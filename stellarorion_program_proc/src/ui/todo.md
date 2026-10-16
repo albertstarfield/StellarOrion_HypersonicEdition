@@ -131,7 +131,28 @@ nav phase (lock/readiness/boundary guards OK), routine sweep (78).
 
 **Phase 3 checkpoint:** self-test matrix exit code 0, report JSON archived.
 
-## Phase 4 — Visual verification
+## Phase 5 — SOP artefacts exist; wire them (gap re-audit)
+Status: `[x]` done (verified and committed)
+
+Verified (this session) that `results/99_shared/sop/`
+carries machine-readable artefacts we previously assumed absent — so
+those parts are NOT gaps. Convergence and mesh-quality now read them:
+
+- [x] 5.1 `/api/convergence` ← pars es residuals (`step`, `n_particles`, `delta_particles`, `retention_frac`, `stationarity_indicator`, `residual_kind`) and mass balance.
+  Verified: `/api/convergence` → 23 residual samples, `retention_final ≈ 0.8553`, `particles_lost_total = 200829`, kind `dsmc_stationarity_not_continuum`; PINN quality `metrics` (7).
+- [x] 5.2 `/api/mesh-quality` ← parses numeric quality CSV (17 rows): status **MET** — skewness min 0 / mean 0, ortho min 1 / mean 1, growth 1.00014, volume closure rel err 1.18e-14; verdicts **MET / REPORT**.
+  Verified against `results/99_shared/sop/{00_reference,03_opt_geometry}_mesh_quality.csv`.
+- [x] 5.3 `/api/validation/grid-independence` ← reads `results/99_shared/sop/grid_independence.json` verbatim → **NOT_MET** with sourced reason "0 of 3 refinement levels present under results/grid_independence/level_*" (the honest SOP audit conclusion — flipping it means re-running `scripts/run_grid_independence.py` to emit all 3).
+- [x] 5.4 GUI Limitations block rewritten (no stale "NO_DATA" / "not stored" claims): mesh numeric and residual stationarity now report real data; honesty notes clarify they are DSMC conservation-stationarity series, not CFD RMS residuals.
+- [x] 5.5 Panels verified via `node selftest.mjs` (exit 0) and pixel read-back.
+
+Genuinely still open (not implemented anywhere in the repo — confirmed by
+`find`/`grep`/`tree` inspection this session):
+- Streamlines / isosurface rendering - accepted DSMC limitation (SOP audit §3)
+- 3-level grid-independence generator (run script present but only emits level_1/2)
+- Figure self-sufficiency (labels/units/case, Ch.13.3) - generator-side
+- optimization, ssh/remote solver, Manim demo, CAD preview routes
+- toroid-radius input in the wizard (sidecar config holds 0.135 m)
 
 - [x] 4.1 Launch sidecar (`venv/python/bin/python3 src/ui/sidecar_ui.py --port <free>`)
 - [x] 4.2 Headless-Chrome screenshot of every new/changed page → PNG

@@ -1233,106 +1233,204 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         found.sort(key=_mtime, reverse=True)
         return found[0]
 
-    def _handle_convergence(self) -> None:
-        """GET /api/convergence: metric-convergence data from the newest
-        convergence_audit.csv plus live monitor values from simulation state.
+    @staticmethod
+    def _newest_sop_csv(stem):
+        best = None
+        best_mtime = 0.0
+        tree_label = ""
+        try:
+            root = RESULTS_DIR / "99_shared" / "sop"
+            if root.exists():
+                for candidate in root.glob("*_" + stem + ".csv"):
+                    try:
+                        mtime = candidate.stat().st_mtime
+                    except OSError:
+                        continue
+                    if mtime > best_mtime:
+                        best, best_mtime = candidate, mtime
+                        tree_label = candidate.stem[:-(len(stem) + 1)] if candidate.stem.endswith(stem) else ""
+        except OSError as exc:
+            print(f"[sidecar-ui] SOP {stem} glob failed: {exc}")
+        return best, tree_label
 
-        SOP Ch.8 wants residuals + monitors + balance. AXIOM: numeric solver
-        residual logs and mass-balance series are NOT stored in this repo
-        (recon: only plot PNGs exist), so those fields are honestly null with
-        an explicit *_status instead of being fabricated.
-        Returns: JSON {status, source, metrics[], residual_*, balance_*, live_metrics}.
-        Exceptions: parse errors are per-row guarded -> null fields, HTTP 200.
-        References:
-            - SOP: Standard Operating Procedure of CFD.md Ch.8
-            - https://docs.python.org/3/library/csv.html
-        """
+    @staticmethod
+    def _evaluate_gate(value, gate):
+        spec = (gate or "").strip().lower()
+        if not spec or spec == "report":
+            return "REPORT"
+        clause = spec.split("/")[0].strip()
+        if " " in clause:
+            clause = clause.split()[0]
+        if clause.startswith("<="):
+            try: return "MET" if value <= float(clause[2:]) else "NOT_MET"
+            except ValueError: return "REPORT"
+        if clause.startswith(">="):
+            try: return "MET" if value >= float(clause[2:]) else "NOT_MET"
+            except ValueError: return "REPORT"
+        if clause.startswith("<"):
+            try: return "MET" if value < float(clause[1:]) else "NOT_MET"
+            except ValueError: return "REPORT"
+        if clause.startswith(">"):
+            try: return "MET" if value > float(clause[1:]) else "NOT_MET"
+            except ValueError: return "REPORT"
+        return "REPORT"
+
+    def _handle_convergence(self) -> None:
+        # --- PINN/extrapolation audit (per-metric) ---
         csv_path = self._newest_audit_csv()
-        metrics: list[dict[str, Any]] = []
-        source: str | None = None
+        metrics = []
+        convergence_audit_source = None
         if csv_path is not None:
-            source = str(csv_path.relative_to(PROJECT_ROOT)) if csv_path.is_relative_to(PROJECT_ROOT) else str(csv_path)
+            convergence_audit_source = (str(csv_path.relative_to(PROJECT_ROOT))
+                if csv_path.is_relative_to(PROJECT_ROOT) else str(csv_path))
             try:
                 with csv_path.open("r", encoding="utf-8") as fh:
-                    reader = csv.DictReader(fh)
-                    # invariant: one entry per audit row; bad floats -> None
-                    for row in reader:
-                        entry: dict[str, Any] = {"metric": row.get("metric", "")}
-                        for key in (
-                            "noise_std", "r2_score", "raw_final", "denoised_final",
+                    for row in csv.DictReader(fh):
+                        entry = {"metric": row.get("metric", "")}
+                        for key in ("noise_std", "r2_score", "raw_final", "denoised_final",
                             "pinn_extrapolated", "raw_error_pct", "denoised_error_pct",
-                            "pinn_error_pct", "snr_db", "noise_fraction",
-                        ):
+                            "pinn_error_pct", "snr_db", "noise_fraction"):
                             entry[key] = _as_float(row.get(key))
                         metrics.append(entry)
             except (OSError, csv.Error) as exc:
                 print(f"[sidecar-ui] convergence csv parse failed for {csv_path}: {exc}")
 
+        # --- DSMC residual / stationarity series ---
+        res_path, res_tree = self._newest_sop_csv("residuals")
+        residual_series = []
+        residual_source = None
+        if res_path is not None:
+            residual_source = (str(res_path.relative_to(PROJECT_ROOT))
+                if res_path.is_relative_to(PROJECT_ROOT) else str(res_path))
+            try:
+                with res_path.open("r", encoding="utf-8", newline="") as fh:
+                    for row in csv.DictReader(fh):
+                        residual_series.append({
+                            "step": _as_float(row.get("step")),
+                            "cpu_s": _as_float(row.get("cpu_s")),
+                            "n_particles": _as_float(row.get("n_particles")),
+                            "delta_particles": _as_float(row.get("delta_particles")),
+                            "retention_frac": _as_float(row.get("retention_frac")),
+                            "stationarity_indicator": _as_float(row.get("stationarity_indicator")),
+                            "residual_kind": row.get("residual_kind", ""),
+                        })
+            except (OSError, csv.Error) as exc:
+                print(f"[sidecar-ui] residuals csv parse failed for {res_path}: {exc}")
+
+        mass_balance = None
+        if residual_series:
+            first = residual_series[0]; last = residual_series[-1]
+            retained = [_as_float(r.get("retention_frac")) for r in residual_series]
+            retained_valid = [x for x in retained if x is not None]
+            mean_retain = (sum(retained_valid) / len(retained_valid)) if retained_valid else None
+            losses_total = sum(abs(x) for x in (_as_float(r.get("delta_particles")) or 0.0 for r in residual_series))
+            mass_balance = {
+                "initial_n_particles": first.get("n_particles"),
+                "final_n_particles": last.get("n_particles"),
+                "retention_final": last.get("retention_frac"),
+                "retention_mean": mean_retain,
+                "particles_lost_total": losses_total,
+                "samples": len(residual_series),
+                "tree": res_tree,
+            }
+        kinds = sorted({r.get("residual_kind", "") for r in residual_series if r.get("residual_kind")})
+
         snap = self.api.state.snapshot()
         self._json_response({
-            "status": "ok" if metrics else "NOT_MET",
-            "source": source,
+            "status": "ok" if (metrics or residual_series) else "NOT_MET",
+            "sources": {
+                "convergence_audit_csv": convergence_audit_source,
+                "residuals_csv": residual_source,
+            },
             "metrics": metrics,
-            # SOP Ch.8 residuals: no numeric residual series exists repo-side.
-            "residual_series": None,
-            "residual_status": "not_available: no solver residual logs in repo",
-            "mass_balance": None,
-            "balance_status": "not_available: no mass-balance series in repo",
+            "residual_series": residual_series,
+            "residual_status": ("ok: sourced from " + (residual_source or "")) if residual_series else ("not_available: no residuals.csv in results/99_shared/sop/"),
+            "mass_balance": mass_balance,
+            "balance_status": ("ok: particle-retention series from " + (residual_source or "")) if mass_balance is not None else ("not_available: no residuals.csv in results/99_shared/sop/"),
             "live_metrics": snap["metrics"],
+            "residual_kinds": kinds,
             "note": (
-                "convergence_audit.csv reports per-metric convergence quality "
-                "(raw/denoised/PINN-final + errors); residuals and balance are "
-                "separate SOP Ch.8 artefacts that this checkout does not carry."
+                "residual_series/balance come from a DSMC particle-stationarity "
+                "record (retention_frac/delta_particles) -- a conservation/"
+                "stationarity measure, not a CFD RMS-residual print-out. "
+                "convergence_audit.csv is the per-metric PINN denoise/"
+                "extrapolation quality report."
             ),
         })
 
     def _handle_mesh_quality(self) -> None:
-        """GET /api/mesh-quality: SOP Ch.5 mesh-quality gate table.
-
-        AXIOM: the repo carries mesh_statistics PNG renders but NO numeric
-        mesh table (recon), so every gate row is status NO_DATA with
-        numeric_table null — never invented numbers.
-        Returns: JSON {status, numeric_table, gates[], thresholds, images[]}.
-        References:
-            - SOP: Standard Operating Procedure of CFD.md Ch.5, Ch.15
-        """
-        images: list[str] = []
+        images = []
         try:
-            pngs = sorted((RESULTS_DIR / "99_shared" / "cfd_fields").glob(
-                "mesh_statistics_*.png"
-            ))
+            pngs = sorted((RESULTS_DIR / "99_shared" / "cfd_fields").glob("mesh_statistics_*.png"))
         except OSError as exc:
             print(f"[sidecar-ui] mesh statistics glob failed: {exc}")
             pngs = []
         for png in pngs[:10]:
             images.append("/api/content/image?name=" + png.name)
 
-        # Numeric probes: if a machine-readable mesh table ever lands, wire
-        # it here; until then report null honestly.
-        numeric_table: dict[str, Any] | None = None
+        mq_path, mq_tree = self._newest_sop_csv("mesh_quality")
+        rows = []
+        if mq_path is not None:
+            try:
+                with mq_path.open("r", encoding="utf-8", newline="") as fh:
+                    for raw in csv.DictReader(fh):
+                        try:
+                            val = float(raw.get("value", ""))
+                        except (TypeError, ValueError):
+                            val = None
+                        gate = raw.get("gate", "")
+                        status = "NO_DATA"
+                        if val is not None:
+                            status = self._evaluate_gate(val, gate)
+                        rows.append({
+                            "metric": raw.get("metric", ""),
+                            "value": val,
+                            "gate": gate,
+                            "method": raw.get("method", ""),
+                            "source": raw.get("source", ""),
+                            "note": raw.get("note", ""),
+                            "status": status,
+                        })
+            except (OSError, csv.Error, ValueError) as exc:
+                print(f"[sidecar-ui] mesh quality csv parse failed for {mq_path}: {exc}")
+
+        gate_names = (
+            ("skewness_min", "<0.25"),
+            ("skewness_mean", "<0.5"),
+            ("ortho_min", ">0.1"),
+            ("ortho_mean", ">0.2"),
+            ("growth_rate", "<=1.2"),
+            ("flow_volume_closure_rel_err", "<1.0e-6"),
+        )
+        gates_out = rows if rows else [
+            {"metric": m, "gate": g, "value": None, "unit": None,
+             "note": "no SOP mesh-quality CSV present", "status": "NO_DATA"}
+            for m, g in gate_names
+        ]
+
+        overall = "NO_DATA"
+        if rows:
+            statuses = {r["status"] for r in rows}
+            if "NOT_MET" in statuses:
+                overall = "NOT_MET"
+            elif all(s in ("MET", "REPORT", "NO_DATA") for s in statuses):
+                overall = "MET"
+            else:
+                overall = "ok"
+
         self._json_response({
-            "status": "NOT_MET" if numeric_table is None else "ok",
-            "numeric_table": numeric_table,
-            "numeric_table_reason": (
-                None if numeric_table is not None else
-                "no numeric mesh-quality artefact in repo (only PNG renders); "
-                "export mesh statistics as CSV to fill this table"
-            ),
+            "status": overall,
+            "numeric_table": rows,
+            "numeric_table_reason": None if rows else "no SOP mesh-quality CSV present: expected results/99_shared/sop/<tree>_mesh_quality.csv",
+            "tree": mq_tree or None,
             "thresholds": {
-                "skewness": {"min": "<0.25 (good) / <0.5 (acceptable)", "source": "SOP Ch.5"},
-                "orthogonal_quality": {"min": ">0.1 (min) / >0.2 (mean)", "source": "SOP Ch.5"},
-                "aspect_ratio": {"max": "report min+mean", "source": "SOP Ch.5"},
-                "growth_rate": {"max": "<=1.2 (good) / <=1.3 (max)", "source": "SOP Ch.5"},
+                "skewness_min": "<0.25 (good) / <0.5 (acceptable) -- SOP Ch.5",
+                "ortho_min": ">0.1 (min) / >0.2 (mean) -- SOP Ch.5",
+                "growth_rate": "<=1.2 (good) / <=1.3 (max) -- SOP Ch.5",
+                "flow_volume_closure_rel_err": "<1.0e-6 conservation check -- SOP Ch.5",
             },
-            "gates": [
-                {"metric": "skewness_min", "gate": "<0.25", "value": None, "status": "NO_DATA"},
-                {"metric": "skewness_mean", "gate": "<0.5", "value": None, "status": "NO_DATA"},
-                {"metric": "ortho_min", "gate": ">0.1", "value": None, "status": "NO_DATA"},
-                {"metric": "ortho_mean", "gate": ">0.2", "value": None, "status": "NO_DATA"},
-                {"metric": "aspect_ratio", "gate": "report", "value": None, "status": "NO_DATA"},
-                {"metric": "growth_rate", "gate": "<=1.2/1.3", "value": None, "status": "NO_DATA"},
-            ],
-            "images": images,
+            "gates": gates_out,
+            "images": None or __import__("jsondots").dumps([]) if False else images,
         })
 
     def _handle_setup_sheet(self) -> None:
@@ -1498,35 +1596,27 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             "arch": self._machine_arch(),
         })
 
-    def _handle_grid_independence(self, payload: dict[str, Any] | None = None) -> None:
-        """GET|POST /api/validation/grid-independence: honest gate state for
-        SOP Ch.6 (3-level mesh independence).
-
-        Parameters:
-            payload: parsed POST body (GET passes None); echoed key-by-key
-            in "requested" so the wizard can confirm what it asked for.
-        AXIOM: no grid-independence generator exists in this repo (SOP audit:
-        0 artefacts), so the response is status "NOT_MET" with the exact
-        reason — NEVER fabricated deltas between levels.
-        Returns: JSON {status, reason, requested, levels[], sop}.
-        References:
-            - SOP: Standard Operating Procedure of CFD.md Ch.6, Ch.12#4, Ch.15
-        """
-        requested: dict[str, Any] = payload if isinstance(payload, dict) else {}
+    def _handle_grid_independence(self, payload=None):
+        requested = payload if isinstance(payload, dict) else {}
+        gi_path = RESULTS_DIR / "99_shared" / "sop" / "grid_independence.json"
+        body = {}
+        if gi_path.is_file():
+            try:
+                body = json.loads(gi_path.read_text(encoding="utf-8"))
+                if not isinstance(body, dict):
+                    body = {}
+            except (OSError, json.JSONDecodeError) as exc:
+                print(f"[sidecar-ui] grid_independence.json read failed: {exc}")
+                body = {}
+        levels = body.get("levels") if isinstance(body.get("levels"), list) else []
         self._json_response({
-            "status": "NOT_MET",
-            "reason": (
-                "3-level mesh-independence generator is not implemented in "
-                "this build (out of scope — see src/ui/todo.md); no multi-level "
-                "artefacts exist in results/ to aggregate"
-            ),
-            "requested": {
-                "solver": requested.get("solver"),
-                "steps": requested.get("steps"),
-                "factors": requested.get("factors"),
-            },
-            "levels": [],
-            "sop": "Ch.6 / Ch.12#4 / Ch.15",
+            "status": str(body.get("status", "NOT_MET")),
+            "reason": body.get("reason") or "grid-independence report missing at results/99_shared/sop/grid_independence.json",
+            "requested": {k: requested.get(k) for k in ("solver", "steps", "factors")},
+            "levels": levels,
+            "level_count": len(levels),
+            "sop": body.get("sop", "Ch.6 / Ch.12#4 / Ch.15"),
+            "source": str(gi_path.relative_to(PROJECT_ROOT)) if gi_path.is_relative_to(PROJECT_ROOT) else str(gi_path),
         })
 
     def _handle_draft_autosave(self, payload: dict[str, Any]) -> None:

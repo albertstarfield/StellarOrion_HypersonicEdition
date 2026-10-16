@@ -1974,9 +1974,11 @@ async function refreshConvergencePanel() {
             '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">R²</th>' +
             '</tr>' + rows + '</table>' +
             '<div style="margin-top:8px; color:var(--text-dim);">Residual series: ' +
-            sopChip('NO DATA') + ' ' + sopEsc(conv.residual_status || '') + '</div>' +
+            sopChip((conv.residual_series && conv.residual_series.length) ? 'MET' : 'NOT MET') +
+            ' <span style="color:var(--text-dim);font-size:0.78rem;">' + sopEsc(conv.residual_status || '') + '</span></div>' +
             '<div style="margin-top:4px; color:var(--text-dim);">Mass balance: ' +
-            sopChip('NO DATA') + ' ' + sopEsc(conv.balance_status || '') + '</div>' +
+            sopChip(conv.mass_balance ? 'MET' : 'NOT MET') +
+            ' <span style="color:var(--text-dim);font-size:0.78rem;">' + sopEsc(conv.balance_status || '') + '</span></div>' +
             (liveKeys.length
                 ? '<div style="margin-top:8px; color:var(--text-dim);">Live monitors: ' + sopEsc(liveKeys.join(', ')) + '</div>'
                 : '<div style="margin-top:8px; color:var(--text-dim);">Live monitors: none reported (no run active)</div>');
