@@ -663,6 +663,48 @@ Limitations & where the result may not be used & explicit list \\
 \end{tabularx}
 \end{table}
 
+\section{Measured evidence pack for this work}
+
+The evidence pack for the runs of Chapter~\ref{ch:results} is emitted as files
+rather than as narrative. \texttt{scripts/generate\_sop\_artifacts.py} writes
+\texttt{results/99\_shared/sop/}, holding a mesh-quality row set and a
+stationarity row set for each result tree, \texttt{00\_reference} and
+\texttt{03\_opt\_geometry}, with the grid-independence artifact in the same
+folder. Table~\ref{tab:measured_evidence} records what those files hold and the
+status each carries. The DSMC records come from the SPARTA
+solver~\cite{plimpton2014sparta}, which produces the cut-cell census and the
+flow-volume closure natively.
+
+\begin{table}[!htbp]
+\centering
+\caption{Measured evidence pack, with the status each record carries.}
+\label{tab:measured_evidence}
+\small
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.26\textwidth} >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.16\textwidth}@{}}
+\hline
+\textbf{Record} & \textbf{Measured content} & \textbf{Status} \\
+\hline
+Mesh quality, both trees & skewness $0$ and orthogonal quality $1$ exactly; growth rate 1.00014123; closure $1.33 \times 10^{-14}$ and $1.18 \times 10^{-14}$ & met \\
+Cut-cell census, both trees & 18,746 outside the body, 430 inside, 145 overlapping, 144 split & reconciling \\
+Stationarity, both trees & retention 0.8555 and 0.8553; indicator 0.84\% and 0.89\% & met \\
+Grid independence, change gate & 4,900 / 10,000 / 19,321 cells; successive changes 5.488091\% and 7.663952\% & met \\
+Grid independence, error gate & convergence index 33.74\% against the $10\%$ tolerance & exceeds tolerance \\
+Figure sufficiency & 389 figures, 352 with a generator, 37 without, 90.49\% compliant & NOT\_MET \\
+\hline
+\end{tabularx}
+\end{table}
+
+Two recorded readings are qualified rather than smoothed. The grid-independence
+artifact holds a pairwise-change gate and a separate estimated-error gate: the
+first is met at 7.663952\% against the $10\%$ criterion adopted on 2026-10-16,
+and the second is exceeded at a convergence index of 33.74\%, so the artifact
+reports the change as met and the estimated error as exceeding tolerance. The
+figure-sufficiency audit reports NOT\_MET, and two of its 37 readings are false
+positives: \texttt{bo\_convergence.png} and \texttt{bo\_ccd\_design.png} are
+recorded as having no generator, and
+\texttt{scripts/render\_bo\_figures.py} writes both. The audit therefore
+under-reports the compliance of the figures this work actually uses.
+
 \section{Figure and table rules}
 
 \begin{itemize}
