@@ -41,6 +41,17 @@ Stagnation temperature, calorically ideal:
 \end{equation}
 The 5-species air model (N$_2$, O$_2$, NO, N, O) with VSS collisions adds vibrational excitation above $\sim$800\,K and dissociation above $\sim$2000\,K, lowering effective translational temperature~\cite{bird1994molecular}.
 
+That state is one point on the entry trajectory of Figure~\ref{fig:trajectory_profile}, which spans the full window from entry interface to landing. The trajectory is the point-mass model integrated over the window; the DSMC snapshot quoted throughout this chapter is taken at its 52.069\,km, 3101.079\,m/s point, so the single-state results below inherit the condition of that one point rather than of the whole trajectory.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Scatter plot titled Trajectory Profile - Altitude vs Velocity. The horizontal axis is velocity in metres per second from 0 to about 7500 and the vertical axis is altitude in kilometres from about 27 to 120. Points form a curve that starts at the upper right, near 7300 metres per second and 120 kilometres, and descends to the lower left, near a few hundred metres per second and 27 kilometres. A color bar on the right gives time in seconds from 0 to 175, so the entry point is dark and the terminal point is yellow.}}%
+    \includegraphics[width=0.95\textwidth]{figures/rapisarda_trajectory_alt_vel.png}%
+    \EndAccSupp{}%
+    \caption[Trajectory profile: altitude against velocity over the full entry window.]{Trajectory profile of the entry window: altitude in kilometres against velocity in metres per second, each sample colored by elapsed time in seconds from 0 at entry to about 195 at the end of the window. The path begins near 123\,km and 7.3\,km/s, decelerates through the DSMC snapshot point of 52.069\,km and 3101.079\,m/s, and terminates near 27\,km. Source: \texttt{results/00\_reference/trajectory\_profile.csv}, rendered by \texttt{scripts/plot\_rapisarda\_comparison.py}.}
+    \label{fig:trajectory_profile}
+\end{figure}
+
 \section{Surface Heat Flux Distribution}
 Stagnation-point heat flux follows the Sutton-Graves (1971) correlation~\cite{sutton1971gravesh}:
 \begin{equation}
@@ -89,6 +100,17 @@ The two time series sit at \emph{different} conditions: smooth at 51.82~km and 3
     \EndAccSupp{}%%
     \caption[Per-element mean and peak cell heat flux for the two skin configurations, on a logarithmic vertical axis against particle-time step.]{Per-element mean and peak cell heat flux for the two skin configurations, on a logarithmic vertical axis against particle-time step. The runs sit at different trajectory states: scalloped at 52.07~km and 3101~m/s, smooth at 51.82~km and 3379~m/s. Figure~\ref{fig:thermal_map} gives the adjacent temperature field.}
     \label{fig:scalloped_heatflux}
+\end{figure}
+
+The surface field that produces those scalar series is shown directly at the final step. Figure~\ref{fig:vtu_heatflux_3d} renders the solver-resolved heat-flux distribution over the whole HIAD surface at step 2200, the same step at which the values quoted above are taken, so the spatial source of the crest hot spots discussed in this section is visible rather than inferred.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter plot of the HIAD surface heat flux distribution at step 2200, titled HIAD Surface Heat Flux Distribution, Step 2200, DSMC SPARTA 5-species air, Mach 10, Alt 52\,km. A color bar on the right gives heat flux in watts per square centimetre from 0 at the bottom to 180 at the top. The surface points form the vehicle shape between the axial axis, X, in the flow direction and the two radial axes, Y and Z, both in metres over about -2 to 2. The color is dark over most of the aft surface and reaches its maximum in a cluster near the nose.}}%
+    \includegraphics[width=0.95\textwidth]{figures/vtu_heatflux_3d_step2200.png}%
+    \EndAccSupp{}%
+    \caption[Solver-resolved surface heat-flux distribution over the HIAD surface at step 2200.]{Solver-resolved surface heat-flux distribution over the HIAD surface at particle-time step 2200 of the scalloped reference tree, computed by SPARTA DSMC with 5-species air at Mach 10 and 52\,km altitude. Color gives heat flux in W/cm$^2$ over the range 0 to 180\,W/cm$^2$; the three axes are the vehicle axial direction in the flow direction and the two radial directions, all in metres. Most of the aft surface sits near zero, with the maximum clustered near the nose and isolated hot spots on the flanks; this is the field the per-element scalars of Figure~\ref{fig:scalloped_heatflux} average over. Source: \texttt{results/00\_reference/paraview/surf\_2200.vtu}, rendered by \texttt{scripts/make\_vtu\_visualization.py}.}
+    \label{fig:vtu_heatflux_3d}
 \end{figure}
 \begin{figure}[!htbp]
     \centering
@@ -227,6 +249,17 @@ Residual tracking (Figure~\ref{fig:convergence}) plots normalized residual $|x -
     \label{fig:convergence}
 \end{figure}
 
+A second, independent audit characterises the statistical state of those residuals rather than their magnitude. Figure~\ref{fig:convergence_audit} reports three bars per monitored quantity: the noise standard deviation of the final samples, a stability index and a convergence ratio. The heat load is noise-free at the reported step, its stability index is unity and its convergence ratio zero, because the quantity is constant over the window; the drag coefficient and the peak heat flux retain finite noise (0.396 and 0.514) with stability indices of 0.921 and 0.775, which is the finite-sample scatter of a particle estimator rather than an unconverged solution.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Three side-by-side bar charts titled Noise/Convergence Audit for the drag coefficient, the peak heat flux and the heat load. Each chart has three bars: Noise Std, Stability Index and Convergence Ratio. For the drag coefficient the bars read 0.396, 0.921 and 0.653; the Noise Std bar is green and the other two are red. For the peak heat flux the bars read 0.514, 0.775 and 0.651. For the heat load the Noise Std and Convergence Ratio bars are zero and the Stability Index bar is 1.000.}}%
+    \includegraphics[width=0.95\textwidth]{figures/pipeline_convergence_audit.png}%
+    \EndAccSupp{}%
+    \caption[Noise and convergence audit of the drag coefficient, peak heat flux and heat load.]{Noise and convergence audit of the drag coefficient, the peak heat flux and the heat load, each shown as the noise standard deviation of the monitored samples, a stability index and a convergence ratio. The heat load is constant over the window, so its noise and convergence ratio are zero and its stability index is unity; the other two quantities carry finite-sample noise with stability indices near 0.8 to 0.9. Source: \texttt{results/00\_reference/plots/validation\_pipeline/convergence\_audit\_plot.png}, generated by \texttt{src/python/validation\_pipeline.py}.}
+    \label{fig:convergence_audit}
+\end{figure}
+
 \section{Mesh Quality Statistics}
 Grid evidence is Table~\ref{tab:grid_study} and the residuals of Figure~\ref{fig:convergence}, not Figures~\ref{fig:grid_mesh} and \ref{fig:mesh_stats}, which render the mesh and its per-cell particle census. The Cartesian grid at grid factor 0.7 adequately resolves collision pairing and property accumulation.
 
@@ -239,6 +272,17 @@ Grid evidence is Table~\ref{tab:grid_study} and the residuals of Figure~\ref{fig
     \label{fig:mesh_stats}
 \end{figure}
 
+Both topologies are solved on one shared Cartesian grid rather than on two separate meshes~\cite{plimpton2014sparta}, so a change of geometry does not change the discretisation that carries it. Figure~\ref{fig:mesh_overlap} renders that grid at the final step with the two bodies overlaid: 19,322 cells in total, 16,349 of which hold at least 10 DSMC particles, the solid curve being the reference body and the dashed curve the optimized body of Table~\ref{tab:bo_before_after}.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Line plot titled Computational mesh -- 00_reference, step 2200, with a grey grid of fine square cells covering the plot area. The horizontal axis is axial x in metres from -4 to 8 and the vertical axis is radial y in metres from 0 to 2. A solid blue line rises from the origin to a peak near x equals 1.5 and returns to the axis, and a dashed red line follows the same path with a taller, narrower peak; the legend labels the solid line reference body (00_reference) and the dashed line optimized body (03_opt_geometry). The subtitle reads step 2200, 19322 cells, 16349 above n greater than or equal to 10.}}%
+    \includegraphics[width=0.95\textwidth]{figures/mesh_overlap_reference_vs_optimized.png}%
+    \EndAccSupp{}%
+    \caption[Computational mesh at step 2200 with the reference and optimized bodies overlaid.]{Computational mesh of the reference tree at particle-time step 2200: 19,322 cells in total, of which 16,349 hold at least 10 DSMC particles. The axes are the axial direction $x$ and the radial direction $y$ in metres; the solid curve is the reference body and the dashed curve the optimized body, both drawn on the same grid so the comparison of Section~\ref{sec:comparison_rapisarda} holds the discretisation fixed. Source: \texttt{results/99\_shared/cfd\_fields/grid\_mesh\_map\_smooth\_00\_reference\_step\_2200.png}.}
+    \label{fig:mesh_overlap}
+\end{figure}
+
 \section{Discussion}
 
 \subsection{Heating Augmentation and TPS Implications}
@@ -248,6 +292,17 @@ Scalloped toroidal geometry creates hot spots at toroid crests. Against the smoo
 Figure~\ref{fig:knudsen_map} shows a systematic \emph{local} gradient around the HIAD at 51.8\,km: the low-density far field carries the highest cell-scale $Kn$ values while the compressed shock layer and near-wall cells carry the lowest. Against the five bands of Table~\ref{tab:knudsen_regimes}, the visible range $1.7\times10^{-6}$ to about $1.95\times10^{-4}$ (dump maximum $9.75\times10^{-4}$) lies wholly inside the continuum band; transitional ($0.1 \lesssim Kn \lesssim 10$) and free-molecular ($Kn > 10$) bands are \emph{not} attained, and at cell scale neither is slip flow.
 
 This local gradient justifies the DSMC choice through its scale dependence: $Kn$ is a local ratio, and over the millimetre bow-shock thickness the value rises three orders of magnitude into the slip regime where continuum Navier-Stokes needs wall slip corrections, so a kinetic treatment is required exactly where heat load is computed~\cite{mos2006lowdensity,bird1994molecular}. The cell-scale map locates the continuum end of that gradient: the stagnation region sits at its floor, licensing the Navier-Stokes PINN stage, while the far-field cells mark where the flow is most rarefied at cell scale. A vehicle-scale $Kn$ on the 3\,m aeroshell diameter would place the vehicle in the continuum band, discarding this distinction, so the local field makes the hybrid DSMC-plus-PINN architecture appropriate.
+
+Figure~\ref{fig:flow_regime_map} places the evaluated entry condition on the regime profile of the whole trajectory rather than at one altitude. The Knudsen number rises from about $10^{-5}$ at 40\,km to order unity at 120\,km, crossing the continuum criterion $Kn = 10^{-2}$ and the transition criterion $Kn = 10^{-1}$ between roughly 93 and 107\,km, so the 52.069\,km snapshot sits on the deep continuum side of the continuum criterion. The Reynolds number falls monotonically over the same band, from about $10^{6}$ to $10^{1}$.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two line plots titled Flow Regime Map, Knudsen and Reynolds Numbers, with the atmosphere model named in the title. Left panel: Knudsen number profile, altitude in kilometres from 40 to 120 against the Knudsen number on a logarithmic axis from 1e-5 to 1. A blue curve rises from about 1e-5 at 40\,km to about 1 at 120\,km. A red dashed vertical line marks the continuum limit Kn equals 0.01 and an orange dashed line marks the transition Kn equals 0.1. Right panel: Reynolds number profile, the same altitude axis against Reynolds number on a logarithmic axis from 1e1 to 1e6, showing a red curve that falls from about 1e6 at 40\,km to about 1e1 at 120\,km.}}%
+    \includegraphics[width=0.95\textwidth]{figures/pipeline_flow_regime_map.png}%
+    \EndAccSupp{}%
+    \caption[Knudsen and Reynolds number profiles over the 40 to 120\,km altitude window.]{Knudsen and Reynolds number profiles over the 40 to 120\,km altitude window, evaluated through the project's ISA 1976 atmosphere model. Left: the Knudsen number on a logarithmic abscissa, with the continuum criterion $Kn = 10^{-2}$ and the transition criterion $Kn = 10^{-1}$ marked as reference lines; the profile crosses both in the 93 to 107\,km band, placing the 52.069\,km DSMC snapshot firmly inside the continuum regime. Right: the Reynolds number falls from about $10^{6}$ to $10^{1}$ over the same altitude range. Source: \texttt{results/00\_reference/plots/validation\_pipeline/flow\_regime\_map.png}, generated by \texttt{src/python/validation\_pipeline.py}.}
+    \label{fig:flow_regime_map}
+\end{figure}
 
 \subsection{Recirculation and Shock-Boundary Layer Interaction}
 Stable recirculation zones in the toroidal valleys match shock-boundary layer interaction (SBLI) patterns of hypersonic blunt-body flows~\cite{guo2019hypersonic}. DSMC captures them through direct molecular collision statistics without turbulence closures.
@@ -432,12 +487,18 @@ Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Fi
 %     blocks, which belonged to that run's optimum (R_N = 2.9714 m).
 %     The retained latest attempt is R_N = 2.9991 m, r_tor = 0.0551 m,
 %     theta_c = 52.2220 deg, J = 1.4921, Q = 147.4597 J/cm^2, 70 evaluations.
-%   * DSMC rows, baseline (IRVE-3 scalloped skin):
+%   * DSMC rows, baseline (IRVE-3 scalloped skin), from the reference tree
+%     renamed results/validation_scalloped/ -> results/00_reference/ on
+%     2026-10-14 (RUNS.md row 4):
 %       - C_d, heat load, deceleration, C_l:
-%         results/validation_scalloped/validation_timeseries.csv (step 2200)
+%         results/00_reference/validation_timeseries.csv (step 2200)
 %       - beta = 27.70 kg/m2:
-%         results/validation_scalloped/VALIDATION_Sep_2_2026.md
-%   * DSMC rows, optimized (round-1 winner, gate re-simulation):
+%         results/00_reference/VALIDATION_Sep_2_2026.md
+%   * DSMC rows, optimized (round-1 winner, gate re-simulation): the
+%     results/validation_optimized/ tree was removed from disk on 2026-10-14
+%     (RUNS.md row 3). The values below are those recorded for that run by the
+%     2026-09-26 report and by commit 57a3a3d6; they are not reproducible
+%     against the live tree and are quoted only as the gated run:
 %       - C_d, heat load, deceleration, C_l:
 %         results/validation_optimized/validation_timeseries.csv (step 2200)
 %       - beta = 10.06 kg/m2:
@@ -652,3 +713,14 @@ Aerodynamically the comparison is one-sided: no drag, lift or ballistic-coeffici
         \bottomrule
     \end{tabularx}
 \end{table}
+
+Figure~\ref{fig:rapisarda_scalar} sets the scalar maxima recorded for this work against the trajectory peak values tabulated for the MDAO framework. Two of the four panels compare like quantities and two do not, and the caption states which is which, because a reader who reads only the bars would otherwise carry away a difference that is an artefact of the comparison rather than a property of either model.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Four side-by-side bar charts titled StellarOrion vs Rapisarda MDAO - Scalar Metrics Comparison. Peak drag in newtons: StellarOrion 62607.49, Rapisarda 0.00, the axis noted as having no Rapisarda reference. Peak heat flux in watts per square centimetre: StellarOrion 390.29 and Rapisarda 14.36, with a printed difference of 2617.7 percent. Total heat load in joules per square centimetre: StellarOrion 165.72 and Rapisarda 195.06, difference -15.0 percent. Peak g-load in g: StellarOrion 17.31 and Rapisarda 19.70, difference -12.2 percent. StellarOrion bars are blue and Rapisarda bars are orange.}}%
+    \includegraphics[width=0.95\textwidth]{figures/rapisarda_scalar_comparison.png}%
+    \EndAccSupp{}%
+    \caption[Scalar maxima of this work against the trajectory peak values tabulated for the MDAO framework.]{Scalar maxima of this work against the trajectory peak values tabulated for the MDAO framework~\protect\cite{rapisarda2023mdao}. Peak drag has no MDAO reference and is therefore reported for this work only. Total heat load and peak g-load compare like quantities: 165.72 against 195.06\,J/cm$^2$ and 17.31 against 19.70\,g. The peak-heat-flux panel is \emph{not} a like-for-like comparison: this work's bar is the maximum per-element DSMC surface flux converted to W/cm$^2$ (390.29), while the MDAO bar is the trajectory-integrated stagnation-correlation peak of 14.3610\,W/cm$^2$ from its reference table, so the printed $+2617.7\%$ measures two different quantities rather than a model error. That 14.3610 value is the group-R reference reported by Rapisarda and is not an IRVE-3 flight measurement; the flight reconstruction value is 13.80\,W/cm$^2$ (Appendix~\ref{app:validation_data}). Source: \texttt{results/00\_reference/plots/rapisarda/11\_scalar\_comparison.png}.}
+    \label{fig:rapisarda_scalar}
+\end{figure}
