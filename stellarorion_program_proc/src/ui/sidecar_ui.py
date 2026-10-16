@@ -744,17 +744,33 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         content_type = self._guess_content_type(file_path.suffix)
         try:
             data = file_path.read_bytes()
+        except OSError as exc:
+            #  VERBOSE error path (Murphy's Law): log before the JSON error
+            #  response so the failure is visible in server logs.
+            print(f"[sidecar-ui] Static file read failed for '{file_path}': {exc}")
+            self._json_response({"error": "Read error"}, 500)
+            return
+        try:
             self.send_response(200)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(data)))
             self.send_header("Cache-Control", "no-cache")
             self.end_headers()
             self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError) as exc:
+            # Client aborted mid-transfer (page navigation or a cache-bust
+            # src rewrite while a large asset was streaming). Expected under
+            # fast UI sweeps — logging at debug keeps the server log clean
+            # while still recording WHY the transfer stopped.
+            print(f"[sidecar-ui] client aborted static transfer for '{file_path}': {exc}")
         except OSError as exc:
-            #  VERBOSE error path (Murphy's Law): log before the JSON error
-            #  response so the failure is visible in server logs.
-            print(f"[sidecar-ui] Static file read failed for '{file_path}': {exc}")
-            self._json_response({"error": "Read error"}, 500)
+            # Genuine send failure (not a client abort): report once, and
+            # stay silent if even the error response cannot reach the wire.
+            print(f"[sidecar-ui] Static send failed for '{file_path}': {exc}")
+            try:
+                self._json_response({"error": "Send error"}, 500)
+            except OSError as exc2:
+                print(f"[sidecar-ui] could not deliver 500 for '{file_path}': {exc2}")
 
     @staticmethod
     @postcondition(_mime_type_contract)
@@ -1893,14 +1909,22 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         except (TypeError, ValueError) as exc:
             print(f"[sidecar-ui] JSON serialization failed ({type(exc).__name__}): {exc}")
             body = json.dumps({"error": "serialization failed"}, default=str).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError) as exc:
+            # Client hung up before the response landed (fast navigation,
+            # fetch aborted by an src rewrite). Not a server fault — record
+            # it and return instead of letting the exception kill the handler.
+            print(f"[sidecar-ui] client disconnected during JSON response (status={status}): {exc}")
+        except OSError as exc:
+            print(f"[sidecar-ui] JSON response write failed (status={status}): {exc}")
 
     # --- CORS preflight ---
     def do_OPTIONS(self) -> None:

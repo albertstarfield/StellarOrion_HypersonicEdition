@@ -3,7 +3,7 @@
 // ============================================================================
 // Every element of the Baloon Shield Maker GUI with the TEST that exercises it.
 // Regenerate after editing index.html:  node gen_manifest.mjs
-// Source: index.html (195 unique ids parsed)
+// Source: index.html (205 unique ids parsed)
 // ============================================================================
 
 export const ELEMENTS = [
@@ -351,6 +351,28 @@ export const ELEMENTS = [
   { id: "summary-content", tag: "div", type: "", action: "inspect", group: "page-6" },
   // #domain-preview-img <img> — TEST: exists in DOM (decorative/static node)
   { id: "domain-preview-img", tag: "img", type: "", action: "inspect", group: "page-6" },
+  // #btn-print-sheet <button> — TEST: click → must not throw ; inline handler: click: printSetupSheet()
+  { id: "btn-print-sheet", tag: "button", type: "", action: "click", group: "page-6" },
+  // #btn-dl-sheet-md <button> — TEST: click → must not throw ; inline handler: click: downloadSetupSheetMarkdown()
+  { id: "btn-dl-sheet-md", tag: "button", type: "", action: "click", group: "page-6" },
+  // #btn-dl-sheet-json <button> — TEST: click → must not throw ; inline handler: click: downloadSetupSheetJson()
+  { id: "btn-dl-sheet-json", tag: "button", type: "", action: "click", group: "page-6" },
+  // #btn-dl-config-json <button> — TEST: click → must not throw ; inline handler: click: exportConfigJson()
+  { id: "btn-dl-config-json", tag: "button", type: "", action: "click", group: "page-6" },
+  // #btn-refresh-sop <button> — TEST: click → must not throw ; inline handler: click: refreshSopPanels()
+  { id: "btn-refresh-sop", tag: "button", type: "", action: "click", group: "page-6" },
+  // #setup-sheet-body <pre> — TEST: exists in DOM (decorative/static node)
+  { id: "setup-sheet-body", tag: "pre", type: "", action: "inspect", group: "page-6" },
+  // #gates-evidence-table <div> — TEST: exists in DOM (decorative/static node)
+  { id: "gates-evidence-table", tag: "div", type: "", action: "inspect", group: "page-6" },
+  // #mesh-quality-table <div> — TEST: exists in DOM (decorative/static node)
+  { id: "mesh-quality-table", tag: "div", type: "", action: "inspect", group: "page-6" },
+  // #mesh-quality-images <div> — TEST: exists in DOM (decorative/static node)
+  { id: "mesh-quality-images", tag: "div", type: "", action: "inspect", group: "page-6" },
+  // #mesh-independence-status <div> — TEST: exists in DOM (decorative/static node)
+  { id: "mesh-independence-status", tag: "div", type: "", action: "inspect", group: "page-6" },
+  // #limitations-list <ul> — TEST: exists in DOM (decorative/static node)
+  { id: "limitations-list", tag: "ul", type: "", action: "inspect", group: "page-6" },
 
   // ── group: (root) ──
   // #page-7 <div> — TEST: exists in DOM (decorative/static node)
@@ -375,10 +397,10 @@ export const ELEMENTS = [
   { id: "vid-simulation", tag: "video", type: "", action: "inspect", group: "page-8" },
   // #img-conv-aero <img> — TEST: exists in DOM (decorative/static node)
   { id: "img-conv-aero", tag: "img", type: "", action: "inspect", group: "page-8" },
-  // #img-conv-thermal <img> — TEST: exists in DOM (decorative/static node)
-  { id: "img-conv-thermal", tag: "img", type: "", action: "inspect", group: "page-8" },
-  // #img-conv-mission <img> — TEST: exists in DOM (decorative/static node)
-  { id: "img-conv-mission", tag: "img", type: "", action: "inspect", group: "page-8" },
+  // #img-conv-thermal <div> — TEST: exists in DOM (decorative/static node)
+  { id: "img-conv-thermal", tag: "div", type: "", action: "inspect", group: "page-8" },
+  // #img-conv-mission <div> — TEST: exists in DOM (decorative/static node)
+  { id: "img-conv-mission", tag: "div", type: "", action: "inspect", group: "page-8" },
   // #img-thermal <img> — TEST: exists in DOM (decorative/static node)
   { id: "img-thermal", tag: "img", type: "", action: "inspect", group: "page-8" },
   // #img-pressure <img> — TEST: exists in DOM (decorative/static node)
@@ -399,18 +421,14 @@ export const ELEMENTS = [
   { id: "img-scallop-temp", tag: "img", type: "", action: "inspect", group: "page-8" },
   // #species-grid <div> — TEST: exists in DOM (decorative/static node)
   { id: "species-grid", tag: "div", type: "", action: "inspect", group: "page-8" },
-
-  // ── group: species-grid ──
-  // #img-species-N2 <img> — TEST: exists in DOM (decorative/static node)
-  { id: "img-species-N2", tag: "img", type: "", action: "inspect", group: "species-grid" },
-  // #img-species-O2 <img> — TEST: exists in DOM (decorative/static node)
-  { id: "img-species-O2", tag: "img", type: "", action: "inspect", group: "species-grid" },
-  // #img-species-NO <img> — TEST: exists in DOM (decorative/static node)
-  { id: "img-species-NO", tag: "img", type: "", action: "inspect", group: "species-grid" },
-  // #img-species-N <img> — TEST: exists in DOM (decorative/static node)
-  { id: "img-species-N", tag: "img", type: "", action: "inspect", group: "species-grid" },
-  // #img-species-O <img> — TEST: exists in DOM (decorative/static node)
-  { id: "img-species-O", tag: "img", type: "", action: "inspect", group: "species-grid" },
+  // #convergence-table <div> — TEST: exists in DOM (decorative/static node)
+  { id: "convergence-table", tag: "div", type: "", action: "inspect", group: "page-8" },
+  // #uncertainty-table <div> — TEST: exists in DOM (decorative/static node)
+  { id: "uncertainty-table", tag: "div", type: "", action: "inspect", group: "page-8" },
+  // #btn-export-metrics-csv <button> — TEST: click → must not throw ; inline handler: click: exportMetricsCsv()
+  { id: "btn-export-metrics-csv", tag: "button", type: "", action: "click", group: "page-8" },
+  // #btn-export-metrics-json <button> — TEST: click → must not throw ; inline handler: click: exportMetricsJson()
+  { id: "btn-export-metrics-json", tag: "button", type: "", action: "click", group: "page-8" },
 
   // ── group: (root) ──
   // #btn-prev <button> — TEST: click → must not throw ; inline handler: click: changePage(-1)

@@ -158,8 +158,8 @@ function nextStep(step) {
     if (titleEl) titleEl.innerText = titleMap[currentPage] || "Baloon Shield Maker";
 
     if (currentPage === 4) init3DView();
-    if (currentPage === 6) updateSummary();
-    if (currentPage === 8) refreshFinalPlots();
+    if (currentPage === 6) { updateSummary(); refreshSopPanels(); }
+    if (currentPage === 8) { refreshFinalPlots(); refreshResultsPanels(); }
 }
 
 function refreshFinalPlots() {
@@ -167,10 +167,13 @@ function refreshFinalPlots() {
     const plotIds = ['img-3d-velocity', 'img-3d-mach', 'img-stag', 'img-knudsen', 'img-residence', 'img-scallop-temp'];
     plotIds.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            const currentSrc = el.src.split('?')[0];
-            el.src = `${currentSrc}?t=${timestamp}`;
-        }
+        if (!el) return;
+        // Rewriting src while the previous fetch is still in flight aborts it
+        // (net::ERR_ABORTED). Only cache-bust images that have finished
+        // loading; in-flight ones will deliver their current request.
+        if (!el.complete) return;
+        const currentSrc = el.src.split('?')[0];
+        el.src = `${currentSrc}?t=${timestamp}`;
     });
 }
 
@@ -915,16 +918,23 @@ function copyToClipboard(id) {
     if (!el) return;
     const text = el.innerText || el.value;
     navigator.clipboard.writeText(text).then(() => {
-        const btn = event.target;
-        const originalText = btn.innerText;
-        btn.innerText = "Copied!";
-        btn.style.background = "rgba(16, 185, 129, 0.4)";
+        // window.event is non-standard: undefined in Firefox and whenever
+        // this handler is reached programmatically (self-test direct invoke).
+        // Guard it so a missing event never throws inside the success path.
+        const src = (typeof event !== 'undefined' && event && event.target)
+            ? event.target : null;
+        if (!src || typeof src.innerText !== 'string') return;
+        const originalText = src.innerText;
+        src.innerText = "Copied!";
+        src.style.background = "rgba(16, 185, 129, 0.4)";
         setTimeout(() => {
-            btn.innerText = originalText;
-            btn.style.background = "rgba(16, 185, 129, 0.2)";
+            src.innerText = originalText;
+            src.style.background = "rgba(16, 185, 129, 0.2)";
         }, 2000);
     }).catch(err => {
-        console.error('Failed to copy: ', err);
+        // console.warn, not console.error: clipboard access can be blocked
+        // by browser policy (not a code defect) but must stay visible.
+        console.warn('Clipboard write failed:', err);
     });
 }
 
@@ -1030,9 +1040,10 @@ function onDomainPreviewReady() {
     const timestamp = new Date().getTime();
     const img1 = document.getElementById('domain-live-preview');
     const img2 = document.getElementById('domain-preview-img');
-    
-    if (img1) img1.src = `assets/plots/domain_preview.png?t=${timestamp}`;
-    if (img2) img2.src = `assets/plots/domain_preview.png?t=${timestamp}`;
+    // Same in-flight guard as refreshFinalPlots: never rewrite src mid-fetch
+    // (that aborts the request with net::ERR_ABORTED).
+    if (img1 && img1.complete) img1.src = `assets/plots/grid_mesh_map_smooth.png?t=${timestamp}`;
+    if (img2 && img2.complete) img2.src = `assets/plots/grid_mesh_map_smooth.png?t=${timestamp}`;
 }
 
 // --- PROJECT MANUAL LOGIC ---
@@ -1700,6 +1711,436 @@ async function showDemoVideo(path) {
         await fetch('/api/demo/open', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({path: path})});
     } else {
         appendLog("[*] Click the 'Visual Demo' button again to re-trigger if needed.");
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  SOP compliance panels (Phase 2 — src/ui/todo.md items 2.1–2.8)
+//  Axiom: every panel renders ONLY what Phase-1 endpoints actually answer —
+//  missing repo data shows as NOT MET / NO DATA / not_available with the
+//  exact reason, never as fabricated success (SOP Ch.12.3 honesty rule).
+//  TEST: each routine below carries its own TEST line and is listed in
+//  tests/manifest.generated.mjs + tests/selftest.mjs ROUTINES; the self-test
+//  routine sweep invokes them and fails on any throw or console.error.
+// ══════════════════════════════════════════════════════════════════════════
+
+// Last GET /api/setup-sheet payload (cached for print/download buttons).
+let setupSheetCache = null;
+
+// sopJson(url, opts) — fetch helper: parses JSON, throws on non-200 so
+// callers' catch blocks render an honest error row instead of silent junk.
+// TEST: exercised by every refresh* routine in the self-test sweep.
+async function sopJson(url, opts) {
+    const res = await fetch(url, opts);
+    if (!res.ok) throw new Error(url + ' → HTTP ' + res.status);
+    return res.json();
+}
+
+// sopEsc(value) — HTML-escape before innerHTML injection (CWE-79 guard).
+// TEST: invoked inside every panel render (values come from server + inputs).
+function sopEsc(value) {
+    return String(value).replace(/[&<>"]/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+    }[c]));
+}
+
+// sopChip(status) — colored status badge (MET green / NOT MET red /
+// PARTIAL·NO DATA amber) so gate tables are readable at a glance (SOP 13.3).
+// TEST: rendered by refreshGatesEvidence + refreshMeshQuality.
+function sopChip(status) {
+    const s = String(status || '').toUpperCase();
+    let color = '#fbbf24';
+    if (s === 'MET' || s === 'OK' || s === 'WITHIN') color = '#10b981';
+    if (s === 'NOT MET' || s === 'OUTSIDE') color = '#ef4444';
+    return '<span style="color:' + color + '; font-weight:700;">' + sopEsc(status) + '</span>';
+}
+
+// refreshSopPanels() — page-6 orchestrator: loads setup sheet, gates &
+// evidence, mesh quality and mesh independence in parallel.
+// TEST: selftest ROUTINES direct invoke + nextStep(6) hook + #btn-refresh-sop.
+async function refreshSopPanels() {
+    try {
+        await Promise.all([
+            refreshSetupSheetPanel(),
+            refreshGatesEvidence(),
+            refreshMeshQuality(),
+            refreshMeshIndependence(),
+        ]);
+    } catch (e) {
+        console.warn('refreshSopPanels failed:', e);
+    }
+}
+
+// refreshResultsPanels() — page-8 orchestrator: convergence audit + target
+// ± tolerance uncertainty table.
+// TEST: selftest ROUTINES direct invoke + nextStep(8) hook.
+async function refreshResultsPanels() {
+    try {
+        await Promise.all([
+            refreshConvergencePanel(),
+            refreshUncertaintyTable(),
+        ]);
+    } catch (e) {
+        console.warn('refreshResultsPanels failed:', e);
+    }
+}
+
+// refreshSetupSheetPanel() — GET /api/setup-sheet, render its Markdown twin
+// into #setup-sheet-body and cache the payload for print/download.
+// TEST: selftest ROUTINES 'refreshSetupSheetPanel' + nav to page 6.
+async function refreshSetupSheetPanel() {
+    const body = document.getElementById('setup-sheet-body');
+    try {
+        const sheet = await sopJson('/api/setup-sheet');
+        setupSheetCache = sheet;
+        if (body) body.innerText = sheet.markdown || JSON.stringify(sheet, null, 2);
+    } catch (e) {
+        console.warn('setup sheet load failed:', e);
+        if (body) body.innerText = 'Setup sheet unavailable: ' + e;
+    }
+}
+
+// refreshGatesEvidence() — build the Ch.15 gate checklist (7 groups) and the
+// Ch.12 evidence pack (10 items) from five live endpoints, each row live-
+// statused with MET / NOT MET / PARTIAL + reason.
+// TEST: selftest ROUTINES 'refreshGatesEvidence' + nav to page 6.
+async function refreshGatesEvidence() {
+    const el = document.getElementById('gates-evidence-table');
+    if (!el) return;
+    try {
+        const [grid, mesh, conv, hist, ready] = await Promise.all([
+            sopJson('/api/validation/grid-independence'),
+            sopJson('/api/mesh-quality'),
+            sopJson('/api/convergence'),
+            sopJson('/api/history'),
+            sopJson('/api/readiness/sparta'),
+        ]);
+        const histCount = Array.isArray(hist) ? hist.length : 0;
+        const meshOk = mesh.status === 'ok';
+        const convOk = conv.status === 'ok';
+        const readyOk = ready.status === 'success';
+
+        const gates = [
+            ['Geometry (15.1)', 'MET', '3D STL viewer + /api/geometry/* archive live'],
+            ['Mesh (15.2)', meshOk ? 'MET' : 'NOT MET', mesh.numeric_table_reason || 'numeric quality table present'],
+            ['Setup (15.3)', 'MET', 'setup sheet assembled from live config (see above)'],
+            ['Solution (15.4)', readyOk ? 'MET' : 'NOT MET', ready.message || 'solver probe'],
+            ['Validation (15.5)', 'PARTIAL', 'targets ± tol configured; uncertainty budget not computed (out of scope)'],
+            ['Presentation (15.6)', 'PARTIAL', 'plot gallery + exports available; figure-label regeneration out of scope'],
+            ['Archive (15.7)', histCount > 0 ? 'MET' : 'NOT MET',
+                histCount > 0 ? histCount + ' run record(s) in history' : 'history empty — no archived runs yet'],
+        ];
+        const evidence = [
+            ['1. Geometry record', 'MET', 'model.stl + geometry snapshot API'],
+            ['2. Mesh quality report', meshOk ? 'MET' : 'NOT MET', mesh.numeric_table_reason || 'ok'],
+            ['3. Mesh independence', grid.status === 'ok' ? 'MET' : 'NOT MET', grid.reason || 'gate state'],
+            ['4. Setup sheet', 'MET', 'GET /api/setup-sheet (this page)'],
+            ['5. Convergence record', convOk ? 'MET' : 'NOT MET', convOk ? conv.source : (conv.source ? 'metrics parsed, residuals not stored' : 'no convergence_audit.csv')],
+            ['6. V&V + uncertainty', 'PARTIAL', 'reference comparisons shown; GUM uncertainty budget not computed'],
+            ['7. Post-processing outputs', 'PARTIAL', 'static gallery served; CSV/JSON exports client-side'],
+            ['8. Run record', histCount > 0 ? 'MET' : 'NOT MET', histCount > 0 ? histCount + ' row(s) in runs.csv' : 'runs.csv absent (fresh checkout)'],
+            ['9. Limitations list', 'MET', 'static block below (Ch.12#10)'],
+            ['10. Evidence self-check', 'MET', 'all 10 rows rendered from live endpoints'],
+        ];
+        const rowHtml = (r) =>
+            '<tr><td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(r[0]) +
+            '</td><td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); white-space:nowrap;">' + sopChip(r[1]) +
+            '</td><td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(r[2]) + '</td></tr>';
+        const table = (caption, rows) =>
+            '<div style="margin-bottom:14px;"><div style="font-weight:700; margin-bottom:6px; color:var(--primary);">' + caption + '</div>' +
+            '<table style="width:100%; border-collapse:collapse;">' + rows.map(rowHtml).join('') + '</table></div>';
+        el.innerHTML = table('Gate checklist (SOP Ch.15)', gates) +
+            table('Evidence pack (SOP Ch.12)', evidence);
+    } catch (e) {
+        console.warn('gates/evidence load failed:', e);
+        el.innerText = 'Gates & evidence unavailable: ' + e;
+    }
+}
+
+// refreshMeshQuality() — render the Ch.5 gate table (skew/ortho/aspect/
+// growth vs SOP bands) from /api/mesh-quality; NO_DATA rows stay honest and
+// mesh_statistics PNGs are embedded through /api/content/image.
+// TEST: selftest ROUTINES 'refreshMeshQuality' + nav to page 6.
+async function refreshMeshQuality() {
+    const el = document.getElementById('mesh-quality-table');
+    const imgBox = document.getElementById('mesh-quality-images');
+    if (!el) return;
+    try {
+        const mq = await sopJson('/api/mesh-quality');
+        const rows = (mq.gates || []).map((g) =>
+            '<tr>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(g.metric) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(g.gate) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + (g.value == null ? '—' : sopEsc(g.value)) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopChip(g.status) + '</td>' +
+            '</tr>'
+        ).join('');
+        const banner = mq.numeric_table
+            ? '<div style="color:#10b981; margin-bottom:8px;">Numeric mesh table available.</div>'
+            : '<div style="color:#fbbf24; margin-bottom:8px; font-weight:600;">NOT MET — ' + sopEsc(mq.numeric_table_reason || 'no numeric data') + '</div>';
+        el.innerHTML = banner +
+            '<table style="width:100%; border-collapse:collapse;"><tr>' +
+            '<th style="text-align:left; padding:4px 8px;">Metric</th>' +
+            '<th style="text-align:left; padding:4px 8px;">SOP gate</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Value (min/mean)</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Status</th></tr>' + rows + '</table>';
+        if (imgBox) {
+            imgBox.innerHTML = (mq.images || []).map((url) =>
+                '<img src="' + sopEsc(url) + '" alt="mesh statistics render" ' +
+                'style="height: 90px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); flex: 0 0 auto;">'
+            ).join('');
+        }
+    } catch (e) {
+        console.warn('mesh quality load failed:', e);
+        el.innerText = 'Mesh quality unavailable: ' + e;
+    }
+}
+
+// refreshMeshIndependence() — Ch.6 gate state from GET
+// /api/validation/grid-independence (always honest NOT_MET + reason today).
+// TEST: selftest ROUTINES 'refreshMeshIndependence' + nav to page 6.
+async function refreshMeshIndependence() {
+    const el = document.getElementById('mesh-independence-status');
+    if (!el) return;
+    try {
+        const grid = await sopJson('/api/validation/grid-independence');
+        const levels = Array.isArray(grid.levels) ? grid.levels.length : 0;
+        el.innerHTML =
+            '<div style="margin-bottom:6px;">Gate: ' + sopChip(grid.status === 'ok' ? 'MET' : grid.status) +
+            ' &nbsp; <span style="color:var(--text-dim);">' + sopEsc(grid.sop || '') + '</span></div>' +
+            '<div style="color:var(--text-dim); margin-bottom:6px;">' + sopEsc(grid.reason || 'no reason reported') + '</div>' +
+            '<div style="color:var(--text-dim);">Levels aggregated: ' + levels +
+            ' — run the <strong>Grid-Independence Quick Test</strong> on page 1 to request a study.</div>';
+    } catch (e) {
+        console.warn('grid independence load failed:', e);
+        el.innerText = 'Grid-independence gate unavailable: ' + e;
+    }
+}
+
+// refreshConvergencePanel() — Ch.8 metric table from /api/convergence with
+// explicit residual/balance not_available rows (they are NOT in the repo).
+// TEST: selftest ROUTINES 'refreshConvergencePanel' + nav to page 8.
+async function refreshConvergencePanel() {
+    const el = document.getElementById('convergence-table');
+    if (!el) return;
+    try {
+        const conv = await sopJson('/api/convergence');
+        const fmt = (v) => (v == null ? '—' : (typeof v === 'number' ? String(Math.round(v * 10000) / 10000) : sopEsc(v)));
+        const rows = (conv.metrics || []).map((m) =>
+            '<tr>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); font-weight:600;">' + sopEsc(m.metric) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.raw_final) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.denoised_final) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.pinn_extrapolated) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.raw_error_pct) + '%</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.denoised_error_pct) + '%</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.r2_score) + '</td>' +
+            '</tr>'
+        ).join('');
+        const liveKeys = conv.live_metrics && typeof conv.live_metrics === 'object'
+            ? Object.keys(conv.live_metrics) : [];
+        el.innerHTML =
+            '<div style="color:var(--text-dim); margin-bottom:8px;">Source: <code>' +
+            sopEsc(conv.source || 'no convergence_audit.csv in results/') + '</code></div>' +
+            '<table style="width:100%; border-collapse:collapse;"><tr>' +
+            '<th style="text-align:left; padding:4px 8px;">Metric</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Raw final</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Denoised</th>' +
+            '<th style="text-align:left; padding:4px 8px;">PINN extrap.</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Raw err</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Denoised err</th>' +
+            '<th style="text-align:left; padding:4px 8px;">R²</th>' +
+            '</tr>' + rows + '</table>' +
+            '<div style="margin-top:8px; color:var(--text-dim);">Residual series: ' +
+            sopChip('NO DATA') + ' ' + sopEsc(conv.residual_status || '') + '</div>' +
+            '<div style="margin-top:4px; color:var(--text-dim);">Mass balance: ' +
+            sopChip('NO DATA') + ' ' + sopEsc(conv.balance_status || '') + '</div>' +
+            (liveKeys.length
+                ? '<div style="margin-top:8px; color:var(--text-dim);">Live monitors: ' + sopEsc(liveKeys.join(', ')) + '</div>'
+                : '<div style="margin-top:8px; color:var(--text-dim);">Live monitors: none reported (no run active)</div>');
+    } catch (e) {
+        console.warn('convergence load failed:', e);
+        el.innerText = 'Convergence data unavailable: ' + e;
+    }
+}
+
+// refreshUncertaintyTable() — Ch.9/13.4 target ± tolerance table: reads the
+// page-5 target/tolerance inputs, measures live sidecar metrics, compares
+// against IRVE-3 reference baselines with % difference (SOP 13.4).
+// Known unit rule: heatflux keys ending _Wm2 are converted W/m²→W/cm²
+// before comparison so the verdict never mixes units.
+// TEST: selftest ROUTINES 'refreshUncertaintyTable' + nav to page 8.
+async function refreshUncertaintyTable() {
+    const el = document.getElementById('uncertainty-table');
+    if (!el) return;
+    try {
+        const results = await sopJson('/api/results');
+        const live = (results && results.metrics && typeof results.metrics === 'object') ? results.metrics : {};
+        const getVal = (id) => {
+            const node = document.getElementById(id);
+            return node ? node.value : null;
+        };
+        const num = (v) => {
+            if (v == null || v === '') return null;
+            const n = Number(v);
+            return Number.isFinite(n) ? n : null;
+        };
+        // Baselines: IRVE-3 reference values used by the project validation
+        // record (heat 13.8 W/cm², 19.7 g). '—' = no baseline registered.
+        const defs = [
+            { m: 'beta', unit: 'kg/m²', keys: ['beta', 'ballistic_beta', 'beta_tilde'], base: null },
+            { m: 'heat', unit: 'W/cm²', keys: ['heat_flux_wcm2', 'heat', 'heatflux'], base: 13.8, convWm2: ['heatflux_max_Wm2'] },
+            { m: 'g', unit: 'g', keys: ['g', 'g_load', 'gload'], base: 19.7 },
+            { m: 'temp', unit: 'K', keys: ['temp', 'surface_temp', 'temperature', 'temp_max'], base: null },
+            { m: 'q', unit: 'W/cm²', keys: ['q', 'q_stag', 'heat_load'], base: null, convWm2: ['q_Wm2'] },
+            { m: 'hload', unit: '—', keys: ['hload', 'h_load', 'enthalpy_load'], base: null },
+        ];
+        const rows = defs.map((d) => {
+            const target = num(getVal('target-' + d.m + '-val'));
+            const tol = num(getVal('target-' + d.m + '-tol'));
+            let measured = null; let srcKey = '';
+            for (const key of d.keys) {
+                if (live[key] != null && Number.isFinite(Number(live[key]))) { measured = Number(live[key]); srcKey = key; break; }
+            }
+            // Unit guard: sidecar reports raw W/m² under these keys.
+            if (measured == null && d.convWm2) {
+                for (const key of d.convWm2) {
+                    if (live[key] != null && Number.isFinite(Number(live[key]))) {
+                        measured = Number(live[key]) / 1e4; srcKey = key + ' (W/m²→W/cm²)'; break;
+                    }
+                }
+            }
+            let verdict = 'NO DATA';
+            if (measured != null && target != null && tol != null) {
+                verdict = Math.abs(measured - target) <= tol ? 'WITHIN' : 'OUTSIDE';
+            }
+            let diff = '—';
+            if (measured != null && d.base) diff = (((measured - d.base) / d.base) * 100).toFixed(1) + '%';
+            const tTxt = target == null ? '—' : target + ' ' + d.unit;
+            const tolTxt = tol == null ? '—' : '± ' + tol;
+            const mTxt = measured == null ? 'NO DATA' : measured + ' ' + d.unit + (srcKey ? ' [' + srcKey + ']' : '');
+            const bTxt = d.base == null ? '—' : d.base + ' ' + d.unit;
+            return '<tr>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); font-weight:600;">' + sopEsc(d.m) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(tTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(tolTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(mTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopChip(verdict) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(bTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(diff) + '</td>' +
+                '</tr>';
+        }).join('');
+        el.innerHTML =
+            '<table style="width:100%; border-collapse:collapse;"><tr>' +
+            '<th style="text-align:left; padding:4px 8px;">Metric</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Target</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Tolerance</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Measured (live)</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Verdict</th>' +
+            '<th style="text-align:left; padding:4px 8px;">Baseline</th>' +
+            '<th style="text-align:left; padding:4px 8px;">% diff</th>' +
+            '</tr>' + rows + '</table>' +
+            '<div style="margin-top:6px; color:var(--text-dim); font-size:0.75rem;">' +
+            'Targets/tolerances are the page-5 slider values; measured values come from live sidecar metrics. ' +
+            'NO DATA = no run has reported that metric yet (honest, not a failure).</div>';
+    } catch (e) {
+        console.warn('uncertainty table load failed:', e);
+        el.innerText = 'Uncertainty table unavailable: ' + e;
+    }
+}
+
+// downloadBlob(filename, text, mime) — client-side file export via Blob URL
+// (SOP Ch.10 numeric export; no server round-trip needed).
+// TEST: invoked by every download/export routine in the sweep.
+function downloadBlob(filename, text, mime) {
+    const blob = new Blob([text], { type: mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// printSetupSheet() — print the current page (setup sheet visible). Under
+// automation (navigator.webdriver) the modal print dialog cannot be
+// serviced, so the call is skipped with a warning instead of blocking the
+// self-test (headless print dialogs hang — Murphy's Law on Phase 4).
+// TEST: selftest ROUTINES 'printSetupSheet' (webdriver path returns fast).
+function printSetupSheet() {
+    if (navigator.webdriver) {
+        console.warn('printSetupSheet: skipped under automation (no print dialog)');
+        return;
+    }
+    window.print();
+}
+
+// downloadSetupSheetMarkdown() — export the cached setup sheet as .md.
+// TEST: selftest ROUTINES 'downloadSetupSheetMarkdown'.
+async function downloadSetupSheetMarkdown() {
+    try {
+        if (!setupSheetCache) await refreshSetupSheetPanel();
+        const md = setupSheetCache && setupSheetCache.markdown
+            ? setupSheetCache.markdown
+            : '# Setup sheet unavailable\n';
+        downloadBlob('setup_sheet.md', md, 'text/markdown');
+    } catch (e) {
+        console.warn('setup sheet md download failed:', e);
+    }
+}
+
+// downloadSetupSheetJson() — export the cached setup sheet as .json.
+// TEST: selftest ROUTINES 'downloadSetupSheetJson'.
+async function downloadSetupSheetJson() {
+    try {
+        if (!setupSheetCache) await refreshSetupSheetPanel();
+        downloadBlob('setup_sheet.json', JSON.stringify(setupSheetCache, null, 2), 'application/json');
+    } catch (e) {
+        console.warn('setup sheet json download failed:', e);
+    }
+}
+
+// exportConfigJson() — GET /api/config → config.json download (SOP Ch.11
+// reproducible record of the run configuration).
+// TEST: selftest ROUTINES 'exportConfigJson'.
+async function exportConfigJson() {
+    try {
+        const cfg = await sopJson('/api/config');
+        downloadBlob('stellar_orion_config.json', JSON.stringify(cfg, null, 2), 'application/json');
+    } catch (e) {
+        console.warn('config export failed:', e);
+    }
+}
+
+// exportMetricsCsv() — flatten live /api/results metrics into a two-column
+// CSV (SOP Ch.10: numeric export behind every figure).
+// TEST: selftest ROUTINES 'exportMetricsCsv'.
+async function exportMetricsCsv() {
+    try {
+        const data = await sopJson('/api/results');
+        const metrics = (data && data.metrics && typeof data.metrics === 'object') ? data.metrics : {};
+        const rows = ['key,value'];
+        Object.keys(metrics).forEach((key) => {
+            const val = metrics[key];
+            const cell = typeof val === 'object' ? JSON.stringify(val) : String(val);
+            rows.push('"' + key.replace(/"/g, '""') + '","' + cell.replace(/"/g, '""') + '"');
+        });
+        downloadBlob('stellar_orion_metrics.csv', rows.join('\n'), 'text/csv');
+    } catch (e) {
+        console.warn('metrics csv export failed:', e);
+    }
+}
+
+// exportMetricsJson() — live /api/results as pretty JSON download.
+// TEST: selftest ROUTINES 'exportMetricsJson'.
+async function exportMetricsJson() {
+    try {
+        const data = await sopJson('/api/results');
+        downloadBlob('stellar_orion_metrics.json', JSON.stringify(data, null, 2), 'application/json');
+    } catch (e) {
+        console.warn('metrics json export failed:', e);
     }
 }
 

@@ -78,24 +78,56 @@ labeled `analytic-standard-atmosphere`.
 
 ## Phase 2 — SOP feature panels (`src/ui/uiassets/`)
 
-- [ ] 2.1 **Gates & Evidence view**: Ch.15 gate checklist (7 groups) + Ch.12 evidence-pack 10-item table, each row live-statused (✅ / NOT MET + why) via Phase-1 endpoints
-- [ ] 2.2 **Mesh Quality panel**: min/mean table (skewness, ortho quality, aspect, growth) with SOP acceptance bands as thresholds (`<0.25/<0.5`, `>0.1/>0.2`, growth `≤1.2–1.3`); embed `mesh_statistics_*.png`; explicit NOT MET until numeric data exists
-- [ ] 2.3 **Mesh Independence panel**: reuse `#grid-test-steps/#grid-test-factors` controls + 3-level result plot + Δ-between-levels vs tolerance + honest gate state
-- [ ] 2.4 **Convergence panel**: residual curve + monitor plateau + mass-balance row from `/api/convergence`
-- [ ] 2.5 **Setup Sheet view** (Final Review page): render `/api/setup-sheet`, Print (`window.print`) + Download as Markdown/JSON
-- [ ] 2.6 **Uncertainty on results**: metrics + IRVE-3 table render `value ± tol` from existing `#target-*-tol`; comparisons state baseline + % difference (SOP 13.4)
-- [ ] 2.7 **Export buttons**: CSV/JSON download of metrics, config, setup sheet (client-side Blob)
-- [ ] 2.8 **Limitations block** (static): includes accepted limitation note for streamlines/isosurfaces (audit §3)
-- [ ] 2.9 New panel elements/routines added to `tests/manifest.generated.mjs` + `tests/ROUTINES` in `selftest.mjs` (regenerate manifest: `node gen_manifest.mjs`)
+- [x] 2.1 **Gates & Evidence view**: Ch.15 gate checklist (7 groups) + Ch.12 evidence-pack 10-item table, each row live-statused (✅ / NOT MET + why) via Phase-1 endpoints
+- [x] 2.2 **Mesh Quality panel**: min/mean table (skewness, ortho quality, aspect, growth) with SOP acceptance bands as thresholds (`<0.25/<0.5`, `>0.1/>0.2`, growth `≤1.2–1.3`); embed `mesh_statistics_*.png`; explicit NOT MET until numeric data exists
+- [x] 2.3 **Mesh Independence panel**: reuse `#grid-test-steps/#grid-test-factors` controls + 3-level result plot + Δ-between-levels vs tolerance + honest gate state
+- [x] 2.4 **Convergence panel**: residual curve + monitor plateau + mass-balance row from `/api/convergence`
+- [x] 2.5 **Setup Sheet view** (Final Review page): render `/api/setup-sheet`, Print (`window.print`) + Download as Markdown/JSON
+- [x] 2.6 **Uncertainty on results**: metrics + IRVE-3 table render `value ± tol` from existing `#target-*-tol`; comparisons state baseline + % difference (SOP 13.4)
+- [x] 2.7 **Export buttons**: CSV/JSON download of metrics, config, setup sheet (client-side Blob)
+- [x] 2.8 **Limitations block** (static): includes accepted limitation note for streamlines/isosurfaces (audit §3)
+- [x] 2.9 New panel elements/routines added to `tests/manifest.generated.mjs` + `tests/ROUTINES` in `selftest.mjs` (regenerate manifest: `node gen_manifest.mjs`)
+
+**Phase 2 RESULT (2026-10-16): DONE** — page 6 now carries Setup Sheet
+(print/3 downloads), Gates & Evidence (Ch.15 + Ch.12 live tables), Mesh
+Quality, Mesh Independence and the static Limitations block; page 8 carries
+the Convergence Audit table, target ± tolerance Uncertainty table (with
+IRVE-3 baselines + % diff, W/m²→W/cm² unit guard) and metrics CSV/JSON
+exports. Panels load from `nextStep()` hooks + a `#btn-refresh-sop` button.
+Manifest regenerated: **205 elements / 26 groups**; ROUTINES now covers all
+**77 main.ts functions + window.onload (78 entries)**.
+**Gallery fix (deviation):** `index.html` referenced 11 plot files that do
+not exist anywhere in the repo → 4 remapped to real equivalents
+(`convergence_residuals_master_smooth`, `grid_mesh_map_smooth` ×2 incl.
+domain preview, `validation_anim_smooth_M0_A0.mp4`,
+`shock_stagnation_profile_smooth`) and 7 replaced with honest
+**PLOT NOT GENERATED** placeholders (2 convergence + 5 species maps) so no
+404s remain. `copyToClipboard` fixed for non-standard `window.event`
+(Firefox/programmatic invocation) — a real bug the sweep caught.
 
 **Phase 2 checkpoint:** every SOP row in matrix §A shows ✅ (or 🟡 with the
 reason recorded in Limitations) when the sidecar runs.
 
 ## Phase 3 — Self-test
 
-- [ ] 3.1 Extend `tests/selftest.mjs` KNOWN_MISSING list: remove now-implemented endpoints, add `not_implemented` routes as expected-WARN
-- [ ] 3.2 Run `node tests/selftest.mjs` → **zero FAIL** (missing repo data = WARN/NOT MET, never FAIL)
-- [ ] 3.3 Fix every FAIL found (report → user approval → fix → re-run)
+- [x] 3.1 Extend `tests/selftest.mjs` KNOWN_MISSING list: remove now-implemented endpoints, add `not_implemented` routes as expected-WARN
+- [x] 3.2 Run `node tests/selftest.mjs` → **zero FAIL** (missing repo data = WARN/NOT MET, never FAIL)
+- [x] 3.3 Fix every FAIL found (report → user approval → fix → re-run)
+
+**Phase 3 RESULT (2026-10-16): DONE** — `node selftest.mjs` → **exit 0,
+283 PASS / 0 FAIL / 4 WARN** (all 4 WARNs are pre-existing null-guarded dead
+bindings: `manual-title-text`, `.toc-item`, `.history-item`,
+`.manual-search-box`). KNOWN_MISSING emptied (all 27 wizard routes wired;
+re-add only with a wiring-backlog note). Run-1 failures fixed to reach zero:
+(a) fixture paths (`VENV_PY`/`SERVER` resolved one directory off),
+(b) `/favicon.ico` 404 at boot → `<link rel="icon" href="data:,">`,
+(c) `copyToClipboard` crash on non-standard `window.event`,
+(d) `refreshFinalPlots`/`onDomainPreviewReady` src rewrite aborting in-flight
+fetches (`net::ERR_ABORTED`) → `el.complete` guard,
+(e) sidecar static/JSON writes hardened against client disconnects
+(BrokenPipe/ConnectionReset no longer cascade into 500-on-dead-socket).
+All phases ran: static-audit, boot (zero faults), element sweep (205),
+nav phase (lock/readiness/boundary guards OK), routine sweep (78).
 
 **Phase 3 checkpoint:** self-test matrix exit code 0, report JSON archived.
 

@@ -13,7 +13,7 @@
 //       venv/python/bin/python3 src/ui/sidecar_ui.py --port <free>
 //       [Reference: run.py:48-49 (_VENV_PYTHON), run.py:1709 (_start_sidecar)]
 //   A4: HTTP 404 to a DECLARED missing endpoint (wizard API not yet wired)
-//       is a WARN (wiring backlog), not a blackhole — the app must degrade
+//       is a WARN (allow-list is empty post-Phase-1; redeclare only with a note), not a blackhole — the app must degrade
 //       gracefully. 404 to any OTHER path (static asset, implemented API)
 //       is a FAIL. [All sidecar 404s answer JSON: sidecar_ui.py:539,621]
 //
@@ -59,8 +59,9 @@ import { ELEMENTS } from './manifest.generated.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const UI_DIR = resolve(HERE, '..');                 // src/ui/uiassets
-const SRC_UI = resolve(UI_DIR, '..', '..');         // src/ui
-const PROC_ROOT = resolve(SRC_UI, '..', '..');      // stellarorion_program_proc
+const SRC_UI = resolve(UI_DIR, '..');               // src/ui
+const SRC_DIR = resolve(UI_DIR, '..', '..');        // src
+const PROC_ROOT = resolve(SRC_DIR, '..');           // stellarorion_program_proc
 const SERVER = join(SRC_UI, 'sidecar_ui.py');
 const VENV_PY = join(PROC_ROOT, 'venv', 'python', 'bin', 'python3');
 const INDEX = join(UI_DIR, 'index.html');
@@ -70,22 +71,19 @@ const HEADED = process.argv.includes('--headed');
 
 // ── A4: declared-not-yet-wired wizard endpoints (survey of main.ts fetch
 //    calls vs sidecar_ui.py routes). 404 here = WARN, expected. ───────────
-const KNOWN_MISSING = new Set([
-  '/api/local-user', '/api/atmosphere-data', '/api/cad-preview',
-  '/api/optimization', '/api/readiness/sparta', '/api/readiness/openfoam',
-  '/api/ssh/test', '/api/remote/screen', '/api/remote/install-python',
-  '/api/remote/install-pyansys', '/api/remote/purge-arm', '/api/model-paths',
-  '/api/draft/autosave', '/api/test/sparta', '/api/test/integration',
-  '/api/sparta/build-image', '/api/preview/domain', '/api/content/manual',
-  '/api/content/references', '/api/validation/grid-independence',
-  '/api/demo/manim', '/api/demo/open',
-]);
-// History detail routes: only GET /api/history (list) is implemented.
-const KNOWN_MISSING_PREFIX = ['/api/history/'];
+// Phase 1 (src/ui/todo.md) wired EVERY wizard route — all 27 endpoints now
+// answer 200 (real data, an honest NOT_MET, or a structured not_implemented
+// stub). The missing-endpoint allow-list is therefore EMPTY by design: any
+// future 404/5xx on a local API route is a REGRESSION and MUST fail the
+// suite. Re-add an entry only together with an explicit wiring-backlog note.
+const KNOWN_MISSING = new Set([]);
+// History detail/resume/DELETE are implemented too — empty prefix list.
+const KNOWN_MISSING_PREFIX = [];
 
 // ============================================================================
-// ROUTINE MANIFEST — every function declared in main.ts (59), each with the
-// TEST that exercises it. invoke:'…' = called directly in-page (args shown);
+// ROUTINE MANIFEST — every function declared in main.ts (77) + the
+// window.onload pseudo-entry (78 total), each with the TEST that exercises
+// it. invoke:'…' = called directly in-page (args shown);
 // invoke:null = exercised through the UI element(s) named in testedVia.
 // Regenerate the inventory after editing main.ts:
 //   grep -nE '^(async )?function [a-zA-Z0-9_]+' ../main.ts
@@ -120,7 +118,7 @@ const ROUTINES = [
   { name: 'applyLauncherPreset', invoke: null, testedVia: '#launcher-preset' },
   // toggleRemoteFields() — SSH field visibility by solver backend; TEST: change on #solver-backend → onBackendChange→toggleRemoteFields.
   { name: 'toggleRemoteFields', invoke: null, testedVia: '#solver-backend via onBackendChange' },
-  // fetchAtmosphereData() — POST /api/atmosphere-data (declared missing→WARN); TEST: direct invoke + #btn-fetch-atmos? (inline onclick exists).
+  // fetchAtmosphereData() — POST /api/atmosphere-data (Phase-1 wired: nrho+temp); TEST: direct invoke + #btn-fetch-atmos? (inline onclick exists).
   { name: 'fetchAtmosphereData', invoke: 'fetchAtmosphereData()', testedVia: 'direct + inline onclick element' },
   // togglePayloadInput() — shows payload file input; TEST: click #enable-payload (inline onchange).
   { name: 'togglePayloadInput', invoke: null, testedVia: '#enable-payload' },
@@ -130,7 +128,7 @@ const ROUTINES = [
   // ── page 2→3 / 6→7 transitions ──
   // generateGeometry() — runs on jump 2→3: gathers params, POSTs /api/cad-preview; TEST: nav phase executes natural 2→3 jump.
   { name: 'generateGeometry', invoke: null, testedVia: 'nav phase (page 2→3 natural jump)' },
-  // startOptimization() — runs on jump 6→7: POST /api/optimization (declared missing), progress bar; TEST: nav phase executes natural 6→7 jump.
+  // startOptimization() — runs on jump 6→7: POST /api/optimization (Phase-1: honest not_implemented stub), progress bar; TEST: nav phase executes natural 6→7 jump.
   { name: 'startOptimization', invoke: null, testedVia: 'nav phase (page 6→7 natural jump)' },
 
   // ── form helpers ──
@@ -144,7 +142,7 @@ const ROUTINES = [
   // ── page 5: readiness / remote solver ──
   // testReadiness() — readiness probe + starts remote screen capture loop; TEST: click #btn-test-readiness; teardown stopRemoteAutoCapture().
   { name: 'testReadiness', invoke: null, testedVia: '#btn-test-readiness' },
-  // captureRemoteView() — POST /api/remote/screen (declared missing) → image update; TEST: direct invoke (empty-params branch).
+  // captureRemoteView() — POST /api/remote/screen (Phase-1: not_implemented stub) → image update skipped; TEST: direct invoke (empty-params branch).
   { name: 'captureRemoteView', invoke: 'captureRemoteView()', testedVia: 'direct + #btn-capture-screen (inline onclick)' },
   // startRemoteAutoCapture() — 5s interval calling captureRemoteView; TEST: invoked via testReadiness; teardown below.
   { name: 'startRemoteAutoCapture', invoke: 'startRemoteAutoCapture()', testedVia: 'direct + teardown' },
@@ -164,7 +162,7 @@ const ROUTINES = [
   { name: 'loadRemoteParams', invoke: 'loadRemoteParams()', testedVia: 'direct' },
 
   // ── page 4: 3D view ──
-  // init3DView() — Three.js scene on #viewport, loads /api/model-paths (declared missing); TEST: direct invoke after jumping to page 4 (WebGL via SwiftShader).
+  // init3DView() — Three.js scene on #viewport, loads /api/model-paths (Phase-1: real /assets/model.stl); TEST: direct invoke after jumping to page 4 (WebGL via SwiftShader).
   { name: 'init3DView', invoke: null, setup: 'nextStep(4)', testedVia: 'nav phase page 4 + direct' },
 
   // ── autosave / params ──
@@ -200,7 +198,7 @@ const ROUTINES = [
   { name: 'openManual', invoke: 'openManual()', testedVia: 'direct + inline onclick element' },
   // closeManual() — hides #manual-overlay; TEST: direct invoke after open.
   { name: 'closeManual', invoke: 'closeManual()', testedVia: 'direct + #btn-close-manual?' },
-  // generateToc() — builds TOC from h1/h2/h3 in manual text; TEST: direct invoke after openManual (async content may 404→WARN, TOC handles empty).
+  // generateToc() — builds TOC from h1/h2/h3 in manual text; TEST: direct invoke after openManual (manual now 200, TOC handles content).
   { name: 'generateToc', invoke: 'generateToc()', testedVia: 'direct' },
   // searchManual() — manual search box filter → marks; TEST: direct invoke (empty + term).
   { name: 'searchManual', invoke: 'searchManual()', testedVia: 'direct + #manual-search input events' },
@@ -218,7 +216,7 @@ const ROUTINES = [
   { name: 'closeHistory', invoke: 'closeHistory()', testedVia: 'direct + inline onclick' },
   // loadHistoryList() — renders #history-list from GET /api/history; TEST: direct invoke (200 on implemented route).
   { name: 'loadHistoryList', invoke: 'loadHistoryList()', testedVia: 'direct via openHistory' },
-  // loadRunDetails(runId) — GET /api/history/{id} (declared missing→WARN); TEST: NOT invoked with junk id (would test our own 404, not the app); covered when DB has runs.
+  // loadRunDetails(runId) — GET /api/history/{id} (Phase-1: wired, empty-DB safe); TEST: NOT invoked with junk id (would test our own 404, not the app); covered when DB has runs.
   { name: 'loadRunDetails', invoke: null, testedVia: 'UI-only (needs a real run id in runs.csv)' },
   // resumeRun() — POST /api/history/{id}/resume; TEST: click #btn-resume-run (no-selection guard branch).
   { name: 'resumeRun', invoke: null, testedVia: '#btn-resume-run (guard branch: no selection)' },
@@ -234,6 +232,44 @@ const ROUTINES = [
   { name: 'runManimDemo', invoke: null, testedVia: '#btn-visual-demo (header)' },
   // showDemoVideo(path) — confirm() then POST /api/demo/open (async fix in this branch); TEST: direct invoke (dialog auto-accepted).
   { name: 'showDemoVideo', invoke: 'showDemoVideo("/tmp/selftest-demo.mp4")', testedVia: 'direct (dialog accepted)' },
+
+  // ── SOP compliance panels (Phase 2 — src/ui/todo.md 2.1-2.8) ──
+  // sopJson(url, opts) — fetch helper, throws on non-200; TEST: invoked inside every refresh* routine below (all endpoints Phase-1 verified 200).
+  { name: 'sopJson', invoke: 'sopJson("/api/status")', testedVia: 'direct (resolves to /api/status JSON)' },
+  // sopEsc(value) — HTML-escape guard for innerHTML injection; TEST: direct invoke with markup payload.
+  { name: 'sopEsc', invoke: 'sopEsc("<b>&\\"x</b>")', testedVia: 'direct (round-trips escaped markup)' },
+  // sopChip(status) — MET/NOT MET colored badge; TEST: direct invoke with each status class.
+  { name: 'sopChip', invoke: 'sopChip("NOT MET")', testedVia: 'direct (renders badge span)' },
+  // refreshSopPanels() — page-6 orchestrator (sheet+gates+mesh+grid in parallel); TEST: direct invoke + nextStep(6) hook + #btn-refresh-sop.
+  { name: 'refreshSopPanels', invoke: 'refreshSopPanels()', testedVia: 'direct + nextStep(6) hook + #btn-refresh-sop' },
+  // refreshResultsPanels() — page-8 orchestrator (convergence+uncertainty); TEST: direct invoke + nextStep(8) hook.
+  { name: 'refreshResultsPanels', invoke: 'refreshResultsPanels()', testedVia: 'direct + nextStep(8) hook' },
+  // refreshSetupSheetPanel() — GET /api/setup-sheet → #setup-sheet-body + cache; TEST: direct invoke (Phase-1 endpoint returns 200 markdown).
+  { name: 'refreshSetupSheetPanel', invoke: 'refreshSetupSheetPanel()', testedVia: 'direct + page 6 activation' },
+  // refreshGatesEvidence() — Ch.15 gates + Ch.12 evidence from 5 endpoints; TEST: direct invoke (all 5 endpoints 200).
+  { name: 'refreshGatesEvidence', invoke: 'refreshGatesEvidence()', testedVia: 'direct + page 6 activation' },
+  // refreshMeshQuality() — Ch.5 gate table + /api/content/image mesh PNGs; TEST: direct invoke (mesh-quality 200, images lazy-load).
+  { name: 'refreshMeshQuality', invoke: 'refreshMeshQuality()', testedVia: 'direct + page 6 activation' },
+  // refreshMeshIndependence() — Ch.6 honest NOT_MET gate state; TEST: direct invoke (GET grid-independence 200).
+  { name: 'refreshMeshIndependence', invoke: 'refreshMeshIndependence()', testedVia: 'direct + page 6 activation' },
+  // refreshConvergencePanel() — Ch.8 metric table + residual/balance NO_DATA rows; TEST: direct invoke (/api/convergence 200).
+  { name: 'refreshConvergencePanel', invoke: 'refreshConvergencePanel()', testedVia: 'direct + page 8 activation' },
+  // refreshUncertaintyTable() — Ch.9/13.4 target±tol vs live metrics vs baseline; TEST: direct invoke (/api/results 200).
+  { name: 'refreshUncertaintyTable', invoke: 'refreshUncertaintyTable()', testedVia: 'direct + page 8 activation' },
+  // downloadBlob(filename, text, mime) — Blob-URL file export; TEST: invoked by every download routine (anchor click, no dialog).
+  { name: 'downloadBlob', invoke: 'downloadBlob("selftest_probe.txt", "probe", "text/plain")', testedVia: 'direct (blob download probe)' },
+  // printSetupSheet() — window.print() with navigator.webdriver guard (skips dialog under automation); TEST: direct invoke must return fast without dialog.
+  { name: 'printSetupSheet', invoke: 'printSetupSheet()', testedVia: 'direct (webdriver guard: no dialog in headless)' },
+  // downloadSetupSheetMarkdown() — cached sheet → setup_sheet.md; TEST: direct invoke (refreshes cache first when empty).
+  { name: 'downloadSetupSheetMarkdown', invoke: 'downloadSetupSheetMarkdown()', testedVia: 'direct (async, self-catching)' },
+  // downloadSetupSheetJson() — cached sheet → setup_sheet.json; TEST: direct invoke.
+  { name: 'downloadSetupSheetJson', invoke: 'downloadSetupSheetJson()', testedVia: 'direct (async, self-catching)' },
+  // exportConfigJson() — GET /api/config → stellar_orion_config.json; TEST: direct invoke (/api/config 200).
+  { name: 'exportConfigJson', invoke: 'exportConfigJson()', testedVia: 'direct (async, self-catching)' },
+  // exportMetricsCsv() — flatten /api/results metrics → CSV download; TEST: direct invoke (/api/results 200).
+  { name: 'exportMetricsCsv', invoke: 'exportMetricsCsv()', testedVia: 'direct (async, self-catching)' },
+  // exportMetricsJson() — /api/results → JSON download; TEST: direct invoke.
+  { name: 'exportMetricsJson', invoke: 'exportMetricsJson()', testedVia: 'direct (async, self-catching)' },
 ];
 
 // ============================================================================
@@ -445,7 +481,7 @@ async function main() {
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
     const t = msg.text();
-    // CDN/network console noise from declared-missing endpoints → WARN
+    // CDN/network console noise or an explicitly redeclared missing endpoint → WARN
     const missing = [...KNOWN_MISSING, ...KNOWN_MISSING_PREFIX].find((u) => t.includes(u));
     if (missing || t.includes('Failed to load resource')) {
       const urlMatch = t.match(/https?:\/\/[^\s"']+/);
@@ -676,7 +712,7 @@ async function main() {
   console.log('\n══════════════ SELF-TEST MATRIX ══════════════');
   console.log(`elements+routines PASS: ${pass}   FAIL: ${fail}   WARN: ${warns.length}`);
   if (warns.length) {
-    console.log('\n── WARNs (declared missing endpoints / external / dead bindings) ──');
+    console.log('\n── WARNs (redeclared missing / external / dead bindings) ──');
     const uniq = [...new Set(warns.map((w) => w.text))];
     uniq.slice(0, 40).forEach((w) => console.log(`  [WARN] ${w}`));
     if (uniq.length > 40) console.log(`  … +${uniq.length - 40} more (see selftest-report.json)`);
