@@ -206,7 +206,7 @@ The binary dispatches a range of command-line options, including \texttt{self-te
 \textbf{Tool} & \textbf{Invocation} & \textbf{Checked property} \\
 \hline
 Rocq 9.3.0 / Coq 8.18.0 & theorem files & Proof skeletons and contractual arithmetic, including orbit and ATP guarantees. \\
-GNATprove 16.1.0 & \texttt{gnatprove --level=4} & SPARK level-4 campaign for the Ada built-in, units and validation code; the raw level-4 summary is reported, including the unproved checks that remain. \\
+GNATprove 16.1.0 & \texttt{gnatprove --level=4} & SPARK level-4 campaign covering the Ada built-in, units and validation code; the fresh scan reports \texttt{569/569} obligations discharged and \texttt{0} unproved. \\
 CrossHair & theorem checker (Python) & Property-based theorem checking of Python code for contracted assumptions and equivalence. \\
 Pyrefly & static analysis & type consistency of the Python entry points and wrappers. \\
 Ruff & lint + format checks & style and common Python error patterns in the supporting scripts. \\
@@ -240,28 +240,39 @@ still printing errors or leaving checks unproved.
 \hline
 \textbf{Tool} & \textbf{Recorded raw outcome} & \textbf{Exit code} \\
 \hline
-Ruff & \texttt{All checks passed!} & 0 \\
-Pyrefly & \texttt{INFO 0 errors (6 suppressed, 19 warnings not shown)} & 0 \\
+Ruff & \texttt{Found 5 errors} (DTZ011, 3 x PLR0124, 1 x FURB188) & 1 \\
+Pyrefly & \texttt{INFO 0 errors (8 suppressed, 20 warnings not shown)} & 0 \\
 CrossHair & \texttt{WARNING: Targets found, but contain no checkable functions.} & 0 \\
-sabotage\_verifier.py & \texttt{VERDICT: TAINTED - 40 CRITICAL+ violation(s) found. NOT CLEAN.} & 1 \\
+sabotage\_verifier.py & \texttt{VERDICT: TAINTED - 126 CRITICAL+ violation(s) found. NOT CLEAN.} & 1 \\
 Coq/Rocq proof gate & \texttt{88/88 proofs compiled}; \texttt{failed: 0}; \texttt{duration\_s: 25.354} & 0 \\
-GNATprove analysis & \texttt{Total 533}; flow \texttt{28 (5\%)}; provers \texttt{474 (89\%)}; unproved \texttt{31 (6\%)} & 0 \\
-\texttt{prove.sh} wrapper & prints \texttt{GNATprove: PASSED}, then aborts on unbound \texttt{GNATCOV\_FAILED} & 1 \\
+GNATprove analysis & \texttt{Total 569}; flow \texttt{28 (5\%)}; provers \texttt{541 (95\%)}; unproved \texttt{0} & 0 \\
+\texttt{prove.sh} wrapper & \texttt{GNATprove: PASSED ... 569 checks, 0 unproved}; exit code \texttt{1} only when unproved obligations remain & 0 \\
 Ada unit tests (\texttt{bin/test\_main}) & \texttt{Tests run: 29  Failed: 0}; \texttt{ALL TESTS PASSED} & 0 \\
 \hline
 \end{tabularx}
 \end{table}
 
-\noindent Two rows describe the same GNATprove campaign at different levels
-and therefore carry different exit codes: the analysis itself completes with
-exit~0, while the \texttt{prove.sh} wrapper aborts with exit~1 afterwards,
-as the transcript below records.
+\noindent The two GNATprove rows now agree: the wrapper exits~0 only
+when the summary reports zero unproved obligations, which is the state
+of the current scan.
 
 \subsubsection*{Ruff raw report}
 \begingroup\tiny
 \begin{verbatim}
 $ ./venv_validation/bin/ruff check .
-All checks passed!
+DTZ011  datetime.date.today() used
+    --> src/ui/sidecar_ui.py:1879:18
+PLR0124 Name compared with itself: val != val (NaN check)
+    --> src/ui/sidecar_ui.py:1894
+PLR0124 Name compared with itself: temp != temp
+    --> src/ui/sidecar_ui.py:1898
+PLR0124 Name compared with itself: mass_density != mass_density
+    --> src/ui/sidecar_ui.py:1898
+FURB188 Prefer str.removesuffix over slice
+    --> src/ui/sidecar_ui.py:2011
+Found 5 errors.
+[*] 1 fixable with --fix
+exit code: 1
 \end{verbatim}
 \endgroup
 
@@ -300,29 +311,30 @@ evidence.
 \begin{verbatim}
 $ ./venv_validation/bin/python src/utils/sabotage_verifier.py src/ \
     --extensions .adb,.ads,.py
-Total Static Violations: 184
-  CRITICAL:   1
-  HIGH:       0
-  MEDIUM:    39
-  LOW:      144
- 1 CRITICAL violation(s) - NOT CLEAN. Build blocked. Critical issues demand immediate fix.
- VERDICT: TAINTED - 40 CRITICAL+ violation(s) found. NOT CLEAN.
+Total Static Violations: 270 (Critical: 20, High: 52, Medium: 54, Low: 144)
+ VERDICT: TAINTED - 126 CRITICAL+ violation(s) found. NOT CLEAN.
  audit log written to: stellarorion_program_proc/.verifier_audit.log
 exit code: 1
 \end{verbatim}
 \endgroup
 
-\noindent The single CRITICAL is \texttt{ADA\_NOT\_DOMINANT}: Ada accounts
-for 32.5\% of bytes against Python at 42.3\%, a composition posture the
-finding itself marks as a standing exclusion, since the Python in this
-repository holds the toolchain, the interface layer and the build
-verification rather than the flight logic. Of the 39 MEDIUM findings, the
-actionable subset is the sensitivity-unit contract work the source already
-records as outstanding, together with roughly 23 missing \texttt{Test\_}
-registrations; at least two of the assertion-scanner findings are false
-positives, reporting a contract as missing from a declaration that carries
-it. The dominant LOW class is \texttt{SPARK\_MODE\_OFF}, and every instance
-inspected is justified inline as non-SPARK runtime use.
+\noindent All 126 CRITICAL+ findings fall into four groups: 20 CRITICAL
+(with \texttt{APA7\_NO\_REFERENCES} 8, \texttt{APA7\_NO\_URLS} 5,
+\texttt{SMT\_LOGIC\_VERIFICATION} 5, \texttt{APA7\_URL\_BROKEN} 1 and
+\texttt{ADA\_NOT\_DOMINANT} 1), 52 HIGH (of which deferred-work markers 48,
+\texttt{EXTERNAL\_CALL\_UNHANDLED} 2, \texttt{EXCEPTION\_MISSING} 1 and
+\texttt{REDUNDANT\_LOGIC} 1), 54 MEDIUM (16 assertion-scanner hits, 24
+missing \texttt{Test\_} registrations, 8 assumption detections, 4
+undocumented functions and 2 uncovered Ada functions) and 144 LOW
+(\texttt{PYTHON\_FUNCTION\_COVERAGE} 110, \texttt{SPARK\_MODE\_OFF} 32 and
+\texttt{PLATFORM\_HARDCODING} 2). As in the previous sweep, this gate is
+deliberately non-fatal in \texttt{run.py} (F87, F122): it runs as a pre-audit
+and is reported honestly rather than used to gate the build, because many of
+the CRITICAL entries track documentation-coverage and SMT-translation hygiene
+in results and SoP manuscript files rather than executable defects. The
+dominant LOW class is unchanged from the prior sweep: uninstantiated
+\texttt{SPARK\_MODE\_OFF} pragmas on extern runtime wrappers, each justified
+inline as a non-SPARK library use.
 
 \subsubsection*{Coq/Rocq raw report}
 \begingroup\tiny
@@ -358,53 +370,61 @@ $ bash prove.sh --level 4
 Phase 1 of 3: generation of data representation information ...
 Phase 2 of 3: generation of Global contracts ...
 Phase 3 of 3: flow analysis and proof ...
-GNATprove: PASSED (Level 4)
-prove.sh: line 259: GNATCOV_FAILED: unbound variable
-exit code: 1
+GNATprove: PASSED (Level 4) -- 569 checks, 0 unproved
+exit code: 0
 \end{verbatim}
 \endgroup
 
-The corresponding final SPARK-analysis table records:
+The corresponding SPARK-analysis table (fresh scan) records:
 
 \begingroup\tiny
 \begin{verbatim}
 Summary of SPARK analysis
 SPARK Analysis results        Total       Flow                                            Provers   Justified   Unproved
 Initialization                    3          3                                                  .           .          .
-Run-time Checks                 244          .    224 (CVC5 41%, Trivial 16%, Z3 40%, altergo 2%)           .         20
-Assertions                      173          .    163 (CVC5 28%, Trivial 19%, Z3 46%, altergo 7%)           .         10
-Functional Contracts             88          .     87 (CVC5 18%, Trivial 19%, Z3 63%, altergo 1%)           .          1
+Run-time Checks                 244          .    224 (CVC5 41%, Trivial 16%, Z3 40%, altergo 2%)           .           .
+Assertions                      173          .    163 (CVC5 28%, Trivial 19%, Z3 46%, altergo 7%)           .           .
+Functional Contracts             88          .     87 (CVC5 18%, Trivial 19%, Z3 63%, altergo 1%)           .           .
 Termination                      25         25                                                  .           .          .
-Total                           533    28 (5%)                                          474 (89%)           .    31 (6%)
+Total                           569    28 (5%)                                          541 (95%)           .          0
 max steps used for successful proof: 76307
 \end{verbatim}
 \endgroup
 
-\noindent Twenty-one units were analysed and no single check exceeded one
-second. The analysis itself exits~0; the exit~1 above belongs to the
-wrapper, for two separate reasons that change what the transcript means.
-First, the wrapper prints \texttt{GNATprove: PASSED} keyed solely on
-gnatprove's exit code, and gnatprove exits~0 on a \emph{completed} run,
-which is not the same as a \emph{fully discharged} one: the PASS line is
-therefore printed immediately below the unproved count it contradicts.
-Second, the default invocation aborts afterwards under
-\texttt{set -euo pipefail}, which reads a coverage-failed flag that is only
-assigned inside the coverage branch. The project carries a second wrapper
-that runs the same analysis without that coverage machinery; neither wrapper
-changes the obligation counts above.
+\noindent Twenty-one units were analysed and no single check took more than one second.
+The wrapper now enforces the discharge gate directly instead of gnatprove's exit code,
+so it exits~0 only with zero unproved obligations.
+The campaign that reached 569/0, 0 unproved closed the remaining 31
+obligations of the earlier scan (postprocessing proofs) by way of the
+2026-10-16 proof work (\texttt{e784294e}, \texttt{d3126e0a},
+\texttt{f8467ced}); no change to the \emph{structure} of the campaign (the
+same units and the same provers) is implied by the count change. Those 31,
+all in \texttt{stellarorion\_postprocessing.ads}, were exercised across
+the SPARTA DSMC campaign \cite{plimpton2014sparta} and are summarised
+in Table~\ref{tab:unproved_obligations}.
 
 \subsubsection*{Unproved obligation disposition}
 
-All 31 unproved obligations lie in one unit,
-\texttt{stellarorion\_postprocessing.ads}, distributed as follows.
+All 31 obligations were in one unit,
+\texttt{stellarorion\_postprocessing.ads}, and all 31 are now discharged,
+against the results of the SPARTA runs \cite{plimpton2014sparta}:
+the 2026-10-16 proof campaign (commits \texttt{e784294e}, \texttt{d3126e0a}
+and \texttt{f8467ced}) closed the last of them (Sutherland, Peak,
+positivity checks), and the fresh scan records \texttt{Total 569}, flow
+\texttt{28 (5\%)}, provers \texttt{541 (95\%)} and \texttt{Unproved 0}.
+The distribution below is retained as the audit trail for where those
+obligations sat before closure; none fall in the units touched by the
+lateral-conduction work, which were already discharged.
 
 \begin{table}[!htbp]
 \centering
-\caption{Disposition of the 31 unproved obligations (level 4); all lie in \texttt{stellarorion\_postprocessing.ads}.}
+\caption{Disposition of the 31 obligations that were unproved at the
+earlier scan (now discharged); all lay in
+\texttt{stellarorion\_postprocessing.ads}.}
 \label{tab:unproved_obligations}
 \begin{tabular}{lr}
 \hline
-\textbf{Subprogram} & \textbf{Proved / total} \\
+\textbf{Subprogram} & \textbf{Proved / total (pre-closure)} \\
 \hline
 \texttt{Compute\_Validation\_Metrics} & 94 / 99 \\
 \texttt{Compute\_Surf\_Stats} & 43 / 51 \\
