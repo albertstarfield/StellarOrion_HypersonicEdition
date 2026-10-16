@@ -30,7 +30,7 @@ StellarOrion is a high-fidelity aerothermodynamic simulation and optimization su
 
 ```bash
 cd stellarorion_program_proc
-python3 run.py --self-test        # Run 18 verification tests
+python3 run.py --self-test        # Run 29 verification tests
 python3 run.py --test sample      # Run single SPARTA sample with 11-metric comparison
 python3 run.py --help             # Show all CLI flags
 ```
@@ -39,7 +39,7 @@ python3 run.py --help             # Show all CLI flags
 
 This project uses a hybrid architecture for running simulations:
 
-- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove `--level=4` (493 checks, 390 proved, 103 unproved — all 103 in the untouched `stellarorion_postprocessing` analytics unit, **0 new obligations unproved** by the F-TPS work; run 2026-10-04). Handles all 19 CLI modes including validation, optimization, calibration, and integration tests.
+- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove `--level=4` (569 checks, 569 proved, 0 unproved — all obligations discharged in the 2026-10-16 campaign; see `programCheckerReport.md`). Handles all 19 CLI modes including validation, optimization, calibration, and integration tests.
 - **Docker:** Used exclusively for running the SPARTA DSMC simulation in a containerized Linux environment.
 - **Python Sidecar:** Native OS Python environment for PINN refinement (DeepXDE), PyFluent/PyAnsys integration, and GUI launcher. Supports NVIDIA CUDA, AMD ROCm, Apple Metal (MPS), Intel OneAPI/OpenCL, and specialized accelerators.
   > ⚠️ **The DeepXDE PINN leg does not currently run.** `PINNAccelerator.train_from_checkpoint` raises `AttributeError` before its first iteration, the DSMC targets it parses are discarded so the PINN is supervised to output zero, its grid parser mis-places 22.80 % of cells across the axis of symmetry, and `compute_pinn_metrics` raises `IndexError`. The Ada layer nevertheless records `pinn_calibration` as `Status_Completed, 1.0`. Verified by execution against `venv_validation` (deepxde 1.15.0). Treat every PINN-derived figure as void until this is fixed — see footnote ⁸ and `FAILURES_AND_FIXES.md` **F24–F33**.
@@ -69,7 +69,7 @@ stellarorion_program_proc/
 │   │   ├── main.adb                 # GPR main → dispatches into StellarOrion_Project
 │   │   ├── stellarorion_project.*   # Entry + CLI surface (~1,900 lines: .adb+.ads)
 │   │   ├── stellarorion_cli.*       # Has_Flag / Get_Option / Get_Float (SPARK On)
-│   │   ├── stellarorion_self_test.* # 18 verification tests
+│   │   ├── stellarorion_self_test.* # 29 verification tests
 │   │   ├── stellarorion_test_modes.*# --test sample|baseline|pinn|sparta|…
 │   │   ├── stellarorion_sparta.*    # SPARTA DSMC driver (~4.5k lines body)
 │   │   ├── stellarorion_physics.*   # Aerothermodynamics, Sutton-Graves, …
@@ -158,7 +158,7 @@ python3 generate_outputs.py --mp4-only --optimized-topology
 ```bash
 cd stellarorion_program_proc
 python3 run.py --help          # Show all CLI flags
-python3 run.py --self-test     # Run 18 verification tests
+python3 run.py --self-test     # Run 29 verification tests
 ```
 
 ---
@@ -849,6 +849,9 @@ Three comment blocks added to `stellarorion_sparta.adb` documenting:
 3. **~line 3127**: Per-element average vs Rapisarda's polynomial at `Avg_Heat_Flux := Heat_Sum / Float(N)` (line 3127) — 3 types of data (flight area-weighted, Rapisarda polynomial-smoothed, our raw per-element)
 
 ### GNATprove Level 4 Validation
+
+**Current scan (2026-10-16): 569 checks total — 569 proved (100 %), 0 unproved**, exit code 0. The 103 unproved checks of the 2026-09-27 baseline (all in `stellarorion_postprocessing`) were closed by commits `e784294e`/`d3126e0a`/`f8467ced`. Historical baselines are retained below for provenance.
+
 
 - Canonical gate (2026-09-27, `cd stellarorion_program_proc && ./scripts/prove.sh 4 --report=all`): **527 checks total — 400 proved by prover (76%), 103 unproved (20%), 24 flow-analysis checks (3 initialization + 21 termination, all proved)**, exit code 0. The script resolves the project file via `PROJ_FILE` (default `stellarorion_program_proc.gpr`) and passes `-P` to every `gprbuild`/`gnatprove` call, so it no longer aborts on a multi-project workspace
 - Per-category breakdown (from `obj/gnatprove/gnatprove.out`): run-time checks `342` total → `250` proved / `92` unproved; assertions `111` → `104` / `7`; functional contracts `50` → `46` / `4`; initialization `3` → `3` / `0`; termination `21` → `21` / `0`
