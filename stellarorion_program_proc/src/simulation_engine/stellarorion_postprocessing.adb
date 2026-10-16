@@ -613,7 +613,9 @@ package body StellarOrion_PostProcessing is
          --  instantiation into a single local fact the solvers can use.
          pragma Loop_Invariant (abs (Heat_Fluxes (I)) <= 1.0e12);
          --  Peak/Min relationship: Peak >= Min_Val when both have been set
-         pragma Loop_Invariant (Peak >= 0.0 or I = 1);
+         pragma Loop_Invariant (Peak >= 0.0);
+         pragma Loop_Invariant
+           (Min_Val /= Float'Last or else I = 1);
          pragma Loop_Invariant (Min_Val = Float'Last or Peak >= Min_Val);
          --  ACCUMULATOR BOUNDS (2026-10-16).  |Heat_Fluxes(K)| <= 1.0e12
          --  comes from the new Pre.  A CONSTANT ceiling (Sum_Sq <= 3.0e27)
@@ -680,7 +682,7 @@ package body StellarOrion_PostProcessing is
         pragma Assert (Mean >= 0.0);
         pragma Assert (Var_Safe >= 0.0);
         pragma Assert (Peak >= 0.0);
-        pragma Assert (Peak / 1.0e4 >= Min_Val / 1.0e4 or Min_Val = Float'Last);
+        pragma Assert (Min_Val /= Float'Last and Peak >= Min_Val);
         return (Mean_Wcm2   => Mean / 1.0e4,
                 Std_Wcm2    => Sqrt_Float (Var_Safe) / 1.0e4,
                 Median_Wcm2 => Mean / 1.0e4,  -- Approximation
@@ -959,25 +961,27 @@ package body StellarOrion_PostProcessing is
       --  APPLICATION: Sutherland's law for air viscosity [Pa*s]
       pragma Assert (T > 0.0);
       pragma Assert (T_REF_SUTHERLAND > 0.0);
-      --  CEILING INSIDE THE BODY, NOT IN THE PRE (same reasoning as
-      --  Sqrt_Float): T > 0.0 is unbounded above, so Ratio = T/273.15,
-      --  Ratio_Sq and Ratio^3 had no upper bound and four overflow checks in
-      --  this function were unprovable.  Putting T <= 1.0e5 in the Pre would
-      --  only move the obligation onto every caller.  TC <= T, the Post is a
-      --  positivity claim only, and 1.0e5 K is far above any temperature used
-      --  here (ISA tops out at 186.87 K; SIM_WALL_TEMP_K is 1500 K), so no
-      --  physical input is altered.
+      --  CEILING (2026-10-16): the Pre now carries `T <= 1.0e4` so the
+      --  documented Post ceiling `Result <= 1.0e-3` is DISCHARGABLE.  The
+      --  bound needed to be in the contract, not only in the body: with
+      --  `TC := T` the prover still had to reason about the caller's
+      --  argument, and `Result <= 1.0e-3` stayed unproved.  1.0e4 K covers
+      --  every temperature this project computes (ISA tops out at 186.87 K;
+      --  SIM_WALL_TEMP_K is 1500 K; the stagnation temperature is ~5544 K),
+      --  so no physical input is excluded.  The body keeps `Float'Min` as a
+      --  belt-and-braces clamp.
       --  [Citation: Sutherland (1893); ISO 2533:1975 temperature range]
-      TC : constant Float := Float'Min (T, 1.0e5);
-      pragma Assert (TC > 0.0 and TC <= 1.0e5);
+      TC : constant Float := Float'Min (T, 1.0e4);
+      pragma Assert (TC > 0.0 and TC <= 1.0e4);
       Ratio  : constant Float := TC / T_REF_SUTHERLAND;
-      --  (T/T_ref)^1.5 = sqrt(Ratio^3)
-      --  Break Ratio^3 into two steps to help prover with overflow check
-      Ratio_Sq : constant Float := Ratio * Ratio;
-      Ratio3 : constant Float := Ratio_Sq * Ratio;
-      Sqrt_Ratio3 : constant Float := Sqrt_Float (Ratio3);
+      --  (T/T_ref)^1.5 computed as Ratio * sqrt(Ratio).  COMPARED with
+      --  the previous sqrt(Ratio^3): the power is identical in exact
+      --  arithmetic, but the provable bound drops from exponent 3 to
+      --  exponent 2, and that is what lets \`Result <= 1.0e-3\` be
+      --  discharged against Sqrt_Float's deliberately loose contract.
+      Sqrt_Ratio : constant Float := Sqrt_Float (Ratio);
       Numerator : constant Float :=
-        MU_REF_AIR * Sqrt_Ratio3
+        MU_REF_AIR * Ratio * Sqrt_Ratio
         * (T_REF_SUTHERLAND + SUTHERLAND_CONST_AIR);
       Denominator : constant Float :=
         TC + SUTHERLAND_CONST_AIR;
@@ -991,7 +995,7 @@ package body StellarOrion_PostProcessing is
       --  Each link below is strictly greater than zero, so the final
       --  division is positive/positive and cannot be zero.
       pragma Assert (Ratio > 0.0);
-      pragma Assert (Sqrt_Ratio3 > 0.0);
+      pragma Assert (Sqrt_Ratio > 0.0);
       pragma Assert (MU_REF_AIR > 0.0);
       pragma Assert (T_REF_SUTHERLAND + SUTHERLAND_CONST_AIR > 0.0);
       pragma Assert (Numerator > 0.0);

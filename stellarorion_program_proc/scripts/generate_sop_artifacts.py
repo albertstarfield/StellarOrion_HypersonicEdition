@@ -48,6 +48,7 @@ import argparse
 import csv
 import itertools
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -419,6 +420,142 @@ def write_residuals_csv(tree: str) -> Path | None:
 # --------------------------------------------------------------------------------
 # 4.  3-level grid independence (SOP Ch.6 / Ch.12#4 / Ch.15)
 # --------------------------------------------------------------------------------
+#  Mesh-independence tolerance on the finest-two QoI change.
+#  OWNER-SET (2026-10-16, "Let's just set to 10% as threshold rather than 5%").
+#  SOP Ch.6 step 4 hands this number to the study; it is not derived here.
+TOLERANCE_PCT = 10.0
+TOLERANCE_SOURCE = ("owner decision 2026-10-16; SOP Ch.6 step 4 leaves the "
+                    "tolerance to the study")
+
+
+def _observed_order(n_cells, qoi):
+    """Observed order of accuracy p from three systematically refined runs.
+
+    Solves p = ln|(f3 - f2)/(f2 - f1)| / ln(r32) with r32 the cell-count-based
+    refinement ratio between the FINEST pair.  Cell counts scale with the
+    square of the linear scale factor these decks refine on, so r = sqrt(N).
+    Using r32 only (not the geometric mean of r21 and r32) is what keeps the
+    log consistent when the three levels are NOT a constant-ratio sequence --
+    and this study's are not (70 -> 100 -> 139 gives r21 = 1.4286,
+    r32 = 1.3900), so the constant-ratio form of the formula cannot be used.
+
+    Parameters:
+        n_cells: cell counts in ascending order (coarse, medium, fine).
+        qoi: the same quantity of interest for those three levels.
+    Returns:
+        Observed order p, or None when either interval's difference is zero
+        (p is UNDEFINED there, not zero, and must not be reported as 0).
+    Exceptions: none.
+    References: SOP Ch.6 step 5 (quote the observed convergence rate);
+                Celik et al., J. Fluids Eng. 130 (2008) 078001.
+    """
+    if len(n_cells) != 3 or len(qoi) != 3:
+        return None
+    if min(abs(c) for c in n_cells) <= 0.0:
+        return None
+    e21 = qoi[1] - qoi[0]
+    e32 = qoi[2] - qoi[1]
+    if e21 == 0.0 or e32 == 0.0:
+        return None
+    r32 = (n_cells[2] / n_cells[1]) ** 0.5
+    if r32 <= 1.0:
+        return None
+    return math.log(abs(e32 / e21)) / math.log(r32)
+
+
+def _convergence_analysis(levels):
+    """GCI-style convergence evidence for the three-level study.
+
+    Emits the observed order, a Richardson-extrapolated value on the fine
+    mesh, the estimated extrapolated relative error and a fine-grid GCI, so a
+    reader can judge mesh sensitivity instead of reading a bare percentage.
+
+    Parameters:
+        levels: the level records in ASCENDING n_cells order.
+    Returns:
+        dict of convergence evidence, or None when <3 levels or a value is
+        missing -- never a fabricated number.
+    Exceptions: none.
+    """
+    if len(levels) < 3:
+        return None
+    try:
+        cells = [float(x["n_cells"]) for x in levels]
+        qo = [float(x["qoi_value"]) for x in levels]
+    except (KeyError, TypeError, ValueError):
+        return None
+    if any(c <= 0.0 for c in cells) or any(v == 0.0 for v in qo):
+        return None
+
+    r21 = (cells[1] / cells[0]) ** 0.5
+    r32 = (cells[2] / cells[1]) ** 0.5
+    note = None
+    if abs(r32 - r21) > 1.0e-9:
+        #  The classic GCI formula assumes a CONSTANT refinement ratio.  This
+        #  study's grids are 70/100/139, which are not, so the GCI below is
+        #  reported as an estimate and the ratios are stated for the reader
+        #  rather than silently averaged away.
+        note = (f"refinement ratios are not constant (r21={r21:.4f}, "
+                f"r32={r32:.4f}); GCI is an estimate, not a bound")
+
+    out = {
+        "r21": r21,
+        "r32": r32,
+        "observed_order_p": _observed_order(cells, qo),
+        "method": "Richardson extrapolation + GCI, Fs=1.3 (3 meshes only)",
+        "citation": "Celik et al., J. Fluids Eng. 130 (2008) 078001",
+        "note": note,
+    }
+    p = out["observed_order_p"]
+    if p is None:
+        out["note"] = ((out["note"] + "; ") if out["note"] else "") + (
+            "observed order undefined (zero change in one interval)")
+        return out
+    if p <= 0.0:
+        out["note"] = ((out["note"] + "; ") if out["note"] else "") + (
+            "observed order <= 0: the QoI is not converging on these levels")
+        return out
+
+    denom = r32 ** p - 1.0
+    if denom == 0.0:
+        out["note"] = ((out["note"] + "; ") if out["note"] else "") + (
+            "degenerate denominator; extrapolation not applicable")
+        return out
+    out["richardson_extrapolated_qoi"] = qo[2] + (qo[2] - qo[1]) / denom
+    out["estimated_extrapolated_error_pct"] = 100.0 * abs((qo[2] - qo[1]) / qo[2])
+    out["gci_fine_pct"] = (100.0 * 1.3 * abs((qo[2] - qo[1]) / qo[2]) / denom)
+    out["factor_of_safety"] = 1.3
+    return out
+
+
+def _gci_vs_tolerance(conv):
+    """Compare the GCI estimate against the owner's tolerance.
+
+    The pairwise-change tolerance and a GCI discretisation-error estimate
+    answer different questions.  When the pairwise test passes but the GCI
+    does not, "MET" must be reported TOGETHER with that disagreement, or the
+    status implies a mesh-independence claim the study has not made.
+
+    Parameters:
+        conv: the dict from _convergence_analysis (may be None or partial).
+    Returns:
+        dict {"ok": bool, "detail": str}.
+    Exceptions: none.
+    """
+    if not conv or conv.get("gci_fine_pct") is None:
+        return {"ok": True, "detail": "no GCI estimate available"}
+    gci = float(conv["gci_fine_pct"])
+    if gci <= TOLERANCE_PCT:
+        return {"ok": True,
+                "detail": f"GCI {gci:.2f}% is within the "
+                          f"{TOLERANCE_PCT:g}% tolerance"}
+    return {"ok": False,
+            "detail": (f"GCI {gci:.2f}% EXCEEDS the {TOLERANCE_PCT:g}% "
+                       f"tolerance: the finest-two change is inside the "
+                       f"tolerance but the estimated fine-mesh discretisation "
+                       f"error is not")}
+
+
 def collect_grid_independence() -> Path | None:
     """Aggregate level_*.json case trees into results/99_shared/sop/.
 
@@ -460,23 +597,40 @@ def collect_grid_independence() -> Path | None:
         qo = [float(x["qoi_value"]) for x in ordered]
         deltas = [abs(qo[i] - qo[i - 1]) / abs(qo[i - 1]) * 100.0
                   for i in range(1, len(qo)) if qo[i - 1] != 0.0]
+        #  TOLERANCE IS OWNER-SET, NOT PROGRAM-SET.  The SOP (Chapter 6,
+        #  step 4) deliberately leaves this number to the study: "within the
+        #  tolerance the study requires".  An earlier version hardcoded 5.0
+        #  and labelled it `criterion`, which presented MY guess as the
+        #  programme's standard -- the same class of error as quoting a
+        #  percentage with no stated basis, which SOP 13.x forbids.
+        #  The owner set 10 % on 2026-10-16; it is recorded as such.
+        meets = bool(deltas) and deltas[-1] < TOLERANCE_PCT
+        conv = _convergence_analysis(ordered)
+        gci_flag = _gci_vs_tolerance(conv)
         payload = {
-            #  NOT_MET must always carry a reason a reader can act on.
-            #  With all three levels present but the finest pair still moving
-            #  7.664%, the old `reason: None` told the GUI nothing -- the
-            #  status was correct while its explanation was blank.
-            "status": "MET" if deltas and deltas[-1] < 5.0 else "NOT_MET",
+            "status": "MET" if meets else "NOT_MET",
+            #  Three distinct reasons, because they are distinct states.
+            #  Getting this wrong once made the artefact claim 7.664%
+            #  exceeded a 10% tolerance -- the GCI banner was re-using the
+            #  tolerance-failure text.
             "reason": (
-                None
-                if deltas and deltas[-1] < 5.0
+                None if (meets and gci_flag["ok"])
+                else gci_flag["detail"] if meets
                 else (f"finest-two change {deltas[-1]:.3f}% exceeds the "
-                      f"<5% criterion (QoI {qo[-2]:.6g} -> {qo[-1]:.6g})"
+                      f"{TOLERANCE_PCT:g}% tolerance (QoI {qo[-2]:.6g} -> "
+                      f"{qo[-1]:.6g})"
                       if deltas
                       else "no QoI values in level records")
             ),
             "levels": ordered,
             "deltas_pct": deltas,
-            "criterion": "<5% change between finest two levels",
+            "tolerance_pct": TOLERANCE_PCT,
+            "tolerance_source": TOLERANCE_SOURCE,
+            "convergence": _convergence_analysis(ordered),
+            #  The owner's tolerance is on the PAIRWISE change.  A GCI-style
+            #  estimate can disagree with it, and when it does the artefact
+            #  must say so rather than let "MET" imply a settled mesh.
+            "gci_vs_tolerance": _gci_vs_tolerance(conv),
             "sop": "Ch.6 / Ch.12#4 / Ch.15",
         }
 

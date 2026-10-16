@@ -159,8 +159,9 @@ package StellarOrion_PostProcessing is
      --  (overflow) -- ~6 unproved checks per function.  The ONLY caller
      --  is stellarorion_project.adb:708-710 passing SIM_WALL_TEMP_K =
      --  1500.0, well inside 300..5000 K, which covers any physical wall
-     --  temperature.  Sutherland_Viscosity keeps Pre => T > 0.0 because
-     --  it is also called with T_Stag ~ 5545 K (see Analytical).
+     --  temperature.  Since 2026-10-16 Sutherland_Viscosity also carries
+     --  `T <= 1.0e4` (needed to discharge its own Result <= 1.0e-3);
+     --  both T_Stag ~ 5545 K (Analytical) and this band sit inside it.
      --  [Reference: ISO 2533:1975 standard atmosphere]
      with Pre  => T >= 300.0 and then T <= 5000.0,
           Post => Compute_DKR_Heat_Flux'Result >= 0.0;
@@ -185,8 +186,9 @@ package StellarOrion_PostProcessing is
      --  (overflow) -- ~6 unproved checks per function.  The ONLY caller
      --  is stellarorion_project.adb:708-710 passing SIM_WALL_TEMP_K =
      --  1500.0, well inside 300..5000 K, which covers any physical wall
-     --  temperature.  Sutherland_Viscosity keeps Pre => T > 0.0 because
-     --  it is also called with T_Stag ~ 5545 K (see Analytical).
+     --  temperature.  Since 2026-10-16 Sutherland_Viscosity also carries
+     --  `T <= 1.0e4` (needed to discharge its own Result <= 1.0e-3);
+     --  both T_Stag ~ 5545 K (Analytical) and this band sit inside it.
      --  [Reference: ISO 2533:1975 standard atmosphere]
      with Pre  => T >= 300.0 and then T <= 5000.0,
           Post => Compute_VD_Heat_Flux'Result >= 0.0;
@@ -211,8 +213,9 @@ package StellarOrion_PostProcessing is
      --  (overflow) -- ~6 unproved checks per function.  The ONLY caller
      --  is stellarorion_project.adb:708-710 passing SIM_WALL_TEMP_K =
      --  1500.0, well inside 300..5000 K, which covers any physical wall
-     --  temperature.  Sutherland_Viscosity keeps Pre => T > 0.0 because
-     --  it is also called with T_Stag ~ 5545 K (see Analytical).
+     --  temperature.  Since 2026-10-16 Sutherland_Viscosity also carries
+     --  `T <= 1.0e4` (needed to discharge its own Result <= 1.0e-3);
+     --  both T_Stag ~ 5545 K (Analytical) and this band sit inside it.
      --  [Reference: ISO 2533:1975 standard atmosphere]
      with Pre  => T >= 300.0 and then T <= 5000.0,
           Post => Compute_Chapman_Heat_Flux'Result >= 0.0;
@@ -231,7 +234,18 @@ package StellarOrion_PostProcessing is
       FR_Peak_Wcm2   : Float) return Comparison_Result
      with Pre  => SG_Peak_Wcm2 > 0.0
                   and then FR_Peak_Wcm2 > 0.0
-                  and then DSMC_Mean_Wcm2 >= 0.0,
+                  and then DSMC_Mean_Wcm2 >= 0.0
+                   --  MAGNITUDE BOUNDS (2026-10-16).  A bare `> 0.0`
+                   --  gives the divisors no lower bound, so
+                   --  `DSMC_Mean / SG_Peak` could overflow for any legal
+                   --  input and two checks stayed unproved.  1.0e-20 W/cm^2
+                   --  is ~6 orders below any physical stagnation flux yet
+                   --  still caps the quotient at 1e12/1e-20 = 1e32 << Float'Last.
+                  and then SG_Peak_Wcm2 <= 1.0e12
+                  and then FR_Peak_Wcm2 <= 1.0e12
+                  and then SG_Peak_Wcm2 >= 1.0e-20
+                  and then FR_Peak_Wcm2 >= 1.0e-20
+                  and then DSMC_Mean_Wcm2 <= 1.0e12,
           Post => Compute_Ratios'Result.DSMC_to_SG_Ratio >= 0.0
                   and then Compute_Ratios'Result.DSMC_to_FR_Ratio >= 0.0;
 
@@ -261,7 +275,14 @@ package StellarOrion_PostProcessing is
      (DSMC_Mean_Wcm2 : Float;
        DSMC_Load_Jcm2 : Float) return Validation_Result
       with Pre  => DSMC_Mean_Wcm2 > 0.0
-                   and then DSMC_Load_Jcm2 >= 0.0,
+                   and then DSMC_Load_Jcm2 >= 0.0
+                   --  MAGNITUDE BOUNDS (2026-10-16): the body forms
+                   --  ((x / C) - 1.0) * 100.0 against the IRVE-3 constants
+                   --  (14.3610 and 195.0577).  With an unbounded x the
+                   --  scaling by 100.0 overflowed and one check stayed
+                   --  unproved.  1e12/14.36*100 = 7.0e12 << Float'Last.
+                   and then DSMC_Mean_Wcm2 <= 1.0e12
+                   and then DSMC_Load_Jcm2 <= 1.0e12,
            Post => Compare_To_Flight'Result.DSMC_Heat_Flux_Wcm2 >= 0.0
                    and then Compare_To_Flight'Result.Flight_Heat_Flux_Wcm2 > 0.0;
 
@@ -309,7 +330,17 @@ package StellarOrion_PostProcessing is
       with Pre  => N > 0
                    and then N <= Heat_Fluxes'Length
                    and then Heat_Fluxes'First = 1
-                   and then N <= Max_Surf_Elements,
+                   and then N <= Max_Surf_Elements
+                   --  MAGNITUDE BOUND (2026-10-16): the AXIOM above
+                   --  ("Physical heat flux range [0, 1e12] W/m^2") was only
+                   --  prose, so Sum and Sum_Sq were unbounded accumulators
+                   --  and 8 checks stayed unproved at level 4.  Stated
+                   --  symmetrically so the body's negative-arrival
+                   --  diagnostic (N_Neg) stays reachable.  Worst case:
+                   --  Val*Val <= 1e24, Sum_Sq <= Max_Surf_Elements*1e24
+                   --  = 2.0e27 << Float'Last (~3.4e38).
+                   and then (for all K in 1 .. N =>
+                               abs (Heat_Fluxes (K)) <= 1.0e12),
            Post => Compute_Surf_Stats'Result.Mean_Wcm2 >= 0.0
                    and then Compute_Surf_Stats'Result.Std_Wcm2 >= 0.0
                    and then Compute_Surf_Stats'Result.Peak_Wcm2 >= Compute_Surf_Stats'Result.Min_Wcm2;
@@ -372,7 +403,13 @@ package StellarOrion_PostProcessing is
       with Pre  => N > 0
                    and then N <= Peak_Fluxes'Length
                    and then Peak_Fluxes'First = 1
-                   and then N <= Max_Timesteps,
+                   and then N <= Max_Timesteps
+                   --  MAGNITUDE BOUND (2026-10-16): same unbounded-
+                   --  accumulator defect as Compute_Surf_Stats.
+                   --  Val*Val <= 1e24, Sum_Sq <= Max_Timesteps*1e24
+                   --  = 5.0e27 << Float'Last.
+                   and then (for all K in 1 .. N =>
+                               abs (Peak_Fluxes (K)) <= 1.0e12),
            Post => Compute_Convergence_Stats'Result.Mean_Peak_Wcm2 >= 0.0
                    and then Compute_Convergence_Stats'Result.Std_Peak_Wcm2 >= 0.0
                    and then Compute_Convergence_Stats'Result.CV_Percent >= 0.0;
@@ -420,8 +457,17 @@ package StellarOrion_PostProcessing is
                    and then Mean_Fluxes_Wcm2'First = 1
                    and then Dt_Sec > 0.0
                    and then Dt_Sec <= 1.0e6
+                   --  LOWER BOUND TIGHTENED from -1.0e8 to 0.0
+                   --  (2026-10-16): the body's own invariant
+                   --  `Total >= 0.0` carries the comment "Pre guarantees
+                   --  all elements >= 0.0", which the old -1.0e8 did NOT
+                   --  guarantee -- the invariant therefore could not be
+                   --  preserved by an arbitrary iteration and the Post
+                   --  `Total_Load_Jcm2 >= 0.0` rested on it.  Trapezoidal
+                   --  integration of a non-negative flux is non-negative;
+                   --  negative heat flux is outside the documented physics.
                    and then (for all I in Mean_Fluxes_Wcm2'Range =>
-                               Mean_Fluxes_Wcm2 (I) >= -1.0e8
+                               Mean_Fluxes_Wcm2 (I) >= 0.0
                                and then Mean_Fluxes_Wcm2 (I) <= 1.0e8),
            Post => Compute_Integrated_Heat_Load'Result.Total_Load_Jcm2 >= 0.0
                    and then Compute_Integrated_Heat_Load'Result.Peak_Flux_Wcm2 >= 0.0
@@ -457,7 +503,7 @@ package StellarOrion_PostProcessing is
      --  unprovable for the whole allowed domain.  Both callers pass
      --  >= 300 K (SIM_WALL_TEMP_K 1500, T_Stag ~5544), so no caller is
      --  affected by the floor.
-     with Pre  => T >= 1.0,
+     with Pre  => T >= 1.0 and then T <= 1.0e4,
           Post => Sutherland_Viscosity'Result > 0.0
                   and then Sutherland_Viscosity'Result <= 1.0e-3;
 
@@ -510,7 +556,21 @@ package StellarOrion_PostProcessing is
                   --  zero.  For X >= 1 the body's invariant
                   --  `Guess >= Float'Min(X, 1.0) = 1.0` gives this floor
                   --  directly, so it is provable from the existing loop.
-                  and (X <= 1.0 or else Sqrt_Float'Result >= 1.0);
+                  and (X <= 1.0 or else Sqrt_Float'Result >= 1.0)
+                  --  LOWER MAGNITUDE FLOOR (round 8).  The magnitude floor
+                  --  above only covers X > 1.0, so for X <= 1.0 the prover
+                  --  had strictly positive but otherwise UNBOUNDED-BELOW,
+                  --  which is not enough to discharge a product of positive
+                  --  floats: strictly-positive operands can underflow to
+                  --  0.0 in IEEE arithmetic, so Sutherland's
+                  --  `Numerator > 0.0` stayed unprovable.
+                  --  Floor: sqrt(X) >= X / max(X, 4.0) for all X > 0.
+                  --  For X <= 4 it is X/4 and the body's invariant
+                  --  `Estimate >= Float'Min(X, 1.0) >= X/4` covers it;
+                  --  for X > 4 it is 1.0 and `Estimate >= 1.0` covers it.
+                  --  [Citation: for 0 < X <= 4, sqrt(X) - X/2 >= 0]
+                  and (X = 0.0
+                       or else Sqrt_Float'Result >= X / Float'Max (X, 4.0));
 
    -- ===================================================================
    --  Validation Metrics (Rapisarda Tables 4.9, 4.10)
@@ -654,7 +714,20 @@ package StellarOrion_PostProcessing is
                    and then Rinflated_M > 0.0
                    and then Rho_Inf > 0.0
                    and then V_Inf > 0.0
-                   and then Mu_Inf > 0.0,
+                   and then Mu_Inf > 0.0
+                   --  MAGNITUDE BOUNDS (2026-10-16): Eq 3.105 forms
+                   --  Re_x = rho * V * r_inf / mu from three unbounded
+                   --  operands, so four overflow checks (and the
+                   --  downstream sqrt/pow chain) stayed unproved.
+                   --  Values are sea-level air density, a generous
+                   --  hypersonic speed ceiling (Mach ~25 at 5500 K),
+                   --  a body far larger than any HIAD, and a viscosity
+                   --  floor ~1e-8 Pa.s.  Worst case:
+                   --  1.225*1.0e5*100.0/1.0e-8 = 1.225e15 << Float'Last.
+                   and then Rho_Inf <= 10.0
+                   and then V_Inf <= 1.0e5
+                   and then Rinflated_M <= 100.0
+                   and then Mu_Inf >= 1.0e-8,
            Post => Hollis_Scalloping_Correction'Result >= 1.0;
 
     -- ===================================================================
