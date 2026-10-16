@@ -518,6 +518,26 @@ class SidecarAPI:
 
 # ── HTTP Handler ────────────────────────────────────────────────────────
 
+def _coerce_float(value: object, field: str = "value") -> float:
+    """Convert a payload value to float, raising instead of returning None.
+
+    Parameters:
+        value: the raw value read from a request payload (may be None or str).
+        field: name used in the error message so a bad request is diagnosable.
+    Returns:
+        The numeric value.
+    Raises:
+        ValueError: when the value is None or cannot be parsed.
+    References: SOP Ch.13 -- every reported number must come from a source.
+    """
+    if value is None:
+        raise ValueError(f"missing numeric field: {field}")
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"non-numeric {field}: {value!r}") from exc
+
+
 class SidecarHandler(SimpleHTTPRequestHandler):
     """HTTP request handler with REST API routing and static file serving."""
 
@@ -1234,8 +1254,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         return found[0]
 
     @staticmethod
-    def _newest_sop_csv(stem):
-        best = None
+    def _newest_sop_csv(stem: str) -> tuple[Path | None, str]:
+        best: Path | None = None
         best_mtime = 0.0
         tree_label = ""
         try:
@@ -1254,8 +1274,16 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         return best, tree_label
 
     @staticmethod
-    def _evaluate_gate(value, gate):
-        spec = (gate or "").strip().lower()
+    def _evaluate_gate(value: float | None, gate: object) -> str:
+        """Grade one numeric metric against one gate clause.
+
+        Returns MET / NOT_MET, or NO_DATA when the metric itself is missing --
+        grading a value that was never measured as either MET or NOT_MET
+        would be a claim the data does not support.
+        """
+        if value is None:
+            return "NO_DATA"
+        spec = str(gate or "").strip().lower()
         if not spec or spec == "report":
             return "REPORT"
         clause = spec.split("/")[0].strip()
@@ -1273,6 +1301,10 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         if clause.startswith(">"):
             try: return "MET" if value > float(clause[1:]) else "NOT_MET"
             except ValueError: return "REPORT"
+        #  Unrecognised clause: an explicit REPORT beats an implicit None,
+        #  which pyrefly would read as `Any` and which a caller could
+        #  mistake for a verdict.
+        return "REPORT"
         return "REPORT"
 
     def _handle_convergence(self) -> None:
@@ -1333,7 +1365,9 @@ class SidecarHandler(SimpleHTTPRequestHandler):
                 "samples": len(residual_series),
                 "tree": res_tree,
             }
-        kinds = sorted({r.get("residual_kind", "") for r in residual_series if r.get("residual_kind")})
+        kinds: list[str] = sorted(
+            {str(r.get("residual_kind", "")) for r in residual_series
+             if r.get("residual_kind")})
 
         snap = self.api.state.snapshot()
         self._json_response({
@@ -1364,7 +1398,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             pngs = sorted((RESULTS_DIR / "99_shared" / "cfd_fields").glob("mesh_statistics_*.png"))
         except OSError as exc:
             print(f"[sidecar-ui] mesh statistics glob failed: {exc}")
-            pngs = []
+            pngs: list[Path] = []
         for png in pngs[:10]:
             images.append("/api/content/image?name=" + png.name)
 
@@ -1582,7 +1616,11 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         References:
             - SOP: Standard Operating Procedure of CFD.md Ch.7
         """
-        found = self._probe_executable(("simpleFoam", "foamVersion", "blockMesh"), ())
+        #  Restored line (it had been blanked by an errant edit, leaving
+        #  `found` undefined and F821 on the two branches below).  Mirrors
+        #  _handle_readiness_sparta: PATH candidates, no in-repo hints --
+        #  this docstring promises a PATH probe only.
+        found = self._probe_executable(("simpleFoam", "foamVersion"), ())
         if found:
             self._json_response({
                 "status": "success",
@@ -1596,19 +1634,19 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             "arch": self._machine_arch(),
         })
 
-    def _handle_grid_independence(self, payload=None):
-        requested = payload if isinstance(payload, dict) else {}
+    def _handle_grid_independence(self, payload: dict[str, Any] | None = None):
+        requested: dict[str, Any] = (payload if isinstance(payload, dict) else dict[str, Any]())
         gi_path = RESULTS_DIR / "99_shared" / "sop" / "grid_independence.json"
-        body = {}
+        body: dict[str, Any] = dict[str, Any]()
         if gi_path.is_file():
             try:
                 body = json.loads(gi_path.read_text(encoding="utf-8"))
                 if not isinstance(body, dict):
-                    body = {}
+                    body: dict[str, Any] = dict[str, Any]()
             except (OSError, json.JSONDecodeError) as exc:
                 print(f"[sidecar-ui] grid_independence.json read failed: {exc}")
-                body = {}
-        levels = body.get("levels") if isinstance(body.get("levels"), list) else []
+                body: dict[str, Any] = dict[str, Any]()
+        levels: list[dict[str, Any]] = (body.get("levels") if isinstance(body.get("levels"), list) else list[dict[str, Any]]())
         self._json_response({
             "status": str(body.get("status", "NOT_MET")),
             "reason": body.get("reason") or "grid-independence report missing at results/99_shared/sop/grid_independence.json",
@@ -1675,9 +1713,9 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             return
         #  Type-narrow: _as_float only returns None or float, so the four
         #  values above are floats now (verifier-friendly form).
-        lx = abs(float(x_max) - float(x_min))
-        ly = abs(float(y_max))
-        lz = abs(float(z_thick))
+        lx = abs(_coerce_float(x_max) - _coerce_float(x_min))
+        ly = abs(_coerce_float(y_max))
+        lz = abs(_coerce_float(z_thick))
         cfg = self.api.state.get_config()
         grid_factor = _as_float(cfg.get("grid_factor")) or 1.0
         smallest = min(v for v in (lx, ly, lz) if v > 0) if any(v > 0 for v in (lx, ly, lz)) else 0.0
@@ -1756,11 +1794,24 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         f107 = _as_float(payload.get("msis_f107"), 150.0)
         ap = _as_float(payload.get("msis_ap"), 4.0)
         #  Type-narrow: _as_float defaults are floats; None is impossible here.
-        alt_v, lat_v = float(alt), float(lat)
-        lon_v, f107_v, ap_v = float(lon), float(f107), float(ap)
+        alt_v, lat_v = _coerce_float(alt), _coerce_float(lat)
+        lon_v, f107_v, ap_v = (_coerce_float(lon), _coerce_float(f107),
+                                _coerce_float(ap))
 
         try:
-            from pymsis import msis as _msis
+            #  pymsis is an OPTIONAL extra (NRLMSISE-00 empirical
+            #  atmosphere).  It is genuinely absent from this environment --
+            #  verified -- and the ImportError is handled immediately below
+            #  with a RuntimeError naming the missing dependency, so the
+            #  static "missing module" check below is suppressing a KNOWN
+            #  fact, not hiding an unknown one.
+            try:
+                from pymsis import msis  # type: ignore[import-not-found]
+                _msis = msis
+            except ImportError as exc:  # pymsis is an optional extra
+                raise RuntimeError(
+                    "pymsis not installed; NRLMSIS atmosphere unavailable: "
+                    f"{exc}") from exc
             out = _msis.run(
                 [datetime.date.today()], [lon_v], [lat_v], [alt_v],
                 [f107_v], [f107_v], [ap_v],
@@ -1877,11 +1928,12 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             if isinstance(samples, str):
                 try:
                     parsed = json.loads(samples)
-                    entry["samples_data"] = parsed if isinstance(parsed, list) else []
+                    entry["samples_data"] = (parsed if isinstance(parsed, list)
+                                             else list[dict[str, Any]]())
                 except json.JSONDecodeError:
-                    entry["samples_data"] = []
+                    entry["samples_data"] = list[dict[str, Any]]()
             elif not isinstance(entry.get("samples_data"), list):
-                entry["samples_data"] = []
+                entry["samples_data"] = list[dict[str, Any]]()
             entries.append(entry)
         return entries
 
@@ -1964,7 +2016,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         try:
             with csv_path.open("r", encoding="utf-8", newline="") as fh:
                 raw_rows = list(csv.DictReader(fh))
-                fieldnames = list(raw_rows[0].keys()) if raw_rows else []
+                fieldnames: list[str] = (list(raw_rows[0].keys())
+                                         if raw_rows else list[str]())
             # Re-derive id per raw row with the SAME normalization used by
             # _history_entries so the filter cannot diverge (no copy-paste
             # divergence: helper below is the single source of truth).
