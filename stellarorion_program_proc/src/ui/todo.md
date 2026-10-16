@@ -44,25 +44,37 @@ Until wired, those features error instead of supplying anything.
 
 ## Phase 1 — Wire the backend (`src/ui/sidecar_ui.py`)
 
-- [ ] 1.1 `GET /api/content/manual` → serve `docs/*.md` (AXIOMS, THEORIES, APPLICATIONS…)
-- [ ] 1.2 `GET /api/content/references` → serve `docs/CITATIONS.md`
-- [ ] 1.3 `GET /api/history/{id}` — run detail (empty-DB safe JSON)
-- [ ] 1.4 `POST /api/history/{id}/resume` — resume record (empty-DB safe JSON)
-- [ ] 1.5 `DELETE /api/history/{id}` — delete record (path-guarded)
-- [ ] 1.6 `GET /api/model-paths` → locate `uiassets/assets/model.stl`
-- [ ] 1.7 `GET /api/local-user` → current user (getpass, no shell)
-- [ ] 1.8 `POST /api/draft/autosave` → persist wizard draft config to disk
-- [ ] 1.9 `POST /api/preview/domain` → real cell-count math from grid factor + extents
-- [ ] 1.10 `POST /api/atmosphere-data` → `pymsis` (already in `venv/python`)
-- [ ] 1.11 **`GET /api/convergence`** → parse `results/*/validation_pipeline_output/convergence_audit.csv` → residuals + monitors JSON
-- [ ] 1.12 **`GET /api/mesh-quality`** → best-available min/mean (parse `grid*.out`/logs; honest `"numeric_table": null` when not derivable)
-- [ ] 1.13 **`GET /api/setup-sheet`** → assemble SOP Ch.11#6 record: sidecar version, config, models, BCs, mesh level, schemes, iteration count, convergence criterion
-- [ ] 1.14 **`POST /api/validation/grid-independence`** → aggregate multi-level data if present, else `status:"NOT_MET"` with exact reason (NEVER fabricate results)
-- [ ] 1.15 Honest `{"status":"not_implemented","detail":…}` JSON for genuinely unwired routes (optimization, ssh/remote solver, readiness, test, build-image, demo/manim|open, cad-preview) so the UI degrades cleanly and self-test classifies WARN not FAIL
-- [ ] 1.16 Server self-tests still pass: run `venv/python/bin/python3 sidecar_ui.py` bottom-of-file pytest-style suite
+- [x] 1.1 `GET /api/content/manual` → serve `docs/*.md` (AXIOMS, THEORIES, APPLICATIONS…)
+- [x] 1.2 `GET /api/content/references` → serve `docs/CITATIONS.md`
+- [x] 1.3 `GET /api/history/{id}` — run detail (empty-DB safe JSON)
+- [x] 1.4 `POST /api/history/{id}/resume` — resume record (empty-DB safe JSON)
+- [x] 1.5 `DELETE /api/history/{id}` — delete record (path-guarded)
+- [x] 1.6 `GET /api/model-paths` → locate `uiassets/assets/model.stl`
+- [x] 1.7 `GET /api/local-user` → current user (getpass, no shell)
+- [x] 1.8 `POST /api/draft/autosave` → persist wizard draft config to disk
+- [x] 1.9 `POST /api/preview/domain` → real cell-count math from grid factor + extents
+- [x] 1.10 `POST /api/atmosphere-data` → `pymsis` (already in `venv/python`)
+- [x] 1.11 **`GET /api/convergence`** → parse `results/*/validation_pipeline_output/convergence_audit.csv` → residuals + monitors JSON
+- [x] 1.12 **`GET /api/mesh-quality`** → best-available min/mean (parse `grid*.out`/logs; honest `"numeric_table": null` when not derivable)
+- [x] 1.13 **`GET /api/setup-sheet`** → assemble SOP Ch.11#6 record: sidecar version, config, models, BCs, mesh level, schemes, iteration count, convergence criterion
+- [x] 1.14 **`POST /api/validation/grid-independence`** → aggregate multi-level data if present, else `status:"NOT_MET"` with exact reason (NEVER fabricate results)
+- [x] 1.15 Honest `{"status":"not_implemented","detail":…}` JSON for genuinely unwired routes (optimization, ssh/remote solver, readiness*, test, build-image, demo/manim|open, cad-preview) so the UI degrades cleanly and self-test classifies WARN not FAIL
+- [x] 1.16 Server self-tests still pass: run `venv/python/bin/python3 sidecar_ui.py` bottom-of-file pytest-style suite
 
 **Phase 1 checkpoint:** every wizard fetch resolves to a defined JSON shape
 (200 real data or structured not_implemented); zero raw HTML 404s on `/api/*`.
+
+**Phase 1 RESULT (2026-10-16): DONE** — 24/24 file self-tests pass (4 new:
+`test_sop_get_endpoints`, `test_sop_post_endpoints`, `test_history_lifecycle`,
+`test_content_image_guard`). Live-curl verified: 11 GET + 5 POST routes all 200;
+`/api/history/{unknown}` and DELETE answer **404 JSON**. Deviations from plan:
+readiness (`/api/readiness/sparta|openfoam`, *above) upgraded from stub to a
+REAL executable probe (PATH + `bin/` globs; honest error + `sparta_missing`
+flag when absent); `/api/history` GET now returns a JSON **array** (main.ts
+calls `history.forEach`) instead of `{"runs": …}`; `GET /api/content/image
+?name=` added to serve results/-side mesh PNGs (outside FRONTEND_DIR) for
+Phase 2. pymsis answers nrho=1.70e22 m⁻³, T=264 K at 52 km; fallback path
+labeled `analytic-standard-atmosphere`.
 
 ## Phase 2 — SOP feature panels (`src/ui/uiassets/`)
 
