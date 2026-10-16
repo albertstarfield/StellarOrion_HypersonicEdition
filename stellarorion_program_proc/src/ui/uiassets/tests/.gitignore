@@ -1,0 +1,4 @@
+node_modules/
+selftest-report.json
+selftest-report-*.json
+screenshots/

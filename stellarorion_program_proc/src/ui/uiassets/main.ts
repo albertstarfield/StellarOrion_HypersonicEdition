@@ -1685,7 +1685,13 @@ async function runManimDemo() {
     }
 }
 
-function showDemoVideo(path) {
+// Axiom: browsers reject `await` outside async functions (ECMA-262 §14.7.5
+// requires AsyncFunction context), so this handler must be async to await
+// the /api/demo/open POST.
+// APPLICATION: `async` makes the whole file parseable as-is by <script src>.
+// References:
+//   - ECMA-262: https://tc39.es/ecma262/#sec-async-function-definitions
+async function showDemoVideo(path) {
     appendLog("<br><span style='color: #10b981; font-weight: 800;'>[SUCCESS] DSMC WORKFLOW VISUALIZATION RENDERED.</span>");
     appendLog(`[*] Media Path: ${path}`);
     

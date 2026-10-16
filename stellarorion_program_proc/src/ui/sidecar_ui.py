@@ -89,7 +89,21 @@ def test_postcondition() -> None:
 
 DEFAULT_PORT = 8080
 POLL_INTERVAL_S = 2.0
-FRONTEND_DIR = Path(__file__).parent / "frontend"
+# Axiom: the Baloon Shield Maker wizard (uiassets/) is the served GUI;
+# THEORY: _serve_static() resolves every request under this directory, so
+#   pointing it at uiassets also exposes its assets/ (plots, videos, STL).
+# APPLICATION: fall back to the legacy frontend/ if uiassets/ is absent
+#   (Murphy's Law: directory may be stripped by a partial checkout).
+# References:
+#   - sidecar_ui.py _serve_static() / run.py _start_sidecar() wiring
+FRONTEND_DIR = Path(__file__).parent / "uiassets"
+if not FRONTEND_DIR.is_dir():
+    print(
+        f"[sidecar-ui] WARNING: uiassets/ missing at {FRONTEND_DIR}; "
+        f"falling back to legacy frontend/ directory.",
+        flush=True,
+    )
+    FRONTEND_DIR = Path(__file__).parent / "frontend"
 VERSION = "1.0.0-hypersonic"
 # Default runs directory (used when --db-dir is absent or malformed).
 _DEFAULT_RUNS_DIR = Path(__file__).parent.parent.parent / "data" / "runs"
