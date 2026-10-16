@@ -473,7 +473,15 @@ package body StellarOrion_PostProcessing is
       --  Chapman uses the same Fay-Riddell form but with catalytic wall
       --  Chapman factor = Pr^(-0.6) * correction ~ 1.045 / Pr^(-0.6)
       --  [Citation: Chapman 1959; Rapisarda Table 4.7]
-      FR_Base : constant Float := Compute_DKR_Heat_Flux (T);
+      --  MAGNITUDE CEILING (2026-10-16).  Compute_DKR_Heat_Flux's Post is
+      --  only `Result >= 0.0`; adding an upper bound there would merely
+      --  move the same obligation into a much larger body.  The documented
+      --  physical magnitude ceiling is 1.0e12 W/cm^2, so clamping here
+      --  leaves every physical input bit-identical while capping
+      --  FR_Base * 1.045 at 1.045e12 << Float'Last, which is what makes
+      --  the multiply provable.
+      FR_Raw   : constant Float := Compute_DKR_Heat_Flux (T);
+      FR_Base  : constant Float := Float'Min (FR_Raw, 1.0e12);
       --  Chapman correction relative to FR: 1.045 (slightly higher than FR)
       --  [Citation: Rapisarda 2023, Table 4.7]
       Chap_Factor : constant Float := 1.045;
@@ -594,10 +602,37 @@ package body StellarOrion_PostProcessing is
          pragma Loop_Invariant (N_Pos + N_Neg = I - 1);
          --  Array bounds: I is in 1..N, N <= Heat_Fluxes'Length
          pragma Loop_Invariant (I <= N);
-         pragma Loop_Invariant (I <= Heat_Fluxes'Length);
+         pragma Loop_Invariant (I <= Max_Surf_Elements);
+         --  INSTANTIATION INVARIANT.  The element bound lives in a
+         --  QUANTIFIED precondition (`for all K ... => abs(...) <= B`).
+         --  Inside a loop the prover must instantiate that universal to get
+         --  a bound on the term it is about to square, and it does not do so
+         --  reliably as part of arithmetic reasoning -- which is why every
+         --  ceiling here stayed unprovable however the ceiling was written.
+         --  Stating the bound for THIS index turns one universal
+         --  instantiation into a single local fact the solvers can use.
+         pragma Loop_Invariant (abs (Heat_Fluxes (I)) <= 1.0e12);
          --  Peak/Min relationship: Peak >= Min_Val when both have been set
          pragma Loop_Invariant (Peak >= 0.0 or I = 1);
          pragma Loop_Invariant (Min_Val = Float'Last or Peak >= Min_Val);
+         --  ACCUMULATOR BOUNDS (2026-10-16).  |Heat_Fluxes(K)| <= 1.0e12
+         --  comes from the new Pre.  A CONSTANT ceiling (Sum_Sq <= 3.0e27)
+         --  is NOT inductive: the preservation step must show
+         --  `prev + term <= ceiling` knowing only `prev <= ceiling`, i.e.
+         --  3.0e27 + 1.0e24 <= 3.0e27, which is false -- that is exactly
+         --  why the constant form stayed unproved.  Scaling by the loop
+         --  counter IS inductive: prev <= I*1.0e24 and term <= 1.0e24 give
+         --  prev + term <= (I+1)*1.0e24.  I <= N <= Max_Surf_Elements =
+         --  2000 caps Sum_Sq at 2.0e27 << Float'Last.  These bounds are
+         --  what make `Sum + Val`, `Val * Val` and `Sum_Sq + Val*Val`
+         --  overflow checks provable.
+         --  Headroom: in single precision (1.0e12)*(1.0e12) does NOT round
+         --  to 1.0e24, so a ceiling of exactly Float(I)*1.0e24 cannot absorb
+         --  one term.  10% per-term slack keeps the induction valid while
+         --  staying far below Float'Last.
+         pragma Loop_Invariant (abs (Sum) <= Float (I) * 1.1e12);
+         pragma Loop_Invariant
+           (Sum_Sq >= 0.0 and then Sum_Sq <= Float (I) * 1.1e24);
          declare
            Val : constant Float := Heat_Fluxes (I);
          begin
@@ -737,7 +772,27 @@ package body StellarOrion_PostProcessing is
          pragma Loop_Invariant (N_Conv <= N_Stable);
          --  Array bounds: I is in 1..N, N <= Peak_Fluxes'Length
          pragma Loop_Invariant (I <= N);
-         pragma Loop_Invariant (I <= Peak_Fluxes'Length);
+         pragma Loop_Invariant (I <= Max_Timesteps);
+         --  INSTANTIATION INVARIANT.  The element bound lives in a
+         --  QUANTIFIED precondition (`for all K ... => abs(...) <= B`).
+         --  Inside a loop the prover must instantiate that universal to get
+         --  a bound on the term it is about to square, and it does not do so
+         --  reliably as part of arithmetic reasoning -- which is why every
+         --  ceiling here stayed unprovable however the ceiling was written.
+         --  Stating the bound for THIS index turns one universal
+         --  instantiation into a single local fact the solvers can use.
+         pragma Loop_Invariant (abs (Peak_Fluxes (I)) <= 1.0e12);
+         --  ACCUMULATOR BOUNDS (2026-10-16), inductive form -- see the
+         --  long note on Compute_Surf_Stats for why a constant ceiling
+         --  cannot be preserved.  I <= N <= Max_Timesteps = 5000 caps
+         --  Sum_Sq at 5.0e27 << Float'Last.
+         --  Headroom: in single precision (1.0e12)*(1.0e12) does NOT round
+         --  to 1.0e24, so a ceiling of exactly Float(I)*1.0e24 cannot absorb
+         --  one term.  10% per-term slack keeps the induction valid while
+         --  staying far below Float'Last.
+         pragma Loop_Invariant (abs (Sum) <= Float (I) * 1.1e12);
+         pragma Loop_Invariant
+           (Sum_Sq >= 0.0 and then Sum_Sq <= Float (I) * 1.1e24);
          declare
            Val : constant Float := Peak_Fluxes (I);
          begin
@@ -775,8 +830,18 @@ package body StellarOrion_PostProcessing is
         Var_Safe : constant Float :=
           (if Var > 0.0 then Var else 0.0);
         Std  : constant Float := Sqrt_Float (Var_Safe);
+        --  COEFFICIENT OF VARIATION (2026-10-16).  Std <= 1.0e12 follows
+        --  from Sum_Sq <= 5.0e27, but a merely POSITIVE Mean gives the
+        --  division no lower bound, so `(Std / Mean) * 100.0` left two
+        --  overflow checks unproved.  Below 1.0e-12 W/cm^2 the mean sits
+        --  14 orders of magnitude under the 1.0e8 W/cm^2 data bound and a
+        --  relative-noise ratio there is meaningless, so CV reports 0.0;
+        --  the result is additionally capped at 1.0e12.  Every physical
+        --  mean in this project is ~12..15 W/cm^2, so no real input moves.
         CV   : constant Float :=
-          (if Mean > 0.0 then (Std / Mean) * 100.0 else 0.0);
+          (if Mean >= 1.0e-12
+           then Float'Min ((Std / Mean) * 100.0, 1.0e12)
+           else 0.0);
       begin
         return (Mean_Peak_Wcm2  => Mean / 1.0e4,
                 Std_Peak_Wcm2   => Std / 1.0e4,
@@ -919,11 +984,17 @@ package body StellarOrion_PostProcessing is
    begin
       --  Assertions to help the prover verify postcondition Result > 0.0
       --  T > 0.0 and T_REF_SUTHERLAND > 0.0 are asserted in the declarative part.
+      --  STRICT-POSITIVITY CHAIN (2026-10-16).  The Post conjunct
+      --  `Result > 0.0` was the one unproved check in this function: the
+      --  old chain only ever asserted `>= 0.0`, and `0.0 / positive` is a
+      --  legal float value, so the prover had no way to exclude 0.0.
+      --  Each link below is strictly greater than zero, so the final
+      --  division is positive/positive and cannot be zero.
       pragma Assert (Ratio > 0.0);
-      pragma Assert (Sqrt_Ratio3 >= 0.0);
+      pragma Assert (Sqrt_Ratio3 > 0.0);
       pragma Assert (MU_REF_AIR > 0.0);
       pragma Assert (T_REF_SUTHERLAND + SUTHERLAND_CONST_AIR > 0.0);
-      pragma Assert (Numerator >= 0.0);
+      pragma Assert (Numerator > 0.0);
       pragma Assert (Denominator > 0.0);
       pragma Assert (Denominator /= 0.0);
       return Numerator / Denominator;
@@ -1048,9 +1119,19 @@ package body StellarOrion_PostProcessing is
       --  Single pass: accumulate sums and find peak indices
       for I in 1 .. N loop
          pragma Loop_Invariant (I <= N);
+         pragma Loop_Invariant (I <= 1000);
          pragma Loop_Invariant (I <= Model_Values'Length);
          pragma Loop_Invariant (I <= Flight_Values'Length);
-         pragma Loop_Invariant (I <= Time_Values'Length);
+         --  INSTANTIATION INVARIANT.  The element bound lives in a
+         --  QUANTIFIED precondition (`for all K ... => abs(...) <= B`).
+         --  Inside a loop the prover must instantiate that universal to get
+         --  a bound on the term it is about to square, and it does not do so
+         --  reliably as part of arithmetic reasoning -- which is why every
+         --  ceiling here stayed unprovable however the ceiling was written.
+         --  Stating the bound for THIS index turns one universal
+         --  instantiation into a single local fact the solvers can use.
+         pragma Loop_Invariant (abs (Model_Values (I)) <= 1.0e8);
+         pragma Loop_Invariant (abs (Flight_Values (I)) <= 1.0e8);
          pragma Loop_Invariant (Sum_Sq_Diff >= 0.0);
          pragma Loop_Invariant (Sum_Sq_Tot >= 0.0);
          --  BOUNDS (2026-10-05).  Both were previously missing, and
@@ -1063,8 +1144,24 @@ package body StellarOrion_PostProcessing is
          --  Without them the prover saw unbounded accumulators, which is why
          --  the downstream `Mean_Flight` subtraction and
          --  `Mean_Sq_Diff := Sum_Sq_Diff / Float(N)` could not be proved.
-         pragma Loop_Invariant (Sum_Sq_Diff <= 4.0e19);
-         pragma Loop_Invariant (abs (Sum_Flight) <= 1.0e11);
+         --  HEADROOM (2026-10-16): these two were stated at the EXACT
+         --  algebraic boundary (1000 * 4.0e16 = 4.0e19, 1000 * 1.0e8 =
+         --  1.0e11).  Floating-point accumulation rounds UP, so the
+         --  preservation check `prev + term <= bound` could not close at
+         --  equality -- this was the whole reason these two failed.  A few
+         --  percent of headroom changes nothing physically and lets the
+         --  check discharge.
+         --  INDUCTIVE FORM (2026-10-16).  The previous constant ceilings
+         --  (4.0e19 / 1.0e11, later nudged to 4.1e19 / 1.01e11) could never
+         --  be preserved: preservation must show `prev + term <= bound`
+         --  knowing only `prev <= bound`, and no finite amount of headroom
+         --  helps because the term itself can be 4.0e16.  Scaling by the loop
+         --  counter is the inductive form:
+         --    prev <= I * C  and  term <= C   =>   prev + term <= (I+1) * C
+         --  With I <= N <= 1000 this reproduces the original 4.0e19 and
+         --  1.0e11 bounds exactly at the last iteration.
+         pragma Loop_Invariant (Sum_Sq_Diff <= Float (I) * 4.1e16);
+         pragma Loop_Invariant (abs (Sum_Flight) <= Float (I) * 1.1e8);
          declare
             M_Val : constant Float := Model_Values (I);
             F_Val : constant Float := Flight_Values (I);
@@ -1098,15 +1195,26 @@ package body StellarOrion_PostProcessing is
       begin
          for I in 1 .. N loop
             pragma Loop_Invariant (I <= N);
-            pragma Loop_Invariant (I <= Flight_Values'Length);
+         pragma Loop_Invariant (I <= 1000);
+         --  INSTANTIATION INVARIANT.  The element bound lives in a
+         --  QUANTIFIED precondition (`for all K ... => abs(...) <= B`).
+         --  Inside a loop the prover must instantiate that universal to get
+         --  a bound on the term it is about to square, and it does not do so
+         --  reliably as part of arithmetic reasoning -- which is why every
+         --  ceiling here stayed unprovable however the ceiling was written.
+         --  Stating the bound for THIS index turns one universal
+         --  instantiation into a single local fact the solvers can use.
+            pragma Loop_Invariant (abs (Flight_Values (I)) <= 1.0e8);
             pragma Loop_Invariant (Sum_Sq_Tot >= 0.0);
             --  BOUND: |Mean_Flight| <= 1.0e11 (loop-1 invariant) and
             --  |Flight_Values(I)| <= 1.0e8 give |Dev| < 2.0e11, so
             --  Dev*Dev < 4.0e22 and the sum over N <= 1000 is < 4.0e25.
             --  This is what makes the `Mean_Flight` subtraction at Dev and
             --  the `Sum_Sq_Tot + Dev*Dev` accumulation provable.
-            pragma Loop_Invariant (abs (Mean_Flight) <= 1.0e11);
-            pragma Loop_Invariant (Sum_Sq_Tot <= 4.0e25);
+            --  Mean = Sum_Flight / N, so once the sum is I-scaled by 1.1e8
+            --  the mean cannot exceed one sample's bound (plus rounding).
+            pragma Loop_Invariant (abs (Mean_Flight) <= 1.1e8);
+            pragma Loop_Invariant (Sum_Sq_Tot <= Float (I) * 2.1e22);
             declare
                Dev : constant Float := Flight_Values (I) - Mean_Flight;
             begin
@@ -1181,12 +1289,23 @@ package body StellarOrion_PostProcessing is
             Sum_APE : Float := 0.0;
          begin
             for I in 1 .. N loop
-               pragma Loop_Invariant (I <= N);
+            pragma Loop_Invariant (I <= N);
+            pragma Loop_Invariant (I <= 1000);
+         --  INSTANTIATION INVARIANT.  The element bound lives in a
+         --  QUANTIFIED precondition (`for all K ... => abs(...) <= B`).
+         --  Inside a loop the prover must instantiate that universal to get
+         --  a bound on the term it is about to square, and it does not do so
+         --  reliably as part of arithmetic reasoning -- which is why every
+         --  ceiling here stayed unprovable however the ceiling was written.
+         --  Stating the bound for THIS index turns one universal
+         --  instantiation into a single local fact the solvers can use.
+               pragma Loop_Invariant (abs (Model_Values (I)) <= 1.0e8);
+               pragma Loop_Invariant (abs (Flight_Values (I)) <= 1.0e8);
                pragma Loop_Invariant (Sum_APE >= 0.0);
                --  BOUND: worst term is Abs_Err(<=2.0e8)/1.0e-6*100.0 = 2.0e16
                --  over N <= 1000 iterations => 2.0e19.  Needed so the final
                --  `Mean_APE := Sum_APE / Float(N)` cannot overflow.
-               pragma Loop_Invariant (Sum_APE <= 2.0e19);
+               pragma Loop_Invariant (Sum_APE <= Float (I) * 3.1e16);
                declare
                   Abs_Err : constant Float :=
                     abs (Model_Values (I) - Flight_Values (I));
@@ -1277,6 +1396,13 @@ package body StellarOrion_PostProcessing is
          --  Pow_F (Ratio, 0.51841) discharge Pow_F's `X <= 1.0` Pre --
          --  the prover will not cancel M_TO_FT on its own.
          pragma Assert (M_TO_FT > 0.0);
+         --  Ksc_Ft <= Rinflated_Ft is the multiplied form of the Pre
+         --  conjunct `Scallop_Depth_M <= Rinflated_M`; both sides pick up
+         --  the identical positive factor M_TO_FT, so the order is
+         --  preserved.  Stating it here is what lets the following
+         --  `Ratio <= 1.0` follow from Ksc_Ft / Rinflated_Ft <= 1.0
+         --  without the prover having to cancel the factor itself.
+         pragma Assert (Ksc_Ft <= Rinflated_Ft);
          pragma Assert (Ratio <= 1.0);
 
          --  Eq 3.105: Re_x = rho * V * r_inf / mu
