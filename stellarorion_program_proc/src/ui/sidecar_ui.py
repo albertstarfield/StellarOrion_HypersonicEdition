@@ -41,7 +41,7 @@ import urllib.parse
 
 logger = logging.getLogger(__name__)
 from collections.abc import Callable, Sequence
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, TypeVar, cast, override
 
@@ -520,6 +520,17 @@ class SidecarAPI:
 
 class SidecarHandler(SimpleHTTPRequestHandler):
     """HTTP request handler with REST API routing and static file serving."""
+
+    # AXIOM: the wizard fires many parallel fetches (SOP panels load 5+
+    # endpoints simultaneously) and streams multi-MB assets; a serial
+    # HTTP/1.0 connection lifecycle lets Chrome's pooled sockets race the
+    # server's closes (observed as net::ERR_CONNECTION_RESET on live API
+    # routes). HTTP/1.1 keep-alive + ThreadingHTTPServer below gives each
+    # connection its own thread and an explicit persistent contract.
+    # Every response path sets Content-Length (or is a bodiless 204), which
+    # keep-alive requires.
+    # [Based on: selftest run4 /api/convergence ERR_CONNECTION_RESET; RFC 7230 §6.3]
+    protocol_version = "HTTP/1.1"
 
     api: SidecarAPI  # Injected at server creation
 
@@ -1994,7 +2005,10 @@ def create_server(port: int = DEFAULT_PORT, db_dir: str | None = None) -> tuple[
     # Attach API to handler class before server creation
     SidecarHandler.api = api
 
-    server = HTTPServer(("0.0.0.0", port), SidecarHandler)
+    # ThreadingHTTPServer (daemon threads) pairs with the handler's
+    # HTTP/1.1 keep-alive: one thread per connection, so slow asset reads
+    # never block API fetches and pooled sockets cannot race to a reset.
+    server = ThreadingHTTPServer(("0.0.0.0", port), SidecarHandler)
     return server, api
 
 
@@ -2050,7 +2064,7 @@ def _spin_ui_server(
 
     api = SidecarAPI(db_dir=None if db_dir is None else db_dir)
     SidecarHandler.api = api
-    srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), SidecarHandler)
     worker = threading.Thread(target=srv.serve_forever, daemon=True)
     worker.start()
     host, port = srv.server_address[:2]

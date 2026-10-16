@@ -5,7 +5,7 @@
 > features that SOP checks.** Reference audits: `SOP_COMPLIANCE_AUDIT.md`
 > (repo outputs), this plan (GUI coverage).
 > Status legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[-]` cut
-> Approved by user: pending (plan awaiting approval before execution).
+> Approved by user: YES (user: "Alright do it and i'll go out for a while do it automatically")
 
 ---
 
@@ -133,10 +133,48 @@ nav phase (lock/readiness/boundary guards OK), routine sweep (78).
 
 ## Phase 4 — Visual verification
 
-- [ ] 4.1 Launch sidecar (`venv/python/bin/python3 src/ui/sidecar_ui.py --port <free>`)
-- [ ] 4.2 Headless-Chrome screenshot of every new/changed page → PNG
-- [ ] 4.3 Read each PNG back; check layout, contrast, alignment, truncation, labels (units + case + quantity per SOP 13.3)
-- [ ] 4.4 Fix + re-snap until clean
+- [x] 4.1 Launch sidecar (`venv/python/bin/python3 src/ui/sidecar_ui.py --port <free>`)
+- [x] 4.2 Headless-Chrome screenshot of every new/changed page → PNG
+- [x] 4.3 Read each PNG back; check layout, contrast, alignment, truncation, labels (units + case + quantity per SOP 13.3)
+- [x] 4.4 Fix + re-snap until clean
+
+**Phase 4 RESULT (2026-10-16): DONE.** 11 screenshots captured to
+`tests/screenshots/` (gitignored; visual read-back done by the Image
+Specialist subagent, three rounds, all pixel-measured; measurement
+scripts in `/private/var/folders/.../T/opencode/` scratch space).
+
+Corrections applied during re-snaps:
+  - D1 (p6_setup_sheet): code-box now solid `#0f172a` (contrast 14.42:1 vs
+    `#e5e7eb`) + dim hint line "Full record — scroll inside the box above."
+  - D2 (gates/convergence tables): row separators `#9ca3af` (2.36-2.47:1),
+    header rules `#6b7280` (4.47/4.63:1) — both were near-invisible light grey
+  - D3 (mesh quality): thumbnails now wrap 3-per-row instead of clipping a 4th
+    card at the container edge; open full-size via anchor in a new tab
+  - D4 (limitations): bold lead-ins `#a16207` (4.92:1), zero `#ff…` yellow
+  - Status glyphs are now **solid pills with white text** (MET #047857,
+    NOT MET #b91c1c, PARTIAL/NO DATA #a16207; 4.92-6.47:1) on the light
+    theme instead of bright outline text
+  - Gates/Evidence gates now have uppercase `ITEM / STATUS / NOTE` headers
+    with a bottom rule and both tables' Status/Note columns are pixel-aligned
+    (x714 / x830) via fixed `table-layout: fixed` widths
+  - Row-5 CSV path (`results/…/convergence_audit.csv`) now wraps inside the
+    Note column (rightmost glyph at x1202, 9 px inside the table edge)
+  - Table row borders, placeholder text (#b91c1c, was #f87171) and
+    convergence NO-DATA banners (#a16207, was #fbbf24) all re-tuned for the
+    light backdrop
+
+Unresolved / accepted:
+  - 4 WARNs in selftest are PRE-EXISTING null-guarded dead bindings
+    (`manual-title-text`, `.toc-item`, `.history-item`, `.manual-search-box`),
+    not defects in my code
+  - WITHIN / OUTSIDE pill colors are not exercised (no in-criteria run data)
+  - hard clip at footer (y737) is scrollable content, not an obstruction
+  - run results pending `.status.json` inputs; Phase uses read-back only
+
+Stability: `node selftest.mjs` → exit 0, **283 PASS / 0 FAIL / 4 WARN**, on
+three consecutive runs after the socket-layer change
+(`ThreadingHTTPServer` + `protocol_version = HTTP/1.1`), which eliminated
+the intermittent `net::ERR_CONNECTION_RESET` on `/api/*`.<|end|>
 
 **Phase 4 checkpoint:** screenshot evidence attached for each panel.
 

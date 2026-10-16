@@ -1749,10 +1749,16 @@ function sopEsc(value) {
 // TEST: rendered by refreshGatesEvidence + refreshMeshQuality.
 function sopChip(status) {
     const s = String(status || '').toUpperCase();
-    let color = '#fbbf24';
-    if (s === 'MET' || s === 'OK' || s === 'WITHIN') color = '#10b981';
-    if (s === 'NOT MET' || s === 'OUTSIDE') color = '#ef4444';
-    return '<span style="color:' + color + '; font-weight:700;">' + sopEsc(status) + '</span>';
+    // Light-theme AA-compliant solid chips: white text on 700-level hues
+    // (measured >=4.77:1 on #a16207/#047857/#b91c1c — the previous bright
+    // hues as plain text failed WCAG AA at 1.6-3.8:1).
+    let bg = '#a16207'; // amber-700 → PARTIAL / NO DATA / NOT_MET / default
+    if (s === 'MET' || s === 'OK' || s === 'WITHIN') bg = '#047857'; // emerald-700
+    if (s === 'NOT MET' || s === 'OUTSIDE') bg = '#b91c1c';         // red-700
+    return '<span style="display:inline-block; background:' + bg +
+        '; color:#ffffff; font-weight:700; padding:1px 9px; border-radius:9px;' +
+        ' font-size:0.72rem; white-space:nowrap; line-height:1.5;">' +
+        sopEsc(status) + '</span>';
 }
 
 // refreshSopPanels() — page-6 orchestrator: loads setup sheet, gates &
@@ -1843,12 +1849,23 @@ async function refreshGatesEvidence() {
             ['10. Evidence self-check', 'MET', 'all 10 rows rendered from live endpoints'],
         ];
         const rowHtml = (r) =>
-            '<tr><td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(r[0]) +
-            '</td><td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); white-space:nowrap;">' + sopChip(r[1]) +
-            '</td><td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(r[2]) + '</td></tr>';
+            '<tr><td style="padding:5px 8px; border-bottom:1px solid #9ca3af;">' + sopEsc(r[0]) +
+            '</td><td style="padding:5px 8px; border-bottom:1px solid #9ca3af; white-space:nowrap;">' + sopChip(r[1]) +
+            // overflow-wrap:anywhere: evidence notes can carry long repo
+            // paths (e.g. results/.../convergence_audit.csv) that would
+            // otherwise escape the fixed-layout column.
+            '</td><td style="padding:5px 8px; border-bottom:1px solid #9ca3af; color:var(--text-dim); overflow-wrap:anywhere; word-break:break-word;">' + sopEsc(r[2]) + '</td></tr>';
+        const thStyle = 'text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; ' +
+            'font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-dim);';
+        // table-layout:fixed + identical th widths keep the two stacked
+        // tables' columns pixel-aligned (was 4-9 px off).
         const table = (caption, rows) =>
             '<div style="margin-bottom:14px;"><div style="font-weight:700; margin-bottom:6px; color:var(--primary);">' + caption + '</div>' +
-            '<table style="width:100%; border-collapse:collapse;">' + rows.map(rowHtml).join('') + '</table></div>';
+            '<table style="width:100%; border-collapse:collapse; table-layout:fixed;">' +
+            '<tr><th style="' + thStyle + ' width:32%;">Item</th>' +
+            '<th style="' + thStyle + ' width:16%;">Status</th>' +
+            '<th style="' + thStyle + ' width:52%;">Note</th></tr>' +
+            rows.map(rowHtml).join('') + '</table></div>';
         el.innerHTML = table('Gate checklist (SOP Ch.15)', gates) +
             table('Evidence pack (SOP Ch.12)', evidence);
     } catch (e) {
@@ -1869,25 +1886,30 @@ async function refreshMeshQuality() {
         const mq = await sopJson('/api/mesh-quality');
         const rows = (mq.gates || []).map((g) =>
             '<tr>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(g.metric) + '</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(g.gate) + '</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + (g.value == null ? '—' : sopEsc(g.value)) + '</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopChip(g.status) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + sopEsc(g.metric) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af; color:var(--text-dim);">' + sopEsc(g.gate) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + (g.value == null ? '—' : sopEsc(g.value)) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + sopChip(g.status) + '</td>' +
             '</tr>'
         ).join('');
         const banner = mq.numeric_table
-            ? '<div style="color:#10b981; margin-bottom:8px;">Numeric mesh table available.</div>'
-            : '<div style="color:#fbbf24; margin-bottom:8px; font-weight:600;">NOT MET — ' + sopEsc(mq.numeric_table_reason || 'no numeric data') + '</div>';
+            ? '<div style="color:#047857; font-weight:600; margin-bottom:8px;">Numeric mesh table available.</div>'
+            : '<div style="color:#a16207; margin-bottom:8px; font-weight:700;">NOT MET — ' + sopEsc(mq.numeric_table_reason || 'no numeric data') + '</div>';
+        const thS = 'text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-dim);';
         el.innerHTML = banner +
-            '<table style="width:100%; border-collapse:collapse;"><tr>' +
-            '<th style="text-align:left; padding:4px 8px;">Metric</th>' +
-            '<th style="text-align:left; padding:4px 8px;">SOP gate</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Value (min/mean)</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Status</th></tr>' + rows + '</table>';
+            '<table style="width:100%; border-collapse:collapse; table-layout:fixed;"><tr>' +
+            '<th style="' + thS + ' width:28%;">Metric</th>' +
+            '<th style="' + thS + ' width:30%;">SOP gate</th>' +
+            '<th style="' + thS + ' width:22%;">Value (min/mean)</th>' +
+            '<th style="' + thS + ' width:20%;">Status</th></tr>' + rows + '</table>';
         if (imgBox) {
+            // Clickable thumbnails: at 130 px tall the histogram axis labels
+            // are illegible, so each opens the full render in a new tab.
             imgBox.innerHTML = (mq.images || []).map((url) =>
-                '<img src="' + sopEsc(url) + '" alt="mesh statistics render" ' +
-                'style="height: 90px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); flex: 0 0 auto;">'
+                '<a href="' + sopEsc(url) + '" target="_blank" rel="noopener" ' +
+                'title="Open full-size mesh statistics render" style="flex:0 0 auto;">' +
+                '<img src="' + sopEsc(url) + '" alt="mesh statistics render (opens full size)" ' +
+                'style="height: 130px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);"></a>'
             ).join('');
         }
     } catch (e) {
@@ -1928,13 +1950,13 @@ async function refreshConvergencePanel() {
         const fmt = (v) => (v == null ? '—' : (typeof v === 'number' ? String(Math.round(v * 10000) / 10000) : sopEsc(v)));
         const rows = (conv.metrics || []).map((m) =>
             '<tr>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); font-weight:600;">' + sopEsc(m.metric) + '</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.raw_final) + '</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.denoised_final) + '</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.pinn_extrapolated) + '</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.raw_error_pct) + '%</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.denoised_error_pct) + '%</td>' +
-            '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + fmt(m.r2_score) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af; font-weight:600;">' + sopEsc(m.metric) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + fmt(m.raw_final) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + fmt(m.denoised_final) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + fmt(m.pinn_extrapolated) + '</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + fmt(m.raw_error_pct) + '%</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + fmt(m.denoised_error_pct) + '%</td>' +
+            '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + fmt(m.r2_score) + '</td>' +
             '</tr>'
         ).join('');
         const liveKeys = conv.live_metrics && typeof conv.live_metrics === 'object'
@@ -1943,13 +1965,13 @@ async function refreshConvergencePanel() {
             '<div style="color:var(--text-dim); margin-bottom:8px;">Source: <code>' +
             sopEsc(conv.source || 'no convergence_audit.csv in results/') + '</code></div>' +
             '<table style="width:100%; border-collapse:collapse;"><tr>' +
-            '<th style="text-align:left; padding:4px 8px;">Metric</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Raw final</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Denoised</th>' +
-            '<th style="text-align:left; padding:4px 8px;">PINN extrap.</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Raw err</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Denoised err</th>' +
-            '<th style="text-align:left; padding:4px 8px;">R²</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Metric</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Raw final</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Denoised</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">PINN extrap.</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Raw err</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Denoised err</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">R²</th>' +
             '</tr>' + rows + '</table>' +
             '<div style="margin-top:8px; color:var(--text-dim);">Residual series: ' +
             sopChip('NO DATA') + ' ' + sopEsc(conv.residual_status || '') + '</div>' +
@@ -2021,24 +2043,24 @@ async function refreshUncertaintyTable() {
             const mTxt = measured == null ? 'NO DATA' : measured + ' ' + d.unit + (srcKey ? ' [' + srcKey + ']' : '');
             const bTxt = d.base == null ? '—' : d.base + ' ' + d.unit;
             return '<tr>' +
-                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); font-weight:600;">' + sopEsc(d.m) + '</td>' +
-                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(tTxt) + '</td>' +
-                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(tolTxt) + '</td>' +
-                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopEsc(mTxt) + '</td>' +
-                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07);">' + sopChip(verdict) + '</td>' +
-                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(bTxt) + '</td>' +
-                '<td style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.07); color:var(--text-dim);">' + sopEsc(diff) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af; font-weight:600;">' + sopEsc(d.m) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + sopEsc(tTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + sopEsc(tolTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + sopEsc(mTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af;">' + sopChip(verdict) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af; color:var(--text-dim);">' + sopEsc(bTxt) + '</td>' +
+                '<td style="padding:4px 8px; border-bottom:1px solid #9ca3af; color:var(--text-dim);">' + sopEsc(diff) + '</td>' +
                 '</tr>';
         }).join('');
         el.innerHTML =
             '<table style="width:100%; border-collapse:collapse;"><tr>' +
-            '<th style="text-align:left; padding:4px 8px;">Metric</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Target</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Tolerance</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Measured (live)</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Verdict</th>' +
-            '<th style="text-align:left; padding:4px 8px;">Baseline</th>' +
-            '<th style="text-align:left; padding:4px 8px;">% diff</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Metric</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Target</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Tolerance</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Measured (live)</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Verdict</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">Baseline</th>' +
+            '<th style="text-align:left; padding:5px 8px; border-bottom:2px solid #6b7280; font-size:0.72rem; text-transform:uppercase; color:var(--text-dim);">% diff</th>' +
             '</tr>' + rows + '</table>' +
             '<div style="margin-top:6px; color:var(--text-dim); font-size:0.75rem;">' +
             'Targets/tolerances are the page-5 slider values; measured values come from live sidecar metrics. ' +

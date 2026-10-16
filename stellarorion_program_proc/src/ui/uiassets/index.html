@@ -1320,7 +1320,8 @@
                             <button class="btn btn-secondary" id="btn-dl-config-json" onclick="exportConfigJson()" style="padding: 6px 14px; font-size: 0.8rem;">Export config .json</button>
                             <button class="btn btn-secondary" id="btn-refresh-sop" onclick="refreshSopPanels()" style="padding: 6px 14px; font-size: 0.8rem;">Refresh</button>
                         </div>
-                        <pre id="setup-sheet-body" style="background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px; font-size: 0.78rem; line-height: 1.5; max-height: 220px; overflow-y: auto; white-space: pre-wrap; color: var(--text-dim);">Loading setup sheet…</pre>
+                        <pre id="setup-sheet-body" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 14px; font-size: 0.78rem; line-height: 1.5; max-height: 260px; overflow-y: auto; white-space: pre-wrap; color: #e5e7eb;">Loading setup sheet…</pre>
+                        <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">Full record — scroll inside the box above.</div>
                     </div>
 
                     <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
@@ -1331,7 +1332,7 @@
                     <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
                         <h4 style="color: var(--primary); margin-bottom: 12px;">Mesh Quality (SOP Ch.5)</h4>
                         <div id="mesh-quality-table" style="font-size: 0.8rem;">Loading mesh quality…</div>
-                        <div id="mesh-quality-images" style="display: flex; gap: 8px; overflow-x: auto; margin-top: 10px;"></div>
+                        <div id="mesh-quality-images" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;"></div>
                     </div>
 
                     <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
@@ -1342,12 +1343,12 @@
                     <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
                         <h4 style="color: var(--primary); margin-bottom: 12px;">Known Limitations (SOP Ch.12#10)</h4>
                         <ul id="limitations-list" style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.7; padding-left: 20px;">
-                            <li><strong style="color: #fbbf24;">Streamlines / isosurfaces</strong> are not produced by this GUI — an <em>accepted</em> DSMC post-processing limitation recorded in the SOP compliance audit (§3), not a defect of this build.</li>
-                            <li><strong style="color: #fbbf24;">3-level mesh-independence generator</strong> is not implemented (repo-side physics task ranked #1 by the SOP audit); the gate answers <code>NOT_MET</code> with the exact reason instead of fabricating deltas.</li>
-                            <li><strong style="color: #fbbf24;">Numeric mesh-quality table</strong> (skew / ortho / aspect / growth) is <code>NO_DATA</code>: only <code>mesh_statistics_*.png</code> renders exist; export a numeric CSV to fill the table.</li>
-                            <li><strong style="color: #fbbf24;">Solver residual logs &amp; mass-balance series</strong> are not stored in this checkout, so the convergence panel shows the metric audit it does have and labels residuals/balance <code>not_available</code>.</li>
-                            <li><strong style="color: #fbbf24;">Optimization, SSH/remote-solver, Manim demo and CAD-preview</strong> endpoints answer structured <code>not_implemented</code> stubs (honest degradation, never silent success).</li>
-                            <li><strong style="color: #fbbf24;">Figure self-sufficiency</strong> (labels/units/case on every plot, SOP Ch.13.3) is a generator-side concern tracked out of scope in <code>src/ui/todo.md</code>.</li>
+                            <li><strong style="color: #a16207;">Streamlines / isosurfaces</strong> are not produced by this GUI — an <em>accepted</em> DSMC post-processing limitation recorded in the SOP compliance audit (§3), not a defect of this build.</li>
+                            <li><strong style="color: #a16207;">3-level mesh-independence generator</strong> is not implemented (repo-side physics task ranked #1 by the SOP audit); the gate answers <code>NOT_MET</code> with the exact reason instead of fabricating deltas.</li>
+                            <li><strong style="color: #a16207;">Numeric mesh-quality table</strong> (skew / ortho / aspect / growth) is <code>NO_DATA</code>: only <code>mesh_statistics_*.png</code> renders exist; export a numeric CSV to fill the table.</li>
+                            <li><strong style="color: #a16207;">Solver residual logs &amp; mass-balance series</strong> are not stored in this checkout, so the convergence panel shows the metric audit it does have and labels residuals/balance <code>not_available</code>.</li>
+                            <li><strong style="color: #a16207;">Optimization, SSH/remote-solver, Manim demo and CAD-preview</strong> endpoints answer structured <code>not_implemented</code> stubs (honest degradation, never silent success).</li>
+                            <li><strong style="color: #a16207;">Figure self-sufficiency</strong> (labels/units/case on every plot, SOP Ch.13.3) is a generator-side concern tracked out of scope in <code>src/ui/todo.md</code>.</li>
                         </ul>
                     </div>
                 </div>
@@ -1391,11 +1392,11 @@
                     </div>
                     <div class="plot-card" style="grid-column: span 2;">
                         <small>Thermal Loading Convergence (Heat Flux, Load)</small>
-                        <div id="img-conv-thermal" style="min-height: 120px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #f87171; font-size: 0.75rem; padding: 12px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — thermal-convergence render absent from assets (repo-side gap, see Limitations)</div>
+                        <div id="img-conv-thermal" style="min-height: 120px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #b91c1c; font-size: 0.75rem; padding: 12px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — thermal-convergence render absent from assets (repo-side gap, see Limitations)</div>
                     </div>
                     <div class="plot-card" style="grid-column: span 2;">
                         <small>Mission Parameter Convergence (β, g, P_stag)</small>
-                        <div id="img-conv-mission" style="min-height: 120px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #f87171; font-size: 0.75rem; padding: 12px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — mission-parameter convergence render absent from assets (repo-side gap, see Limitations)</div>
+                        <div id="img-conv-mission" style="min-height: 120px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #b91c1c; font-size: 0.75rem; padding: 12px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — mission-parameter convergence render absent from assets (repo-side gap, see Limitations)</div>
                     </div>
                     <div class="plot-card">
                         <small>Thermal Map (K)</small>
@@ -1437,11 +1438,11 @@
 
                 <h4 style="margin-top: 30px; color: var(--primary); font-family: var(--font-family); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">Thermo-Chemical Diagnostics (Species)</h4>
                 <div class="plot-grid" id="species-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
-                    <div class="plot-card"><small>N2 Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #f87171; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
-                    <div class="plot-card"><small>O2 Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #f87171; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
-                    <div class="plot-card"><small>NO Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #f87171; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
-                    <div class="plot-card"><small>N Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #f87171; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
-                    <div class="plot-card"><small>O Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #f87171; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
+                    <div class="plot-card"><small>N2 Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #b91c1c; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
+                    <div class="plot-card"><small>O2 Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #b91c1c; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
+                    <div class="plot-card"><small>NO Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #b91c1c; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
+                    <div class="plot-card"><small>N Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #b91c1c; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
+                    <div class="plot-card"><small>O Concentration</small><div style="min-height: 90px; border-radius: 8px; border: 1px dashed rgba(244,63,94,0.45); display: flex; align-items: center; justify-content: center; text-align: center; color: #b91c1c; font-size: 0.72rem; padding: 10px; background: rgba(244,63,94,0.05);">PLOT NOT GENERATED — species map absent from assets (see Limitations)</div></div>
                 </div>
                 
                 <!-- SOP results panels (Phase 2 — src/ui/todo.md 2.4/2.6/2.7) -->
