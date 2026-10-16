@@ -456,6 +456,14 @@ The per-ply decomposition also shows where the stack spends its resistance. Beca
     \label{fig:tps_per_ply_resistance}
 \end{figure}
 
+\subsubsection{Lateral Conduction and Surface Energy Balance}
+
+The one-dimensional assumption is verified by the lateral conduction field. The mean lateral flux is $-9.85 \times 10^{-10}$\,W/m$^2$ for the reference tree and $2.68 \times 10^{-9}$\,W/m$^2$ for the optimized tree, both effectively zero against the $1.93 \times 10^{5}$\,W/m$^2$ through-flux. The lateral field is symmetric: the reference tree spans $-6.30$ to $+6.90$\,W/m$^2$ and the optimized tree $-7.43$ to $+6.74$\,W/m$^2$, with 1632/2016 elements losing/gaining to neighbours in the reference and 1536/2112 in the optimized, so no systematic lateral drift exists.
+
+The surface energy balance closes. The Stefan-Boltzmann constant recovered from the Ada \texttt{Radiative\_Eq\_Temp\_C} identity is $5.6703745 \times 10^{-8}$\,W/m$^2$/K$^4$ against the CODATA value $5.6703744 \times 10^{-8}$\,W/m$^2$/K$^4$, a relative difference of $1.7 \times 10^{-8}$. The maximum absolute surface-energy residual is $0.0631$\,W/m$^2$ (reference) and $0.0618$\,W/m$^2$ (optimized), with relative residuals $1.78 \times 10^{-4}$ and $1.99 \times 10^{-4}$. The radiative fraction of the surface energy balance is $0.866$ (reference) and $0.869$ (optimized), with 2971/3017 elements using the radiative path.
+
+Zero-flux elements are real and arise from DSMC noise. Of 3648 surface elements, 912 (reference) and 960 (optimized) sit at zero flux; 288 elements in each tree carry negative raw flux that the solver floors at zero by axiom~A1. These elements are concentrated in the wake and shoulder regions where the DSMC signal is below the noise floor.
+
 Thermal soak is dominated by integrated heat load, not instantaneous heat flux. For this trajectory point $Q = 165.72$\,J/cm$^2$, or $1.657$\,MJ/m$^2$; the 1D transient model integrates the heat pulse over the exposure duration, so this accumulated quantity, not the Chapter~3 stagnation-point correlation value, sets the backface temperature. Implications for TPS design:
 \begin{itemize}
     \item The active 7.131\,mm layup is insufficient, so insulation must gain Pyrogel content. Cutting backface temperature from 955.66\,K to the 773\,K Kapton limit raises the required thermal resistance by a factor of 1.39, the ratio implied by the lumped-capacitance back-face model ($(955.66-300)/(773-300)$), which for this stack means thickening Pyrogel plies, not outer fabric.
