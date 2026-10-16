@@ -1814,12 +1814,13 @@ async function refreshGatesEvidence() {
     const el = document.getElementById('gates-evidence-table');
     if (!el) return;
     try {
-        const [grid, mesh, conv, hist, ready] = await Promise.all([
+        const [grid, mesh, conv, hist, ready, figures] = await Promise.all([
             sopJson('/api/validation/grid-independence'),
             sopJson('/api/mesh-quality'),
             sopJson('/api/convergence'),
             sopJson('/api/history'),
             sopJson('/api/readiness/sparta'),
+            sopJson('/api/figures/audit'),
         ]);
         const histCount = Array.isArray(hist) ? hist.length : 0;
         const meshOk = mesh.status === 'ok';
@@ -1847,6 +1848,12 @@ async function refreshGatesEvidence() {
             ['8. Run record', histCount > 0 ? 'MET' : 'NOT MET', histCount > 0 ? histCount + ' row(s) in runs.csv' : 'runs.csv absent (fresh checkout)'],
             ['9. Limitations list', 'MET', 'static block below (Ch.12#10)'],
             ['10. Evidence self-check', 'MET', 'all 10 rows rendered from live endpoints'],
+            ['11. Figure self-sufficiency (Ch.13.3)', figures.status || 'PARTIAL',
+                (figures.compliant_pct == null ? 'audit unavailable' :
+                 (figures.compliant_pct + '% compliant (' +
+                  ((figures.status_counts && figures.status_counts.ok) || 0) + '/' + (figures.figures || 0) + ' files, ' +
+                  ((figures.missing_counts && Object.keys(figures.missing_counts)[0]) || 'none') + ')'))
+            ],
         ];
         const rowHtml = (r) =>
             '<tr><td style="padding:5px 8px; border-bottom:1px solid #9ca3af;">' + sopEsc(r[0]) +

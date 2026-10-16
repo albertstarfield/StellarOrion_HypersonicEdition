@@ -238,6 +238,20 @@
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">
+                            <label>Tube Radius (m)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Toroid Tube Radius</strong>
+                                <span class="unit">Unit: Metres (m)</span>
+                                Minor radius of each inflatable torus -- the tube's own thickness, distinct from the ring count.
+                                <br><br>
+                                <strong>Optimiser bound:</strong> r_tor is searched in 0.10 to 0.18 m; the sidecar's baseline is 0.135 m.
+                            </div>
+                        </div>
+                        <input type="number" id="ref-toroid-radius" value="0.135" min="0.05" max="0.30" step="0.005">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
                             <label>Mass (kg)</label>
                             <span class="info-icon">?</span>
                             <div class="tooltip-text">
@@ -1348,7 +1362,7 @@
                             <li><strong style="color: #a16207;">Mesh-quality numbers come from the committed SOP CSV</strong> (<code>results/99_shared/sop/<tree>_mesh_quality.csv</code>, 17 metrics with verdicts — skew 0, ortho 1, growth 1.0, volume-closure 1.33e-14) rather than being auto-regenerated per run; re-running the grid audit refreshes them.</li>
                             <li><strong style="color: #a16207;">Residuals shown are DSMC stationarity</strong> (particle retention vs step from <code>results/.../residuals.csv</code>), a mass-balance proxy — SPARTA does not emit a CFD-style RMS residual, and the panel says so instead of faking one.</li>
                             <li><strong style="color: #a16207;">Optimization, SSH/remote-solver, Manim demo and CAD-preview</strong> endpoints answer structured <code>not_implemented</code> stubs (honest degradation, never silent success) — see <code>src/ui/todo.md § Phase 5</code>.</li>
-                            <li><strong style="color: #a16207;">Figure self-sufficiency</strong> (labels/units/case on every plot, SOP Ch.13.3) is a generator-side concern tracked out of scope in <code>src/ui/todo.md</code>.</li>
+                            <li><strong style="color: #a16207;">Figure self-sufficiency</strong> (SOP Ch.13.3) is now <em>partially</em> met: <code>/api/figures/audit</code> reports 352/389 figures (90.49%) compliant via generator source; 37 have no renderer and are listed in <code>results/99_shared/sop/figure_checklist.csv</code>.</li>
                         </ul>
                     </div>
                 </div>
