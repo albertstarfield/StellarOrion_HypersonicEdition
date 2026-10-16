@@ -78,21 +78,63 @@ echo ""
 echo "Running: alr exec -- gnatprove -P stellarorion_program_proc.gpr --level=$LEVEL"
 echo ""
 
-if alr exec -- gnatprove -P stellarorion_program_proc.gpr --level="$LEVEL"; then
-    echo ""
-    echo "GNATprove: PASSED (Level $LEVEL)"
-else
-    echo ""
-    echo "GNATprove: FAILED (Level $LEVEL)"
-    echo "Check the output above for unproved checks."
+GNATPROVE_OUT="obj/gnatprove/gnatprove.out"
+GNATPROVE_RC=0
+alr exec -- gnatprove -P stellarorion_program_proc.gpr --level="$LEVEL" || GNATPROVE_RC=$?
+
+echo ""
+
+# ─────────────────────────────────────────────────────────────────────
+# F-proof(1): a zero exit code means the proof run COMPLETED, not that
+# every obligation was discharged.  GNATprove exits 0 on a finished run
+# with unproved checks still in the summary.  Previously the script keyed
+# `PASSED` on the exit code alone, so it printed "GNATprove: PASSED" with
+# 31 unproved obligations sitting directly above that line.  PASSED is now
+# keyed on an unproved count of exactly zero, parsed from the summary the
+# prover itself wrote.
+# ─────────────────────────────────────────────────────────────────────
+if [ ! -f "$GNATPROVE_OUT" ]; then
+    echo "GNATprove: FAILED (Level $LEVEL) -- summary missing at $GNATPROVE_OUT"
+    echo "gnatprove exited $GNATPROVE_RC; without a summary the result cannot be read."
     exit 1
 fi
+
+# Sum (total - proved) over every `not proved, N checks out of M proved`
+# line.  awk always prints a number, so an all-proved run yields 0.
+UNPROVED=$(grep -oE 'not proved, [0-9]+ checks out of [0-9]+ proved' "$GNATPROVE_OUT" 2>/dev/null \
+    | awk '{s += $7 - $3} END {print s+0}' || true)
+UNPROVED=${UNPROVED:-0}
+
+if [ "$GNATPROVE_RC" -ne 0 ]; then
+    echo "GNATprove: FAILED (Level $LEVEL) -- gnatprove exited $GNATPROVE_RC"
+    echo "Check the output above for analysis errors."
+    exit 1
+fi
+
+if [ "$UNPROVED" -gt 0 ]; then
+    echo "GNATprove: NOT PROVED (Level $LEVEL) -- $UNPROVED obligation(s) unproved"
+    echo "Summary: $GNATPROVE_OUT (see the 'Unproved' column)."
+    exit 1
+fi
+
+TOTAL_CHECKS=$(awk '/^Total /{print $2; exit}' "$GNATPROVE_OUT" 2>/dev/null || true)
+TOTAL_CHECKS=${TOTAL_CHECKS:-?}
+echo "GNATprove: PASSED (Level $LEVEL) -- $TOTAL_CHECKS checks, 0 unproved"
 
 echo ""
 
 # ─────────────────────────────────────────────────────────────────────
 # Phase 2: gnatcov Ada Code Coverage (optional)
 # ─────────────────────────────────────────────────────────────────────
+# F-proof(2): these two MUST be initialised at TOP LEVEL.  They were only
+# assigned inside `if $RUN_COVERAGE`, but line ~259 reads GNATCOV_FAILED
+# unconditionally under `set -u`, so the default (no coverage requested)
+# path died with "GNATCOV_FAILED: unbound variable" -- which read as
+# "coverage failed" when coverage was never even asked for.  Same defect
+# pattern PYTHON_COVERAGE_FAILED already had fixed; this closes the twin.
+GNATCOV_STATUS="NOT RUN"
+GNATCOV_FAILED=false
+
 if $RUN_COVERAGE; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Phase 2: gnatcov Ada Code Coverage"

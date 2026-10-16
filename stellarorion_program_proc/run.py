@@ -1178,6 +1178,18 @@ def _phase2c_generate_media_and_sync() -> None:
                     "--solve-out-dir", _solve_out,
                     "--outdir", os.path.join(script_dir, "results", _tree, "plots", "tps_per_ply")])
 
+    #  SOP numeric artefacts (Ch.5 mesh quality, Ch.8 residual/balance series,
+    #  Ch.6 3-level grid independence).  These are the three tables the
+    #  sidecar GUI reports as NOT_MET today because no machine-readable
+    #  source exists; this call is what makes them generate BY DEFAULT on
+    #  every run.py pass instead of by hand.  Runs with no flags so all
+    #  three families are emitted from whatever data the run just produced.
+    _run_media([os.path.join("scripts", "generate_sop_artifacts.py")])
+    #  SOP Ch.13.3 figure self-sufficiency checklist (title, axis units,
+    #  legend, colourbar limits).  Runs after the figures exist so it audits
+    #  the pass that just produced them.
+    _run_media([os.path.join("scripts", "audit_figure_sufficiency.py")])
+
     # MP4s
     _run_media([os.path.join("src", "python", "generate_outputs.py"), "--mp4-only", "--validation"])
     _run_media([os.path.join("src", "python", "generate_outputs.py"), "--mp4-only", "--optimized-topology"])

@@ -263,8 +263,14 @@ def render_field_figure(raw: np.ndarray, krig: np.ndarray, step: int, path: str)
     #  the SAME field, and the KRIGED panel deliberately reuses the RAW
     #  limits, so a per-row bar is the physically correct single key.
     for row in range(4):
+        #  SOP 13.3: a colour scale must show its PHYSICAL QUANTITY as well
+        #  as numeric limits.  ROWS is field-major (line 214), so row r holds
+        #  the RAW/KRIGED pair of FIELDS[ROWS[r*2][1]] -- naming that field
+        #  is what makes the bar readable without the panel titles.
+        _cb_label = FIELDS[ROWS[row * 2][1]][2]
         cb = fig.colorbar(axes[row, 1].collections[0], ax=list(axes[row, :]),
-                          orientation="vertical", fraction=0.035, pad=0.015)
+                          orientation="vertical", fraction=0.035, pad=0.015,
+                          label=_cb_label)
         #  8pt floor (FONT_PT-1): -2 rendered 7pt colourbar ticks, which
         #  failed the printed >=8pt check (image-specialist, 2026-10-09).
         cb.ax.tick_params(labelsize=FONT_PT - 1)
