@@ -9,15 +9,18 @@
 #   A2  A single 3/4 view hides half the body.  A report figure that claims
 #       to show "the full 3D model" must show it from several camera
 #       angles, otherwise the reader cannot see the whole surface.
-#   A3  `hiad_geometry.generate_cross_section` is the SINGLE meridian
-#       source, and `render_geometry_grid.revolve_profile` is the SINGLE
-#       surface-of-revolution implementation.  This script imports both —
+#   A3  There are exactly TWO permitted meridian sources — the analytic
+#       `hiad_geometry.generate_cross_section` (used when no CFD mesh
+#       exists) and the flown `HIAD_custom.surf` (A6) — and exactly ONE
+#       surface-of-revolution implementation,
+#       `render_geometry_grid.revolve_profile`.  This script imports both;
 #       it never re-derives the 4-segment profile maths nor the
 #       revolution broadcast (no copy-paste divergence, per the
 #       no_copy_paste_divergence rule).
-#   A4  Design data comes ONLY from `hiad_optimization_results.json`
-#       (pure post-processing — this script NEVER re-runs the optimizer,
-#       matching render_geometry_grid.py A4).
+#   A4  Optimiser outputs (cost, Cd, heat load, the analytic triple) come
+#       ONLY from `hiad_optimization_results.json` — pure post-processing,
+#       this script NEVER re-runs the optimizer (matching render_geometry_grid
+#       A4).  The DRAWN MERIDIAN is governed by A6 when a CFD `.surf` exists.
 #   A5  The body is axisymmetric.  Therefore the SILHOUETTE is invariant
 #       under azimuth and only the shading / feature orientation changes.
 #       This is a physical fact, not a rendering bug — the figure states
@@ -79,6 +82,13 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _SCRIPT_DIR.parent              # stellarorion_program_proc/
 _SRC_PYTHON = _PROJECT_ROOT / "src" / "python"
 _RESULTS_JSON = _SRC_PYTHON / "hiad_optimization_results.json"
+_RESULTS_ROOT = _PROJECT_ROOT / "results"
+
+# A4-derived: which run folder's CFD mesh represents each headline design.
+# The `.surf` in that folder is the body SPARTA actually flew, so when it
+# exists it MUST win over the analytic JSON triple -- otherwise this figure
+# and the ParaView/CFD artefacts would show two different vehicles.
+_DESIGN_TREE = {"irve3": "00_reference", "optimized": "03_opt_geometry"}
 
 # -- Import the SHARED geometry + revolution code (A3 — no duplication) ------
 sys.path.insert(0, str(_SRC_PYTHON))
@@ -189,6 +199,7 @@ def load_designs(json_path: Path = _RESULTS_JSON) -> list:
                     "cost": float(src["cost"]),
                     "cd": float(src.get("Cd", float("nan"))),
                     "heat_load": float(src.get("total_heat_load_Jcm2", float("nan"))),
+                    "tree": _DESIGN_TREE[key],
                 }
             )
         except (KeyError, TypeError, ValueError) as exc:
@@ -204,6 +215,145 @@ def load_designs(json_path: Path = _RESULTS_JSON) -> list:
               "figure uses the round-1 optimum (run --validate-round2 for R2).")
 
     return designs
+
+
+# ===========================================================================
+# FUNCTION: read_surf_profile
+# ===========================================================================
+#
+# AXIOMS:
+#   A6  `results/<tree>/HIAD_custom.surf` is the body the CFD flew, so it
+#       is the authoritative meridian for that run folder.  When present
+#       it overrides the analytic JSON triple for this figure.
+#   A7  A missing or malformed `.surf` must fall back to the analytic
+#       model WITH A LOUD PRINTED NOTE -- never a silently substituted
+#       vehicle, and never an invented profile.
+# THEORIES:
+#   T5  The `.surf` "Points" block is (id, axial, radial) of an open 2-D
+#       curve that SPARTA revolves; feeding it to `revolve_profile` yields
+#       the same surface of revolution SPARTA uses, so the figure and the
+#       CFD describe one object.
+# APPLICATIONS: read file -> parse "Points" block -> validate -> return
+#               (x, r) or None on any failure.
+# CITATIONS: [6] SPARTA surface file format (surf files: header, `Points`,
+#               one `id x y` row per line)
+#
+# TIMING ANALYSIS
+#   CPU Time: < 5 ms   WCET: 50 ms   Space Complexity: O(N) for N points
+# ===========================================================================
+def read_surf_profile(tree: str) -> tuple | None:
+    """Load the CFD meridian profile for a run folder, or None if absent.
+
+    Parameters:
+        tree -- run-folder name under results/ (e.g. "00_reference")
+
+    Returns:
+        (x, r) as float numpy arrays of equal length, or None when the
+        file is missing or malformed.  None means "use the analytic
+        model", which the caller must announce (A7).
+
+    Raises:
+        nothing -- every failure path is reported and returns None, so a
+        missing mesh degrades the figure rather than aborting it, but the
+        degradation is always printed.
+    """
+    surf = _RESULTS_ROOT / tree / "HIAD_custom.surf"
+    if not surf.is_file():
+        print(
+            f"[4views] note: {surf} absent — '{tree}' falls back to the "
+            f"analytic JSON geometry (A7). The figure and that run's CFD "
+            f"mesh will NOT be the same vehicle.",
+            file=sys.stderr,
+        )
+        return None
+    try:
+        text = surf.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(
+            f"[4views] WARN: cannot read {surf}: {exc} — falling back to "
+            f"the analytic JSON geometry (A7)",
+            file=sys.stderr,
+        )
+        return None
+
+    lines = text.splitlines()
+    # Header line 2 is "  <N> points"; guard against a truncated file.
+    try:
+        n_points = int(lines[1].split()[0])
+    except (IndexError, ValueError) as exc:
+        print(
+            f"[4views] WARN: {surf} has no parseable point count "
+            f"(line 2 = {lines[1] if len(lines) > 1 else '<missing>'!r}): "
+            f"{exc} — falling back to the analytic model (A7)",
+            file=sys.stderr,
+        )
+        return None
+
+    start = next((i for i, l in enumerate(lines) if l.strip() == "Points"), None)
+    if start is None:
+        print(
+            f"[4views] WARN: {surf} has no 'Points' block — falling back to "
+            f"the analytic model (A7)",
+            file=sys.stderr,
+        )
+        return None
+
+    xs: list[float] = []
+    rs: list[float] = []
+    for line in lines[start + 1 :]:
+        if line.strip() in ("", "Lines"):
+            if line.strip() == "Lines":
+                break
+            continue
+        parts = line.split()
+        if len(parts) != 3:
+            # A trailing "Lines" block or an index row; stop once we have
+            # the declared number of points.
+            if len(xs) == n_points:
+                break
+            print(
+                f"[4views] WARN: {surf} row {line!r} is not '<id> <x> <r>'; "
+                f"stopping at {len(xs)}/{n_points} points (A7)",
+                file=sys.stderr,
+            )
+            break
+        try:
+            xs.append(float(parts[1]))
+            rs.append(float(parts[2]))
+        except ValueError as exc:
+            print(
+                f"[4views] WARN: {surf} non-numeric row {line!r}: {exc} — "
+                f"falling back to the analytic model (A7)",
+                file=sys.stderr,
+            )
+            return None
+        if len(xs) == n_points:
+            break
+
+    if len(xs) != n_points or n_points < 4:
+        print(
+            f"[4views] WARN: {surf} yielded {len(xs)} of {n_points} declared "
+            f"points (need >= 4) — falling back to the analytic model (A7)",
+            file=sys.stderr,
+        )
+        return None
+    x = np.asarray(xs, dtype=float)
+    r = np.asarray(rs, dtype=float)
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(r))):
+        print(
+            f"[4views] WARN: {surf} contains non-finite coordinates — "
+            f"falling back to the analytic model (A7)",
+            file=sys.stderr,
+        )
+        return None
+    if float(np.max(np.abs(r))) <= 0.0:
+        print(
+            f"[4views] WARN: {surf} is radially degenerate (max |r| = 0) — "
+            f"falling back to the analytic model (A7)",
+            file=sys.stderr,
+        )
+        return None
+    return (x, r)
 
 
 # ===========================================================================
@@ -236,9 +386,17 @@ def render_four_views(design: dict, out_path: Path) -> None:
             revolve_profile rejects the arrays (caller decides policy).
         OSError    -- if the raster cannot be written.
     """
-    x, r = generate_cross_section(  # [1] single meridian source (A3)
-        design["R_N"], design["r_tor"], design["half_cone"]
-    )
+    # A6: prefer the CFD mesh the run actually flew; A7: fall back to the
+    # analytic triple only when the .surf is missing/unusable, loudly.
+    surf_profile = read_surf_profile(design["tree"])
+    if surf_profile is not None:
+        x, r = surf_profile
+        source = f"CFD mesh {design['tree']}/HIAD_custom.surf ({len(x)} pts)"
+    else:
+        x, r = generate_cross_section(  # [1] analytic fallback (A7)
+            design["R_N"], design["r_tor"], design["half_cone"]
+        )
+        source = "analytic JSON model (no CFD .surf available)"
     X, Y, Z = revolve_profile(x, r)  # [2] single revolution source (A3)
 
     # T4: colour by axial position so the silhouette reads as a shape.
@@ -270,10 +428,22 @@ def render_four_views(design: dict, out_path: Path) -> None:
     #  with the "R_N = ..." line (defect measured 2026-10-08 by pixel
     #  inspection).  Anchoring the title from the top and moving the note to
     #  the BOTTOM margin removes the collision entirely.
+    # The geometry line MUST describe what is actually drawn: quoting
+    # R_N/r_tor/half-cone over a .surf-derived body would mislabel the
+    # figure (that triple generated a different vehicle).
+    if surf_profile is not None:
+        geom_line = (
+            f"meridian from {design['tree']}/HIAD_custom.surf    "
+            f"L = {x_max:.4f} m    r_max = {r_max:.4f} m"
+        )
+    else:
+        geom_line = (
+            f"R_N = {design['R_N']:.4f} m    r_tor = {design['r_tor']:.4f} m    "
+            f"half-cone = {design['half_cone']:.3f}\u00b0"
+        )
     fig.suptitle(
         f"{design['label']}\n"
-        f"R_N = {design['R_N']:.4f} m    r_tor = {design['r_tor']:.4f} m    "
-        f"half-cone = {design['half_cone']:.3f}\u00b0    J = {design['cost']:.6f}",
+        f"{geom_line}    J = {design['cost']:.6f}    source: {source}",
         color=_TEXT, fontsize=11, y=0.98, va="top",
     )
     #  A5: the body is axisymmetric, so this note belongs in the figure

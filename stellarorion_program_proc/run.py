@@ -144,6 +144,10 @@ _COQ_STATUS_FILE = _PROJECT_ROOT / "results" / "coq_proof_status.json"
 #   - StellarOrion_program_proc/src/python/generate_outputs.py MP4 generator
 
 _VALIDATION_TREES = ("validation", "00_reference", "01_smooth")
+# Trees that own a CFD surf snapshot (paraview/surf_*.vtu) and a per-ply TPS
+# set.  Single source for both the VTU-completion loop and the per-ply loop
+# below, so the two can never drift apart (no_copy_paste_divergence).
+_SURF_TREES = ("00_reference", "03_opt_geometry")
 _MEDIA_OUT_BASE = _PROJECT_ROOT / "results" / "plots"
 _MEDIA_SUBDIRS = (
     "short_window",
@@ -1092,6 +1096,22 @@ def _phase2c_generate_media_and_sync() -> None:
         else:
             print(f"  [OK] {' '.join(args)}")
 
+    # Complete the ParaView VTU array sets BEFORE anything reads them.
+    # WHY: `Write_VTU` (stellarorion_sparta.adb) emits CellData only, so
+    # ParaView rendered flat per-cell blocks with 3 of the ~23 quantities
+    # this project actually produces.  `complete_vtu.py` adds PointData
+    # (smooth colouring), the per-step array set from each tree's own
+    # validation_timeseries.csv, and <FieldData> provenance.  It is
+    # idempotent, so an unchanged file is rewritten byte-identically.
+    for _vtu_tree in _SURF_TREES:
+        _pv_dir = os.path.join(script_dir, "results", _vtu_tree, "paraview")
+        if os.path.isdir(_pv_dir):
+            _run_media([os.path.join("scripts", "complete_vtu.py"),
+                        "--tree", _vtu_tree])
+        else:
+            print(f"  [Phase 2c] WARNING: {_pv_dir} missing; "
+                  "VTU completion skipped for this tree.")
+
     # Per-tree validation plots
     for tree in _VALIDATION_TREES:
         results_dir = os.path.join(script_dir, "results", tree)
@@ -1114,9 +1134,12 @@ def _phase2c_generate_media_and_sync() -> None:
     #  4-angle turntable of the full 3-D body: a 2x2 grid of the SAME surface
     #  of revolution rendered at azimuths 0/90/180/270 deg, once for the
     #  IRVE-3 validation baseline and once for the round-1 optimized topology.
-    #  It reads hiad_optimization_results.json and reuses the same
-    #  generate_cross_section + revolve_profile single source as the grid
-    #  above (A3), so no geometry maths is duplicated.
+    #  Geometry source, in priority order: the flown
+    #  results/<tree>/HIAD_custom.surf (so this figure and the ParaView/CFD
+    #  artefacts show ONE vehicle), else the analytic triple in
+    #  hiad_optimization_results.json.  Revolution reuses the same
+    #  revolve_profile single source as the grid above (A3) — no duplicate
+    #  geometry maths.
     _run_media([os.path.join("scripts", "render_geometry_4views.py")])
     _run_media([os.path.join("scripts", "render_kriging_panel.py"), "--outdir", os.path.join(media_out, "kriging"), "--all-steps"])
     _run_media([os.path.join("scripts", "render_optimization_comparison.py")])
@@ -1131,7 +1154,7 @@ def _phase2c_generate_media_and_sync() -> None:
     # Per-ply TPS sets -- one per tree, each solved on its own snapshot
     # and flight condition, then plotted into its own folder.  No tree borrows
     # another's altitude/velocity or stage annotation.
-    per_ply_trees = ("00_reference", "03_opt_geometry")
+    per_ply_trees = _SURF_TREES
     _per_ply_args = {
         "00_reference": (52.069210, 3101.079),
         "03_opt_geometry": (52.069210, 3101.079),
@@ -1298,9 +1321,9 @@ def _sync_media_into_canonical_tree() -> None:
     # only source directory cannot leave behind a littered empty sibling.
     opt_src = Path(script_dir) / "results" / "03_opt_geometry" / "plots"
     # Collect the source artefacts once so we never mkdir an empty folder.
-    opt_sources = ([p for p in opt_src.iterdir()
-                   if p.suffix.lower() in {".png", ".mp4"}]
-                  if opt_src.is_dir() else [])
+    opt_sources: list[Path] = ([p for p in opt_src.iterdir()
+                               if p.suffix.lower() in {".png", ".mp4"}]
+                              if opt_src.is_dir() else [])
     if opt_sources:
         (Path(media_out) / "optimized_topology").mkdir(parents=True, exist_ok=True)
         targets = sorted({"mp4" if p.suffix.lower() == ".mp4" else "plots"
@@ -2045,10 +2068,18 @@ def _post_optimization_outputs(stdout_text: str) -> None:
     print(f"  [OPTIMIZE] Generated: {os.path.basename(json_path)}")
 
     # 4. Bar chart plot
+    # matplotlib is an OPTIONAL dependency here: the block is guarded by
+    # try/except below, so a missing matplotlib degrades to a skipped chart
+    # rather than a crash. pyrefly's configured interpreter
+    # (/opt/homebrew/bin/python3 -> 3.15) does not ship matplotlib, so the
+    # import is an intentional ignore with this reason, not an oversight.
+    # NOTE: /opt/homebrew/bin/python3.14 DOES have matplotlib 3.11.2;
+    # pointing the whole config at it raises repo-wide errors 379079 ->
+    # 430640, so it is deliberately not used.
     try:
-        import matplotlib
+        import matplotlib  # type: ignore[missing-import]
         matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt  # type: ignore[missing-import]
 
         fig, ax = plt.subplots(figsize=(12, 6))
         params = ["Diameter\n(m)", "Angle\n(deg)", "Nose radius\n(m)",
@@ -2355,14 +2386,12 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
             return
         # Target specific trees / per-ply only: call the solve+plot loop that
         # run.py already uses, limited to the requested trees.
-        trees = []
+        trees: list[str] = []
         if args.regenerate_plots == "tps-validation":
             trees = ["00_reference"]
         elif args.regenerate_plots == "tps-optimized":
             trees = ["03_opt_geometry"]
-        elif args.regenerate_plots == "tps-per-ply":
-            trees = ["00_reference", "03_opt_geometry"]
-        elif args.regenerate_plots == "all":
+        elif args.regenerate_plots in ("tps-per-ply", "all"):
             trees = ["00_reference", "03_opt_geometry"]
         if not trees:
             trees = ["00_reference"]

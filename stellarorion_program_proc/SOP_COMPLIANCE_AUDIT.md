@@ -75,20 +75,32 @@ loaded, so every array appeared broken. Fixed in the Ada writer (commit
 `bc1e8027`), and the 68 existing files repaired with proof (§ P0.4 of the
 overnight plan). **0 unreadable files remain.**
 
-### 2.2 Still open
+### 2.2 Closed since the first pass (evidence below)
+
+| # | Gap | Fix | Verified |
+|---|---|---|---|
+| G1 | `surf_*.vtu` carried **no PointData** at all | `scripts/complete_vtu.py` cell→node averaging (VTK "Cell Data to Point Data" semantics), wired into `run.py` Phase 2c **before** any reader runs | 11 PointData arrays per file; `paraview_smoke_test.py` colours+visibility-toggles every one, **46/46 pass** |
+| G2 | `surf_*.vtu` had 3 cell arrays vs `surf_pinn_*`'s 8 | 9 per-step cell arrays joined from each tree's own `validation_timeseries.csv` | 12 CellData arrays per file; smoke test passes on all of them |
+| G5 | No `FieldData` anywhere | 11 numeric FieldData arrays per file, plus an XML identity comment carrying run tree, step, `.surf` MD5 and generator | real VTK reads back `n_points=3696 n_cells=3648 step=100 mach=9.455298 …` |
+| G6 | The 2×2 3-D renders used a **different vehicle** than ParaView/CFD | `render_geometry_4views.py` A6/A7: prefer `results/<tree>/HIAD_custom.surf`, fall back to the JSON triple **loudly**; subtitle now names the source it drew | profile reads back **bit-identical** to each `.surf` (77 pts); rendered grid 77×48 = 3696 verts = the VTU point count |
+
+The G6 measurement that forced the fix: the analytic JSON triple produced
+r_max 2.65221 m (00) / 2.87041 m (03) while the flown `.surf` gives
+1.88019 m / 1.82981 m, and the correction factors differ **by axis and by
+tree** (×1.374 vs ×1.411 for 00; ×1.285 vs ×1.569 for 03) — so it was not
+a scale factor, it was two different geometries.
+
+### 2.3 Still open
 
 | # | Gap | Measured | Impact |
 |---|---|---|---|
-| G1 | `surf_*.vtu` carries **no PointData** at all | point_arrays = `[]` for all 66 | ParaView can only colour by *cell* (flat/faceted) values; smooth interpolated surface colouring is impossible |
-| G2 | `surf_*.vtu` has 3 cell arrays vs `surf_pinn_*`'s 8 | missing `step`, `G_Load`, `HeatLoad_Jcm2`, `HeatFlux_Max_Wm2`, `drag_coefficient` | Production snapshots lack the derived quantities the PINN export already writes |
 | G3 | `optimisation_output/optimised_geometry.vtu` is **empty** | `NumberOfPoints="0" NumberOfCells="0"` | No geometry to display for the optimisation result |
 | G4 | 1482 `irve*_alt*_km_step*.vtu` are **1-point / 1-cell** | 1 point at `(0,0,altitude)`, 1 tuple per array | They are time-series scalar records dressed as geometry — nothing to see in a 3-D view; they belong in an XY/Time-plot, not a mesh |
-| G5 | No `FieldData` anywhere | `field_arrays = []` across all 1551 | No embedded provenance (time, case id, units) — Ch. 11 "record for every run" is not satisfied inside the artefact |
 
-Array inventory actually present across the tree:
+Array inventory actually present across the tree after completion:
 
-- **Point arrays (11):** `altitude_km, density_kgm3, drag_force_N, dynamic_pressure_Pa, g_load, heat_flux_Wcm2, heat_flux_Wm2, mach_number, pressure_Pa, temperature_K, velocity_ms`
-- **Cell arrays (14):** `angle_deg, diameter_m, mass_kg, nose_radius_m, step, toroid_count, toroid_radius_m, Drag_N, G_Load, HeatFlux_Max_Wm2, HeatFlux_Wm2, HeatLoad_Jcm2, Lift_N, drag_coefficient`
+- **Point arrays (14):** `Drag_N, HeatFlux_Wm2, Lift_N, altitude_km, density_kgm3, drag_force_N, dynamic_pressure_Pa, g_load, heat_flux_Wcm2, heat_flux_Wm2, mach_number, pressure_Pa, temperature_K, velocity_ms`
+- **Cell arrays (19):** `Drag_N, G_Load, HeatFlux_Max_Wm2, HeatFlux_Wm2, HeatLoad_Jcm2, Lift_N, angle_deg, diameter_m, drag_coefficient, drag_sum_N, heat_flux_avg_Wm2, heat_flux_sg_Wm2, lift_coefficient, lift_sum_N, mass_kg, nose_radius_m, step, toroid_count, toroid_radius_m`
 
 ---
 
@@ -97,7 +109,7 @@ Array inventory actually present across the tree:
 1. Mesh independence study (3 grid levels, same case) — closes the single
    highest-risk SOP gap and is a real measurement, not a document.
 2. Setup sheet generator wired into `run.py` — cheap, satisfies Ch. 11 #6 + 12 #5.
-3. PointData + missing cell arrays on `surf_*.vtu` — closes G1/G2.
+3. ~~PointData + missing cell arrays on `surf_*.vtu`~~ — **done** (G1/G2/G5/G6).
 4. Uncertainty bands on the validation comparison plots — closes #7 / #12.3.
 
 *Streamlines and isosurfaces (5 and 6) are recorded as accepted limitations for a
