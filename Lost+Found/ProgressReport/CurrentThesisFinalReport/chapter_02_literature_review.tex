@@ -106,7 +106,7 @@ The density ratio instead approaches a finite limit as $Ma \to \infty$:
     \lim_{M \to \infty} \frac{\rho_2}{\rho_1} = \frac{\gamma + 1}{\gamma - 1}
 \end{equation}
 
-For standard air ($\gamma = 1.4$) the limit is $\rho_2/\rho_1 \approx 6$.
+For standard air ($\gamma = 1.4$) the limit is $\rho_2/\rho_1 \approx 6$. (Figure~\ref{fig:shock_wave})
 
 \begin{figure}[!htbp]
     \centering
@@ -144,7 +144,7 @@ Aerothermodynamics couples high-speed aerodynamics with high-temperature thermod
 \par
 A Low Earth Orbit return travels at about $7.8 \text{\,km/s}$ and lunar or Martian returns exceed $11 \text{\,km/s}$ \cite{AndersonHypersonic}; that kinetic energy ($\frac{1}{2}mV^2$) and potential energy ($mgh$) must become thermal energy.
 \par
-The bow shock converts directed kinetic energy into internal energy, raising static temperature above $6000 \text{\,K}$: air then acts as a reacting plasma, dissociating ($N_2 \rightarrow 2N$, $O_2 \rightarrow 2O$) and ionizing ($N \rightarrow N^+ + e^-$), altering $\gamma$, $\mu$ and $k$.
+The bow shock converts directed kinetic energy into internal energy, raising static temperature above $6000 \text{\,K}$: air then acts as a reacting plasma, dissociating ($N_2 \rightarrow 2N$, $O_2 \rightarrow 2O$) and ionizing ($N \rightarrow N^+ + e^-$), altering $\gamma$, $\mu$ and $k$. (Figure~\ref{fig:aerothermodynamics})
 
 \begin{figure}[!htbp]
     \centering
@@ -205,7 +205,7 @@ Billig's empirical fit for a sphere gives:
     \frac{\Delta}{R} = 0.143 \exp\left(\frac{3.24}{M_{\infty}^2}\right)
 \end{equation}
 
-Real gas effects (dissociation) push $\rho_2/\rho_{\infty}$ beyond the ideal gas limit of 6, shrinking $\Delta$ and intensifying wall heating. If $\Delta$ reaches the valley depth between toroids, shock-shock interactions or structural impingement can follow.
+Real gas effects (dissociation) push $\rho_2/\rho_{\infty}$ beyond the ideal gas limit of 6, shrinking $\Delta$ and intensifying wall heating. If $\Delta$ reaches the valley depth between toroids, shock-shock interactions or structural impingement can follow. (Figure~\ref{fig:bow_shock})
 
 \begin{figure}[!htbp]
     \centering
@@ -230,7 +230,7 @@ Allen showed stagnation point heat flux ($\dot{q}_s$) falls as the inverse squar
 
 Bluntness therefore raises drag and lowers peak heat flux, the foundation of HIADs.
 
-See the example below~\cite{aerospace9120800BluntBodyTheory}.
+See the example below~\cite{aerospace9120800BluntBodyTheory}. (Figure~\ref{fig:blunt_body_theory})
 
 \begin{figure}[!htbp]
     \centering
@@ -250,7 +250,7 @@ The TPS cannot be redundant: any breach typically loses the vehicle \cite{Anders
 
 TPS divide by heat management mechanism: ablative TPS char and outgas to thicken the boundary layer (blowing), as in PICA and Avcoat, while reusable TPS re-radiate heat flux ($\dot{q}_{rad} \propto \epsilon T^4$) and insulate the substructure \cite{TPS-stateofIndustryNASA}.
 
-Rigid architectures are capped by the launch fairing diameter, motivating flexible architectures like HIADs for heavier Mars payloads \cite{dinonno2026loftid}.
+Rigid architectures are capped by the launch fairing diameter, motivating flexible architectures like HIADs for heavier Mars payloads \cite{dinonno2026loftid}. (Figure~\ref{fig:tps_technology_grid})
 
 \begin{figure}[htbp]
     \centering
@@ -327,7 +327,7 @@ The load-bearing structure itself is the thermal protection, using Carbon-Carbon
     \item \textbf{Example:} The Reinforced Carbon-Carbon (RCC) nose cap of the Space Shuttle.
 \end{itemize}
 
-These rigid technologies constrain the ballistic coefficient ($m/C_d A$) beyond rigid fairing limits \cite{dinonno2026loftid}.
+These rigid technologies constrain the ballistic coefficient ($m/C_d A$) beyond rigid fairing limits \cite{dinonno2026loftid}. (Figure~\ref{fig:rigid_tps})
 
 \begin{figure}[!htbp]
     \centering
@@ -363,7 +363,7 @@ Figure~\ref{fig:LoftidMission} reproduces the trajectory overview of the predece
     \BeginAccSupp{method=escape,ActualText={Altitude-against-time profile of the IRVE-3 flight, from launch at 0 seconds to loss of signal near 1000 seconds, with altitude rising to about 450 kilometres at 450 seconds and then falling to the surface. Four shaded bands divide the flight into Ascent, Deployment, Experiment Phase and Final Descent. The trajectory line is blue where attitude control is off and green where it is on. Flight events marked along the curve are Launch, Rate Damping, Payload Separation, Nosecone Separation, Inflation Start, ACS Reorient, Inflation Complete, CG Translation, ACS Hold Attitude, 25 pascal, Max Heat Rate, Max Dynamic Pressure, Mach 0.7, a second CG Translation and Loss of Signal. The event annotations are densely packed in the lower right of the source artwork and several of them touch or overlap, so the shaded phase bands are the reliable reading and the individual event labels are not.}}%
 \includegraphics[width=0.77\textwidth]{figures/LOFTID_mission_trajectory.png}%
 \EndAccSupp{}%
-    \caption[Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal.]{Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal. The trajectory is drawn in blue while attitude control is off and in green once it is on. One caution belongs with this figure: in the source artwork the event annotations are packed tightly enough in the descent that several of them touch or overprint one another, and the trajectory line crosses the legend. The phase bands and the order of the events are therefore readable from this figure but the precise event times are not, and no event time is quoted from it anywhere in this work; the flight conditions used in Chapter~\ref{ch:results} are taken from the reference sources rather than measured off this plot. Source: Olds et al.~\cite{old2013irve3postflight}, Figure~1.}
+    \caption[Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal.]{Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal. The trajectory is drawn in blue while attitude control is off and in green once it is on. One caution belongs with this figure: in the source artwork the event annotations are packed tightly enough in the descent that several of them touch or overprint one another, and the trajectory line crosses the legend. The phase bands and the order of the events are therefore readable from this figure but the precise event times are not, and no event time is quoted from it anywhere in this work; the flight conditions used in Chapter~\ref{ch:results} are taken from the reference sources rather than measured off this plot. Source: Olds et al.~\cite{old2013irve3postflight}, Figure~1. (Figure~\ref{fig:hiad_loftid})}
     \label{fig:LoftidMission}
 \end{figure}
 
@@ -402,7 +402,7 @@ Conventional re-entry vehicles use smooth Outer Mold Lines for uniform heating, 
 \par
 A golf ball's dimples trip the boundary layer into turbulence to reduce drag; hypersonic IAD waviness differs in scale (macro valleys, not micro-roughness), objective (drag maximization), and thermal consequence (heat flux rises by a factor of 3 to 5 over laminar flow), as documented by~\cite{AndersonHypersonic}.
 
-The scalloped topology is therefore studied for its aerothermal effect on shock structure and local heating.~\cite{white2006viscous}
+The scalloped topology is therefore studied for its aerothermal effect on shock structure and local heating. (Figure~\ref{fig:surface_topology})~\cite{white2006viscous}
 
 \begin{figure}[!htbp]
     \centering
@@ -450,7 +450,7 @@ Compression waves at each toroid's windward face drive the interaction: as flow 
 \par
 That shock penetrates the boundary layer, imposing a strong adverse pressure gradient ($\frac{dp}{dx} > 0$) that propagates upstream through the subsonic part and separates the flow before the valley floor; wall realignment at the next crest then generates a reattachment shock.
 
-Where that reattachment shock meets the boundary layer the layer is extremely thin, so the impinging shock gives a spike in pressure and heat flux well above smooth-body stagnation heating \cite{AndersonHypersonic,aerospace10080729SWBLISBLI}.
+Where that reattachment shock meets the boundary layer the layer is extremely thin, so the impinging shock gives a spike in pressure and heat flux well above smooth-body stagnation heating \cite{AndersonHypersonic,aerospace10080729SWBLISBLI}. (Figure~\ref{fig:sbli})
 
 \begin{figure}[!htbp]
     \centering
@@ -474,7 +474,7 @@ Stability depends on the valley length-to-depth ratio ($L/D$).
     \item \textbf{Closed Cavity ($L/D > 10$):} The shear layer curves inward and impinges on the floor, a local hot spot that negates scalloping's benefit.
 \end{itemize}
 
-See an example of this recirculation effect~\cite{RecirculationCaseWindDrivenCoastal}.
+See an example of this recirculation effect~\cite{RecirculationCaseWindDrivenCoastal}. (Figure~\ref{fig:recirculation_zones})
 
 \begin{figure}[!htbp]
     \centering
@@ -516,7 +516,7 @@ Substituting back gives:
 
 Scalloped IAD geometry is therefore vulnerable: global heating is low, but each toroid tube ($R_{tube}$) has a small local radius, so every crest is a stagnation point with peak heating far above a smooth sphere-cone.
 
-An analogue of this localized heating is shown below.
+An analogue of this localized heating is shown below. (Figure~\ref{fig:peak_heating})
 
 \begin{figure}[!htbp]
     \centering
@@ -535,7 +535,7 @@ Fay-Riddell needs post-shock velocity gradients and boundary-layer edge properti
     \label{eq:sutton_graves}
 \end{equation}
 
-\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ the freestream density, $R_N$ the nose radius and $V_{\infty}$ the freestream velocity. For a 5-species reacting air model of Earth air $C_{SG} = 1.7415 \times 10^{-4}$ in SI units, the value adopted here \cite{sutton1971gravesh} and the value the StellarOrion engine carries.
+\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ the freestream density, $R_N$ the nose radius and $V_{\infty}$ the freestream velocity. For a 5-species reacting air model of Earth air $C_{SG} = 1.7415 \times 10^{-4}$ in SI units, the value adopted here \cite{sutton1971gravesh} and the value the StellarOrion engine carries. (Figure~\ref{fig:sutton_graves_parametric})
 
 \begin{figure}[htbp]
     \centering
@@ -686,7 +686,7 @@ Shock heating alters the air molecules through successive energy mode excitation
     \item \textbf{$T > 800$\,K:} Vibrational excitation of $N_2$ and $O_2$ becomes significant; the gas is Thermally Ideal but Calorically Non-Ideal ($C_p = f(T)$).
     \item \textbf{$T > 2000$\,K:} Oxygen molecules begin to dissociate ($O_2 \rightarrow 2O$).
     \item \textbf{$T > 4000$\,K:} Nitrogen molecules begin to dissociate ($N_2 \rightarrow 2N$).
-    \item \textbf{$T > 9000$\,K:} Atoms begin to ionize ($N \rightarrow N^+ + e^-$).
+    \item \textbf{$T > 9000$\,K:} Atoms begin to ionize ($N \rightarrow N^+ + e^-$). (Figure~\ref{fig:temperature_chemistry_regime})
 \end{itemize}
 
 \begin{figure}[htbp]
@@ -755,7 +755,7 @@ $C_p(T)$ is modeled by polynomial fits such as the NASA 7- or 9-coefficient poly
 \begin{equation}
     \frac{C_p(T)}{R} = a_1 + a_2 T + a_3 T^2 + a_4 T^3 + a_5 T^4
 \end{equation}
-For HIAD analysis, vibrational energy absorption lowers the peak shock layer temperature relative to a Calorically Ideal prediction, giving less conservative density and heat flux \cite{AndersonHypersonic}.
+For HIAD analysis, vibrational energy absorption lowers the peak shock layer temperature relative to a Calorically Ideal prediction, giving less conservative density and heat flux \cite{AndersonHypersonic}. (Figure~\ref{fig:cp_nasa_polynomial})
 
 \begin{figure}[htbp]
     \centering
@@ -790,7 +790,7 @@ For standard air:
     \item $S = 110.4$\,K
 \end{itemize}
 
-Aerodynamic heating scales with the square root of the viscosity product ($q_w \propto \sqrt{\rho \mu}$), so neglecting the temperature dependence of $\mu$ underestimates surface heat flux.
+Aerodynamic heating scales with the square root of the viscosity product ($q_w \propto \sqrt{\rho \mu}$), so neglecting the temperature dependence of $\mu$ underestimates surface heat flux. (Figure~\ref{fig:sutherlands_law})
 
 \begin{figure}[!htbp]
     \centering
@@ -892,7 +892,7 @@ The standard implementation follows Bird's No-Time-Counter (NTC) algorithm:
         \label{eq:ntc_collisions}
     \end{equation}
     where $N_{\text{cell}}$ is the particle count in the cell, $V_{\text{cell}}$ its volume, and $\sigma\,g$ the collision rate.
-    \item \textbf{Collision dynamics:} Post-collision velocities follow the chosen interaction model.
+    \item \textbf{Collision dynamics:} Post-collision velocities follow the chosen interaction model. (Figure~\ref{fig:dsmc_flowchart})
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -1053,7 +1053,7 @@ Automatic differentiation (AD) computes exact derivatives of $\hat{u}$ through t
     \label{eq:auto_diff}
 \end{equation}
 
-\noindent The chain rule gives exact gradients without truncation error or mesh dependence, including second-order terms; DeepXDE \cite{lu2021deepxde} carries this through the full PINN pipeline.
+\noindent The chain rule gives exact gradients without truncation error or mesh dependence, including second-order terms; DeepXDE \cite{lu2021deepxde} carries this through the full PINN pipeline. (Figure~\ref{fig:pinn_architecture})
 
 \begin{figure}[htbp]
     \centering
@@ -1155,14 +1155,14 @@ Rapisarda \cite{rapisarda2023mdao} then developed a multidisciplinary design ana
     \item \textbf{Flexible TPS:} 15~mm Pyrogel\texttrademark\ 2250 + 1.5~mm Kapton\texttrademark\ ($\rho = 300$ kg/m$^3$, $C_p = 1500$ J/(kg$\cdot$K), $\epsilon = 0.82$).
 \end{itemize}
 
-\noindent The Rapisarda model is the baseline for all simulations in this study.
+\noindent The Rapisarda model is the baseline for all simulations in this study. (Figure~\ref{fig:hiad_parametric_cross_section})
 
 \begin{figure}[htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Parametric cross-section drawing of the 3.0\,m HIAD (Rapisarda MDAO baseline). Six stacked toroidal bladders T1 to T6 are drawn symmetrically about the centerline, with the shoulder torus T7 marked as a purple disc at the end of the lower stack. The scalloped aerodynamic skin, the cone envelope and the nose-sphere guide are shown, together with the half-cone angle and the callouts D = 3.0\,m and R N = 577\,mm.}}%
 \includegraphics[width=0.85\textwidth]{figures/hiad_parametric_cross_section.png}%
 \EndAccSupp{}%
-    \caption[Parametric cross-section of the 3.0~m HIAD showing the stacked toroidal bladder configuration (T1-T6), shoulder torus (T7), nose sphere, and scalloped aerodynamic skin.]{Parametric cross-section of the 3.0~m HIAD showing the stacked toroidal bladder configuration (T1-T6), shoulder torus (T7), nose sphere, and scalloped aerodynamic skin. The geometry is defined by the Rapisarda MDAO baseline parameters: $D = 3.0$~m, $\theta_c = 60^\circ$, $N_t = 6$, $R_N = 577$~mm.}
+    \caption[Parametric cross-section of the 3.0~m HIAD showing the stacked toroidal bladder configuration (T1-T6), shoulder torus (T7), nose sphere, and scalloped aerodynamic skin.]{Parametric cross-section of the 3.0~m HIAD showing the stacked toroidal bladder configuration (T1-T6), shoulder torus (T7), nose sphere, and scalloped aerodynamic skin. The geometry is defined by the Rapisarda MDAO baseline parameters: $D = 3.0$~m, $\theta_c = 60^\circ$, $N_t = 6$, $R_N = 577$~mm. (Figure~\ref{fig:hiad_design_sensitivity})}
     \label{fig:hiad_parametric_cross_section}
 \end{figure}
 
@@ -1293,7 +1293,7 @@ The objective is greatest survivability: decelerate the payload to safe landing 
 
 \subsection{Why Optimization is Necessary}
 
-\noindent Engineering intuition alone cannot solve this problem: raising $\theta_c$ reduces stagnation heating but hurts stability, $N_t$ is discrete against continuous $r_{tor}$ (Eq.~\ref{eq:toroid_radius}), and evaluations near $\mathcal{O}(10^2)$ force a surrogate-accelerated search for Pareto-optimal configurations.
+\noindent Engineering intuition alone cannot solve this problem: raising $\theta_c$ reduces stagnation heating but hurts stability, $N_t$ is discrete against continuous $r_{tor}$ (Eq.~\ref{eq:toroid_radius}), and evaluations near $\mathcal{O}(10^2)$ force a surrogate-accelerated search for Pareto-optimal configurations. (Figure~\ref{fig:knudsen_regime_map})
 
 \begin{figure}[htbp]
     \centering
