@@ -4,7 +4,7 @@
 
 \section{Review of Related Research}
 
-Table~\ref{tab:research_comparison} summarizes the landmark HIAD flight tests and numerical studies behind this triangulation.
+Table~\ref{tab:research_comparison} summarises the landmark HIAD flight tests and numerical studies behind this triangulation.
 
 % Column widths set by measurement: converting the hand-typed citation to
 % \cite made column 1 hold the unbreakable token "Lichodziejewski", which LaTeX cannot hyphenate.
@@ -29,18 +29,18 @@ Table~\ref{tab:research_comparison} summarizes the landmark HIAD flight tests an
 
 \textbf{Deformed OML Study} \cite{guo2017deformation} & Deformed Outer Mold Line (OML) analysis of a stacked-tori HIAD. & Proved that surface irregularities between tori augment local heat flux. & Justifies the Config B (Smooth) comparison. \\ \hline
 
-\textbf{HEART Project} \cite{mazaheri2012heart} & Optimized nose-shape and two-piece TPS at the nose-IAD juncture. & The nose-IAD juncture creates a secondary heat flux peak. & Predicts local hot spots. \\ \hline
+\textbf{HEART Project} \cite{mazaheri2012heart} & Optimised nose-shape and two-piece TPS at the nose-IAD juncture. & The nose-IAD juncture creates a secondary heat flux peak. & Predicts local hot spots. \\ \hline
 
 \textbf{SST $k$-$\omega$ Source} \cite{menter1994SST} & $k$-$\omega$ SST Turbulence Model. & Superior prediction of separation in adverse pressure gradients. & Basis of future work only; not executed here. \\ \hline
 \end{longtable}
 \subsection{Triangulation of Expected Outcomes}
-By synthesizing \cite{dillman2014irve3flight} and \cite{guo2017deformation}, the scalloped geometry is hypothesized to generate localized heat flux peaks on the toroidal crests; the present DSMC runs resolve the near-surface recirculation in the toroid valleys directly, and the \textit{Thermally Ideal Gas} model matches the high-enthalpy \textit{LOFTID} conditions.
+By synthesizing \cite{dillman2014irve3flight} and \cite{guo2017deformation}, the scalloped geometry is hypothesized to generate localised heat flux peaks on the toroidal crests; the present DSMC runs resolve the near-surface recirculation in the toroid valleys directly, and the \textit{Thermally Ideal Gas} model matches the high-enthalpy \textit{LOFTID} conditions.
 
 This synthesis grounds \textbf{Chapter~\ref{ch:methodology}}; Figure~\ref{fig:literature_review_map} maps coverage.
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Two studies form the rows: Rapisarda 2023, the MDAO HIAD baseline thesis, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN Overview Pipeline, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; the Rapisarda row covers HIAD geometry, Sutton-Graves heating and survivability optimization, uses panel-method and Fay-Riddell aerothermodynamics rather than DSMC, and runs a single sequential framework.}}%
+    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Two studies form the rows: Rapisarda 2023, the MDAO HIAD baseline thesis, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN Overview Pipeline, survivability optimisation and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; the Rapisarda row covers HIAD geometry, Sutton-Graves heating and survivability optimisation, uses panel-method and Fay-Riddell aerothermodynamics rather than DSMC, and runs a single sequential framework.}}%
 \includegraphics[width=0.845\textwidth]{figures/literature_review_map.png}%
 \EndAccSupp{}%
     \caption[Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components.]{Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components. Filled circles indicate full coverage; half-filled indicate partial coverage. The dashed red outline highlights the comprehensive coverage achieved in this work (StellarOrion pipeline).}
@@ -218,7 +218,7 @@ Real gas effects (dissociation) push $\rho_2/\rho_{\infty}$ beyond the ideal gas
 
 \subsection{H. Julian Allen’s Blunt Body Theory }
 \par
-Sharp, slender noses minimized drag in early supersonic design, but H. Julian Allen and Alfred Eggers of NACA Ames showed in 1953~\cite{AndersonHypersonic} that they fail for hypersonic re-entry.
+Sharp, slender noses minimised drag in early supersonic design, but H. Julian Allen and Alfred Eggers of NACA Ames showed in 1953~\cite{AndersonHypersonic} that they fail for hypersonic re-entry.
 \par
 The lost kinetic energy has two sinks: a weak attached shock gives low wave drag, so skin friction heats a sharp body enough to melt conventional materials, while a strong detached bow shock dumps most kinetic energy into the airflow and its wake.
 
@@ -363,7 +363,7 @@ Figure~\ref{fig:LoftidMission} reproduces the trajectory overview of the predece
     \BeginAccSupp{method=escape,ActualText={Altitude-against-time profile of the IRVE-3 flight, from launch at 0 seconds to loss of signal near 1000 seconds, with altitude rising to about 450 kilometres at 450 seconds and then falling to the surface. Four shaded bands divide the flight into Ascent, Deployment, Experiment Phase and Final Descent. The trajectory line is blue where attitude control is off and green where it is on. Flight events marked along the curve are Launch, Rate Damping, Payload Separation, Nosecone Separation, Inflation Start, ACS Reorient, Inflation Complete, CG Translation, ACS Hold Attitude, 25 pascal, Max Heat Rate, Max Dynamic Pressure, Mach 0.7, a second CG Translation and Loss of Signal. The event annotations are densely packed in the lower right of the source artwork and several of them touch or overlap, so the shaded phase bands are the reliable reading and the individual event labels are not.}}%
 \includegraphics[width=0.77\textwidth]{figures/LOFTID_mission_trajectory.png}%
 \EndAccSupp{}%
-    \caption[Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal.]{Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal. The trajectory is drawn in blue while attitude control is off and in green once it is on. One caution belongs with this figure: in the source artwork the event annotations are packed tightly enough in the descent that several of them touch or overprint one another, and the trajectory line crosses the legend. The phase bands and the order of the events are therefore readable from this figure but the precise event times are not, and no event time is quoted from it anywhere in this work; the flight conditions used in Chapter~\ref{ch:results} are taken from the reference sources rather than measured off this plot. Source: Olds et al.~\cite{old2013irve3postflight}, Figure~1. (Figure~\ref{fig:hiad_loftid})}
+    \caption[Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the centre of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal.]{Altitude against mission elapsed time for the IRVE-3 flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the centre of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal. The trajectory is drawn in blue while attitude control is off and in green once it is on. One caution belongs with this figure: in the source artwork the event annotations are packed tightly enough in the descent that several of them touch or overprint one another, and the trajectory line crosses the legend. The phase bands and the order of the events are therefore readable from this figure but the precise event times are not, and no event time is quoted from it anywhere in this work; the flight conditions used in Chapter~\ref{ch:results} are taken from the reference sources rather than measured off this plot. Source: Olds et al.~\cite{old2013irve3postflight}, Figure~1. (Figure~\ref{fig:hiad_loftid})}
     \label{fig:LoftidMission}
 \end{figure}
 
@@ -373,7 +373,7 @@ Figure~\ref{fig:LoftidMission} reproduces the trajectory overview of the predece
     \BeginAccSupp{method=escape,ActualText={Rendering of a fully deployed 3.0\,m inflatable hypersonic aerodynamic decelerator: a stack of inflated toroidal rings forming a blunt sphere-cone aeroshell.}}%
 \includegraphics[width=0.565\textwidth]{figures/HIADsDeployed.png}%
 \EndAccSupp{}%
-    \caption[Concept rendering of a fully deployed 3.0\,m HIAD: a stack of inflated toroidal rings at the center of a rigid, stowable carrier.]{Concept rendering of a fully deployed 3.0\,m HIAD: a stack of inflated toroidal rings at the center of a rigid, stowable carrier. Each ring is a pressure-supported structural member, so the package is thin enough to fold inside the carrier and inflates to a diameter of about 3~m. The rendering is a generic visualization rather than a flight photograph, and its source is not recorded in this repository.}
+    \caption[Concept rendering of a fully deployed 3.0\,m HIAD: a stack of inflated toroidal rings at the centre of a rigid, stowable carrier.]{Concept rendering of a fully deployed 3.0\,m HIAD: a stack of inflated toroidal rings at the centre of a rigid, stowable carrier. Each ring is a pressure-supported structural member, so the package is thin enough to fold inside the carrier and inflates to a diameter of about 3~m. The rendering is a generic visualization rather than a flight photograph, and its source is not recorded in this repository.}
     \label{fig:hiad_loftid}
 \end{figure}
 
@@ -485,8 +485,8 @@ See an example of this recirculation effect~\cite{RecirculationCaseWindDrivenCoa
     \label{fig:recirculation_zones}
 \end{figure}
 
-\subsection{Localized Peak Heating Effects}
-The crests show the opposite behavior: severe localized heating governed by stagnation point flow.
+\subsection{Localised Peak Heating Effects}
+The crests show the opposite behaviour: severe localised heating governed by stagnation point flow.
 
 \subsubsection*{The Stagnation Temperature (Energy Potential)}
 At a toroid's windward face the fluid decelerates to zero, so a calorically ideal gas reaches stagnation temperature $T_0$ \cite{AndersonHypersonic}:
@@ -516,14 +516,14 @@ Substituting back gives:
 
 Scalloped IAD geometry is therefore vulnerable: global heating is low, but each toroid tube ($R_{tube}$) has a small local radius, so every crest is a stagnation point with peak heating far above a smooth sphere-cone.
 
-An analogue of this localized heating is shown below. (Figure~\ref{fig:peak_heating})
+An analogueue of this localised heating is shown below. (Figure~\ref{fig:peak_heating})
 
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Three panels labelled (a) 255 Hz, (b) 341 Hz and (c) 436 Hz, each showing the distribution of heating concentration at the crest of a protruding surface feature with converging flow.}}%
 \includegraphics[width=0.8\textwidth]{figures/LocalizedHeatinginAmplify.png}%
 \EndAccSupp{}%
-    \caption[Localized amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids.]{Localized amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids, the local curvature is small and the heating scales as the inverse square root of that curvature, so a modest change in surface radius produces a disproportionate increase in local heat flux at the crest. The illustration's source is not recorded in this repository and it is used as a qualitative analogue only.}
+    \caption[Localised amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids.]{Localised amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids, the local curvature is small and the heating scales as the inverse square root of that curvature, so a modest change in surface radius produces a disproportionate increase in local heat flux at the crest. The illustration's source is not recorded in this repository and it is used as a qualitative analogueue only.}
     \label{fig:peak_heating}
 \end{figure}
 
@@ -547,7 +547,7 @@ Fay-Riddell needs post-shock velocity gradients and boundary-layer edge properti
 \end{figure}
 
 \subsection{Flight Performance Metrics}
-Force and heat-flux data from DSMC feed the Survivability-Based Optimization objective space of Chapter~3.
+Force and heat-flux data from DSMC feed the Survivability-Based Optimisation objective space of Chapter~3.
 
 \subsubsection*{Mass Density from Number Density}
 DSMC solvers such as SPARTA report number density $n$ (particles per cubic metre), so mass density follows from the mean molecular mass:
@@ -719,7 +719,7 @@ Real gas effects deviate from standard air in two ways:
     \item \textbf{High-Temperature Effects (Chemistry):} This dominates for HIADs: rising temperature changes the air's composition, so $p = \rho R_{mix} T$ holds with $R_{mix}$ following the mixture molecular weight as $N_2$ and $O_2$ break apart.
 \end{enumerate}
 
-Table~\ref{tab:gas_models} compares these modeling assumptions.
+Table~\ref{tab:gas_models} compares these modelling assumptions.
 
 \begin{table}[!htbp]
     \centering
@@ -751,7 +751,7 @@ A strong bow shock ($T > 800$\,K) activates the vibrational modes of $N_2$ and $
 \end{equation}
 The gas still obeys $p = \rho R T$ (no dissociation), so variable specific heats make it Thermally Ideal.
 \par
-$C_p(T)$ is modeled by polynomial fits such as the NASA 7- or 9-coefficient polynomials:
+$C_p(T)$ is modelled by polynomial fits such as the NASA 7- or 9-coefficient polynomials:
 \begin{equation}
     \frac{C_p(T)}{R} = a_1 + a_2 T + a_3 T^2 + a_4 T^3 + a_5 T^4
 \end{equation}
@@ -762,7 +762,7 @@ For HIAD analysis, vibrational energy absorption lowers the peak shock layer tem
     \BeginAccSupp{method=escape,ActualText={Plot of the specific heat capacity of air against temperature. The vertical axis runs from 1.0 to 2.4 kilojoules per kilogram kelvin and the horizontal axis from 0 to 6000 kelvin. A solid curve labelled NASA Polynomial, Thermally Perfect, starts near 1.0, falls slightly and stops at roughly 1300 kelvin, so the region above 1300 kelvin is empty apart from a horizontal dashed line labelled Calorically Perfect at 1004.5 joules per kilogram kelvin and a shaded band between the two. Two vertical dotted markers are drawn: one at about 800 kelvin labelled vibrational excitation onset, and one at about 2000 kelvin labelled HIAD re-entry peak temperature.}}%
 \includegraphics[width=0.85\textwidth]{figures/cp_temperature_nasa.png}%
 \EndAccSupp{}%
-    \caption[Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically ideal gas assumption (CIG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally ideal gas (TIG).]{Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically ideal gas assumption (CIG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally ideal gas (TIG). Two limitations of the imported artwork are recorded here rather than left for the reader to discover. First, the TIG curve is drawn only over roughly the range 0 to 1300~K, so the plot shows nothing about the high-temperature behavior for which the thermally ideal model exists; the marked vibrational excitation onset near 800~K is an annotation carried over from the source correlation rather than a feature resolved in this plot, and no change in the curve is visible at that temperature. Second, the vertical marker in the artwork labelled ``HIAD re-entry peak temperature'' sits at about 2000~K, which is not the value used anywhere in this work: the calorically ideal stagnation temperature computed in Chapter~\ref{ch:results} is 5952~K, before any reduction for vibrational excitation and dissociation. The marker belongs to the source of the imported figure and is disregarded here. The source of the imported artwork itself is not recorded in this repository; the plot is used only to contrast the calorically ideal and thermally ideal assumptions, which are established in the text rather than by this figure.}
+    \caption[Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically ideal gas assumption (CIG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally ideal gas (TIG).]{Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically ideal gas assumption (CIG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally ideal gas (TIG). Two limitations of the imported artwork are recorded here rather than left for the reader to discover. First, the TIG curve is drawn only over roughly the range 0 to 1300~K, so the plot shows nothing about the high-temperature behaviour for which the thermally ideal model exists; the marked vibrational excitation onset near 800~K is an annotation carried over from the source correlation rather than a feature resolved in this plot, and no change in the curve is visible at that temperature. Second, the vertical marker in the artwork labelled ``HIAD re-entry peak temperature'' sits at about 2000~K, which is not the value used anywhere in this work: the calorically ideal stagnation temperature computed in Chapter~\ref{ch:results} is 5952~K, before any reduction for vibrational excitation and dissociation. The marker belongs to the source of the imported figure and is disregarded here. The source of the imported artwork itself is not recorded in this repository; the plot is used only to contrast the calorically ideal and thermally ideal assumptions, which are established in the text rather than by this figure.}
     \label{fig:cp_nasa_polynomial}
 \end{figure}
 
@@ -794,10 +794,10 @@ Aerodynamic heating scales with the square root of the viscosity product ($q_w \
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={A line plot of six laminar boundary-layer velocity profiles at different freestream Mach numbers. The horizontal axis is the normalized streamwise velocity u over u sub e, ticked 0, 0.2, 0.4, 0.6, 0.8 and 1.0. The vertical axis is the compressible similarity coordinate y over x times the square root of Re sub x, ticked 0, 20, 40, 60 and 80. Six thin solid black curves, with no color coding and no separate legend box, each rise monotonically from the origin region and flatten toward u over u sub e equals one; each curve is annotated in the plot with its freestream Mach number, and reading from the lowest to the highest curve those labels are 0, 4, 8, 12, 16 and 20, with M infinity equals 20 printed beside the topmost curve. The higher-Mach curves extend to much larger values of the similarity coordinate before the velocity has recovered, so the profiles thicken as the Mach number rises. The plot is monochrome with thin gridlines and small in-plot lettering; no plate, wedge, body or surface is drawn, and no viscosity, temperature, heat flux or pressure appears anywhere in the image.}}%
+    \BeginAccSupp{method=escape,ActualText={A line plot of six laminar boundary-layer velocity profiles at different freestream Mach numbers. The horizontal axis is the normalised streamwise velocity u over u sub e, ticked 0, 0.2, 0.4, 0.6, 0.8 and 1.0. The vertical axis is the compressible similarity coordinate y over x times the square root of Re sub x, ticked 0, 20, 40, 60 and 80. Six thin solid black curves, with no colour coding and no separate legend box, each rise monotonically from the origin region and flatten toward u over u sub e equals one; each curve is annotated in the plot with its freestream Mach number, and reading from the lowest to the highest curve those labels are 0, 4, 8, 12, 16 and 20, with M infinity equals 20 printed beside the topmost curve. The higher-Mach curves extend to much larger values of the similarity coordinate before the velocity has recovered, so the profiles thicken as the Mach number rises. The plot is monochrome with thin gridlines and small in-plot lettering; no plate, wedge, body or surface is drawn, and no viscosity, temperature, heat flux or pressure appears anywhere in the image.}}%
 \includegraphics[width=0.504\textwidth]{figures/sutherlandfx.png}%
 \EndAccSupp{}%
-    \caption[Laminar boundary-layer velocity profiles on an insulated flat plate at freestream Mach numbers $M_\infty = 0$, $4$, $8$, $12$, $16$ and $20$.]{Laminar boundary-layer velocity profiles on an insulated flat plate at freestream Mach numbers $M_\infty = 0$, $4$, $8$, $12$, $16$ and $20$. normalized streamwise velocity $u/u_e$ is plotted against the compressible similarity coordinate $(y/x)\sqrt{Re_x}$. Viscosity is evaluated with Sutherland's law, Eq.~\eqref{eq:sutherland}; because $\mu$ enters both the wall shear and the compressible similarity scaling directly, the law sets the thickness of the profile shown here, and the profiles spread outward as $M_\infty$ rises. Note what this figure is and is not. It is a family of laminar profiles at different Mach numbers for a single transport model, not a comparison of transport models: it is a single laminar transport model and contains no turbulent closure. The law itself is Eq.~\eqref{eq:sutherland} in the text. The artwork is an imported illustration whose source is not recorded in this repository; it is retained because it displays the family of laminar profiles that the compressible similarity solution produces for one transport model.}
+    \caption[Laminar boundary-layer velocity profiles on an insulated flat plate at freestream Mach numbers $M_\infty = 0$, $4$, $8$, $12$, $16$ and $20$.]{Laminar boundary-layer velocity profiles on an insulated flat plate at freestream Mach numbers $M_\infty = 0$, $4$, $8$, $12$, $16$ and $20$. normalised streamwise velocity $u/u_e$ is plotted against the compressible similarity coordinate $(y/x)\sqrt{Re_x}$. Viscosity is evaluated with Sutherland's law, Eq.~\eqref{eq:sutherland}; because $\mu$ enters both the wall shear and the compressible similarity scaling directly, the law sets the thickness of the profile shown here, and the profiles spread outward as $M_\infty$ rises. Note what this figure is and is not. It is a family of laminar profiles at different Mach numbers for a single transport model, not a comparison of transport models: it is a single laminar transport model and contains no turbulent closure. The law itself is Eq.~\eqref{eq:sutherland} in the text. The artwork is an imported illustration whose source is not recorded in this repository; it is retained because it displays the family of laminar profiles that the compressible similarity solution produces for one transport model.}
     \label{fig:sutherlands_law}
 \end{figure}
 
@@ -1074,14 +1074,14 @@ PINNs fill spatial gaps in sparse DSMC data, close turbulence, estimate unknown 
 
 \noindent \textbf{Limitation.} A fully connected $\tanh$ network shares the spectral bias documented for PINNs~\cite{raissi2019pinn}: it reproduces smooth, low-wavenumber content well but attenuates sharp gradients such as the bow shock. This study therefore does not use the PINN output for detailed analysis, where the DSMC particle statistics remain the reference; the network is used only for the overall survivability assessment, that is, to judge whether a design survives the reentry heat pulse longer than the baseline.
 
-\section{Parametric HIAD Geometry modeling}
+\section{Parametric HIAD Geometry modelling}
 \label{sec:parametric}
 
-A HIAD's aerodynamic performance follows its inflated outer mold line: toroidal bladders under a flexible thermal protection system skin. The framework follows Rapisarda \cite{rapisarda2023mdao}, an optimized adaptation of the IRVE-3 (Inflatable Reentry Vehicle Experiment 3) configuration and structural layout \cite{dillman2015irve3, dillman2014irve3flight}.
+A HIAD's aerodynamic performance follows its inflated outer mold line: toroidal bladders under a flexible thermal protection system skin. The framework follows Rapisarda \cite{rapisarda2023mdao}, an optimised adaptation of the IRVE-3 (Inflatable Reentry Vehicle Experiment 3) configuration and structural layout \cite{dillman2015irve3, dillman2014irve3flight}.
 
 \subsection{Design Variables and Constraints}
 
-The HIAD OML is parameterized by five primary design variables:
+The HIAD OML is parameterised by five primary design variables:
 
 \begin{equation}
     \mathbf{x} = \left[ D,\; \theta_c,\; N_t,\; r_{tor},\; R_N \right]
@@ -1091,8 +1091,8 @@ The HIAD OML is parameterized by five primary design variables:
 \noindent where $D$ is the target inflated aeroshell diameter, $\theta_c$ the half-cone angle, $N_t$ the number of toroidal bladders in the stack, $r_{tor}$ the individual toroid minor radius, and $R_N$ the nose sphere radius. Structural and packaging constraints bound the design space:
 
 % Bounds aligned to the engine search space of tab:design_variables
-% (stellarorion_optimization.ads): the previous [2.0,15.0] m / [45,75] deg /
-% [50,300] mm set excluded the recorded optimization results (BO round-1
+% (stellarorion_optimisation.ads): the previous [2.0,15.0] m / [45,75] deg /
+% [50,300] mm set excluded the recorded optimisation results (BO round-1
 % theta_c = 40.15 deg). The R_N row stays the structural lower bound only;
 % the numeric R_N bounds of the two campaigns are stated where they run.
 \begin{equation}
@@ -1117,11 +1117,11 @@ In the Rapisarda formulation the nose sphere radius is fixed by the payload adap
     \label{eq:structural_integration}
 \end{equation}
 
-\noindent where $R_{\text{pay}}$ is the payload adapter radius; for the parametric HIAD design configuration used in this design-space study ($R_{\text{pay}} = 500$\,mm, $\theta_c = 60^\circ$) this yields $R_N = 577.4$\,mm. This is the parametric closure value only, and it must not be conflated with the two other nose radii in this thesis: the validation and optimization studies of Chapters~\ref{ch:methodology} and~\ref{ch:results} use the flown IRVE-3 reference radius of $1.5$\,m, while the StellarOrion engine default is $R_N = 0.55$\,m (Chapter~\ref{ch:methodology}).
+\noindent where $R_{\text{pay}}$ is the payload adapter radius; for the parametric HIAD design configuration used in this design-space study ($R_{\text{pay}} = 500$\,mm, $\theta_c = 60^\circ$) this yields $R_N = 577.4$\,mm. This is the parametric closure value only, and it must not be conflated with the two other nose radii in this thesis: the validation and optimisation studies of Chapters~\ref{ch:methodology} and~\ref{ch:results} use the flown IRVE-3 reference radius of $1.5$\,m, while the StellarOrion engine default is $R_N = 0.55$\,m (Chapter~\ref{ch:methodology}).
 
 \subsection{Toroid Radius Derivation (Rapisarda Eq.\ 3.3)}
 
-Given a target inflated diameter $D$ and toroid count $N_t$, the minor radius $r_{tor}$ must place the outermost toroid centerline on the target radius; Rapisarda \cite{rapisarda2023mdao} derives it from geometric closure along the conical stack:
+Given a target inflated diameter $D$ and toroid count $N_t$, the minor radius $r_{tor}$ must place the outermost toroid centreline on the target radius; Rapisarda \cite{rapisarda2023mdao} derives it from geometric closure along the conical stack:
 
 \begin{equation}
     r_{tor} = \frac{r_{\text{target}} - R_{\text{pay}} - r_{\text{sh}} \left( \cos\theta_c - \sin\theta_c + 1 \right)}{2 N_t \cos\theta_c}
@@ -1147,7 +1147,7 @@ The crest-and-valley pressure gradient in Figure~\ref{fig:scalloped_wall_flow} f
 
 The IRVE-3 flight experiment (2012) first deployed a 3.0~m HIAD at Mach~10+ re-entry conditions \cite{dillman2014irve3flight}. Its TPS stack used an inner Pyrogel\texttrademark\ 2250 aerogel blanket and an outer Kapton\texttrademark\ polyimide film \cite{dillman2015irve3}.
 
-Rapisarda \cite{rapisarda2023mdao} then developed a multidisciplinary design analysis and optimization (MDAO) framework with a unified TPS material model:
+Rapisarda \cite{rapisarda2023mdao} then developed a multidisciplinary design analysis and optimisation (MDAO) framework with a unified TPS material model:
 
 \begin{itemize}
     \item \textbf{Stiff TPS:} 50~mm Pyrogel\texttrademark\ 2250 ($\rho = 200$ kg/m$^3$, $C_p = 2500$ J/(kg$\cdot$K), $\epsilon = 0.85$).
@@ -1159,7 +1159,7 @@ Rapisarda \cite{rapisarda2023mdao} then developed a multidisciplinary design ana
 
 \begin{figure}[htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Parametric cross-section drawing of the 3.0\,m HIAD (Rapisarda MDAO baseline). Six stacked toroidal bladders T1 to T6 are drawn symmetrically about the centerline, with the shoulder torus T7 marked as a purple disc at the end of the lower stack. The scalloped aerodynamic skin, the cone envelope and the nose-sphere guide are shown, together with the half-cone angle and the callouts D = 3.0\,m and R N = 577\,mm.}}%
+    \BeginAccSupp{method=escape,ActualText={Parametric cross-section drawing of the 3.0\,m HIAD (Rapisarda MDAO baseline). Six stacked toroidal bladders T1 to T6 are drawn symmetrically about the centreline, with the shoulder torus T7 marked as a purple disc at the end of the lower stack. The scalloped aerodynamic skin, the cone envelope and the nose-sphere guide are shown, together with the half-cone angle and the callouts D = 3.0\,m and R N = 577\,mm.}}%
 \includegraphics[width=0.85\textwidth]{figures/hiad_parametric_cross_section.png}%
 \EndAccSupp{}%
     \caption[Parametric cross-section of the 3.0~m HIAD showing the stacked toroidal bladder configuration (T1-T6), shoulder torus (T7), nose sphere, and scalloped aerodynamic skin.]{Parametric cross-section of the 3.0~m HIAD showing the stacked toroidal bladder configuration (T1-T6), shoulder torus (T7), nose sphere, and scalloped aerodynamic skin. The geometry is defined by the Rapisarda MDAO baseline parameters: $D = 3.0$~m, $\theta_c = 60^\circ$, $N_t = 6$, $R_N = 577$~mm. (Figure~\ref{fig:hiad_design_sensitivity})}
@@ -1175,12 +1175,12 @@ Rapisarda \cite{rapisarda2023mdao} then developed a multidisciplinary design ana
     \label{fig:hiad_design_sensitivity}
 \end{figure}
 
-\section{Optimization Theory Fundamentals}
+\section{Optimisation Theory Fundamentals}
 \label{sec:opt_theory}
 
-A HIAD design trades competing objectives: maximize drag, minimize peak heat flux, minimize structural mass. Shared design variables (Eq.~\ref{eq:hiad_design_variables}) couple them into a multidisciplinary design optimization (MDO) problem.
+A HIAD design trades competing objectives: maximise drag, minimise peak heat flux, minimise structural mass. Shared design variables (Eq.~\ref{eq:hiad_design_variables}) couple them into a multidisciplinary design optimisation (MDO) problem.
 
-\subsection{Multidisciplinary Design Optimization (MDO)}
+\subsection{Multidisciplinary Design Optimisation (MDO)}
 
 MDO covers systems whose physics interact across separate disciplines \cite{Kroo2005}. The HIAD disciplines are aerodynamics ($C_d$, $\dot{q}_s$), thermal protection ($T_{\text{back}}$), and structural mechanics (mass and reliability from toroid count and skin).
 
@@ -1215,11 +1215,11 @@ LHS \cite{mckay1979lhs} splits each axis into $N$ equal-probability intervals fo
 
 \subsubsection{Central Composite Design (CCD)}
 
-CCD \cite{Montgomery2017} adds a second-order response surface: factorial ($2^d$ hypercube corners), axial ($2d$ points at distance $\alpha$) and center points; for $d = 5$ it needs $2^5 + 2 \times 5 + 1 = 43$ samples.
+CCD \cite{Montgomery2017} adds a second-order response surface: factorial ($2^d$ hypercube corners), axial ($2d$ points at distance $\alpha$) and centre points; for $d = 5$ it needs $2^5 + 2 \times 5 + 1 = 43$ samples.
 
-\subsection{Surrogate modeling (Bayesian Optimization)}
+\subsection{Surrogate modelling (Bayesian Optimisation)}
 
-Each SPARTA DSMC simulation takes 30-60 minutes, so evolutionary optimization needing $10^3$-$10^4$ evaluations is infeasible; a surrogate approximates it instead:
+Each SPARTA DSMC simulation takes 30-60 minutes, so evolutionary optimisation needing $10^3$-$10^4$ evaluations is infeasible; a surrogate approximates it instead:
 
 \begin{equation}
     \hat{y} = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta}) : \mathbb{R}^d \rightarrow \mathbb{R}
@@ -1233,7 +1233,7 @@ Each SPARTA DSMC simulation takes 30-60 minutes, so evolutionary optimization ne
     \label{eq:mlp}
 \end{equation}
 
-\noindent Training minimizes the mean squared error (MSE) against SPARTA results:
+\noindent Training minimises the mean squared error (MSE) against SPARTA results:
 
 \begin{equation}
     \mathcal{L}_{\text{MSE}} = \frac{1}{N} \sum_{i=1}^{N} \left| \mathcal{M}(\mathbf{x}_i; \boldsymbol{\theta}) - y_i \right|^2
@@ -1242,15 +1242,15 @@ Each SPARTA DSMC simulation takes 30-60 minutes, so evolutionary optimization ne
 
 \noindent The surrogate models the aggregate cost $J(\mathbf{x})$ directly as a scalar response; the multi-fidelity trade-off inside $J$ is fixed by the reference values of Chapter~\ref{ch:methodology}, so no vector-valued output or weighted-loss scheme is used.
 
-\noindent This study instantiates the Bayesian-optimization surrogate as a Gaussian process with the Mat\'ern 5/2 kernel and an Expected Improvement acquisition function (Chapter~\ref{ch:methodology}).
+\noindent This study instantiates the Bayesian-optimisation surrogate as a Gaussian process with the Mat\'ern 5/2 kernel and an Expected Improvement acquisition function (Chapter~\ref{ch:methodology}).
 
-%\subsection{Genetic Algorithm Optimization}
+%\subsection{Genetic Algorithm Optimisation}
 %
-%The Genetic Algorithm (GA) is a population-based stochastic optimizer inspired by natural selection \cite{Goldberg1989} that improves candidate designs $\{\mathbf{x}_1, \ldots, \mathbf{x}_P\}$ through three operators:
+%The Genetic Algorithm (GA) is a population-based stochastic optimiser inspired by natural selection \cite{Goldberg1989} that improves candidate designs $\{\mathbf{x}_1, \ldots, \mathbf{x}_P\}$ through three operators:
 %
 %\subsubsection{Selection}
 %
-%Individuals reproduce with probability proportional to fitness $f_i = 1 / (1 + J_i)$ for minimized $J$.
+%Individuals reproduce with probability proportional to fitness $f_i = 1 / (1 + J_i)$ for minimised $J$.
 %
 %\subsubsection{Crossover}
 %
@@ -1278,7 +1278,7 @@ Each SPARTA DSMC simulation takes 30-60 minutes, so evolutionary optimization ne
 %
 %\noindent where $\phi_j(g_j) = 0$ if $g_j \leq 0$ (feasible) and $g_j^2$ otherwise.
 
-\subsection{Cost Function and Optimization Objective}
+\subsection{Cost Function and Optimisation Objective}
 
 The objective is greatest survivability: decelerate the payload to safe landing conditions with backface temperature below the structural limit. A representative cost function weights the squared deviations of the three survivability metrics:
 
@@ -1289,9 +1289,9 @@ The objective is greatest survivability: decelerate the payload to safe landing 
 
 \noindent where $\beta_{\text{calc}}$ is the ballistic coefficient, $\dot{q}_{\text{pred}}$ the predicted peak stagnation heat flux, $T_{\text{back}}$ the predicted backface temperature, and $w_\beta, w_{\dot{q}}, w_T$ the priority weighting factors.
 
-\noindent Chapter~\ref{ch:methodology} states the five-term cost actually optimized by this work.
+\noindent Chapter~\ref{ch:methodology} states the five-term cost actually optimised by this work.
 
-\subsection{Why Optimization is Necessary}
+\subsection{Why Optimisation is Necessary}
 
 \noindent Engineering intuition alone cannot solve this problem: raising $\theta_c$ reduces stagnation heating but hurts stability, $N_t$ is discrete against continuous $r_{tor}$ (Eq.~\ref{eq:toroid_radius}), and evaluations near $\mathcal{O}(10^2)$ force a surrogate-accelerated search for Pareto-optimal configurations. (Figure~\ref{fig:knudsen_regime_map})
 
@@ -1333,9 +1333,9 @@ This review establishes six pillars:
 
     \item \textbf{Parametric HIAD Geometry:} Five design variables ($D$, $\theta_c$, $N_t$, $r_{tor}$, $R_N$) plus the structural integration constraint (Eq.~\ref{eq:structural_integration}) and toroid radius (Eq.~\ref{eq:toroid_radius}) define the OML, following Rapisarda's MDAO IRVE-3 adaptation in Section~\ref{sec:parametric}~\cite{rapisarda2023mdao}.
 
-% GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Optimization Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{jones1998efficient}, and genetic algorithm search~\cite{Goldberg1989} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
-    \item \textbf{Optimization Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{jones1998efficient} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
+% GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Optimisation Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{jones1998efficient}, and genetic algorithm search~\cite{Goldberg1989} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
+    \item \textbf{Optimisation Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{jones1998efficient} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
 \end{enumerate}
 
-% GA de-documented (Genetic Algorithm not used in the recorded run); original: \noindent Chapter~3 uses these foundations: the Rapisarda geometry engine~\cite{rapisarda2023mdao}, SPARTA DSMC~\cite{plimpton2014sparta}, PINN reconstruction~\cite{lu2021deepxde}, Bayesian Optimization surrogates~\cite{rasmussen2003} and genetic algorithm search~\cite{Goldberg1989}.
-\noindent Chapter~3 uses these foundations: the Rapisarda geometry engine~\cite{rapisarda2023mdao}, SPARTA DSMC~\cite{plimpton2014sparta}, PINN reconstruction~\cite{lu2021deepxde}, Bayesian Optimization surrogates~\cite{rasmussen2003}.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: \noindent Chapter~3 uses these foundations: the Rapisarda geometry engine~\cite{rapisarda2023mdao}, SPARTA DSMC~\cite{plimpton2014sparta}, PINN reconstruction~\cite{lu2021deepxde}, Bayesian Optimisation surrogates~\cite{rasmussen2003} and genetic algorithm search~\cite{Goldberg1989}.
+\noindent Chapter~3 uses these foundations: the Rapisarda geometry engine~\cite{rapisarda2023mdao}, SPARTA DSMC~\cite{plimpton2014sparta}, PINN reconstruction~\cite{lu2021deepxde}, Bayesian Optimisation surrogates~\cite{rasmussen2003}.

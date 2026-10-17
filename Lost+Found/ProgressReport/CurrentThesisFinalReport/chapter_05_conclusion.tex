@@ -1,9 +1,9 @@
 \chapter{Conclusion and Recommendations}
 
 \section{Summary of Findings}
-This research developed and validated a framework for aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework couples parametric CadQuery geometry generation, a 5-species air DSMC simulation, PINN Overview Pipeline and surrogate-based optimization, and it is validated against IRVE-3 flight data. The study quantified the heating augmentation caused by scalloped surface topology, resolved the local continuum-band structure of the Knudsen field, and delivered a round-1 geometry that passed the hybrid validation gate while exposing the backface-temperature violation of the thermal constraint as the open design issue.
+This research developed and validated a framework for aerothermal analysis and survivability optimisation of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework couples parametric CadQuery geometry generation, a 5-species air DSMC simulation, PINN Overview Pipeline and surrogate-based optimisation, and it is validated against IRVE-3 flight data. The study quantified the heating augmentation caused by scalloped surface topology, resolved the local continuum-band structure of the Knudsen field, and delivered a round-1 geometry that passed the hybrid validation gate while exposing the backface-temperature violation of the thermal constraint as the open design issue.
 
-The validation runs in two stages: DSMC validates the initial IRVE-3 baseline configuration against flight data, and the same DSMC pipeline re-simulates the optimized design selected by the Bayesian optimization loop. For the overall survivability assessment, the DSMC particle fields of both designs are processed with the PINN Overview Pipeline stage; bounded by the spectral-bias limitation of Chapter~II, the refined fields support only the survivability comparison (whether the optimized design survives longer than the baseline), while the gate verdict itself rests on the DSMC-resolved surface quantities.
+The validation runs in two stages: DSMC validates the initial IRVE-3 baseline configuration against flight data, and the same DSMC pipeline re-simulates the optimised design selected by the Bayesian optimisation loop. For the overall survivability assessment, the DSMC particle fields of both designs are processed with the PINN Overview Pipeline stage; bounded by the spectral-bias limitation of Chapter~II, the refined fields support only the survivability comparison (whether the optimised design survives longer than the baseline), while the gate verdict itself rests on the DSMC-resolved surface quantities.
 
 \section{Key Conclusions}
 
@@ -22,21 +22,21 @@ A grid factor of 0.7 best balances accuracy and cost, with the least error again
 \subsection{Real-Gas Effects and 5-Species Air Model}
 A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures vibrational excitation and dissociation, reducing the effective stagnation temperature below the calorically ideal prediction of 5952\,K. Energy partitioning into internal modes affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}.
 
-\subsection{Optimization and Thermal Constraint}
-The optimization work evaluated a 15-point central composite screen~\cite{Montgomery2017} and, separately, a 70-entry Bayesian Optimization campaign (20 Latin Hypercube designs and 50 Expected-Improvement iterations)~\cite{sklearn2024gp} across three design variables (nose radius, toroid radius, half-cone angle). The constrained single-objective cost trades total heat load against drag with one-sided backface-temperature and deceleration-load constraints, and the campaign converged toward a larger-nose design that then passed the DSMC validation gate of Chapter~\ref{ch:results}.
+\subsection{Optimisation and Thermal Constraint}
+The optimisation work evaluated a 15-point central composite screen~\cite{Montgomery2017} and, separately, a 70-entry Bayesian Optimisation campaign (20 Latin Hypercube designs and 50 Expected-Improvement iterations)~\cite{sklearn2024gp} across three design variables (nose radius, toroid radius, half-cone angle). The constrained single-objective cost trades total heat load against drag with one-sided backface-temperature and deceleration-load constraints, and the campaign converged toward a larger-nose design that then passed the DSMC validation gate of Chapter~\ref{ch:results}.
 
 The thermal constraint is violated: the active TPS reports a backface temperature of 955.66\,K, exceeding the Kapton limit of 773\,K by 182.7\,K~\cite{old2013irve3postflight}. The system is the five-ply second-generation flexible TPS (two 0.506\,mm Nicalon SiC outer fabric plies, two 3.047\,mm Pyrogel 3350 insulation plies, one 0.025\,mm Kapton gas barrier), totaling 7.131\,mm with series resistance $R = 0.305583$\,m$^2$\,K/W and outer emissivity 0.80. Survival is judged on four fronts: surface temperature under 2073\,K, backface temperature under 773\,K, and both measured and computed deceleration under 25\,g. The thermal channel binds; the deceleration channel passes with margin.
 
 \section{Contributions}
 \begin{enumerate}
-    \item \textbf{Integrated DSMC-HIAD Framework:} A complete pipeline from parametric geometry through DSMC simulation to survivability optimization for inflatable decelerators.
+    \item \textbf{Integrated DSMC-HIAD Framework:} A complete pipeline from parametric geometry through DSMC simulation to survivability optimisation for inflatable decelerators.
 
     \item \textbf{Scalloping Effect Quantification:} DSMC-based characterization of heating augmentation and recirculation patterns caused by the stacked toroid surface topology of HIADs.
 
     \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks providing a fast, physics-consistent overview of the flow field for a new topology, anchored in the compressible Navier-Stokes equations.
 
-% GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Constrained Single-Objective Optimization:} Automated surrogate-based optimization of HIAD geometry with Bayesian Optimization (Gaussian Process surrogate, Mat\'ern 5/2 kernel, Expected Improvement) and the engine's Genetic Algorithm search, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
-    \item \textbf{Constrained Single-Objective Optimization:} Automated surrogate-based optimization of HIAD geometry with Bayesian Optimization (Gaussian Process surrogate, Mat\'ern 5/2 kernel, Expected Improvement), targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Constrained Single-Objective Optimisation:} Automated surrogate-based optimisation of HIAD geometry with Bayesian Optimisation (Gaussian Process surrogate, Mat\'ern 5/2 kernel, Expected Improvement) and the engine's Genetic Algorithm search, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+    \item \textbf{Constrained Single-Objective Optimisation:} Automated surrogate-based optimisation of HIAD geometry with Bayesian Optimisation (Gaussian Process surrogate, Mat\'ern 5/2 kernel, Expected Improvement), targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
 
 \section{Recommendations for Future Work}

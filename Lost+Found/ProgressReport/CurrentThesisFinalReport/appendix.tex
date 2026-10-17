@@ -185,14 +185,14 @@ Packages:
     \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}}: aerothermodynamics
     \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}}: aeroshell geometry
     \item \texttt{\seqsplit{stellarorion\_sparta.ads/adb}}: SPARTA DSMC surfaces, Docker
-    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}}: cost function
+    \item \texttt{\seqsplit{stellarorion\_optimisation.ads/adb}}: cost function
     \item \texttt{\seqsplit{stellarorion\_pinn\_trajectory.ads/adb}}: trajectory extrapolation
     \item \texttt{\seqsplit{stellarorion\_validation.ads/adb}}: validation and survivability.
 \end{itemize}
 
 \section{Command-Line Interface (CLI) Modes}
 
-The binary dispatches a range of command-line options, including \texttt{self-test}, \texttt{compareNoses}, \texttt{compareCalibrate}, \texttt{optimize}, \texttt{validate}, \texttt{gridIndepTest} and \texttt{validationPINN}.
+The binary dispatches a range of command-line options, including \texttt{self-test}, \texttt{compareNoses}, \texttt{compareCalibrate}, \texttt{optimise}, \texttt{validate}, \texttt{gridIndepTest} and \texttt{validationPINN}.
 
 \section{Automated Verification and Code-Quality Toolchain}
 \label{sec:automated_verification_toolchain}
@@ -228,7 +228,7 @@ that are an artifact of the invocation rather than of the code.
 \label{sec:raw_verification_transcripts}
 
 Each transcript below documents the emitted tool report; this appendix does
-not repair any reported finding. Terminal color codes were removed from the
+not repair any reported finding. Terminal colour codes were removed from the
 raw records. Exit codes are reported because a tool can exit cleanly while
 still printing errors or leaving checks unproved.
 
@@ -302,7 +302,7 @@ exit code: 0
 \endgroup
 
 \noindent The exit~0 here is a vacuous pass: the target file was found and
-zero functions were analyzed, so this gate contributes no assurance in its
+zero functions were analysed, so this gate contributes no assurance in its
 current configuration and is reported as such rather than counted as
 evidence.
 
@@ -391,7 +391,7 @@ max steps used for successful proof: 76307
 \end{verbatim}
 \endgroup
 
-\noindent Twenty-one units were analyzed and no single check took more than one second.
+\noindent Twenty-one units were analysed and no single check took more than one second.
 The wrapper now enforces the discharge gate directly instead of gnatprove's exit code,
 so it exits~0 only with zero unproved obligations.
 The campaign that reached 569/0, 0 unproved closed the remaining 31
@@ -536,7 +536,7 @@ Table~\ref{tab:run_inventory} is the authority for which.
 \textbf{\#} & \textbf{Run folder} & \textbf{Role} & \textbf{Step-2200 state} & \textbf{Status in this thesis} \\
 \hline
 4 & \texttt{00\_reference} & latest reference, the default for every reported figure & 52.069\,km /\newline 3101.079\,m/s & every quoted DSMC value \\
-3 & \texttt{\seqsplit{validation\_optimized}} & round-1 gate run of the optimized morphology & 52.033\,km /\newline 3094.193\,m/s & removed from disk on 2026-10-14; the gated run of Table~\ref{tab:bo_before_after}, cited with its failed-candidate caveat \\
+3 & \texttt{\seqsplit{validation\_optimised}} & round-1 gate run of the optimised morphology & 52.033\,km /\newline 3094.193\,m/s & removed from disk on 2026-10-14; the gated run of Table~\ref{tab:bo_before_after}, cited with its failed-candidate caveat \\
 2 & \texttt{01\_smooth} & finer-spool variant & 51.818\,km /\newline 3378.671\,m/s & observation only; source of the 3378\,m/s snapshot condition \\
 1 & \texttt{02\_early\_window} & week-1 legacy window & no step-2200 row & not a candidate where step-2200 resolution is required \\
 \hline
@@ -706,7 +706,7 @@ flow-volume closure natively.
 \hline
 Mesh quality, both trees & skewness $0$ and orthogonal quality $1$ exactly; growth rate 1.00014123; closure $1.33 \times 10^{-14}$ and $1.18 \times 10^{-14}$ & met \\
 Cut-cell census, reference tree & 18,746 outside the body, 430 inside, 145 overlapping, 144 split & reconciling \\
-Cut-cell census, optimized tree & 18,751 outside the body, 428 inside, 142 overlapping, 142 split & reconciling \\
+Cut-cell census, optimised tree & 18,751 outside the body, 428 inside, 142 overlapping, 142 split & reconciling \\
 Stationarity, both trees & retention 0.8555 and 0.8553; indicator 0.84\% and 0.89\% & met \\
 Grid independence, change gate & 4,900 / 10,000 / 19,321 cells; successive changes 5.488091\% and 7.663952\% & met \\
 Grid independence, error gate & convergence index 33.74\% against the $10\%$ tolerance & exceeds tolerance \\
@@ -730,9 +730,9 @@ under-reports the compliance of the figures this work actually uses.
 
 \begin{itemize}
     \item Every figure caption names the case, the mesh level and the
-    physical quantity; every axis carries a unit and every color scale
+    physical quantity; every axis carries a unit and every colour scale
     carries numeric limits.
-    \item Comparison figures share color ranges and axis limits. An
+    \item Comparison figures share colour ranges and axis limits. An
     auto-ranged scale makes two cases look different when they are not.
     \item Every reported number states its symbol, its unit and where it came
     from, and every percentage states its baseline.
@@ -763,7 +763,7 @@ under-reports the compliance of the figures this work actually uses.
 
 \begin{itemize}
     \item Every figure is self-sufficient without the speaker.
-    \item Every comparison declares its baseline and shares its color range.
+    \item Every comparison declares its baseline and shares its colour range.
     \item The conclusion leads and the method follows.
     \item Mesh quality and mesh independence are shown as evidence.
     \item Limitations are stated, not implied.
