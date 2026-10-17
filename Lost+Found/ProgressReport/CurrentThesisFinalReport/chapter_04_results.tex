@@ -406,7 +406,7 @@ The vehicle fails the thermal constraint. The active TPS reports a backface temp
         \includegraphics[width=\linewidth]{figures/tps_ply_profile_peak.png}%
         \EndAccSupp{}%
     \end{minipage}
-    \caption[Per-ply temperature response of the shield stack from the step-2200 conduction solve.]{Per-ply temperature response of the five-ply shield stack from the step-2200 conduction solve. Left: temperature of each ply across the stack surface field. Right: through-thickness temperature profile at the peak-flux surface element, from the Nicalon SiC outer fabric (ply~1) through the two Pyrogel 3350 insulation plies to the Kapton gas barrier (ply~5). The stack schedule is Table~\ref{tab:tps_layup} and the per-ply specification and steady ply-face temperatures are Table~\ref{tab:tps_spec}.}
+    \caption[Per-ply temperature response of the shield stack from the step-2200 conduction solve.]{Per-ply temperature response of the five-ply shield stack from the step-2200 conduction solve. Left: temperature of each ply across the stack surface field. Right: through-thickness temperature profile at the peak-flux surface element, from the Nicalon SiC outer fabric (ply~1) through the two Pyrogel 3350 insulation plies to the Kapton gas barrier (ply~5). The stack schedule is Table~\ref{tab:tps_layup} and the per-ply specification and steady ply-face temperatures are Table~\ref{tab:tps_spec}; Figure~\ref{fig:tps_ply_stack} shows the per-ply temperature response of that stack.}
     \label{fig:tps_ply_stack}
 \end{figure}
 
@@ -609,14 +609,14 @@ Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton19
     \BeginAccSupp{method=escape,ActualText={Four-panel comparison of the HIAD geometry before and after optimization, arranged as a rear row of three-quarter side views and a front row of nose-on views. The left column is the IRVE-3 default geometry with nose radius 1.5\,m, toroid radius 0.135\,m, and half-cone angle 60 degrees; the right column is the Bayesian optimum with nose radius 2.9714\,m, toroid radius 0.0885\,m, and half-cone angle 40.15 degrees. The optimized geometry has a larger nose, tighter toroid, and steeper cone angle.}}%
     \includegraphics[width=\textwidth]{figures/optimization_comparison.png}%
     \EndAccSupp{}%
-    \caption[Topology before and after optimization.]{Topology before and after optimization. The rear row shows the three-quarter side view and the front row the nose-on view; the left column is the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$) and the right column the Bayesian optimum ($R_N = 2.9714$\,m, $r_{tor} = 0.0885$\,m, $\theta_c = 40.15^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5597 and total heat load from 219.10 to 155.67\,J/cm$^2$ ($-28.95\,\%$). The flown scalloped surface is omitted from this preview; see the scalloped-geometry discussion in the prose.}
+    \caption[Topology before and after optimization.]{Topology before and after optimization. The rear row shows the three-quarter side view and the front row the nose-on view; the left column is the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$) and the right column the Bayesian optimum ($R_N = 2.9714$\,m, $r_{tor} = 0.0885$\,m, $\theta_c = 40.15^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5597 and total heat load from 219.10 to 155.67\,J/cm$^2$ ($-28.95\,\%$); Figure~\ref{fig:optimization_comparison} shows the topology before and after. The flown scalloped surface is omitted from this preview; see the scalloped-geometry discussion in the prose.}
     \label{fig:optimization_comparison}
 \end{figure}
 
 \subsection{PINN Overview of Heating and Entry State}
 \label{sec:pinn_heating_entry_overview}
 
-The PINN Overview Pipeline is used here only as a fast overview, not as an accuracy refinement of the DSMC result~\cite{raissi2019pinn}. The step-aligned full-trajectory overview files available for the reference and optimized trees show the same heating and entry-state histories; the only differing columns are the force coefficients. This overview therefore cannot support a claim of a topology-sensitive heating change by itself, and the DSMC validation-gate result remains the authority for the optimized heat load discussed in Sec.~\ref{sec:hybrid_gate}. The optimized tree is the gated geometry of Table~\ref{tab:bo_before_after}, so these overviews inherit the provenance stated there.
+The PINN Overview Pipeline is used here only as a fast overview, not as an accuracy refinement of the DSMC result~\cite{raissi2019pinn}. The step-aligned full-trajectory overview files available for the reference and optimized trees show the same heating and entry-state histories; the only differing columns are the force coefficients. This overview therefore cannot support a claim of a topology-sensitive heating change by itself, and the DSMC validation-gate result remains the authority for the optimized heat load discussed in Sec.~\ref{sec:hybrid_gate}. The optimized tree is the gated geometry of Table~\ref{tab:bo_before_after}, so these overviews inherit the provenance stated there; Figure~\ref{fig:pinn_heating_entry_comparison} shows the step-aligned comparison.
 
 \begin{figure}[!htbp]
     \centering
@@ -669,7 +669,7 @@ Table~\ref{tab:pinn_heating_entry_overview} records the step-aligned values from
 
 \subsection{Surrogate Reproducibility Finding}
 \label{sec:surrogate_repro}
-An earlier gradient-based optimizer in the engine, scoring candidate geometries with a Gaussian-Process fitness model, exhibited chaotic behavior: two consecutive runs at the fixed seed 42 returned different optima ($J = 1.602195$ vs $1.608508$). The cause is the GP hyper-parameter fit (scikit-learn \texttt{lbfgs} on the Mat\'ern length scale hitting the 1000.0 upper bound), not the sampling seed. This finding is why the recorded campaign uses Bayesian Optimization with a fixed hyper-parameter refit strategy, as described in Sec.~\ref{sec:bo_results}; the earlier path generates none of the numbers reported in this chapter.
+An earlier gradient-based optimizer in the engine, scoring candidate geometries with a Gaussian-Process fitness model, exhibited chaotic behavior: two consecutive runs at the fixed seed 42 returned different optima ($J = 1.602195$ vs $1.608508$). The cause is the GP hyper-parameter fit (scikit-learn \texttt{lbfgs} on the Mat\'ern length scale hitting the 1000.0 upper bound), not the sampling seed. This finding is why the recorded campaign uses Bayesian Optimization with a fixed hyper-parameter refit strategy, as described in Sec.~\ref{sec:bo_results}; the earlier path generates none of the numbers reported in this chapter. Figure~\ref{fig:bo_optimization_3d} shows the design-space samples across the 70-evaluation budget.
 
 \section{Hybrid Validation Gate}
 \label{sec:hybrid_gate}
@@ -694,7 +694,7 @@ The 2026-09-26 gate execution returned \textsc{pass}. The round-1 winner's analy
 \end{equation}
 with prediction error $-49.94\,\%$ and a clamped correction factor $c = 0.5006$, immediately above the lower clamp bound. The hybrid drag coefficient is $C_{d,hybrid} = 2.529$.
 
-The winner passes with substantial margin, so the round-1 design is safe. The $-49.94\,\%$ error is not noise: two independent DSMC runs of the same geometry agreed to within 0.3\,\%, so the analytic-to-hybrid gap is reproducible systematic bias in the closed-form surrogate~\cite{kennedy2000multi}, absorbed by the multi-fidelity correction.
+The winner passes with substantial margin, so the round-1 design is safe; Figure~\ref{fig:gate_comparison} shows the three heat loads against the acceptance threshold. The $-49.94\,\%$ error is not noise: two independent DSMC runs of the same geometry agreed to within 0.3\,\%, so the analytic-to-hybrid gap is reproducible systematic bias in the closed-form surrogate~\cite{kennedy2000multi}, absorbed by the multi-fidelity correction.
 
 \begin{figure}[!htbp]
     \centering
