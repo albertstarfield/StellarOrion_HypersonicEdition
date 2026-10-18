@@ -13,7 +13,10 @@
 % remain exposed to assistive technology) while suppressing the red border box
 % that pdfborder otherwise paints around every \ref, which is a print and
 % screen-reader visual defect in a submitted thesis.
-\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=section,colourlinks=false]{hyperref}
+% NOTE: `colorlinks` is hyperref's API key and is spelled in American English;
+% localising it to `colourlinks` aborts hyperref at \ProcessKeyvalOptions{Hyp}
+% (keyval error) and breaks every cross-reference in the document.
+\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=section,colorlinks=false]{hyperref}
 
 % hyphenat: the `htt` option (hyphenation inside \texttt) was removed, it
 % is what produced all 31 "Font shape T1/cmtt/... undefined" warnings, and the
@@ -87,7 +90,9 @@
 %       (main.bbl lines 1657, 1895, 2093). The label is the macro sequence
 %       \protect \citeauthoryear followed by an author list; the .bst output
 %       offers no break opportunity, and the .bst is a third-party file that
-%       must not be edited.
+%       must not be edited. [Historical: these entries are gone since the
+%       IEEE conversion removed apacite; IEEEtran.bst emits short numeric
+%       labels that give TeX no such trouble.]
 %   (3) The remainder are single low-badness lines (measured 1533, 1590, ...)
 %       in paragraphs carrying long unbreakable tokens: \texttt file paths,
 %       chemical species names, and inline math such as $k$-$\omega$.
@@ -147,10 +152,17 @@
 % has no `titletoc` option, so the load ORDER is the whole fix.
 \usepackage[titletoc]{appendix}
 \usepackage{cite}          % buat cite pake BibTex
-\usepackage{apacite}
+% Citation format switched from APA (apacite) to IEEE: apacite is no
+% longer loaded, so cite.sty provides \cite and emits numeric [n]
+% markers; the bibliography is formatted by IEEEtran.bst. Loading
+% apacite alongside cite is also a known-incompatible combination
+% (apacite overrides \cite with author-year output and chokes on
+% \cite inside caption moving arguments), which was the suspected
+% source of the "Illegal parameter number in definition of
+% \reserved@a" caption errors in Chapter 4.
 %\usepackage{subfigure}
 \usepackage{subcaption}
-\bibliographystyle{apacite}
+\bibliographystyle{IEEEtran}
 \usepackage[american]{babel} %plugin bahasa
 
 \usepackage[utf8]{inputenc}
@@ -185,11 +197,14 @@
 {\bfseries\Large}
 {%
 % \vskip-5em
-\filcentre
+% \filcenter is titlesec's provided fill command (titlesec.sty \providecommand);
+% it is an API identifier spelled in American English — \filcentre is undefined
+% in TeX Live and aborts every \chapter with "Undefined control sequence".
+\filcenter
  \LARGE\MakeUppercase \chaptertitlename\
  \LARGE\thechapter}
 {0mm}
-{\filcentre}
+{\filcenter}
 \titleformat*{\section}{\bfseries\large}
 \titleformat*{\subsection}{\bfseries}
 \titlespacing*{\chapter}{0pt}{-1.5\baselineskip}{1em}
@@ -273,7 +288,7 @@
 \makeatletter
 \renewenvironment{thebibliography}[1]{%
      \section*{REFERENCES}%
-      % Q-references-widow: the 47-entry APA list overflows its last page,
+      % Q-references-widow: the 47-entry reference list (APA-era count) overflows its last page,
       % leaving the final entry (White 2006) alone on a 1658-ink-pixel page
       % (audit geom/near-empty < 3000 px). Tightening title spacing alone
       % did not help: the list starts mid-page, so a reclaimed skip sinks
@@ -320,7 +335,7 @@
       \widowpenalty10000%
       % \itemsep 2pt was what pushed the final two references onto a page of
       % their own: measured, page 185 of the previous build carried 4 lines and
-      % 1614 ink pixels against a document median above 30000. An APA reference
+      % 1614 ink pixels against a document median above 30000. A reference
       % list is single-spaced with no inter-entry skip, so 0pt is both the
       % correct style and the fix.
       \setlength{\itemsep}{0pt}%

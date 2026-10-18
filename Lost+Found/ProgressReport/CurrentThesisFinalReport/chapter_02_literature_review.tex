@@ -516,14 +516,14 @@ Substituting back gives:
 
 Scalloped IAD geometry is therefore vulnerable: global heating is low, but each toroid tube ($R_{tube}$) has a small local radius, so every crest is a stagnation point with peak heating far above a smooth sphere-cone.
 
-An analogueue of this localised heating is shown below. (Figure~\ref{fig:peak_heating})
+An analogue of this localised heating is shown below. (Figure~\ref{fig:peak_heating})
 
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Three panels labelled (a) 255 Hz, (b) 341 Hz and (c) 436 Hz, each showing the distribution of heating concentration at the crest of a protruding surface feature with converging flow.}}%
 \includegraphics[width=0.8\textwidth]{figures/LocalizedHeatinginAmplify.png}%
 \EndAccSupp{}%
-    \caption[Localised amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids.]{Localised amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids, the local curvature is small and the heating scales as the inverse square root of that curvature, so a modest change in surface radius produces a disproportionate increase in local heat flux at the crest. The illustration's source is not recorded in this repository and it is used as a qualitative analogueue only.}
+    \caption[Localised amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids.]{Localised amplification of peak heating, where a shock impinges on the cusp formed by the transition between two toroids, the local curvature is small and the heating scales as the inverse square root of that curvature, so a modest change in surface radius produces a disproportionate increase in local heat flux at the crest. The illustration's source is not recorded in this repository and it is used as a qualitative analogue only.}
     \label{fig:peak_heating}
 \end{figure}
 
@@ -1060,7 +1060,7 @@ Automatic differentiation (AD) computes exact derivatives of $\hat{u}$ through t
     \BeginAccSupp{method=escape,ActualText={Schematic of the physics-informed neural network architecture, showing input coordinates entering a multilayer perceptron whose output is constrained by the governing PDE residuals.}}%
 \includegraphics[width=0.80\textwidth]{figures/pinn_architecture.png}%
 \EndAccSupp{}%
-    \caption[Schematic of the Physics-Informed Neural Network (PINN) architecture.]{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, v_x, v_y, T)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
+    \caption[Schematic of the Physics-Informed Neural Network (PINN) architecture.]{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, v_x, v_y, T)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring; Chapter 3 documents the training as a single-stage Adam run, with the two-stage schedule planned but not executed.}
     \label{fig:pinn_architecture}
 \end{figure}
 
