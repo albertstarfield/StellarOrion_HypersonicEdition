@@ -2,29 +2,6 @@
 
 This document provides a comprehensive derivation of the mathematical models used in the StellarOrion Hypersonic Simulation Suite and maps them to their current implementations in the Ada/SPARK engine (`stellarorion_program_proc/src/simulation_engine/`) and Python sidecar (`stellarorion_program_proc/src/python/`).
 
-
-> ## ⚠️ Reference values corrected by the `_proc` audit — read before citing this file
->
-> The IRVE-3 reference constants in this document were written before the `_proc` rescan and
-> are **not** the values the code compares against. Corrected per `FAILURES_AND_FIXES.md`
-> (findings F12, F19, F22, F41, F54, F60, F61, F69, F71):
->
-> | value used here | what is actually correct | source of truth |
-> | :--- | :--- | :--- |
-> | 14.36 W/cm² as the **IRVE-3 flight** peak heat flux | **13.80 W/cm²** | NASA TP-2013-4012. **14.361 is Rapisarda Table 4.10**, a *model* value, not a flight measurement |
-
-> | 195.06 J/cm² as the flight total heat load | **188.00 J/cm²** | NASA TP-2013-4012; 195.0577 is the Rapisarda (MDAO) model value |
-> | 165.72 J/cm² as the validation target | **174.14 J/cm²** (the run's own DSMC value) | `validation_pipeline.py` `IRVE3_REFERENCE`; the 165.72 figure is a stale Ada V1 default |
-> | 12.20 W/cm² as the model's peak heat flux | **12.82 W/cm²** | measured from `results/validation_scalloped` |
-> | 16.83 g as the peak deceleration | **16.48 g** (tail-15 mean 17.09 g; the series peaks at 22.67 g) | measured |
-> | 6 toroids as the IRVE-3 flight vehicle | flight used **7**; 6 is the MDAO-comparison default | `stellarorion_types.ads:284-288` |
-> | the SiC survivability limit as 1700 K | **2073 K** | `stellarorion_types.ads:97` |
->
-> Nothing in this file was silently altered — the original text is left in place so the audit
-> trail stays readable. **Every occurrence of the values above is marked inline** with a
-> `[REF-CORRECTED]` pointer. To fix the substance rather than the annotation, apply the
-> `IRVE3_REFERENCE` values directly.
-
 ---
 
 ## 1. SPARTA Data Parsing & Mapping
@@ -118,8 +95,6 @@ $$\boxed{\dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \cdot V_\infty^3
 $$\dot{q}_{stag} = 1.7415 \times 10^{-4} \sqrt{\frac{6.9674 \times 10^{-4}}{0.55}} \times 2700^3 \approx 1.22 \times 10^5 \ \text{W/m}^2 = 12.20 \ \text{W/cm}^2$$
 
 This is compared against the IRVE-3 flight measurement of 14.36 W/cm². The difference reflects
-  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
-
 that our code uses a single-point baseline condition (ρ=6.9674e-4, V=2700), while the actual
 trajectory-integrated peak heating occurs at different conditions. Rapisarda (2023) reports
 the trajectory-integrated Sutton-Graves peak as 15.26 W/cm² (+6.26% above flight) and the

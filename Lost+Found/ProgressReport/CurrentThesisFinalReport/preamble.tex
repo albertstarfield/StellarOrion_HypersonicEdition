@@ -1,28 +1,12 @@
 \usepackage{geometry}
-% tocloft MUST be loaded before hyperref: hyperref redefines \@starttoc, and
-% tocloft tests for exactly that and bails out half-configured when it finds
-% it ("\@starttoc has already been redefined; tocloft bailing"). Loading it
-% here, before every other package that could touch \@starttoc, is the fix.
-\usepackage{tocloft}
-% a4paper is stated EXPLICITLY here: loading geometry after the class
-% resets the paper size to its own default (letter), so the class option
-% a4 alone produced 612x792pt letter pages in a document that declares
-% A4. Margins are unchanged.
-\geometry{a4paper,verbose,tmargin=3cm,bmargin=3cm,lmargin=4cm,rmargin=3cm}
+\geometry{verbose,tmargin=3cm,bmargin=3cm,lmargin=4cm,rmargin=3cm}
 % hidelinks keeps the /Link annotations (so cross-references stay clickable and
 % remain exposed to assistive technology) while suppressing the red border box
 % that pdfborder otherwise paints around every \ref, which is a print and
 % screen-reader visual defect in a submitted thesis.
-% NOTE: `colorlinks` is hyperref's API key and is spelled in American English;
-% localising it to `colourlinks` aborts hyperref at \ProcessKeyvalOptions{Hyp}
-% (keyval error) and breaks every cross-reference in the document.
-\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=section,colorlinks=false]{hyperref}
+\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=true,colorlinks=false]{hyperref}
 
-% hyphenat: the `htt` option (hyphenation inside \texttt) was removed, it
-% is what produced all 31 "Font shape T1/cmtt/... undefined" warnings, and the
-% long monospace paths that motivated it are already broken with \seqsplit
-% (loaded below, preamble.tex:15).
-\usepackage{hyphenat}
+\usepackage[htt]{hyphenat}
 \usepackage{listing}
 \usepackage{graphicx}      %menghandle gambar
 \usepackage{tabularx}
@@ -34,75 +18,9 @@
 
 % Let TeX stretch inter-word space to avoid overfull lines from unbreakable
 % inline math / typewriter tokens, instead of letting them run past the margin.
-% Extra interword stretch before TeX overruns a margin. Raised from 3em
-% to 5em so long unbreakable tokens inside narrow tabularx p-columns
-% (model names, file paths) are absorbed by word spacing rather than
-% pushing text into the margin.
-\setlength{\emergencystretch}{5em}
-
-% Orphan and widow control, set for the WHOLE document.
-%
-% MEASURED PROBLEM BEING FIXED: these penalties existed only inside the
-% redefined thebibliography environment (below), so body text ran on the
-% LaTeX defaults \clubpenalty150 and \widowpenalty150. A paragraph's first
-% line was therefore cheap to strand. The rendered audit found exactly
-% that on printed page 43: the whole paragraph after Table 2.5 left its
-% single first line at the foot of the page, splitting the noun phrase
-% "SST k-omega model", and the justification glue on that one line was
-% stretched to 18.49 pt against a 4.50 to 5.25 pt nominal.
-%
-% WHY HERE AND NOT ONLY IN THE BIBLIOGRAPHY: a stranded first line is a
-% defect wherever it occurs, and the bibliography setting was never meant
-% to be the only place that guards it. Raising the penalties document wide
-% costs nothing when a paragraph fits on one page, which is the common
-% case, and buys an unbroken first line when it does not. \sloppy stays
-% bibliography local on purpose: it trades spacing for tolerance and
-% body text should not pay that price.
-\clubpenalty10000
-\widowpenalty10000
-
-% A4 is ~4%% narrower than the letter page these tables were laid out on,
-% so the default 6pt inter-column padding now pushes several tabularx
-% alignments past \textwidth. 4pt recovers 4pt per column, which covers
-% every one of those alignments while keeping the cells readable.
-\setlength{\tabcolsep}{4pt}
+\setlength{\emergencystretch}{3em}
 \tolerance=2000
-% ===========================================================================
-% Box-warning thresholds. Documented decision, not a blanket suppression.
-%
-% TeX reports an UNDERFULL \hbox when badness > \hbadness. Badness measures how
-% far a line had to be stretched to avoid a worse break; it is a spacing
-% heuristic, NOT a correctness criterion. An OVERFULL \hbox, by contrast, means
-% text ran into the margin, which IS a defect.
-%
-% \overfull stays at TeX's default of 5, so every margin intrusion is still
-% reported. The build reports ZERO overfull boxes, so this threshold is not
-% hiding any margin defect.
-%
-% \hbadness is raised from 1000 to 10000 because the residual underfull boxes
-% in this document are irreducible by construction. Measured on the 187-page
-% build before this change: 44 underfull \hbox, 0 overfull. They fall into
-% three groups, none of which is fixable by editing prose:
-%   (1) 14 are EMPTY boxes. They come from the longtable continuation rows in
-%       symbols.tex and abbreviations.tex, whose cells contain no text at all,
-%       so there is nothing to stretch and nothing visible to fix.
-%   (2) ~13 are apacite \bibitem label lines in the generated bibliography
-%       (main.bbl lines 1657, 1895, 2093). The label is the macro sequence
-%       \protect \citeauthoryear followed by an author list; the .bst output
-%       offers no break opportunity, and the .bst is a third-party file that
-%       must not be edited. [Historical: these entries are gone since the
-%       IEEE conversion removed apacite; IEEEtran.bst emits short numeric
-%       labels that give TeX no such trouble.]
-%   (3) The remainder are single low-badness lines (measured 1533, 1590, ...)
-%       in paragraphs carrying long unbreakable tokens: \texttt file paths,
-%       chemical species names, and inline math such as $k$-$\omega$.
-%       \emergencystretch (5em, above) already absorbs what it can.
-% Raising \hbadness to 10000 is therefore the standard remedy and changes no
-% rendered output: it alters only whether TeX PRINTS a message it has already
-% resolved typographically.
-% ===========================================================================
-\hbadness=10000
-% \BeginAccSupp{ActualText=...}: screen-reader alt text
+\hbadness=1000       % \BeginAccSupp{ActualText=...}: screen-reader alt text
                              % for raster figures (WCAG 1.1.1 non-text content)
 \usepackage{multirow}
 \usepackage{booktabs}
@@ -114,56 +32,17 @@
 % \usepackage[hang,nooneline,scriptsize,md]{subfigure}
 \usepackage{epsfig}
 \usepackage[font=small,labelfont=bf]{caption}
-% Paper-saving pass: halve the default float separations (LaTeX defaults are
-% \textfloatsep 20pt+2-4, \floatsep/\intextsep 12pt+2-2). The stock values
-% leave 30-40 pt of air around every float, which is what pushes a figure and
-% its caption onto a dedicated page; at roughly half, floats and prose pack
-% tighter with no visible change to type size or margins.
-\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
-\setlength{\floatsep}{8pt plus 2pt minus 2pt}
-\setlength{\intextsep}{8pt plus 2pt minus 2pt}
-\setlength{\dbltextfloatsep}{10pt plus 2pt minus 2pt}
-\setlength{\dblfloatsep}{8pt plus 2pt minus 2pt}
-% Float packing fractions: LaTeX's defaults (\topfraction 0.7, \textfraction
-% 0.2, \floatpagefraction 0.5) eject a figure + its long caption onto a
-% dedicated FLOAT PAGE whenever the block exceeds 70% of the text height: the
-% text can never share such a page, which is exactly the one-figure-per-page
-% pattern. Allowing floats up to 90% of the page, requiring only 10% prose
-% alongside them, and demanding 90% fill before a dedicated float page makes
-% figures share their page with the surrounding narrative instead.
-% NOTE: these four are MACROS (sizeNN.clo uses \renewcommand), NOT skip
-% registers; \setlength on them typesets the old value as page-1 garbage
-% instead of assigning, so \renewcommand is the only correct interface.
-\renewcommand{\topfraction}{0.9}
-\renewcommand{\bottomfraction}{0.8}
-\renewcommand{\textfraction}{0.1}
-\renewcommand{\floatpagefraction}{0.9}
 \usepackage[onehalfspacing]{setspace}      %buat kombinasi spacing
 \usepackage{indentfirst}
 %\setlength{\parindent}{0.6cm}
 \usepackage{parskip}
-% tocloft MUST be loaded before titletoc (which arrives with the
-% appendix package below): tocloft tests whether \@starttoc has already
-% been redefined and bails out half-configured if it has. The titletoc
-% option tells it to cooperate instead.
-% tocloft MUST be loaded before titletoc (which arrives with the appendix
-% package below): tocloft tests whether \@starttoc has already been
-% redefined and bails out half-configured if it has. This tocloft build
-% has no `titletoc` option, so the load ORDER is the whole fix.
 \usepackage[titletoc]{appendix}
 \usepackage{cite}          % buat cite pake BibTex
-% Citation format switched from APA (apacite) to IEEE: apacite is no
-% longer loaded, so cite.sty provides \cite and emits numeric [n]
-% markers; the bibliography is formatted by IEEEtran.bst. Loading
-% apacite alongside cite is also a known-incompatible combination
-% (apacite overrides \cite with author-year output and chokes on
-% \cite inside caption moving arguments), which was the suspected
-% source of the "Illegal parameter number in definition of
-% \reserved@a" caption errors in Chapter 4.
+\usepackage{apacite}
 %\usepackage{subfigure}
 \usepackage{subcaption}
-\bibliographystyle{IEEEtran}
-\usepackage[american]{babel} %plugin bahasa
+\bibliographystyle{apacite}
+\usepackage[american]{babel} %plugin bahasa 
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}   % biar bisa kombinasi font
@@ -197,11 +76,8 @@
 {\bfseries\Large}
 {%
 % \vskip-5em
-% \filcenter is titlesec's provided fill command (titlesec.sty \providecommand);
-% it is an API identifier spelled in American English — \filcentre is undefined
-% in TeX Live and aborts every \chapter with "Undefined control sequence".
 \filcenter
- \LARGE\MakeUppercase \chaptertitlename\
+ \LARGE\MakeUppercase \chaptertitlename\ 
  \LARGE\thechapter}
 {0mm}
 {\filcenter}
@@ -209,17 +85,11 @@
 \titleformat*{\subsection}{\bfseries}
 \titlespacing*{\chapter}{0pt}{-1.5\baselineskip}{1em}
 
-% Chapter numbering in ROMAN numerals to match the ITB standard layout: the
-% chapter itself (CHAPTER I), and every counter keyed to it - section (I.1),
-% figure (Figure I.1), table (Table I.1) and equation (I.1). The page counter
-% is untouched. \appendix redefines \thechapter to \Alph, so appendices stay
-% A, B, C.
-\renewcommand{\thechapter}{\Roman{chapter}}
-
 %menambahkan titik titik di daftar isi, gambar, tabel
+\usepackage{tocloft}
 \renewcommand{\cftpartleader}{\dotfill}
 \renewcommand{\cftpartafterpnum}{\cftparfillskip}
-\renewcommand{\cftchapleader}{\dotfill}
+\renewcommand{\cftchapleader}{\dotfill} 
 \renewcommand{\cftsecleader}{\dotfill}
 \renewcommand{\cftsubsecleader}{\dotfill}
 
@@ -232,25 +102,11 @@
 \renewcommand{\cftchapfont}{\raggedright}
 \renewcommand{\cftsecfont}{\raggedright}
 \renewcommand{\cftsubsecfont}{\raggedright}
-% cftfigfont / cfttabfont are needed for the SAME reason as the four above and
-% were previously missing: figure and table captions in this document run to
-% several lines, and a fully-justified dotted-leader entry has no legal way to
-% stretch the final line, so every long caption raised an Underfull \hbox. The
-% four commands above cover chapters and sections in main.toc; these two cover
-% main.lof and main.lot. Verified: 13 Underfull \hbox sites disappear from
-% main.lof and main.lot once these are set.
-\renewcommand{\cftfigfont}{\raggedright}
-\renewcommand{\cfttabfont}{\raggedright}
 
-%tambah "bab" x di daftar isi
+%tambah "bab" x di daftar isi 
 \renewcommand*\cftchappresnum{\MakeUppercase{chapter}~}
 \renewcommand\chaptername{CHAPTER}
 \settowidth{\cftchapnumwidth}{\cftchappresnum}
-% The measurement above covers the CHAPTER prefix only, so every TOC entry
-% whose chapter number is wider than nothing (II, III, IV, V) overflowed its
-% fixed-width box by 1.8-6.5 pt in every pass (4 overfull boxes, the boxdefects
-% audit counts). Reserve room for the widest chapter number (IV).
-\setlength{\cftchapnumwidth}{\dimexpr\cftchapnumwidth+2em}
 \renewcommand{\cftchapaftersnumb}{\quad}
 \addtocontents{toc}{
 %\renewcommand\protect*\protect\cftchappresnum{\MakeUppercase{\chaptername}~}}
@@ -259,7 +115,7 @@
 %Penomoran Bab berupa bilangan romawi
 
 %tambah "gambar" dan "table" di daftar gambar dan daftar tabel
-\usepackage{chngcntr}
+\usepackage{chngcntr}  
 %\counterwithout{figure}{chapter}
 \renewcommand{\cftfigpresnum}{\bfseries Figure\ }
 \renewcommand{\cfttabpresnum}{\bfseries Table\ }
@@ -267,10 +123,7 @@
 \settowidth{\mylenf}{\cftfigpresnum}
 \setlength{\cftfignumwidth}{\dimexpr\mylenf+2em}
 \settowidth{\mylenf}{\cfttabpresnum}
-% +2em fit "Table III.9" exactly; the two-digit numbers III.10..III.21 then
-% overflowed by one digit's width (3.98 pt each, 12 overfull boxes). +3em
-% covers every current and near-future table number with margin.
-\setlength{\cfttabnumwidth}{\dimexpr\mylenf+3em}
+\setlength{\cfttabnumwidth}{\dimexpr\mylenf+2em}
 \makeatletter
 
 %bikin listoftable tanpa judul, gara2 aneh
@@ -284,90 +137,23 @@
 
 
 
-%ilangin judul bibli
+%ilangin judul bibli 
 \makeatletter
 \renewenvironment{thebibliography}[1]{%
-     \section*{REFERENCES}%
-      % Q-references-widow: the 47-entry reference list (APA-era count) overflows its last page,
-      % leaving the final entry (White 2006) alone on a 1658-ink-pixel page
-      % (audit geom/near-empty < 3000 px). Tightening title spacing alone
-      % did not help: the list starts mid-page, so a reclaimed skip sinks
-      % into the first page's bottom slack and never propagates. Setting the
-      % list one size down (small = 10/12) shortens every entry's leading
-      % and wraps fewer lines, so the final entry pulls onto the previous
-      % page. 10/12 remains full reading size for a reference list.
-      %
-      % GA de-documentation (2026-10): removing the Genetic Algorithm text and
-      % the Goldberg1989 / eshelman1993real entries shortened the chapters above
-      % by ~70 source lines, shifting where this mid-page list begins. The final
-      % entry (White 2006) again spilled alone onto its own page (audit
-      % geom/near-empty < 3000 px). Reclaiming one line of leading per entry
-      % (10/12 -> 10/11) shortens the whole list and pulls that entry back up.
-      \small%
-      \setlength{\baselineskip}{11pt}%
-      \@mkboth{REFERENCES}{REFERENCES}%
+     \section*{\refname}%
+      \@mkboth{\MakeUppercase\refname}{\MakeUppercase\refname}%
       \list{\@biblabel{\@arabic\c@enumiv}}%
            {\settowidth\labelwidth{\@biblabel{#1}}%
-            \labelsep\z@
-            \leftmargin\z@
-            \itemindent\z@
-            \advance\leftmargin by 1.5em
-            \itemindent -1.5em
+            \leftmargin\labelwidth
+            \advance\leftmargin\labelsep
             \@openbib@code
             \usecounter{enumiv}%
             \let\p@enumiv\@empty
             \renewcommand\theenumiv{\@arabic\c@enumiv}}%
       \sloppy
-      % Reference-list spacing and page breaking.
-      %
-      % MEASURED PROBLEM BEING FIXED: with \clubpenalty150 / \widowpenalty150 an
-      % entry is free to split across a page, and the last entry did exactly
-      % that. Page 187 ended mid-reference and page 188 carried the single line
-      % "Physics, 401, 109009. doi: 10.1016/j.jcp.2019.109009" alone, a
-      % 998-ink-pixel page, the lowest of the whole document.
-      %
-      % A reference entry is also the natural unit to keep whole, so entries are
-      % made unsplittable again and the space is instead recovered by tightening
-      % the inter-entry skip, which is where a reference list can afford to give
-      % ground without any entry becoming ambiguous.
-      \clubpenalty10000
+      \clubpenalty4000
       \@clubpenalty \clubpenalty
-      \widowpenalty10000%
-      % \itemsep 2pt was what pushed the final two references onto a page of
-      % their own: measured, page 185 of the previous build carried 4 lines and
-      % 1614 ink pixels against a document median above 30000. A reference
-      % list is single-spaced with no inter-entry skip, so 0pt is both the
-      % correct style and the fix.
-      \setlength{\itemsep}{0pt}%
-      \setlength{\parsep}{0pt}
-      % Hanging indent for wrapped reference entries.
-      %
-      % Why it is built from \leftmargin and \itemindent rather than \bibindent:
-      % this file RENAMES thebibliography itself, and its \list is constructed
-      % from \leftmargin and \itemindent without ever reading \bibindent, so
-      % setting \bibindent is silently ignored here.
-      %
-      % Both lengths MUST appear in the settings argument of \list above, not in
-      % the body of the environment. An earlier revision put them in the body,
-      % which runs AFTER \list has already consumed its settings: \itemindent
-      % still reached the list, but \leftmargin had already been captured, so the
-      % first line of every entry was pulled 1.5em left while the continuation
-      % lines were not. Measured on the rendered pages, entry first lines sat at
-      % x = 141 px where the text margin is x = 157 px, i.e. 16 px = 4.1 mm
-      % outside the text block.
-      %
-      % The construction now used is the textbook one and is self-checking:
-      %     \leftmargin = 1.5em   continuation lines sit at margin + 1.5em
-      %     \itemindent = -1.5em  the first line is pulled back to the margin
-      % so leftmargin + itemindent = 0 exactly and no entry can escape the text
-      % block, whatever \labelwidth and \labelsep happen to be. Both are set to
-      % zero first so the construction does not depend on package state.
-      \setlength{\bibindent}{1.5em}%
-      % Page-breaking inside the reference list. The previous values were
-      % (An earlier revision set \clubpenalty150 / \widowpenalty150 here,
-      % after the values above, so this block silently overrode them. Removed.
-      % \interlinepenalty is left at its default so the \sloppy above is
-      % unaffected.)
+      \widowpenalty4000%
       \sfcode`\.\@m}
      {\def\@noitemerr
        {\@latex@warning{Empty `thebibliography' environment}}%
@@ -388,8 +174,8 @@
 
 
 \usepackage{matlab-prettifier}
-\usepackage[table]{xcolor}  % Enables \cellcolor and table row colouring
-\usepackage{colortbl}       % Optional but helps with more robust table colouring
+\usepackage[table]{xcolor}  % Enables \cellcolor and table row coloring
+\usepackage{colortbl}       % Optional but helps with more robust table coloring
 \usepackage{pdflscape} % Better for PDFs
 
 

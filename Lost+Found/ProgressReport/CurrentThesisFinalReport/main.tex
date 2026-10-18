@@ -1,42 +1,24 @@
-\documentclass[12pt,a4paper,fleqn,american]{extreport}
-% We use British English because it's funny. Also because the thesis is
-% submitted to an Indonesian university and the supervisor liked 'colour'.
+\documentclass[12pt,a4,fleqn,american]{extreport}
 \input{preamble}
 \input{identity}
 \input{database.hyphenate}
 \begin{document}
-% Front matter is numbered twice (cover = arabic 1, then roman i), so two
-% pages both claim the anchor page.1 and hyperref drops one with a duplicate
-% destination warning. Anchors stay off until the arabic body numbering
-% begins, which is the documented hyperref remedy.
-\hypersetup{pageanchor=false}
   \include{cover}
-  \input{blank_page}
-\pagenumbering{roman}
- \include{abstract}
- \input{blank_page}
- \include{abstrak}
- \input{blank_page}
+\pagenumbering{roman} 
  \include{approval_sheet}
- \input{blank_page}
- \include{protocol}
- \input{blank_page}
- \include{acknowledgement}
- \input{blank_page}
+ \include{abstract}
 \include{table_of_contents}
-\include{list_of_figures}
+\include{list_of_figures} 
 \include{list_of_tables}
 \include{symbols}
 \include{abbreviations}
 \pagenumbering{arabic}
-\hypersetup{pageanchor=true}
   \include{chapter_01_introduction}
   \include{chapter_02_literature_review}
   \include{chapter_03_methodology}
 
   \include{chapter_04_results}
   \include{chapter_05_conclusion}
-\input{references}
+\input{references}  
 \input{appendix}
-\input{disclaimer}
 \end{document}

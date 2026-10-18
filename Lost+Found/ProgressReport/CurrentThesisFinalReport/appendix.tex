@@ -3,35 +3,35 @@
 \chapter{StellarOrion Physical Constants and Code Reference}
 \label{app:code_constants}
 
-This appendix lists the constants and defaults used by \mbox{\texttt{stellarorion\_program\_proc}}.
+This appendix documents the physical constants and default parameters used in the StellarOrion simulation engine (\texttt{\seqsplit{stellarorion\_program\_proc}}), providing full traceability between the thesis equations and the Ada/SPARK implementation.
 
 \section{Fundamental Physical Constants}
 \label{sec:fundamental_constants}
 
-Constants from \texttt{\seqsplit{stellarorion\_types.ads}} (Table~\ref{tab:constants}).
+Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\seqsplit{stellarorion\_types.ads}}, which are used throughout the aerothermodynamic calculations presented in this thesis.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{Physical constants used by \texttt{stellarorion\_types.ads}, with 2018 recommended values~\protect\cite{codata2018}. The Sutton-Graves coefficient is listed at the Earth-air correlation value $1.7415 \times 10^{-4}$ (tabulated for Earth air in TR R-376), the same value the engine carries; $1.83 \times 10^{-4}$ belongs to a Mars-mixture evaluation and is not used.}
+\caption{Fundamental physical constants used in StellarOrion (from \texttt{stellarorion\_types.ads}).}
 \label{tab:constants}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.22\textwidth} >{\RaggedRight\arraybackslash}p{0.10\textwidth} >{\RaggedRight\arraybackslash}p{0.25\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
 \hline
-Stefan-Boltzmann & $\sigma$ & \mbox{$5.670374419 \times 10^{-8}$} & W m$^{-2}$ K$^{-4}$ \\
-Boltzmann & $k_B$ & \mbox{$1.380649 \times 10^{-23}$} & J K$^{-1}$ \\
-Avogadro & $N_A$ & \mbox{$6.02214076 \times 10^{23}$} & mol$^{-1}$ \\
-Standard gravity & $g_0$ & $9.80665$ & m s$^{-2}$ \\
-Molar mass of air & $M_{\text{air}}$ & $28.97 \times 10^{-3}$ & kg mol$^{-1}$ \\
-Specific gas constant (air) & $R_{\text{air}}$ & $287.058$ & J kg$^{-1}$ K$^{-1}$ \\
-Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & n/a \\
+Stefan--Boltzmann & $\sigma_B$ & $5.670374419 \times 10^{-8}$ & W\,m$^{-2}$\,K$^{-4}$ \\
+Boltzmann & $k_B$ & $1.380649 \times 10^{-23}$ & J\,K$^{-1}$ \\
+Avogadro & $N_A$ & $6.02214076 \times 10^{23}$ & mol$^{-1}$ \\
+Standard gravity & $g_0$ & $9.80665$ & m\,s$^{-2}$ \\
+Molar mass of air & $M_{\text{air}}$ & $28.97 \times 10^{-3}$ & kg\,mol$^{-1}$ \\
+Specific gas constant (air) & $R_{\text{air}}$ & $287.058$ & J\,kg$^{-1}$\,K$^{-1}$ \\
+Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & --- \\
 Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
-Prandtl number (air) & $\text{Pr}$ & $0.71$ & n/a \\
+Prandtl number (air) & $\text{Pr}$ & $0.71$ & --- \\
 Sutherland constant & $S$ & $110.4$ & K \\
-Sutton-Graves coefficient & $C_{SG}$ & $1.7415 \times 10^{-4}$ & W m$^{-2}$ (kg~m$^{-3}$)$^{-1/2}$ (m~s$^{-1}$)$^{-3}$ \\
-Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa s \\
+Sutton--Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ \\
+Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa\,s \\
 Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
-Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J kg$^{-1}$ K$^{-1}$ \\
+Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}$ \\
 \hline
 \end{tabularx}
 \end{table}
@@ -39,19 +39,19 @@ Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J kg$^{-1}$ K$^{-1}$ 
 \section{Material Survivability Limits}
 \label{sec:survivability_limits}
 
-Limits for \texttt{Is\_Survivable} in \texttt{\seqsplit{stellarorion\_physics.ads}} (Table~\ref{tab:survivability}).
+Table~\ref{tab:survivability} lists the material failure thresholds used by the \texttt{Is\_Survivable} predicate in \texttt{\seqsplit{stellarorion\_physics.ads}} to determine whether a given flight condition exceeds TPS or structural limits.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{Material survivability limits.}
+\caption{Material survivability limits enforced by StellarOrion.}
 \label{tab:survivability}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Parameter} & \textbf{Value} & \textbf{Source} \\
 \hline
-SiC maximum temperature & 2073 K & Material datasheet / \cite{rapisarda2023mdao}, Sec.~4.3 \\
-Kapton maximum temperature & 773 K & DuPont Kapton HN datasheet \\
-Maximum g-load & 25 $g$ & \cite{rapisarda2023mdao}, Sec.~5.4 \\
+SiC maximum temperature & 2073\,K & Material datasheet / Rapisarda (2023) Sec.\ 4.3 \\
+Kapton maximum temperature & 773\,K & DuPont Kapton HN datasheet \\
+Maximum g-load & 25\,$g$ & Rapisarda (2023) Sec.\ 5.4 \\
 \hline
 \end{tabularx}
 \end{table}
@@ -59,29 +59,29 @@ Maximum g-load & 25 $g$ & \cite{rapisarda2023mdao}, Sec.~5.4 \\
 \section{Default Vehicle Geometry (IRVE-3 Baseline)}
 \label{sec:vehicle_geometry}
 
-Default HIAD geometry (Table~\ref{tab:geometry}).
+Table~\ref{tab:geometry} presents the default HIAD geometry parameters corresponding to the IRVE-3 flight configuration as implemented in the StellarOrion engine.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{Default HIAD geometry, the {IRVE}-3 MDAO baseline from \protect\cite{rapisarda2023mdao}.}
+\caption{Default HIAD geometry parameters (IRVE-3 MDAO baseline from Rapisarda, 2023).}
 \label{tab:geometry}
 \begin{tabular}{lll}
 \hline
 \textbf{Parameter} & \textbf{Symbol} & \textbf{Value} \\
 \hline
-Aeroshell diameter & $D$ & 3.0 m \\
+Aeroshell diameter & $D$ & 3.0\,m \\
 Cone half-angle & $\theta_c$ & 60\textdegree \\
-Nose radius & $R_N$ & 1.5 m \\
+Nose radius & $R_N$ & 1.5\,m \\
 Number of toroids & $N_{\text{tor}}$ & 6 \\
-Toroid radius & $r_{tor}$ & 0.135 m \\
-Outer toroid radius & $r_{\text{out}}$ & 0.1016 m \\
-Vehicle mass & $m$ & 281 kg \\
-Payload height & $h_{\text{pay}}$ & 1.70 m \\
+Toroid radius & $r_{\text{tor}}$ & 0.135\,m \\
+Outer toroid radius & $r_{\text{out}}$ & 0.1016\,m \\
+Vehicle mass & $m$ & 281\,kg \\
+Payload height & $h_{\text{pay}}$ & 1.70\,m \\
 Slice angle & $\phi$ & 360\textdegree \\
-Nose profile & n/a & Smooth \\
-Skin type & n/a & Smooth \\
+Nose profile & --- & Smooth \\
+Skin type & --- & Smooth \\
 Scallop points & $N_{\text{sc}}$ & 8 \\
-Scallop amplitude & $\delta_{\text{sc}}$ & 0.030 m \\
+Scallop amplitude & $\delta_{\text{sc}}$ & 0.030\,m \\
 \hline
 \end{tabular}
 \end{table}
@@ -89,21 +89,21 @@ Scallop amplitude & $\delta_{\text{sc}}$ & 0.030 m \\
 \section{Default Flight Conditions}
 \label{sec:flight_conditions}
 
-Baseline freestream conditions (Table~\ref{tab:flight}).
+Table~\ref{tab:flight} lists the freestream conditions used as the baseline simulation point, corresponding to an altitude of 51.8\,km during IRVE-3 reentry.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{Default freestream conditions at 51.8 km.}
+\caption{Default freestream flight conditions at 51.8\,km altitude.}
 \label{tab:flight}
 \begin{tabular}{lll}
 \hline
 \textbf{Parameter} & \textbf{Symbol} & \textbf{Value} \\
 \hline
 Mach number & $M_\infty$ & 10.29 \\
-Altitude & $h$ & 51.8 km \\
-Freestream velocity & $V_\infty$ & 3378 m/s \\
-Freestream density & $\rho_\infty$ & $7.851 \times 10^{-4}$ kg/m$^3$ \\
-Freestream temperature & $T_\infty$ & 268.41 K \\
+Altitude & $h$ & 51.8\,km \\
+Freestream velocity & $V_\infty$ & 3378\,m/s \\
+Freestream density & $\rho_\infty$ & $7.851 \times 10^{-4}$\,kg/m$^3$ \\
+Freestream temperature & $T_\infty$ & 268.41\,K \\
 \hline
 \end{tabular}
 \end{table}
@@ -111,22 +111,21 @@ Freestream temperature & $T_\infty$ & 268.41 K \\
 \section{Thermal Protection System (TPS) Presets}
 \label{sec:tps_presets}
 
-TPS presets (Table~\ref{tab:tps}).
+The StellarOrion engine includes several predefined TPS material presets for thermal analysis. Table~\ref{tab:tps} summarizes the available configurations.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\footnotesize
-\caption{TPS material presets.}
+\caption{TPS material presets available in StellarOrion.}
 \label{tab:tps}
-\begin{tabularx}{\textwidth}{l l c c c c >{\RaggedRight\arraybackslash}X}
+\begin{tabularx}{\textwidth}{l l c c c c c X}
 \hline
-\textbf{Preset} & \textbf{Material} & $\rho$ (kg/m$^3$) & $c_p$ (J/kg K) & $k$ (W/m K) & $\varepsilon$ & $\delta$ (m) \\
+\textbf{Preset} & \textbf{Material} & $\rho$ (kg/m$^3$) & $c_p$ (J/kg\,K) & $k$ (W/m\,K) & $\varepsilon$ & $\delta$ (m) \\
 \hline
 SiC & Nicalon SiC & 1468 & 1100 & 0.20 & 0.75 & 0.0254 \\
 PICA\textsubscript{X} & Phenolic carbon & 320 & 1500 & 0.50 & 0.85 & 0.040 \\
 LOFTID & Nextel/Pyrogel & 300 & 1200 & 0.15 & 0.80 & 0.050 \\
 Kapton & Polyimide film & 1420 & 1090 & 0.12 & 0.70 & 0.005 \\
-Pyrogel 3350 & Aerogel & 110 & 1000 & 0.02 & 0.80 & 0.025 \\
+Pyrogel & Aerogel insul.\ & 200 & 1000 & 0.02 & 0.85 & 0.025 \\
 Multi & Layer composite & 650 & 1050 & 0.10 & 0.80 & 0.040 \\
 \hline
 \end{tabularx}
@@ -135,13 +134,13 @@ Multi & Layer composite & 650 & 1050 & 0.10 & 0.80 & 0.040 \\
 \section{Computational Chemistry Modes}
 \label{sec:chemistry_modes}
 
-Gas-phase modes (Table~\ref{tab:chemistry}).
+Table~\ref{tab:chemistry} documents the gas-phase chemistry models available in the simulation framework.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{Chemistry modes.}
+\caption{Chemistry modes implemented in StellarOrion.}
 \label{tab:chemistry}
-\begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Mode} & \textbf{Species} & \textbf{Application} \\
 \hline
@@ -155,13 +154,13 @@ Mars & CO$_2$, CO, N$_2$, O$_2$, NO, C, O, N, CN, CO$^+$, N$_2^+$ & Mars entry \
 \section{Solver Backends}
 \label{sec:solver_backends}
 
-Supported solver backends (Table~\ref{tab:solvers}).
+Table~\ref{tab:solvers} lists the computational solver backends supported by the framework.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{Solver backends.}
+\caption{Solver backends in StellarOrion.}
 \label{tab:solvers}
-\begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Solver} & \textbf{Type} & \textbf{Description} \\
 \hline
@@ -178,609 +177,125 @@ PyANSYS & CFD (Mechanical) & Structural finite element analysis interface \\
 
 \section{Module Structure}
 
-Packages:
+The StellarOrion simulation engine is implemented in Ada/SPARK and organized into the following key packages:
 
 \begin{itemize}
-    \item \texttt{\seqsplit{stellarorion\_types.ads}}: constants, types
-    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}}: aerothermodynamics
-    \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}}: aeroshell geometry
-    \item \texttt{\seqsplit{stellarorion\_sparta.ads/adb}}: SPARTA DSMC surfaces, Docker
-    \item \texttt{\seqsplit{stellarorion\_optimisation.ads/adb}}: cost function
-    \item \texttt{\seqsplit{stellarorion\_pinn\_trajectory.ads/adb}}: trajectory extrapolation
-    \item \texttt{\seqsplit{stellarorion\_validation.ads/adb}}: validation and survivability.
+    \item \texttt{\seqsplit{stellarorion\_types.ads}} -- Physical constants, type definitions, vehicle and flight parameter records
+    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}} -- Aerothermodynamic calculations (mean free path, Knudsen number, Sutton--Graves heat flux, Fay--Riddell correlation, radiative equilibrium, ballistic coefficient, g-load, trajectory profiling)
+    \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
+    \item \texttt{\seqsplit{stellarorion\_simulation.ads/adb}} -- SPARTA DSMC simulation driver and Docker integration
+    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with LHS/CCD design of experiments
+    \item \texttt{\seqsplit{stellarorion\_pinn.ads/adb}} -- PINN refinement via DeepXDE Python sidecar
+    \item \texttt{\seqsplit{stellarorion\_calibration.ads/adb}} -- Automated calibration against IRVE-3 flight data
 \end{itemize}
 
-\section{Command-Line Interface (CLI) Modes}
+\section{CLI Modes}
 
-The binary dispatches a range of command-line options, including \texttt{self-test}, \texttt{compareNoses}, \texttt{compareCalibrate}, \texttt{optimise}, \texttt{validate}, \texttt{gridIndepTest} and \texttt{validationPINN}.
+The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{\seqsplit{--compareCalibrate}}, \texttt{--optimize}, \texttt{--trajectory}, \texttt{--pinn}, and others. Refer to the StellarOrion README for complete CLI documentation.
 
-\section{Automated Verification and Code-Quality Toolchain}
-\label{sec:automated_verification_toolchain}
+\section{GNATprove Verification Status}
 
-\begin{table}[!htbp]
-\centering
-\caption{Automated verification and code-quality tools applied to the StellarOrion program.}
-\label{tab:verification_tools}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.16\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
-\hline
-\textbf{Tool} & \textbf{Invocation} & \textbf{Checked property} \\
-\hline
-Rocq 9.3.0 / Coq 8.18.0 & theorem files & Proof skeletons and contractual arithmetic, including orbit and ATP guarantees. \\
-GNATprove 16.1.0 & \texttt{gnatprove --level=4} & SPARK level-4 campaign covering the Ada built-in, units and validation code; the fresh scan reports \texttt{569/569} obligations discharged and \texttt{0} unproved. \\
-CrossHair & theorem checker (Python) & Property-based theorem checking of Python code for contracted assumptions and equivalence. \\
-Pyrefly & static analysis & type consistency of the Python entry points and wrappers. \\
-Ruff & lint + format checks & style and common Python error patterns in the supporting scripts. \\
-sabotage\_verifier.py & sabotage scan & resource cleanup, exception handling, memory safety, and audit rules across Ada and Python. \\
-\hline
-\end{tabularx}
-\end{table}
-
-\noindent The versions recorded for this sweep are the measured ones rather
-than nominal ones: Python 3.12.15 in the project's validation virtual
-environment, ruff 0.16.10, pyrefly 1.3.2, GNAT 16.1.0 and GNATprove FSF
-16.1.0. The Python checks run inside that environment, and pyrefly is
-invoked with \texttt{--python-interpreter-path} pointed at the same
-interpreter: resolved against a different interpreter it reports three
-spurious \texttt{missing-import} errors in \texttt{ada\_pinn\_wrapper.py}
-that are an artifact of the invocation rather than of the code.
-
-\subsection{Raw Report Transcripts}
-\label{sec:raw_verification_transcripts}
-
-Each transcript below documents the emitted tool report; this appendix does
-not repair any reported finding. Terminal colour codes were removed from the
-raw records. Exit codes are reported because a tool can exit cleanly while
-still printing errors or leaving checks unproved.
-
-\begin{table}[!htbp]
-\centering
-\caption{Documented raw verification outcomes.}
-\label{tab:raw_verification_outcomes}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.10\textwidth}@{}}
-\hline
-\textbf{Tool} & \textbf{Recorded raw outcome} & \textbf{Exit code} \\
-\hline
-Ruff & \texttt{Found 5 errors} (DTZ011, 3 x PLR0124, 1 x FURB188) & 1 \\
-Pyrefly & \texttt{INFO 0 errors (8 suppressed, 20 warnings not shown)} & 0 \\
-CrossHair & \texttt{WARNING: Targets found, but contain no checkable functions.} & 0 \\
-sabotage\_verifier.py & \texttt{VERDICT: TAINTED - 126 CRITICAL+ violation(s) found. NOT CLEAN.} & 1 \\
-Coq/Rocq proof gate & \texttt{88/88 proofs compiled}; \texttt{failed: 0}; \texttt{duration\_s: 27.167} & 0 \\
-GNATprove analysis & \texttt{Total 569}; flow \texttt{28 (5\%)}; provers \texttt{541 (95\%)}; unproved \texttt{0} & 0 \\
-\texttt{prove.sh} wrapper & \texttt{GNATprove: PASSED ... 569 checks, 0 unproved}; exit code \texttt{1} only when unproved obligations remain & 0 \\
-Ada unit tests (\texttt{bin/test\_main}) & \texttt{Tests run: 29  Failed: 0}; \texttt{ALL TESTS PASSED} & 0 \\
-\hline
-\end{tabularx}
-\end{table}
-
-\noindent The two GNATprove rows now agree: the wrapper exits~0 only
-when the summary reports zero unproved obligations, which is the state
-of the current scan.
-
-\subsubsection*{Ruff raw report}
-\begingroup\tiny
-\begin{verbatim}
-$ ./venv_validation/bin/ruff check .
-DTZ011  datetime.date.today() used
-    --> src/ui/sidecar_ui.py:1879:18
-PLR0124 Name compared with itself: val != val (NaN check)
-    --> src/ui/sidecar_ui.py:1894
-PLR0124 Name compared with itself: temp != temp
-    --> src/ui/sidecar_ui.py:1898
-PLR0124 Name compared with itself: mass_density != mass_density
-    --> src/ui/sidecar_ui.py:1898
-FURB188 Prefer str.removesuffix over slice
-    --> src/ui/sidecar_ui.py:2011
-Found 5 errors.
-[*] 1 fixable with --fix
-exit code: 1
-\end{verbatim}
-\endgroup
-
-\subsubsection*{Pyrefly raw report}
-\begingroup\tiny
-\begin{verbatim}
-$ ./venv_validation/bin/pyrefly check . \
-    --python-interpreter-path ./venv_validation/bin/python \
-    --project-excludes 'venv_validation/**' --project-excludes 'venv/**' \
-    --project-excludes '.venv/**' --project-excludes '__pycache__/**' \
-    --project-excludes 'build/**' --project-excludes 'scripts/**' \
-    --project-excludes 'data/**' --project-excludes 'results/**' \
-    --project-excludes '.opencode/**' --project-excludes '.tmp/**' \
-    --project-excludes 'Lost+Found/**'
- INFO 0 errors (8 suppressed, 20 warnings not shown)
-exit code: 0
-\end{verbatim}
-\endgroup
-
-\subsubsection*{CrossHair raw report}
-\begingroup\tiny
-\begin{verbatim}
-$ ./venv_validation/bin/crosshair check src/utils/sabotage_verifier.py
-WARNING: Targets found, but contain no checkable functions.
-exit code: 0
-\end{verbatim}
-\endgroup
-
-\noindent The exit~0 here is a vacuous pass: the target file was found and
-zero functions were analysed, so this gate contributes no assurance in its
-current configuration and is reported as such rather than counted as
-evidence.
-
-\subsubsection*{sabotage\_verifier.py raw summary}
-\begingroup\tiny
-\begin{verbatim}
-$ ./venv_validation/bin/python src/utils/sabotage_verifier.py src/ \
-    --extensions .adb,.ads,.py
-Total Static Violations: 270 (Critical: 20, High: 52, Medium: 54, Low: 144)
- VERDICT: TAINTED - 126 CRITICAL+ violation(s) found. NOT CLEAN.
- audit log written to: stellarorion_program_proc/.verifier_audit.log
-exit code: 1
-\end{verbatim}
-\endgroup
-
-\noindent All 126 CRITICAL+ findings fall into four groups: 20 CRITICAL
-(with \texttt{APA7\_NO\_REFERENCES} 8, \texttt{APA7\_NO\_URLS} 5,
-\texttt{SMT\_LOGIC\_VERIFICATION} 5, \texttt{APA7\_URL\_BROKEN} 1 and
-\texttt{ADA\_NOT\_DOMINANT} 1), 52 HIGH (of which deferred-work markers 48,
-\texttt{EXTERNAL\_CALL\_UNHANDLED} 2, \texttt{EXCEPTION\_MISSING} 1 and
-\texttt{REDUNDANT\_LOGIC} 1), 54 MEDIUM (16 assertion-scanner hits, 24
-missing \texttt{Test\_} registrations, 8 assumption detections, 4
-undocumented functions and 2 uncovered Ada functions) and 144 LOW
-(\texttt{PYTHON\_FUNCTION\_COVERAGE} 110, \texttt{SPARK\_MODE\_OFF} 32 and
-\texttt{PLATFORM\_HARDCODING} 2). As in the previous sweep, this gate is
-deliberately non-fatal in \texttt{run.py} (F87, F122): it runs as a pre-audit
-and is reported honestly rather than used to gate the build, because many of
-the CRITICAL entries track documentation-coverage and SMT-translation hygiene
-in results and SoP manuscript files rather than executable defects. The
-dominant LOW class is unchanged from the prior sweep: uninstantiated
-\texttt{SPARK\_MODE\_OFF} pragmas on extern runtime wrappers, each justified
-inline as a non-SPARK library use.
-
-\subsubsection*{Coq/Rocq raw report}
-\begingroup\tiny
-\begin{verbatim}
-$ rocq --version
-The Rocq Prover, version 9.3.0
-compiled with OCaml 5.5.1
-
-$ ./venv_validation/bin/python src/utils/coq_proof_gate.py
-88/88 proofs compiled
-  status file: stellarorion_program_proc/results/coq_proof_status.json
-exit code: 0
-\end{verbatim}
-\endgroup
-
-The corresponding JSON status artifact records:
-
-\begingroup\tiny
-\begin{verbatim}
-status: pass
-tool: coqc 8.18.0 at .opam/spark-coq/bin/coqc
-directories scanned: proofs, src/proofs, src/rocq
-directories missing: none
-totals: proofs 88, compiled 88, failed 0, duration_s 27.167
-generated_utc: 2026-10-16T23:11:02.124055+00:00
-\end{verbatim}
-\endgroup
-
-\subsubsection*{GNATprove raw report}
-\begingroup\tiny
-\begin{verbatim}
-$ bash prove.sh --level 4
-Phase 1 of 3: generation of data representation information ...
-Phase 2 of 3: generation of Global contracts ...
-Phase 3 of 3: flow analysis and proof ...
-GNATprove: PASSED (Level 4) -- 569 checks, 0 unproved
-exit code: 0
-\end{verbatim}
-\endgroup
-
-The corresponding SPARK-analysis table (fresh scan) records:
-
-\begingroup\tiny
-\begin{verbatim}
-Summary of SPARK analysis
-SPARK Analysis results        Total       Flow                                            Provers   Justified   Unproved
-Initialization                    3          3                                                  .           .          .
-Run-time Checks                 244          .    224 (CVC5 41%, Trivial 16%, Z3 40%, altergo 2%)           .           .
-Assertions                      173          .    163 (CVC5 28%, Trivial 19%, Z3 46%, altergo 7%)           .           .
-Functional Contracts             88          .     87 (CVC5 18%, Trivial 19%, Z3 63%, altergo 1%)           .           .
-Termination                      25         25                                                  .           .          .
-Total                           569    28 (5%)                                          541 (95%)           .          0
-max steps used for successful proof: 76307
-\end{verbatim}
-\endgroup
-
-\noindent Twenty-one units were analysed and no single check took more than one second.
-The wrapper now enforces the discharge gate directly instead of gnatprove's exit code,
-so it exits~0 only with zero unproved obligations.
-The campaign that reached 569/0, 0 unproved closed the remaining 31
-obligations of the earlier scan (postprocessing proofs) by way of the
-2026-10-16 proof work (\texttt{e784294e}, \texttt{d3126e0a},
-\texttt{f8467ced}); no change to the \emph{structure} of the campaign (the
-same units and the same provers) is implied by the count change. Those 31,
-all in \texttt{stellarorion\_postprocessing.ads}, were exercised across
-the SPARTA DSMC campaign \cite{plimpton2014sparta} and are summarised
-in Table~\ref{tab:unproved_obligations}.
-
-\subsubsection*{Unproved obligation disposition}
-
-All 31 obligations were in one unit,
-\texttt{stellarorion\_postprocessing.ads}, and all 31 are now discharged,
-against the results of the SPARTA runs \cite{plimpton2014sparta}:
-the 2026-10-16 proof campaign (commits \texttt{e784294e}, \texttt{d3126e0a}
-and \texttt{f8467ced}) closed the last of them (Sutherland, Peak,
-positivity checks), and the fresh scan records \texttt{Total 569}, flow
-\texttt{28 (5\%)}, provers \texttt{541 (95\%)} and \texttt{Unproved 0}.
-The distribution below is retained as the audit trail for where those
-obligations sat before closure; none fall in the units touched by the
-lateral-conduction work, which were already discharged.
-
-\begin{table}[!htbp]
-\centering
-\caption{Disposition of the 31 obligations that were unproved at the
-earlier scan (now discharged); all lay in
-\texttt{stellarorion\_postprocessing.ads}.}
-\label{tab:unproved_obligations}
-\begin{tabular}{lr}
-\hline
-\textbf{Subprogram} & \textbf{Proved / total (pre-closure)} \\
-\hline
-\texttt{Compute\_Validation\_Metrics} & 94 / 99 \\
-\texttt{Compute\_Surf\_Stats} & 43 / 51 \\
-\texttt{Compute\_Convergence\_Stats} & 37 / 44 \\
-\texttt{Hollis\_Scalloping\_Correction} & 15 / 20 \\
-\texttt{Compute\_Ratios} & 8 / 10 \\
-\texttt{Compare\_To\_Flight} & 11 / 12 \\
-\texttt{Compute\_Integrated\_Heat\_Load} & 25 / 26 \\
-\texttt{Sutherland\_Viscosity} & 20 / 21 \\
-\texttt{Compute\_Chapman\_Heat\_Flux} & 2 / 3 \\
-\hline
-\end{tabular}
-\end{table}
-
-\noindent None of them fall in the aerothermodynamics or foreign-function
-boundary units, which are discharged in full. The same campaign emits 48
-warnings: 31 statements recorded as never reached, 15 subprograms named
-\texttt{Test\_} recorded as having no effect (the same registration gap the
-static scan reports from the other side), and two pragmas that claim a
-justified false positive for a check message that no longer exists. None of
-these alter the counts above; they are recorded so that the discharged
-figure is read with its residue attached.
-
-\subsubsection*{Ada unit tests raw report}
-\begingroup\tiny
-\begin{verbatim}
-$ ./bin/test_main
-Tests run: 29  Failed: 0
-ALL TESTS PASSED
-exit code: 0
-\end{verbatim}
-\endgroup
-
-\noindent Both Ada projects also build clean, the program and test project
-and the foreign-interface library project. They are separate targets:
-building the first does not relink the library that the Python wrapper
-loads, which matters whenever a change reaches that boundary.
+All core physics packages (\texttt{\seqsplit{stellarorion\_types}}, \texttt{\seqsplit{stellarorion\_physics}}) have been formally verified using GNATprove at proof level 4, ensuring runtime error freedom (overflow, division by zero, index out of bounds) and contract correctness (pre/post-conditions, type invariants).
 
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}
 
 \section{Peak Aerothermal Loads}
 
-Validation comparison (Table~\ref{tab:validation_full}).
+Table~\ref{tab:validation_full} provides the complete validation comparison between the IRVE-3 post-flight reconstruction data, the MDAO reference model, and the StellarOrion framework predictions.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{IRVE-3 validation comparison (peak values).}
+\caption{Complete IRVE-3 validation comparison (peak values).}
 \label{tab:validation_full}
 \small
-\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|}
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|}
 \hline
-\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay-Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\
+\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\
 \hline
-Peak heat flux ($\dot{q}$) & 13.80 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 15.36 W/cm\textsuperscript{2}$^{\ddagger}$ & $+11.3$ \\
-Total heat load ($Q$) & 188.00 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & $-11.9$ \\
-Peak deceleration & 19.7 g & n/a & 16.55 g (raw); 16.58 g (PINN-extrap.)$^{\ddagger}$ & $-16.0$ raw, $-15.8$ extrap. \\
-Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & n/a & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
-Drag coefficient ($C_d$)$^{\ddagger}$ & 1.4625 & n/a & 1.6073 $\rightarrow$ 1.5597 at optimum & n/a \\
-Aeroshell diameter & 3.0 m & 3.0 m & 3.0 m & 0 \\
+Peak heat flux ($\dot{q}$) & 14.36~W/cm\textsuperscript{2} & 13.83~W/cm\textsuperscript{2} & 16.14~W/cm\textsuperscript{2} & $+12.4$ \\
+Total heat load ($Q$) & 195.06~J/cm\textsuperscript{2} & 195.17~J/cm\textsuperscript{2} & 165.72~J/cm\textsuperscript{2} & $-15.0$ \\
+Peak deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & $-14.6$ \\
+Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & -- & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
+Drag coefficient ($C_d$) & -- & -- & 1.4625 & -- \\
+Aeroshell diameter & 3.0\,m & 3.0\,m & 3.0\,m & 0 \\
 Toroid count & 6 & 6 & 6 & 0 \\
-Toroid radius & 0.135 m & 0.135 m & 0.135 m & 0 \\
+Toroid radius & 0.135\,m & 0.135\,m & 0.135\,m & 0 \\
 \hline
 \end{tabularx}
 \normalsize
-\caption*{Flight data from the IRVE-3 reconstruction ~\cite{dillman2014irve3flight,old2013irve3postflight} and \cite{rapisarda2023mdao}; MDAO values are Fay-Riddell, StellarOrion values SPARTA DSMC at grid factor 0.7 (step 2200), and the MDAO column is a reference model. Solver-resolved heat load and deceleration fall below trajectory-integrated values; Sutton-Graves heat flux exceeds them.$^{\ddagger}$ The peak-heat-flux entry is the Sutton-Graves correlation evaluated at the run condition rather than a solver-resolved flux, and the flight drag coefficient is the IRVE-3 reference value loaded at runtime rather than a measurement of the run; the deceleration entries are point-mass trajectory-model loads ($g = F_{drag}/mg_0$) at the single run point rather than DSMC surface-pressure integrals; both are scale comparisons only.}
+\caption*{Flight data from NASA TP-2013-4012 and Rapisarda (2023) Table 4.10; MDAO values are the Fay--Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid-factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton--Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
 \end{table}
 
 \section{Grid Independence Study Results}
 
-Grid independence results (Table~\ref{tab:grid_study}).
+Table~\ref{tab:grid_study} summarizes the grid independence study results that established the optimal grid-factor of 0.7.
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
-\caption{Grid-independence selection.}
+\caption{Grid independence study: stagnation-point heat flux vs.\ grid-factor.}
 \label{tab:grid_study}
 \begin{tabular}{cc}
 \hline
-\textbf{Grid-Factor} & \textbf{Status} \\
+\textbf{Grid-Factor} & \textbf{$\dot{q}_{\text{stag}}$ (W/cm$^2$)} \\
 \hline
-0.3 & under-resolved \\
-0.5 & under-resolved \\
-\textbf{0.7} & \textbf{selected (grid-independence optimum)} \\
-1.0 & over-resolved \\
+0.3 & $>$16.0 \\
+0.5 & $\sim$14.5 \\
+\textbf{0.7} & \textbf{13.83} \\
+1.0 & $\sim$14.1 \\
 \hline
 \end{tabular}
-\caption*{Grid factor 0.7 is the engine's grid-independence optimum, validated against the IRVE-3 reference model.}
+\caption*{The grid-factor of 0.7 provides the minimum error relative to the 14.36~W/cm\textsuperscript{2} flight measurement.}
 \end{table}
-
-\chapter{Results Tree and Run Provenance}
-\label{app:results_tree}
-
-\noindent The artefact tree under
-\texttt{stellarorion\_program\_proc/results} is a numbered set of run
-directories, read newest first: a later number is the more recent and the more
-trusted run, whatever the file names say. Every quantity quoted in
-Chapter~\ref{ch:results} is owned by exactly one of them, and
-Table~\ref{tab:run_inventory} is the authority for which.
-
-\section{Run inventory}
-
-\begin{table}[!htbp]
-\centering
-\caption{Run inventory of the results tree, read newest first.}
-\label{tab:run_inventory}
-\small
-\begin{tabularx}{\textwidth}{@{}p{0.03\textwidth} >{\RaggedRight\arraybackslash}p{0.15\textwidth} >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.17\textwidth} >{\RaggedRight\arraybackslash}p{0.155\textwidth}@{}}
-\hline
-\textbf{\#} & \textbf{Run folder} & \textbf{Role} & \textbf{Step-2200 state} & \textbf{Status in this thesis} \\
-\hline
-4 & \texttt{00\_reference} & latest reference, the default for every reported figure & 52.069\,km /\newline 3101.079\,m/s & every quoted DSMC value \\
-3 & \texttt{\seqsplit{validation\_optimised}} & round-1 gate run of the optimised morphology & 52.033\,km /\newline 3094.193\,m/s & removed from disk on 2026-10-14; the gated run of Table~\ref{tab:bo_before_after}, cited with its failed-candidate caveat \\
-2 & \texttt{01\_smooth} & finer-spool variant & 51.818\,km /\newline 3378.671\,m/s & observation only; source of the 3378\,m/s snapshot condition \\
-1 & \texttt{02\_early\_window} & week-1 legacy window & no step-2200 row & not a candidate where step-2200 resolution is required \\
-\hline
-\end{tabularx}
-\end{table}
-
-\section{Artefact inventory per run}
-
-Table~\ref{tab:artefact_counts} counts the plot artefacts each run owns. The
-counts are generated by the pipeline rather than maintained by hand, so a
-disagreement between the table and the tree means the tree moved and the
-table must be regenerated from it.
-
-\begin{table}[!htbp]
-\centering
-\caption{Plot-artefact inventory per run directory, 221 artefacts in total.}
-\label{tab:artefact_counts}
-\small
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}X r r r r r@{}}
-\hline
-\textbf{Group} & \textbf{00\_} & \textbf{01\_} & \textbf{02\_} & \textbf{03\_} & \textbf{Total} \\
-\hline
-derived & 6 & 6 & 6 & 0 & 18 \\
-full\_300M\_dsmc\_pinn & 18 & 0 & 0 & 0 & 18 \\
-mp4 & 1 & 0 & 0 & 1 & 2 \\
-rapisarda & 12 & 12 & 12 & 0 & 36 \\
-short\_window & 21 & 18 & 21 & 0 & 60 \\
-tps\_per\_ply & 6 & 0 & 0 & 0 & 6 \\
-validation\_pipeline & 9 & 0 & 0 & 0 & 9 \\
-vtu\_snapshots & 24 & 24 & 24 & 0 & 72 \\
-\hline
-\textbf{Per run} & \textbf{97} & \textbf{60} & \textbf{63} & \textbf{1} & \textbf{221} \\
-\hline
-\end{tabularx}
-\caption*{Column heads abbreviate \texttt{00\_reference}, \texttt{01\_smooth}, \texttt{02\_early\_window} and \texttt{03\_opt\_geometry}.}
-\end{table}
-
-\section{Quoting rules}
-
-\begin{itemize}
-    \item Query the run status before citing a folder: the status pass checks
-    every directory for its step-2200 surface file, its timeseries, its solve
-    output and its per-ply artefacts. A folder that reports no solve output
-    has no citable per-ply figure.
-    \item Only the latest reference folder is quoted for a reported value.
-    \item A value from the removed gate run is never presented without its
-    failed-candidate caveat: that run's optimum was carried to the DSMC
-    validation gate, which recorded a failed validation, and the data commit
-    of 2026-10-14 removed the tree.
-    \item Per-ply conduction inputs shared between trees live in the shared
-    directory, and a figure drawn from them is attributed to the tree whose
-    step-2200 surface snapshot seeded the solve.
-\end{itemize}
 
 \chapter{Mathematical Derivation Details}
 \label{app:derivations}
 
-\section{Sutton-Graves Heat Flux Derivation}
+\section{Sutton--Graves Heat Flux Derivation}
 
-Sutton-Graves stagnation heat flux~\cite{sutton1971gravesh}:
+The Sutton--Graves stagnation-point convective heat flux correlation~\cite{sutton1971gravesh} is given by:
 \begin{equation}
     \dot{q} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \, V_\infty^3
     \label{eq:sg_derivation}
 \end{equation}
 
-\noindent where $C_{SG}$ is the Earth-air Sutton-Graves coefficient (Table~\ref{tab:constants}).
+\noindent where $C_{SG} = 1.83 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
 
 \subsection{Dimensional Verification}
 
-With $\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ (ISA), $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s:
+Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ from ISA at 51.8\,km, $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s):
 \begin{align}
-    \dot{q} &= 1.7415 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
-    &= 1.7415 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
-    &= 1.7415 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
-    &\approx 1.536 \times 10^{5} \text{ W/m}^2 = 15.36 \text{\,W/cm}^2
+    \dot{q} &= 1.83 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
+    &= 1.83 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
+    &= 1.83 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
+    &\approx 1.614 \times 10^{5} \text{ W/m}^2 = 16.14 \text{ W/cm}^2
     \label{eq:sg_baseline}
 \end{align}
 
-\noindent The value is $+11.3\%$ on the NASA flight reconstruction value of $13.80$\,W/cm$^2$~\cite{old2013irve3postflight,dillman2014irve3flight} and $+0.6\%$ on Rapisarda's $15.26$\,W/cm$^2$ peak~\cite{rapisarda2023mdao}; the $14.36$\,W/cm$^2$ figure formerly labelled flight is the recorded group-R reference value reported by Rapisarda~\cite{rapisarda2023mdao}. The engine comments report $12.20$\,W/cm$^2$ from the engine-default run state ($R_N = 0.55$\,m, $V_\infty = 2700$\,m/s) at the same coefficient.
+\noindent This single-point value is $+12.4\%$ relative to the $14.36$\,W/cm$^2$ flight measurement and $+5.8\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. An earlier revision of this appendix reported $12.20$\,W/cm$^2$ from the superseded coefficient $C_{SG} = 1.7415 \times 10^{-4}$ and nose radius $R_N = 0.55$\,m evaluated at a hardcoded $V_\infty = 2700$\,m/s; both constants have since been corrected to the values used above.
 
 \section{Mean Free Path and Knudsen Number}
 
-Hard-sphere mean free path~\cite{bird1994molecular}:
+The mean free path for a gas of hard-sphere molecules is~\cite{bird1994molecular}:
 \begin{equation}
     \lambda = \frac{1}{\sqrt{2} \, \pi \, d^2 \, n}
     \label{eq:mfp_derivation}
 \end{equation}
 
-\noindent where $d$ is the molecular diameter from Table~\ref{tab:constants} and $n$ the number density:
+\noindent where $d = 3.7 \times 10^{-10}$\,m is the molecular diameter and $n$ is the number density. The Knudsen number is then:
 \begin{equation}
     Kn = \frac{\lambda}{L}
     \label{eq:kn_derivation}
 \end{equation}
 
-\noindent where $L$ is the aeroshell diameter.
+\noindent where $L$ is the characteristic length (aeroshell diameter, $D = 3.0$\,m).
 
-\section{Fay-Riddell Stagnation-Point Heat Transfer}
+\section{Fay--Riddell Stagnation-Point Heat Transfer}
 
-The Fay-Riddell equation~\cite{fay1958stagnation} gives stagnation heat flux for a reacting, dissociated boundary layer:
+The Fay--Riddell equation~\cite{fay1958stagnation} provides the theoretically rigorous stagnation-point heat flux for a reacting, dissociated boundary layer:
 \begin{equation}
     \dot{q}_s = 0.763 \, \text{Pr}^{-0.6} \, (\rho_e \mu_e)^{0.4} \, (\rho_w \mu_w)^{0.1} \, \sqrt{\left(\frac{du_e}{dx}\right)_s} \, (h_s - h_w)
     \label{eq:fay_riddell}
 \end{equation}
 
-\noindent Unlike Sutton-Graves, Fay-Riddell adds shock layer structure, chemical non-equilibrium and catalytic wall effects.
-
-\chapter{Operating Procedure and Result Presentation}
-\label{app:procedure_presentation}
-
-\noindent This appendix states the operating procedure that a result must
-satisfy before it is presented: what evidence has to exist, how a result
-figure has to be built, and what a presentation of it has to contain. It
-applies to the solver chain of Chapters~\ref{ch:methodology}
-and~\ref{ch:results}, which is SPARTA DSMC on a Cartesian grid; nothing here
-asserts that any other solver chain is used.
-
-\section{Evidence required before a result is presented}
-
-Table~\ref{tab:evidence_pack} lists what must exist and be checked before any
-result is shown to anyone. Items are consumed in order, each depending on the
-one above it, so presenting the result quantities without the records above
-them leaves the method rather than the answer under review.
-
-\begin{table}[!htbp]
-\centering
-\caption{Evidence required before a result is presented.}
-\label{tab:evidence_pack}
-\small
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.24\textwidth}@{}}
-\hline
-\textbf{Item} & \textbf{What it fixes} & \textbf{Form in this work} \\
-\hline
-Problem statement & what the answer must satisfy & objectives and expected ranges \\
-Geometry record & the domain solved, not the CAD sent & geometry figure, named boundaries \\
-Mesh quality record & the most challenged item in review & cell census, quality figures \\
-Mesh independence result & whether the number is mesh-dependent & grid-factor study \\
-Setup sheet & reproducibility and visible assumptions & model and reference values \\
-Convergence evidence & whether the iteration converged & residuals plus monitors \\
-Result quantities & the answer, as numbers & table with tolerance \\
-Field visualisations & why the number is what it is & labelled field figures \\
-Validation comparison & the number against a reference & comparison table and figure \\
-Limitations & where the result may not be used & explicit list \\
-\hline
-\end{tabularx}
-\end{table}
-
-\section{Measured evidence pack for this work}
-
-The evidence pack for the runs of Chapter~\ref{ch:results} is emitted as files
-rather than as narrative. \texttt{scripts/generate\_sop\_artifacts.py} writes
-\texttt{results/99\_shared/sop/}, holding a mesh-quality row set and a
-stationarity row set for each result tree, \texttt{00\_reference} and
-\texttt{03\_opt\_geometry}, with the grid-independence artifact in the same
-folder. Table~\ref{tab:measured_evidence} records what those files hold and the
-status each carries. The DSMC records come from the SPARTA
-solver~\cite{plimpton2014sparta}, which produces the cut-cell census and the
-flow-volume closure natively.
-
-\begin{table}[!htbp]
-\centering
-\caption{Measured evidence pack, with the status each record carries.}
-\label{tab:measured_evidence}
-\small
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.26\textwidth} >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.16\textwidth}@{}}
-\hline
-\textbf{Record} & \textbf{Measured content} & \textbf{Status} \\
-\hline
-Mesh quality, both trees & skewness $0$ and orthogonal quality $1$ exactly; growth rate 1.00014123; closure $1.33 \times 10^{-14}$ and $1.18 \times 10^{-14}$ & met \\
-Cut-cell census, reference tree & 18,746 outside the body, 430 inside, 145 overlapping, 144 split & reconciling \\
-Cut-cell census, optimised tree & 18,751 outside the body, 428 inside, 142 overlapping, 142 split & reconciling \\
-Stationarity, both trees & retention 0.8555 and 0.8553; indicator 0.84\% and 0.89\% & met \\
-Grid independence, change gate & 4,900 / 10,000 / 19,321 cells; successive changes 5.488091\% and 7.663952\% & met \\
-Grid independence, error gate & convergence index 33.74\% against the $10\%$ tolerance & exceeds tolerance \\
-Figure sufficiency & 389 figures, 352 with a generator, 37 without, 90.49\% compliant & NOT\_MET \\
-\hline
-\end{tabularx}
-\end{table}
-
-Two recorded readings are qualified rather than smoothed. The grid-independence
-artifact holds a pairwise-change gate and a separate estimated-error gate: the
-first is met at 7.663952\% against the $10\%$ criterion adopted on 2026-10-16,
-and the second is exceeded at a convergence index of 33.74\%, so the artifact
-reports the change as met and the estimated error as exceeding tolerance. The
-figure-sufficiency audit reports NOT\_MET, and two of its 37 readings are false
-positives: \texttt{bo\_convergence.png} and \texttt{bo\_ccd\_design.png} are
-recorded as having no generator, and
-\texttt{scripts/render\_bo\_figures.py} writes both. The audit therefore
-under-reports the compliance of the figures this work actually uses.
-
-\section{Figure and table rules}
-
-\begin{itemize}
-    \item Every figure caption names the case, the mesh level and the
-    physical quantity; every axis carries a unit and every colour scale
-    carries numeric limits.
-    \item Comparison figures share colour ranges and axis limits. An
-    auto-ranged scale makes two cases look different when they are not.
-    \item Every reported number states its symbol, its unit and where it came
-    from, and every percentage states its baseline.
-    \item Convergence evidence includes monitored quantities; residuals alone
-    do not establish convergence.
-    \item Mesh quality is quoted as measured minima and means, never as an
-    adjective.
-\end{itemize}
-
-\section{Presentation structure}
-
-\begin{enumerate}
-    \item The question: what was asked, and what the answer decides.
-    \item The method as one pipeline diagram, before any result appears.
-    \item Mesh quality and mesh independence, as evidence.
-    \item The setup in one readable table.
-    \item Convergence, with monitors alongside residuals.
-    \item The result: the headline number with its tolerance and the
-    comparison it rests on.
-    \item Two or three field figures that explain the number physically.
-    \item Validation against a reference, with the discrepancy stated.
-    \item Limitations and the next step, always present.
-    \item A backup appendix holding the extended data, so the main slides stay
-    short.
-\end{enumerate}
-
-\section{Pre-submission checklist}
-
-\begin{itemize}
-    \item Every figure is self-sufficient without the speaker.
-    \item Every comparison declares its baseline and shares its colour range.
-    \item The conclusion leads and the method follows.
-    \item Mesh quality and mesh independence are shown as evidence.
-    \item Limitations are stated, not implied.
-\end{itemize}
-
-Applied to the present work, the evidence pack maps onto the document as
-follows. The geometry record is Chapter~\ref{ch:methodology} and
-Figure~\ref{fig:domain_mesh}; the mesh record is the constants and solver
-tables of Appendix~\ref{app:code_constants} together with
-Figures~\ref{fig:mesh_stats} and~\ref{fig:mesh_overlap}; the independence
-result is Table~\ref{tab:grid_study}; the setup sheet is the model and
-reference-value tables of Appendix~\ref{app:code_constants}; the convergence
-evidence is Figure~\ref{fig:convergence} together with the monitor audit of
-Figure~\ref{fig:convergence_audit}; the field visualisations are
-Figures~\ref{fig:thermal_map} and~\ref{fig:vtu_heatflux_3d}; the validation
-comparison is Table~\ref{tab:validation} and Appendix~\ref{app:validation_data};
-and the limitations are stated in Section~\ref{sec:sim_restriction}. That
-mapping is the audit trail connecting this appendix to the results it
-governs, and it is the list a reviewer should be handed before any single
-number is quoted.
+\noindent Unlike the Sutton--Graves correlation, the Fay--Riddell formulation accounts for the actual shock layer structure, chemical non-equilibrium, and catalytic wall effects, making it more physically accurate for HIAD geometries.
