@@ -38,10 +38,17 @@
 \usepackage{parskip}
 \usepackage[titletoc]{appendix}
 \usepackage{cite}          % buat cite pake BibTex
-\usepackage{apacite}
+% Citation format switched from APA (apacite) to IEEE: apacite is no
+% longer loaded, so cite.sty provides \cite and emits numeric [n]
+% markers; the bibliography is formatted by IEEEtran.bst. Loading
+% apacite alongside cite is also a known-incompatible combination
+% (apacite overrides \cite with author-year output and chokes on
+% \cite inside caption moving arguments), which previously produced
+% "Illegal parameter number in definition of \reserved@a" errors in
+% Chapter 4 captions.
 %\usepackage{subfigure}
 \usepackage{subcaption}
-\bibliographystyle{apacite}
+\bibliographystyle{IEEEtran}
 \usepackage[american]{babel} %plugin bahasa 
 
 \usepackage[utf8]{inputenc}

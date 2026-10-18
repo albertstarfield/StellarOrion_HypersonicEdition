@@ -1177,7 +1177,7 @@ Unlike finite-difference methods, automatic differentiation (AD) computes exact 
     \BeginAccSupp{method=escape,ActualText={Schematic of the physics-informed neural network architecture, showing input coordinates entering a multilayer perceptron whose output is constrained by the governing PDE residuals.}}%
 \includegraphics[width=0.9\textwidth]{figures/pinn_architecture.png}%
 \EndAccSupp{}%
-    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, T, u)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
+    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, T, u)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring; Chapter 3 documents the training as a single-stage Adam run, with the two-stage schedule planned but not executed.}
     \label{fig:pinn_architecture}
 \end{figure}
 
