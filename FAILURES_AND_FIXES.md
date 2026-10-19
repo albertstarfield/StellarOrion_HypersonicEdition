@@ -5855,6 +5855,49 @@ later pass does not re-derive it.
 
 **Verified.** Energy balance residual **0.0000 %** at peak element (`q_conv = 266509.28 W/m²`, `q_rad = 261626.54 W/m²`, `q_cond = 4882.77 W/m²`). Both files parse cleanly. `tps_conduction` FFI returns `t_surface = 1550.2345 K`, `t_back = 300.0 K`, `R_total = 0.25605 m²·K/W` — matching the shipped summary.
 
+> ### CORRECTION 2026-10-19 — the `R_total` above is the SUPERSEDED layup
+>
+> **The `ε = 0.80` in this entry is correct and stands. The `R_total = 0.25605 m²·K/W`
+> does not.** It is the series resistance of the **superseded 6.35 mm flown IRVE-3
+> stack** (Nextel BF-20 outer plies + 2.5 mm Pyrogel), which is exactly what this entry's
+> own root-cause sentence describes ("For a 6.35 mm multi-ply TPS with
+> `R_total = 0.256 m²·K/W`"). It was carried into the "Fix" bullet as if it belonged to the
+> *current* layup.
+>
+> The current 7.131 mm Nicalon SiC + 3.047 mm Pyrogel + Kapton schedule totals
+> **`0.305583 m²·K/W`**. From `src/python/ada_pinn_wrapper.py:1495-1497`:
+>
+> ```
+> 2(0.000506/1.5) + 2(0.003047/0.02) + 0.000025/0.12
+>   = 0.000337 + 0.000337 + 0.152350 + 0.152350 + 0.000208 = 0.305583
+> ```
+>
+> and `src/simulation_engine/stellarorion_types.ads:760` already records the change:
+>
+> ```
+> net stack R        0.257250 -> 0.305583 m^2*K/W, i.e. UP 18.8 %
+> ```
+>
+> `0.25605 ≈ 0.257250` is the *pre-change* value. Re-solving the same balance
+> (`q_conv = 266509.28 W/m²`, `ε = 0.80`, `T_back = 300 K`) at the current resistance:
+>
+> ```
+> 266509.3 = 262415.9 + 4093.4 W/m²     residual 0.0000 %     T_s = 1550.86 K
+> ```
+>
+> **Blast radius.** The stale `0.25605` propagated into the Week 16 and Week 17 progress
+> decks, where it sat beside a ply table that correctly totalled `0.305583` — an on-slide
+> contradiction, since the deck showed the *new* stack and solved with the *old*
+> resistance. Fixed in `Lost+Found/ProgressReport/Week 17 LaTeX/` (`main.tex`,
+> `make_heatflux_methodology.py`, `README.md`, `SOURCES.md`) on 2026-10-19. Note that
+> `CurrentThesisFinalReport/add_methodology.py:97` and `fix_thermal_section.py:34` also
+> still emit `R = 0.25605` over a `6.35 mm` stack — **the thesis thermal section needs the
+> same correction and has not been touched yet.**
+>
+> **Do not re-derive these numbers from this entry.** Re-derive them from
+> `ada_pinn_wrapper.py:IRVE3_FTPS_PLY_THICKNESS_M` / `IRVE3_FTPS_PLY_THERMAL_K` /
+> `IRVE3_FTPS_EMISSIVITY`.
+
 **Reproducer.**
 ```bash
 cd stellarorion_program_proc && PYTHONPATH=src/python venv_validation/bin/python3 -c "
