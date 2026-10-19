@@ -469,9 +469,10 @@ Institut Teknologi Bandung}
 %   #1 frametitle (string, uppercase by house style)
 %   #2 caption (string, HARD CAPPED at 1-2 lines -- see \MaxTextLines)
 %   #3 image path (string, resolvable by \graphicspath)
-%   #4 OPTIONAL plot-box height (a length). Defaults to \plotheight. Needed for
-%      portrait artwork, which is height-bound on a 16:9 frame and would
-%      otherwise render as a narrow column.
+%
+%   There is NO #4. The plot-box height is the plain length \plotheight, which
+%   a single portrait frame overrides locally by grouping -- it is NOT a
+%   parameter of \PlotFrame. See the ARITY NOTE above \newcommand{\PlotFrame}.
 %
 % RETURNS: nothing; draws into the current frame.
 %

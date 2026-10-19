@@ -85,7 +85,11 @@
     Thesis writing (waiting for revision batches) & 90\% \\
   \end{tabular}
   \vspace{0.4cm}
-  \par{\scriptsize Each percentage reflects the current measured progress.}
+  \par{\scriptsize Each percentage is the owner's self-assessed progress for
+  that work item as of 2026-10-19; no automated counter produces them. The
+  underlying work products are the Ada/SPARK sources in
+  stellarorion\_program\_proc/ and the thesis chapters in
+  CurrentThesisFinalReport/.}
 \end{frame}
 % Added after the STATUS UPDATE frame at the owner's request: result page using
 % the final thesis 2x2 reference-vs-optimized topology and the DSMC-gated result.
@@ -149,11 +153,19 @@
 \PlotFrame{REDEMPTION 1f: OVERALL HEAT FLUX PICTURE}
   {\MaxTextLines{2}%
    Convection (Sutton-Graves) = reradiation + conduction through the TPS:
-   266509.3 = 261530.8 + 4978.5 W/m$^2$, residual 0.0000\% (F84; outer-layer $\varepsilon=0.75$).}
+   266509.3 = 262415.9 + 4093.4 W/m$^2$, residual 0.0000\%
+   ($\varepsilon=0.80$ stack-level, $R_{tot}=0.305583$ m$^2$K/W).}
   {heatflux_methodology}
 % SOURCE: thesis Table tab:tps_spec (chapter_03_methodology.tex). Complete
-% per-ply material and thermal-resistance specification. Outer hot ply is
-% Nicalon SiC; its per-ply epsilon = 0.75 is the re-radiation value.
+% per-ply material and thermal-resistance specification.
+% BALANCE BASIS (corrected 2026-10-19): solved at the STACK-LEVEL epsilon
+% 0.80 (IRVE3_FTPS_EMISSIVITY, ada_pinn_wrapper.py:1526 =
+% stellarorion_types.ads:714) with R_tot = 0.305583 m^2*K/W, the sum of t/k
+% over the 7.131 mm 5-ply table below. The hot outer ply's per-ply epsilon
+% 0.75 (Rapisarda Table B.17) is a Nicalon SiC MATERIAL property listed in
+% that table; it is not the balance input. The previously quoted R_tot=0.25605
+% belongs to the superseded 6.35 mm flown IRVE-3 stack
+% (stellarorion_types.ads:760: net stack R 0.257250 -> 0.305583, +18.8%).
 \begin{frame}{REDEMPTION 1e: 5-PLY IRVE-3 FTPS SPECIFICATION (THESIS)}
   \scriptsize
   \resizebox{\textwidth}{!}{%
@@ -168,14 +180,18 @@
   4 & Pyrogel 3350 & 3.047 & 0.02 & 110 & 1000 & 0.80 & 0.152350 & 49.86\\
   5 (cold) & Kapton & 0.025 & 0.12 & 3100 & 1090 & 0.12 & 0.000208 & 0.07\\
   \hline
-  $\Sigma$ & 5 plies & 7.131 & & & & 0.80 & 0.305583 & 100\\
+  $\Sigma$ & 5 plies & 7.131 & & & & $-$ & 0.305583 & 100\\
   \end{tabular}}
   \par\vspace{0.25cm}
-  \par{\footnotesize Source: thesis Table~tab:tps\_spec (chapter~3). Stack-level
-  $\varepsilon=0.80$ is the thesis footnote; the hot outer ply is Nicalon SiC with
-  per-ply $\varepsilon=0.75$, and $0.75$ is the value used for reradiation.
-  Total thickness $7.131$ mm, thesis $\Sigma R=0.305583$ m$^2$K/W;
-  the deck heat-flux balance uses the conservative $R_{tot}=0.25605$ m$^2$K/W (F84).}
+  \par{\footnotesize Source: thesis Table~tab:tps\_spec (chapter~3). Total
+  thickness $7.131$ mm and $\Sigma R=0.305583$ m$^2$K/W are the sum of the
+  t and t/k columns above (each row is t/k; the $\varepsilon$ column does not
+  sum). The heat-flux balance uses exactly this $R_{tot}=0.305583$ with the
+  stack-level $\varepsilon=0.80$ (Ada TPS\_Layup\_IRVE3); the hot outer ply's
+  per-ply $\varepsilon=0.75$ is its Nicalon~SiC material property
+  (Rapisarda Table~B.17), not the balance input. The superseded $6.35$ mm
+  flown IRVE-3 stack gave $R=0.25605$ m$^2$K/W and is NOT used here
+  (stellarorion\_types.ads:760: net stack R $0.257250\to0.305583$, $+18.8\%$).}
 \end{frame}
 \begin{frame}{REDEMPTION 3a2: ONE VALIDATION POINT, REFERENCES ONLY}
   \small
@@ -217,15 +233,16 @@
 % ada_pinn_wrapper.py._BOUNDS / Ada FFI launch (run.py) rather than a hard-coded sample.
 \PlotFrame{REDEMPTION 3b: DESIGN OF EXPERIMENTS -- THE CCD SCREEN}
   {\MaxTextLines{2}%
-   Face-centred 15-point CCD (F17): 8 factorial, 6 axial, 1 centre;
-   source: render\_ccd\_design (Ada/SPARK optimizer bounds).}
+   Face-centred 15-point CCD over $k=3$ variables ($R_N$, $r_t$, $\theta_c$):
+   $2^3{=}8$ factorial, $2k{=}6$ axial, 1 centre. CCD supplies curvature and
+   corner/face coverage; LHS supplies the space-filling base for Kriging.}
   {so_ccd_screen}
 % inserted between DoE sampling and the produced geometry grid:
 % state the optimization ordering explicitly.
 \PlotFrame{REDEMPTION 3c: OPTIMIZATION STAGE}
   {\MaxTextLines{2}%
-   CCD gives the validated first candidate; 20 LHS seeds and
-   50 BO steps then optimize it (Bayesian plot follows).}
+   CCD gives the validated first candidate; the 20-point LHS base design and
+   50 BO improvement steps then optimize it (Bayesian plot follows).}
   {so_bo_convergence}
 % moved next to the DoE/CCD slide: 70-evaluation Bayesian design plot.
 % Figure copied from CurrentThesisFinalReport/figures/bo_optimization_3d.png
@@ -296,9 +313,10 @@
   Single-point validation: the 51.8 km / 3378 m/s anchor is the only DSMC
   reference point (REDEMPTION 3a2), so trajectory-wide statements remain PINN
   overview (REDEMPTION 3a3), not validated extents.\\
-  Resistance basis: this deck's balance uses $R_{tot}=0.25605$ m$^2$K/W (F84),
-  while the thesis schedule totals $\Sigma R=0.305583$ m$^2$K/W (REDEMPTION 1e);
-  reconcile the two before the final defense.\\
+  Resistance basis: reconciled 2026-10-19. The balance uses the thesis
+  schedule $R_{tot}=0.305583$ m$^2$K/W (REDEMPTION 1e), the $\Sigma$(t/k) of
+  the 7.131 mm 5-ply stack. The older $0.25605$ belonged to the superseded
+  $6.35$ mm flown IRVE-3 stack and is retired (stellarorion\_types.ads:760).\\
   Next step: re-run the surrogate cost on the latest reference values, re-issue
   the DSMC gate, then refresh the per-ply figures in a single commit.
 \end{frame}
@@ -312,16 +330,16 @@
   \textbf{Conduction:} $q_{\mathrm{cond}}=(T_s-T_{\mathrm{back}})/R_{\mathrm{tot}}$,
   Fourier through the 5-ply IRVE-3 FTPS.\\
   \textbf{Reradiation:} $q_{\mathrm{rad}}=\varepsilon\sigma T_s^4$ to ambient
-  ($\varepsilon=0.75$ is the outer Nicalon SiC surface only; the ply stack carries
-  no optical term in conduction).\\
+  ($\varepsilon=0.80$ stack-level; the outer SiC ply's own $\varepsilon=0.75$
+  is a material property).\\
   \textbf{Hot-face energy balance:} convection absorbed = reradiation + conduction:
   \[
   q_{\mathrm{conv}} = q_{\mathrm{rad}} + q_{\mathrm{cond}}
   = \varepsilon\sigma T_s^4 + (T_s - T_{\mathrm{back}})/R_{\mathrm{tot}}
   \]
-  Evaluated at peak: $266509.3 = 261530.8 + 4978.5$ W/m$^2$;
-  $T_s=1574.7530$ K, $R_{\mathrm{tot}}=0.25605$ m$^2$K/W,
-  outer-layer emissivity $\varepsilon=0.75$.\\
+  Evaluated at peak: $266509.3 = 262415.9 + 4093.4$ W/m$^2$;
+  $T_s=1550.86$ K, $R_{\mathrm{tot}}=0.305583$ m$^2$K/W,
+  stack-level emissivity $\varepsilon=0.80$.\\
   DSMC$\rightarrow$thermal is not superposition: DSMC supplies shape, $Q_{SG}$ scales, local balance solves.\\
   \begin{tabular}{@{}lll@{}}
   \textbf{Term} & \textbf{definition} & \textbf{slide}\\
@@ -348,10 +366,11 @@
     q_{cond}=(T_s-T_{back})/R_{tot},\qquad
     R_{tot}=\sum_i \Delta x_i/k_i.
   \]
-  Symbols: $q_{cond}$ [W/m$^2$] through the TPS; $T_s=1574.7530$ K hot face,
+  Symbols: $q_{cond}$ [W/m$^2$] through the TPS; $T_s=1550.86$ K hot face,
   $T_{back}=300$ K cold face; $\Delta x_i$ [m] ply thickness; $k_i$ [W/mK]
   ply conductivity (Nicalon SiC, Pyrogel, Kapton); total
-  $R_{tot}=0.25605$ [m$^2$K/W]. (F84)
+  $R_{tot}=0.305583$ [m$^2$K/W], i.e. $\Sigma_i\Delta x_i/k_i$ over the
+  REDEMPTION 1e table.
 \end{frame}
 \begin{frame}{REDEMPTION 1d2: RERADIATION, BALANCE, AND CHANNEL MAP}
   \small
@@ -359,16 +378,19 @@
   \[
     q_{rad}=\varepsilon\,\sigma_{SB}\,T_s^4.
   \]
-  Symbols: $q_{rad}$ [W/m$^2$] radiated outward; $\varepsilon=0.75$ outer-layer emissivity;
+  Symbols: $q_{rad}$ [W/m$^2$] radiated outward; $\varepsilon=0.80$ stack-level
+  hot-face emissivity (Ada TPS\_Layup\_IRVE3); the outer Nicalon SiC ply's own
+  material $\varepsilon=0.75$ is listed in the REDEMPTION 1e table;
   $\sigma_{SB}=5.670374\times10^{-8}$ [W/m$^2$K$^4$]; $T_s$ hot-face
-  temperature. (F84) \\
+  temperature. \\
 
   \textbf{Hot-face energy balance.} $q_{conv}=q_{rad}+q_{cond}$:
   \[
-    266509.3=261530.8+4978.5\ \text{W/m}^2,\quad
+    266509.3=262415.9+4093.4\ \text{W/m}^2,\quad
     \text{residual }0.0000\%.
   \]
-  (F84) \\
+  Formulation from F84 ($q_{conv}=\varepsilon\sigma T_s^4+(T_s-T_{back})/R_{tot}$,
+  $\varepsilon=0.80$); $R_{tot}=0.305583$ from the REDEMPTION 1e schedule. \\
 
   Channel map: convection is the plasma/flow input; conduction is the
   through-TPS 5-ply stack; reradiation is outward hot-face radiation.
@@ -379,7 +401,8 @@
    results/00\_reference/plots/tps\_per\_ply/ply\_heat\_flux\_distribution.png.}
   {so_ply_heatflux_explainer}
 \PlotFrame{REDEMPTION 1b: CONVECTION TERM (Sutton--Graves)}
-  {Recomputed with the corrected C\_SG = 1.7415e-4; the peak-element
+  {\MaxTextLines{2}%
+   Recomputed with the corrected C\_SG = 1.7415e-4; the peak-element
    annotation updates on each re-run. (F21, F83).}
   {so_sutton_graves}
 \PlotFrame{REDEMPTION 1c: PLY STACK AND TEMPERATURE (IRVE-3 FTPS)}
@@ -389,23 +412,22 @@
   {so_ply_stack_temperature}
 \begin{frame}{REDEMPTION 2: COST FUNCTION COMPLETE}
   \MaxTextLines{2}%
-  The earlier cost used 400 initial samples inefficiently and mis-stated
-  the objective. The redefined cost function matches the aerothermal
-  dynamics and converges. All details follow.
+  The earlier cost spent 400 initial samples and mis-stated the objective;
+  the redefined cost matches the aerothermal dynamics and converges.
 \end{frame}
 \begin{frame}{REDEMPTION 2a: OBJECTIVE AND VARIABLES}
   \small
-  \textbf{Cost (implemented, F84)}\
+  \textbf{Cost (implemented, F84)}\\
   $J = w_\beta\,(\beta_{\mathrm{calc}}/\beta_{ref}-1)^2 +
-  \sum_i w_i\cdot\{10^{15}\text{ if }y_i^{(\mathrm{pred})} > y_i^{(\mathrm{limit})}\}$\
+  \sum_i w_i\cdot\{10^{15}\text{ if }y_i^{(\mathrm{pred})} > y_i^{(\mathrm{limit})}\}$\\
   $\beta_{calc}$ is the design ballistic coefficient ($\beta_{ref}=23.288$, Coq-backed);
   $w_\beta,w_i$ weights; $y_i^{(pred)}$ a predicted metric;
-  $y_i^{(limit)}$ its failure limit; hard-constraint penalty uses $\Lambda_j=10^6$:\
-  $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x})$.\
+  $y_i^{(limit)}$ its failure limit; hard-constraint penalty uses $\Lambda_j=10^6$:\\
+  $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x})$.\\
   \vspace{0.1cm}
   \textbf{Error-allowed gap:} no soft tolerance term is implemented; a violated
-  metric injects $10^{15}$ to bias the score so infeasible designs rank last.\
-  \textbf{Design Space (full bounds); BO campaign (3 active)}\
+  metric injects $10^{15}$ to bias the score so infeasible designs rank last.\\
+  \textbf{Design Space (full bounds); BO campaign (3 active)}\\
   \begin{tabular}{@{}ll@{}}
   \hline
   $D$ nose & $[0.5,15.0]$ m\\
@@ -427,10 +449,11 @@
   manufacturability & $N_t-12\le 0$\\
   \end{tabular}
   \vspace{0.2cm}
-  \textbf{Objective loop:} BO (LHS 20 + EI 50 steps, incumbent $1.7654\to1.6051$,
-  $-9.08\%$) \; DoE (LHS/CCD-15), Kriging denoising, DSMC + PINN as the
-  expensive oracle. Hard gate: DSMC direct simulation (no surrogate) on the
-  optimum-shape candidate.
+  \textbf{Objective loop (stages in order):} CCD-15 screen first, then a
+  20-point LHS base design with 50 EI-driven BO steps (incumbent
+  $1.7654\to1.6051$, $-9.08\%$), then Kriging denoising. DSMC + PINN stay
+  reserved as the expensive oracle. Hard gate: DSMC direct simulation
+  (no surrogate) on the optimum-shape candidate.
 \end{frame}
 \begin{frame}{REDEMPTION 3: DoE SAMPLING}
   \MaxTextLines{2}%

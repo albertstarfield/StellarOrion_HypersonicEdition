@@ -227,14 +227,20 @@ def main():
         # Repurposed from "Delivered outputs". The terminal box is where the
         # reader expects to be told what the number IS, so it carries the
         # F84 surface energy balance -- the three terms this frame names.
+        # Basis (corrected 2026-10-19): eps = 0.80 stack-level (Ada
+        # TPS_Layup_IRVE3) and R_total = 0.305583 m^2*K/W, the sum of t/k over
+        # the 7.131 mm 5-ply schedule. The earlier 261626.5 + 4882.8 /
+        # T_s 1550.23 used the superseded 6.35 mm flown IRVE-3 stack's
+        # R = 0.25605 (stellarorion_types.ads:760: 0.257250 -> 0.305583, +18.8%).
         # Decimal places are deliberate: integers do not add up on screen
-        # (261627 + 4883 = 266510 vs a true 266509), one decimal does.
+        # (262416 + 4093 = 266509 is fine, but 261627 + 4883 = 266510 vs a true
+        # 266509), one decimal does.
         # Body is capped at 3 lines because AXIOM A5's overflow guard refuses
         # a 4th: measured raise at h=0.145, "bottom box overflow".
         (0.725, 0.275, "Surface energy balance (F84)",
          ["q_conv = q_rad + q_cond",
-          "266509.3 = 261626.5 + 4882.8 W/m2",
-          "residual 0.0000 %, T_s 1550.23 K."],
+          "266509.3 = 262415.9 + 4093.4 W/m2",
+          "residual 0.0000 %, T_s 1550.86 K."],
          MIST, BAND),
     ]
     for x, w, title, lines, fc, ec in bottoms:
