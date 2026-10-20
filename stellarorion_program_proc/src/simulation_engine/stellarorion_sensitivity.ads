@@ -122,6 +122,17 @@
 --    increment; only the design-native estimates of T1 and T2 live here.
 --  * It does not attribute the ranking to literature.  See AP-2 and the
 --    provenance note above.
+--  * It cannot be replaced by an LHS-only workflow.  The estimators of T1
+--    and T2 are defined on the canonical CCD layout only (precondition
+--    CCD_Layout_Conforms): LHS points are randomized reals with no coded
+--    +-1 factorial contrast, no axial arm and no replicated centre, so
+--    Axial_Swing / Axial_Gradient / Axial_Mean_Effect / Corner_Mean_Effect
+--    are undefined on them, and rotatability -- the property that makes
+--    the one-factor contrast balanced and variance-optimal -- is not
+--    guaranteed by random stratification.  LHS remains the right design
+--    for seeding the GP in the BO loop; CCD is the right design for
+--    MEASURING factor effects.  See StellarOrion_Optimization's CCD
+--    section for the full division-of-labour rationale.
 ------------------------------------------------------------------------------
 
 --  Ada.Numerics.Elementary_Functions supplies Sqrt for Float, used for the

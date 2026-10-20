@@ -64,6 +64,40 @@ package StellarOrion_Optimization is
    -- -----------------------------------------------------------------
    --  Central Composite Design
    -- -----------------------------------------------------------------
+   --
+   --  WHY CCD EXISTS HERE BESIDE LHS (they are not interchangeable):
+   --
+   --  1. DIFFERENT JOBS.  LHS_Sample (above) is the space-filling design
+   --     that seeds the Bayesian-Optimisation loop: 20 randomized LHS
+   --     points train the Matern 5/2 GP + Expected Improvement search
+   --     (see sensitivity_ranking_todo.md).  The CCD is the deterministic
+   --     15-point sensitivity SCREEN (8 factorial corners at coded +-1,
+   --     1 centre, 6 axial arms at coded +-alpha, alpha = 2^(k/4)) that
+   --     produces the measured factor ranking r_tor > R_N > half_cone_deg
+   --     (Optimization_Attempt_1.md, Attempt 2: 15 CCD + 20 LHD + 50 BO).
+   --
+   --  2. LHS CANNOT REPLACE CCD FOR THE RANKING STEP.  The estimators in
+   --     StellarOrion_Sensitivity (Axial_Swing, Axial_Gradient,
+   --     Axial_Mean_Effect, Corner_Mean_Effect) are contrast-based: they
+   --     require the canonical coded layout, enforced by the
+   --     CCD_Layout_Conforms precondition.  Random LHS points are
+   --     arbitrary reals with no +-1 factorial contrast, no axial arm
+   --     and no replicated centre, so those estimators are undefined on
+   --     LHS data.  Rotatability (equal prediction variance at equal
+   --     distance from the centre) is what makes the one-factor contrast
+   --     orthogonal, balanced and variance-optimal; randomized LHS does
+   --     not guarantee it, and the centre-vs-corner comparison is what
+   --     separates linear effect from quadratic curvature.
+   --
+   --  3. HONEST SCOPE.  CCD is required only because the sensitivity
+   --     ranking feature is defined as a response-surface contrast on
+   --     this design.  If the ranking feature were dropped, LHS + BO
+   --     alone would suffice for optimisation.  Conversely, replacing
+   --     the screen with LHS would forfeit the numeric ranking, not
+   --     merely degrade it.
+   --  [Citation: McKay et al. (1979) Technometrics 21(2) -- LHS;
+   --   Montgomery (2017) Design and Analysis of Experiments, 9th ed. --
+   --   central composite designs and rotatability]
 
    --  Return the CCD value for a given factor level.
    --  CCD centre point:  x_c = (x_min + x_max) / 2
