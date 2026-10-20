@@ -5,6 +5,7 @@
 with Ada.Text_IO;                use Ada.Text_IO;
 with StellarOrion_Environment;   use StellarOrion_Environment;
 with StellarOrion_Optimization;  use StellarOrion_Optimization;
+with StellarOrion_GA_Parallel;
 with StellarOrion_Status_Writer; use StellarOrion_Status_Writer;
 with Ada.Exceptions;
 
@@ -54,6 +55,10 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
       --  GA configuration (tuned for HIAD optimisation)
       Config    : GA_Config;
       Result    : GA_Result;
+      --  Number of rows written into the (optional) GA history trace.
+      --  WHY: the CLI driver reports the optimisation result only, so
+      --  no history buffer is requested here (null access = no trace).
+      Hist_Count : Natural := 0;
       --  N_Samples IS used below (population size + report); not unreferenced.
       pragma Unreferenced (DoE, Obj, Steps, Grid_Factor, Chemistry, Geo);
 
@@ -118,13 +123,31 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
       New_Line;
 
       --  Run GA optimisation using MoP_Fitness (full physics pipeline)
-      Run_GA_Optimization
-        (Config      => Config,
-         Flight      => Flight,
-         TPS         => TPS,
-         Target_Beta => Target_Beta,
-         Eval        => MoP_Fitness'Access,
-         Result      => Result);
+      --  This is an Ada MAIN program, so the tasking environment exists:
+      --  the population is evaluated CONCURRENTLY by the four
+      --  Ravenscar-restricted worker tasks (measured 3.92x on 16
+      --  candidates).  The FFI library path cannot do this (no tasking
+      --  environment under a foreign main) and stays sequential.
+      begin
+         Run_GA_Optimization
+           (Config        => Config,
+            Flight        => Flight,
+            TPS           => TPS,
+            Target_Beta   => Target_Beta,
+            Model         => No_Surrogate_Model,
+            Eval          => MoP_Fitness'Access,
+            Evaluator     => StellarOrion_GA_Parallel.Parallel_Batch_Evaluator'Access,
+            Result        => Result,
+            History       => null,
+            History_Count => Hist_Count);
+      exception
+         when others =>
+            --  WHY: the worker pool blocks at exit; release it even on
+            --  the failure path so the partition can terminate.
+            StellarOrion_GA_Parallel.Shut_Down_Workers;
+            raise;
+      end;
+      StellarOrion_GA_Parallel.Shut_Down_Workers;
 
       --  Print results
       Put_Line ("[OPTIMIZE] ====== Optimisation Results ======");
