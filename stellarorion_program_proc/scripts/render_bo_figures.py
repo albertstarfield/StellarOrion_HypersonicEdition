@@ -110,6 +110,7 @@ import argparse
 import json
 import math
 import sys
+import time
 from collections import Counter
 from itertools import pairwise, product
 from pathlib import Path
@@ -365,6 +366,47 @@ def phase_boundary(history: list) -> int:
     return len(history)
 
 
+def _source_caption(data: dict) -> str:
+    """Build the figure source caption from the artifact's own metadata.
+
+    WHY: a hardcoded algorithm name and a hardcoded run date go stale as
+    soon as the optimizer changes, which makes every regenerated figure
+    misdescribe its own data. The caption is therefore derived from the
+    recorded config block and the artifact's own modification time.
+
+    Args:
+        data: The parsed hiad_optimization_results.json payload.
+
+    Returns:
+        The caption string for the figure's source line.
+    """
+    config = data.get("config", {})
+    optimizer = str(config.get("optimizer", "bo"))
+    label = (
+        "Bayesian Optimization" if optimizer == "bo"
+        else "SBO Genetic Algorithm"
+    )
+    try:
+        stamp = time.strftime(
+            "%Y-%m-%d", time.localtime(RESULTS_JSON.stat().st_mtime)
+        )
+    except OSError:
+        stamp = "unknown date"
+    return f"Source: hiad_optimization_results.json ({label} run, {stamp})"
+
+
+def _optimizer_name(data: dict) -> str:
+    """Return the recorded optimizer label ("bo" or the GA/SBO label).
+
+    Args:
+        data: The parsed hiad_optimization_results.json payload.
+
+    Returns:
+        The optimizer label recorded in the artifact's config block.
+    """
+    return str(data.get("config", {}).get("optimizer", "bo"))
+
+
 def render_ccd_design(data: dict, out_path: Path) -> None:
     """Render the 15-point central composite screen in factor space.
 
@@ -458,7 +500,11 @@ def render_ccd_design(data: dict, out_path: Path) -> None:
         edgecolors="black",
         linewidths=0.7,
         zorder=5,
-        label="round-1 BO optimum",
+        label=(
+            "round-1 BO optimum"
+            if _optimizer_name(data) == "bo"
+            else "GA optimum (round 1)"
+        ),
     )
 
     bar = fig.colorbar(scatter, ax=ax, pad=0.12, shrink=0.62)
@@ -477,7 +523,7 @@ def render_ccd_design(data: dict, out_path: Path) -> None:
     fig.text(
         0.5,
         0.015,
-        "Source: hiad_optimization_results.json, official run 2026-09-26",
+        _source_caption(data),
         ha="center",
         fontsize=7.5,
         style="italic",
@@ -549,14 +595,17 @@ def render_convergence(data: dict, out_path: Path) -> None:
         label="running best (incumbent)",
         zorder=3,
     )
-    ax.axvline(
-        boundary,
-        color="0.35",
-        linestyle="--",
-        linewidth=1.2,
-        label=f"LHS $\\rightarrow$ BO boundary (eval {boundary})",
-        zorder=1,
-    )
+    if boundary < len(costs):
+        # A boundary line only makes sense when the run really had two
+        # phases; the GA path has none (phase_boundary returns the length).
+        ax.axvline(
+            boundary,
+            color="0.35",
+            linestyle="--",
+            linewidth=1.2,
+            label=f"LHS $\\rightarrow$ BO boundary (eval {boundary})",
+            zorder=1,
+        )
     ax.scatter(
         [best_index],
         [min(costs)],
@@ -566,7 +615,11 @@ def render_convergence(data: dict, out_path: Path) -> None:
         edgecolors="black",
         linewidths=0.8,
         zorder=4,
-        label=f"round-1 optimum (eval {best_index})",
+        label=(
+            f"round-1 optimum (eval {best_index})"
+            if _optimizer_name(data) == "bo"
+            else f"GA optimum (generation {best_index})"
+        ),
     )
 
     default_cost = float(data["default"]["cost"])
@@ -580,17 +633,32 @@ def render_convergence(data: dict, out_path: Path) -> None:
     )
 
     ax.set_yscale("log")
-    ax.set_xlabel("evaluation index")
+    ax.set_xlabel(
+        "evaluation index" if _optimizer_name(data) == "bo"
+        else "generation index"
+    )
     ax.set_ylabel("cost $J(\\mathbf{x})$  (log scale)")
     # Counts are interpolated from the module constants, which validate_payload
     # has already proven against the artifact (AXIOM A2), so the title cannot
     # drift from the plotted series.
-    ax.set_title(
-        f"Bayesian Optimization Convergence — {len(costs)} Evaluations\n"
-        f"{EXPECTED_INITIAL_POINTS} Latin-Hypercube initial points + "
-        f"{EXPECTED_BO_POINTS} GP/Expected-Improvement iterations",
-        fontsize=11,
-    )
+    config = data.get("config", {})
+    if _optimizer_name(data) == "bo":
+        n_initial = sum(1 for e in history if e.get("type") == "initial")
+        n_bo = sum(1 for e in history if e.get("type") == "bo")
+        ax.set_title(
+            f"Bayesian Optimization Convergence — {len(costs)} Evaluations\n"
+            f"{n_initial} Latin-Hypercube initial points + "
+            f"{n_bo} GP/Expected-Improvement iterations",
+            fontsize=11,
+        )
+    else:
+        ax.set_title(
+            f"SBO Genetic Algorithm Convergence — {len(costs)} Generations\n"
+            f"population {config.get('population_size', '?')}, "
+            f"generation budget {config.get('max_generations', '?')} "
+            "(parallel population, model-fidelity penalty)",
+            fontsize=11,
+        )
     ax.grid(True, which="both", linewidth=0.3, alpha=0.5)
     # Show only the two series in the legend box; the vertical/horizontal guide
     # lines are self-describing in the title and would crowd a 10-inch frame.
@@ -600,7 +668,7 @@ def render_convergence(data: dict, out_path: Path) -> None:
     fig.text(
         0.5,
         0.012,
-        "Source: hiad_optimization_results.json, official run 2026-09-26",
+        _source_caption(data),
         ha="center",
         fontsize=7.5,
         style="italic",
@@ -789,7 +857,7 @@ def ccd_sensitivity_estimates(samples: list | None) -> dict:
     }
 
 
-def _sensitivity_caption(estimates: dict) -> str:
+def _sensitivity_caption(estimates: dict, data: dict) -> str:
     """Build the multi-line caption reporting both estimators and their
     documented disagreement.
 
@@ -847,7 +915,7 @@ def _sensitivity_caption(estimates: dict) -> str:
                 "Positive contrast = evaluated cost rises as the factor "
                 "increases (J is minimized)."
             ),
-            "Source: hiad_optimization_results.json, official run 2026-09-26",
+            _source_caption(data),
         ]
     )
 
@@ -960,7 +1028,7 @@ def render_ccd_sensitivity(data: dict, out_path: Path) -> None:
     fig.text(
         0.5,
         0.015,
-        _sensitivity_caption(estimates),
+        _sensitivity_caption(estimates, data),
         ha="center",
         va="bottom",
         fontsize=7.8,
