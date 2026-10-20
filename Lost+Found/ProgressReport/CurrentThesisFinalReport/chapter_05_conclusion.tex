@@ -1,7 +1,7 @@
 \chapter{Conclusion and Recommendations}
 
 \section{Summary of Findings}
-This research developed and validated a computational framework for the aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework integrates parametric CadQuery geometry generation, DSMC rarefied gas dynamics simulation, Physics-Informed Neural Network (PINN) refinement, and Genetic Algorithm optimization with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate.
+This research developed and validated a computational framework for the aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework integrates parametric CadQuery geometry generation, DSMC rarefied gas dynamics simulation, and Genetic Algorithm optimization with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate.
 
 The key findings from the simulation results and validation against IRVE-3 flight data are summarized below.
 
@@ -29,7 +29,7 @@ This research contributes the following to the field of hypersonic aerothermal a
 
     \item \textbf{Scalloping Effect Quantification:} First systematic DSMC-based characterization of the heating augmentation and recirculation patterns caused by the stacked toroid surface topology of HIADs.
 
-    \item \textbf{PINN-DSMC Hybrid Approach:} Demonstration of Physics-Informed Neural Networks as a post-processing smoothing layer for DSMC particle data, anchored in the compressible Navier--Stokes equations.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
     \item \textbf{Multi-Objective Optimization:} Automated GA-based optimization of HIAD geometry using a Gaussian Process surrogate (Mat\'ern 5/2 kernel with Expected Improvement acquisition), targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance simultaneously.
 \end{enumerate}
@@ -52,5 +52,6 @@ The current analysis uses the IRVE-3 Gen-1 TPS (Nextel/Pyrogel) as the baseline.
 \subsection{Mars Entry Extension}
 The framework is readily extensible to Mars entry conditions by modifying the atmospheric composition (CO$_2$-dominated) and updating the gas model in SPARTA. The Sutton-Graves correlation would need to be replaced with the Mars-specific correlation of West and Brandis (2020), and the 5-species Earth air model would be replaced with a CO$_2$/N$_2$/Ar mixture model.
 
-\subsection{PINN Refinement Validation}
-While the PINN refinement stage provides smooth, physics-consistent interpolation of noisy DSMC data, its accuracy in the transitional flow regime ($0.01 < Kn < 1$) requires further quantification. A systematic comparison between raw DSMC results and PINN-refined outputs across a range of Knudsen numbers would establish the reliability bounds of the hybrid approach.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% to produce the optimised body, so all PINN material is removed from this
+% thesis deliberately. Do not reintroduce it.

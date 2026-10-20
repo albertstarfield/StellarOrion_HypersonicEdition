@@ -121,7 +121,7 @@ FOOTER_PT = 9.0
 MIN_PRINTED_PT = 8.0
 
 INK = "#2C3E50"
-BOX_FILLS = ("#316383", "#3D82AF", "#4392C7", "#2B9A84", "#BE9F23", "#9D4037")
+BOX_FILLS = ("#316383", "#3D82AF", "#4392C7", "#2B9A84", "#9D4037")
 BOX_BORDER = "#2C3E50"
 CHIP_FILL = "#FEFAEB"
 CHIP_BORDER = "#F2EA9F"
@@ -134,7 +134,7 @@ FOOTER_TEXT = "#7F8C8C"
 ARROW_COLOR = "#2C3E50"
 
 MARGIN_X = 0.08
-N_BOX = 6
+N_BOX = 5
 GAP = 0.074
 BOX_W = (PRINT_W_IN - 2.0 * MARGIN_X - (N_BOX - 1) * GAP) / N_BOX
 EQ_W = 0.90
@@ -147,7 +147,6 @@ BOX_TITLES = (
     ("DSMC", "Method"),
     ("Navier-", "Stokes", "Equations"),
     ("Sutton-", "Graves", "Correlation"),
-    ("PINN", "Refinement"),
     ("Bayesian", "survivability", "optimization"),
 )
 
@@ -155,7 +154,6 @@ TRANSITIONS = (
     ("Discretize", "(Bird, 1994)"),
     ("Continuum", "Limit (Kn->0)"),
     ("Regression", "Correlation"),
-    ("Neural", "Approximation"),
     ("Global", "Search"),
 )
 
@@ -171,10 +169,6 @@ EQUATIONS = (
     (r"$\dot{q}_s=k$",
      r"$\sqrt{\rho_\infty/R_N}$",
      r"$V_\infty^3$"),
-    (r"$\mathcal{L}=\lambda_d$",
-     r"$\mathcal{L}_{data}$",
-     r"$+\lambda_{pde}$",
-     r"$\mathcal{L}_{PDE}$"),
     (r"$J^*=$",
      r"$\min(\beta$",
      r"$-\beta_{target})^2$",
@@ -191,7 +185,6 @@ AXIOMS = (
     ("A4:", "M-B Distribution"),
     ("A5:", "Empirical Heating"),
     ("A6:", "Convergence Guarantee"),
-    ("A7:", "PINN Consistency"),
 )
 
 FOOTER = "Bottom: Axiom references (Table 3.1)    Top: Transition methodology"
@@ -252,7 +245,7 @@ def draw_main_box(ax: object, i: int) -> None:
 
 
 def draw_arrows(ax: object) -> None:
-    """Draw the five right-arrows between the main boxes.
+    """Draw the four right-arrows between the main boxes.
 
     :param ax: the axes to draw on.
     :returns: None.
@@ -270,12 +263,12 @@ def draw_arrows(ax: object) -> None:
 
 
 def draw_transition_chips(ax: object) -> None:
-    """Draw the five transition chips in two rows over the gaps.
+    """Draw the four transition chips in two rows over the gaps.
 
     :param ax: the axes to draw on.
     :returns: None.
     """
-    top_indices = (0, 2, 4)
+    top_indices = (0, 2)
     bot_indices = (1, 3)
     for row, indices in enumerate((top_indices, bot_indices)):
         y = 4.39 - row * 0.30
@@ -297,7 +290,7 @@ def draw_transition_chips(ax: object) -> None:
 
 
 def draw_equation_boxes(ax: object) -> None:
-    """Draw the six equation boxes under the main boxes.
+    """Draw the five equation boxes under the main boxes.
 
     :param ax: the axes to draw on.
     :returns: None.
@@ -322,7 +315,7 @@ def draw_equation_boxes(ax: object) -> None:
 
 
 def draw_axiom_chips(ax: object) -> None:
-    """Draw the seven axiom chips in two rows at the bottom.
+    """Draw the six axiom chips in two rows at the bottom.
 
     :param ax: the axes to draw on.
     :returns: None.
@@ -335,9 +328,12 @@ def draw_axiom_chips(ax: object) -> None:
         if n == 4:
             spacing = (PRINT_W_IN - 2.0 * MARGIN_X) / n
         else:
-            spacing = (PRINT_W_IN - 2.0 * MARGIN_X) / 4.0
+            # centre a short row across the full width instead of left-
+            # packing it at quarter positions (two chips at 0.5/1.5 pitch
+            # collided after the A7 chip was removed)
+            spacing = (PRINT_W_IN - 2.0 * MARGIN_X) / (n + 1.0)
         for k, (label, desc) in enumerate(group):
-            cx = MARGIN_X + spacing * (k + 0.5)
+            cx = MARGIN_X + spacing * ((k + 0.5) if n == 4 else (k + 1.0))
             patch = FancyBboxPatch(
                 (cx - 0.55, y - 0.13), 1.10, 0.26,
                 boxstyle="round,pad=0.0,rounding_size=0.04",

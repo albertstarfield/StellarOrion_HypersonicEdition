@@ -130,7 +130,6 @@ COLUMNS = (
     ("HIAD", "Geometry"),
     ("DSMC", "Aerothermal"),
     ("Sutton-Graves", "Heating"),
-    ("PINN", "Refinement"),
     ("Survivability", "Optimization"),
     ("Multi-Solver", "Pipeline"),
 )
@@ -146,8 +145,8 @@ ROWS = (
 # and Fay-Riddell, not DSMC, and runs a single sequential framework).
 # F full, P partial, "." not covered.
 COVERAGE = (
-    "F.F.F.",
-    "FFFFFF",
+    "F.FF.",
+    "FFFFF",
 )
 
 # A17 LOW: the "Partially covered" swatch was dropped because COVERAGE uses

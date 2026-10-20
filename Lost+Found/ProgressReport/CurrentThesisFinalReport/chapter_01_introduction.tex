@@ -35,10 +35,10 @@ At hypersonic speeds ($Ma > 5$) and high altitudes ($> 50$ km), the atmospheric 
 
 Furthermore, the optimization of HIAD geometry for survivability -- balancing drag performance, peak heating, ballistic coefficient, and structural mass -- requires an automated, multi-stage computational framework that can efficiently explore a high-dimensional design space. Existing approaches based on parametric CFD sweeps are computationally prohibitive for the thousands of design evaluations required.
 
-Therefore, there is a critical need for an integrated computational framework that: (1) employs DSMC-based rarefied gas dynamics to accurately predict aerothermal loads in the transitional regime, (2) incorporates automated parametric geometry generation for design space exploration, and (3) leverages physics-informed machine learning and surrogate-based optimization to efficiently identify optimal HIAD configurations.
+Therefore, there is a critical need for an integrated computational framework that: (1) employs DSMC-based rarefied gas dynamics to accurately predict aerothermal loads in the transitional regime, (2) incorporates automated parametric geometry generation for design space exploration, and (3) leverages surrogate-based machine-learning optimization to efficiently identify optimal HIAD configurations.
 
 \section{Research Objective}
-In this research, the objective is to develop and validate a computational framework for the aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver and integrated with physics-informed neural network (PINN) refinement and genetic algorithm optimization.
+In this research, the objective is to develop and validate a computational framework for the aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver and integrated with genetic algorithm optimization.
 
 The specific objectives are:
 \begin{enumerate}
@@ -50,7 +50,7 @@ The specific objectives are:
 
     \item \textbf{Aerothermal Load Prediction:} To determine the surface distributions of heat flux ($\dot{q}$), pressure, and shear stress using the Sutton-Graves stagnation-point correlation and SPARTA surface compute quantities, with validation against IRVE-3 flight data.
 
-    \item \textbf{PINN Flow Field Refinement:} To apply Physics-Informed Neural Networks (DeepXDE) as a post-processing step to smooth noisy DSMC data, fill gaps in the flow field, and provide a continuous interpolant anchored in the compressible Navier--Stokes equations.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
     \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization (GP Matérn 5/2 surrogate + Expected Improvement) for automated optimization of HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
@@ -62,7 +62,7 @@ Based on the literature review, several gaps are identified in the current state
 
     \item \textbf{Automated Design Space Exploration:} Current approaches require manual parametric sweeps with individual CFD runs, making high-dimensional design optimization (6+ parameters) computationally infeasible. No integrated framework exists that couples automated geometry generation with DSMC simulation and machine learning-based optimization.
 
-    \item \textbf{PINN-DSMC Hybrid Approach:} While Physics-Informed Neural Networks have been applied to CFD post-processing, their use as a smoothing/interpolation layer for noisy DSMC particle data in HIAD applications is unexplored.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
     \item \textbf{Multi-Objective Survivability Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations using surrogate-assisted genetic algorithms has not been demonstrated.
 \end{itemize}
@@ -71,11 +71,11 @@ Based on the literature review, several gaps are identified in the current state
 The present work makes the following novel contributions to the field of hypersonic aerothermodynamic analysis and HIAD design:
 
 \begin{enumerate}
-    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), Physics-Informed Neural Network refinement (DeepXDE), and surrogate-assisted genetic algorithm optimization in a unified pipeline for HIAD survivability analysis.
+    \item \textbf{First Integrated DSMC-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), and surrogate-assisted genetic algorithm optimization in a unified pipeline for HIAD survivability analysis.
 
     \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the transitional flow regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50 km, enabling physically correct aerothermal load prediction for inflatable decelerators.
 
-    \item \textbf{PINN as DSMC Post-Processor:} The application of Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in the context of HIAD aerothermal analysis. The two-stage training protocol (data-only followed by data+PDE) provides a physics-consistent continuous field from discrete particle simulations.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
     \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance using a Bayesian Optimization (GP surrogate) coupled with a genetic algorithm demonstrates a computationally efficient approach to HIAD design that would be infeasible with direct simulation alone.
 
@@ -99,11 +99,11 @@ The scope of this research is defined to provide aerothermal analysis and surviv
 
     \item \textbf{Thermal Analysis:} Surface heat flux is estimated using the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh}, validated against IRVE-3 flight data. The 1D transient backface temperature model assumes a thermal lag factor ($\eta_{lag} = 0.15$) through the FTPS insulation stack. SPARTA surface kinetic energy quantities are retained as relative shape-ranking signals for the optimizer, not as absolute heat flux values.
 
-    \item \textbf{Optimization:} The Genetic Algorithm explores the design space using Latin Hypercube Sampling (LHS) for initial population generation, with a Gaussian Process (Matérn 5/2) Bayesian Optimization surrogate as the evaluator. PINN refinement using DeepXDE is applied during the exploration phase but is bypassed during final validation to eliminate neural network bias.
+    \item \textbf{Optimization:} The Genetic Algorithm explores the design space using Latin Hypercube Sampling (LHS) for initial population generation, with a Gaussian Process (Matérn 5/2) Bayesian Optimization surrogate as the evaluator.
 \end{enumerate}
 
 \section{Methodology Overview}
-This study employs a multi-stage computational framework to analyze the aerothermal performance and optimize the survivability of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The framework integrates automated parametric geometry generation, DSMC-based rarefied gas dynamics simulation, Physics-Informed Neural Network refinement, and Genetic Algorithm optimization. The methodology is designed to compare a smooth rigid sphere-cone baseline against the scalloped inflatable architecture under identical hypersonic flight conditions. The workflow is illustrated in Figure~\ref{fig:flowchart_ch1}.
+This study employs a multi-stage computational framework to analyze the aerothermal performance and optimize the survivability of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The framework integrates automated parametric geometry generation, DSMC-based rarefied gas dynamics simulation, and Genetic Algorithm optimization. The methodology is designed to compare a smooth rigid sphere-cone baseline against the scalloped inflatable architecture under identical hypersonic flight conditions. The workflow is illustrated in Figure~\ref{fig:flowchart_ch1}.
 
 \begin{figure}[htbp]
     \centering
@@ -130,29 +130,30 @@ The 3D CAD models of the HIAD are generated using CadQuery, a Python-based param
 \subsection*{c. DSMC Simulation}
 The SPARTA solver executes the DSMC simulation within a Docker-containerized Linux environment. The simulation domain is initialized with freestream conditions matching the target trajectory point ($v = 3378$ m/s, $\rho = 7.851 \times 10^{-4}$ kg/m$^3$, $T = 268.41$ K at 51.8 km altitude, from the atmospheric model built into the solver). SPARTA tracks millions of simulated particles, modeling their advection, collisions (VSS model), and surface interactions. Surface computes accumulate force (drag, lift) and energy (heat flux) data, while grid dumps provide field maps of density, temperature, pressure, velocity, and Knudsen number.
 
-\subsection*{d. PINN Refinement}
-The raw DSMC output is post-processed using a Physics-Informed Neural Network (PINN) implemented in DeepXDE. The PINN solves the 2D compressible Navier--Stokes equations using automatic differentiation, with SPARTA grid data introduced as observational boundary conditions. The total loss function combines PDE residuals with data-matching terms, providing a smooth, physics-consistent interpolant that fills gaps in the DSMC flow field and reduces particle noise.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% to produce the optimised body, so all PINN material is removed from this
+% thesis deliberately. Do not reintroduce it.
 
-\subsection*{e. Survivability Optimization}
+\subsection*{d. Survivability Optimization}
 A Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate performs multi-objective optimization of the HIAD geometry. Latin Hypercube Sampling (LHS) generates the initial design population. The GA evaluates candidates using the GP surrogate for rapid screening, with expensive SPARTA simulations reserved for elite candidates and final validation. The cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against user-defined targets.
 
-\subsection*{f. Validation and Analysis}
-The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics are peak heat flux (14.36\,W/cm$^2$ flight, 13.83\,W/cm$^2$ from the MDAO Fay--Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation evaluated at the present DSMC run conditions), total heat load (195.06\,J/cm$^2$, 195.17\,J/cm$^2$, and 165.72\,J/cm$^2$ respectively), and peak deceleration (19.7\,$g$ flight against 16.83\,$g$ from this work). The two solver-resolved integrated quantities under-predict the flight values by close to a common $15\%$, which is attributed to the evaluation of a single trajectory point rather than a fully integrated reentry history, whereas the correlation-based stagnation heat flux over-predicts by $+12.4\%$ because the correlation resolves neither the scalloped geometry nor the rarefied-flow departure; both deviations are quantified in Chapter IV. The final optimized design undergoes a high-fidelity SPARTA validation run \textit{without} PINN refinement to eliminate neural network bias.
+\subsection*{e. Validation and Analysis}
+The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics are peak heat flux (14.36\,W/cm$^2$ flight, 13.83\,W/cm$^2$ from the MDAO Fay--Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation evaluated at the present DSMC run conditions), total heat load (195.06\,J/cm$^2$, 195.17\,J/cm$^2$, and 165.72\,J/cm$^2$ respectively), and peak deceleration (19.7\,$g$ flight against 16.83\,$g$ from this work). The two solver-resolved integrated quantities under-predict the flight values by close to a common $15\%$, which is attributed to the evaluation of a single trajectory point rather than a fully integrated reentry history, whereas the correlation-based stagnation heat flux over-predicts by $+12.4\%$ because the correlation resolves neither the scalloped geometry nor the rarefied-flow departure; both deviations are quantified in Chapter IV. The final optimized design undergoes a high-fidelity SPARTA validation run.
 
 \section{Thesis Outline}
 The structure of this thesis is arranged as follows. A brief description of each chapter is outlined below:
 
 \textbf{CHAPTER I} This chapter contains the research background, problem statement, research objectives, scope of study, methodology overview, and the systematic thesis outline. This section provides an initial overview regarding the rationale for conducting the research, the specific goals to be achieved, and the limitations of the research scope.
 
-\textbf{CHAPTER II} This chapter contains the theoretical framework and literature review supporting this research. It discusses the fundamental concepts of hypersonic aerothermodynamics, the Boltzmann equation and DSMC methodology, the Sutton-Graves heating correlation, Physics-Informed Neural Networks, and genetic algorithm optimization. This chapter also reviews relevant previous studies including IRVE-3 and LOFTID flight experiments.
+\textbf{CHAPTER II} This chapter contains the theoretical framework and literature review supporting this research. It discusses the fundamental concepts of hypersonic aerothermodynamics, the Boltzmann equation and DSMC methodology, the Sutton-Graves heating correlation and genetic algorithm optimization. This chapter also reviews relevant previous studies including IRVE-3 and LOFTID flight experiments.
 
-\textbf{CHAPTER III} This chapter details the research methodology, covering the automated parametric geometry generation using CadQuery, the SPARTA DSMC simulation configuration, the PINN refinement workflow, the Genetic Algorithm optimization pipeline, and the validation procedures against flight data. It describes the complete computational framework from geometry input to optimized design output.
+\textbf{CHAPTER III} This chapter details the research methodology, covering the automated parametric geometry generation using CadQuery, the SPARTA DSMC simulation configuration, the Genetic Algorithm optimization pipeline, and the validation procedures against flight data. It describes the complete computational framework from geometry input to optimized design output.
 
 \textbf{CHAPTER IV} This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework. It covers the baseline IRVE-3 geometry configuration, aerothermal surface distributions, flow field characteristics, validation against flight data, and a comparative analysis with prior Newtonian-panel-based approaches highlighting the methodological advances of the present DSMC framework.
 
 \textbf{CHAPTER V} This chapter contains the summary of research findings derived from the data analysis and optimization results. It presents the final conclusions regarding the aerothermal performance and survivability optimization of the scalloped HIAD and provides recommendations for future researchers and aerospace engineers.
 
 \section*{Chapter Summary}
-This chapter has established the research context by presenting the background on hypersonic inflatable aerodynamic decelerators (HIADs), identifying the critical need for accurate aerothermal analysis in the transitional flow regime, and defining six specific research objectives. The novelty of this work lies in the first integrated DSMC-PINN-optimization framework for HIAD design, which addresses four identified research gaps in rarefied regime modeling, automated design space exploration, PINN-DSMC hybrid approaches, and multi-objective survivability optimization.
+This chapter has established the research context by presenting the background on hypersonic inflatable aerodynamic decelerators (HIADs), identifying the critical need for accurate aerothermal analysis in the transitional flow regime, and defining six specific research objectives. The novelty of this work lies in the first integrated DSMC-optimization framework for HIAD design, which addresses three identified research gaps in rarefied regime modeling, automated design space exploration, and multi-objective survivability optimization.
 
 The scope of this research is bounded by the IRVE-3 baseline configuration, 2D axisymmetric and 3D simulations, 5-species air chemistry, and the Sutton-Graves heating correlation. The following chapter presents the theoretical foundations and literature review supporting the computational methodology described herein.

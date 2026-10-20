@@ -348,7 +348,8 @@ The gate is enforced as a post-optimization stage and executes five legs~\cite{k
 \begin{enumerate}
     \item \textbf{Preconditions and geometry QA.} The compiled binary, the Docker daemon, the validation virtual environment, the pipeline module, and the reference CSV are all checked, followed by a seconds-fast \texttt{\seqsplit{bin/main -{}-validate-only}} geometry check. Every failure is reported with a path and a remedy, and the gate exits with status 1.
     \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless -{}-nose 2.971440 -{}-tradius 0.088460 -{}-angle 40.147949 -{}-skin scalloped -{}-steps 2200}}, writing to a dedicated results directory. The reference dataset used for the baseline comparison is never overwritten.
-    \item \textbf{PINN leg.} The PINN refinement pipeline is executed on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
+    \item \textbf{Refinement leg.} The validation pipeline is executed on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
+    % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and it records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
     \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$ and the optimizer is re-run, producing the corrected round-2 design.
 \end{enumerate}
@@ -421,8 +422,9 @@ Rapisarda's framework uses a sequential, single-objective approach: the aerodyna
 
 The present framework implements a Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate model for multi-objective optimization. Latin Hypercube Sampling (LHS) generates the initial design population, and the Bayes Opt (GP) surrogate enables rapid evaluation of thousands of candidate geometries. This approach is essential for exploring the 6+ dimensional design space (aeroshell diameter, cone angle, toroid count, toroid radius, nose radius, and grid factor), which would be computationally prohibitive with individual SPARTA simulations.
 
-\subsection{Physics-Informed Neural Network Refinement}
-A novel contribution of the present work is the application of Physics-Informed Neural Networks (PINNs) as a post-processing layer for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier--Stokes equations using automatic differentiation, with SPARTA grid data introduced as observational boundary conditions. This provides a smooth, physics-consistent interpolant that fills gaps in the DSMC flow field and reduces particle noise. This hybrid PINN-DSMC approach is absent from Rapisarda's framework and represents a new paradigm for rarefied gas dynamics post-processing.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% to produce the optimised body, so all PINN material is removed from this
+% thesis deliberately. Do not reintroduce it.
 
 \subsection{Reproducibility and Accessibility}
 The present framework is fully open-source, Python-based, and Docker-containerized. The SPARTA simulation runs in a reproducible Linux environment, while the Python optimization pipeline runs on the native OS with support for global hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS). Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.
@@ -441,9 +443,8 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
         Thermal Analysis & 1D F-TPS with contact conductance & Sutton--Graves + Fay--Riddell correlations + DSMC surface computes \\
         Optimization & Sequential parametric sweeps & GP Mat\'ern 5/2 + Expected Improvement (Bayes Opt), 70 evaluations \\
         Design Space & 3--4 parameters & 6+ parameters with CCD + LHS sampling \\
-        Optimum Verification & Not reported & Enforced DSMC+PINN re-simulation gate with multi-fidelity correction \\
+        Optimum Verification & Not reported & Enforced DSMC re-simulation gate with multi-fidelity correction \\
         Formal Verification & Not reported & GNATprove level 4; 527 checks, 400 proved \\
-        ML/AI Component & None & PINN refinement (DeepXDE) \\
         Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
         Grid Independence & Not reported & Automated grid-factor optimization \\

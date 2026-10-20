@@ -227,9 +227,9 @@ ROWS = (
     {
         "label": ("LAYER 3 /", "METHODS"),
         "color": ROW_COLORS[2],
+        "cols": (0, 2, 3),
         "boxes": (
             ("DSMC (Bird", "Algorithm)", "SPARTA"),
-            ("PINN (Physics-", "Informed", "Neural", "Network)"),
             ("Gaussian", "Process", "Surrogate"),
             ("Bayesian", "Optimization", "(Expected", "Improvement)"),
         ),
@@ -237,9 +237,9 @@ ROWS = (
     {
         "label": ("LAYER 4 /", "IMPLEMENTATION"),
         "color": ROW_COLORS[3],
+        "cols": (0, 2, 3),
         "boxes": (
             ("SPARTA Docker", "Container", "5-species air"),
-            ("DeepXDE", "PINN Library", "Stage 1 +", "Stage 2"),
             ("scikit-learn", "GP (Matern 5/2)", "LHS + EI"),
             ("StellarOrion", "Ada core", "run.py", "orchestrator"),
         ),
@@ -247,7 +247,7 @@ ROWS = (
 )
 
 # Red data-flow arrows in row 3: (source column, target column, label).
-RED_ARROWS = ((0, 1, "data"), (1, 2, "refined"), (2, 3, "eval"))
+RED_ARROWS = ((0, 2, "data"), (2, 3, "eval"))
 
 # Bottom legend: (label, patch colour).
 LEGEND = (
@@ -419,13 +419,12 @@ def draw() -> plt.Figure:
         box_top = label_top - 2.0 * LABEL_PITCH - LABEL_GAP
         box_h = layout["box_heights"][r]
         box_w = row_box_width(r)
-        for c in range(4):
+        for c, lines in zip(row.get("cols", range(4)), layout["wrapped"][r]):
             x0 = row_box_left(r, c)
             ax.add_patch(FancyBboxPatch(
                 (x0, box_top - box_h), box_w, box_h,
                 boxstyle="round,pad=0.0,rounding_size=0.04",
                 linewidth=0.0, facecolor=row["color"], zorder=2))
-            lines = layout["wrapped"][r][c]
             n = len(lines)
             for k, line in enumerate(lines):
                 ly = box_top - 0.5 * box_h + (n / 2.0 - k - 0.5) * LINE_PITCH
@@ -434,10 +433,13 @@ def draw() -> plt.Figure:
         row_centers.append(box_top - 0.5 * box_h)
         y = box_top - box_h - ROW_GAP
 
-    # Twelve solid derivation arrows, source centre bottom to target centre
-    # top, one per column per row transition.
+    # Derivation arrows, source centre bottom to target centre top, one per
+    # lane that exists in both adjacent rows (the PINN lane is absent from
+    # the METHODS and IMPLEMENTATION rows, so no arrow enters the gap).
     for r in range(3):
-        for c in range(4):
+        shared = sorted(set(ROWS[r].get("cols", range(4))) &
+                        set(ROWS[r + 1].get("cols", range(4))))
+        for c in shared:
             cx = COL_CENTERS[c]
             y_from = row_centers[r] - 0.5 * layout["box_heights"][r]
             y_to = row_centers[r + 1] + 0.5 * layout["box_heights"][r + 1]

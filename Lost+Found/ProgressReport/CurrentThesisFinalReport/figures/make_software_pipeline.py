@@ -158,7 +158,7 @@ OUTPUT_H = 0.90
 INPUT_Y = [2.28, 1.62, 0.94]
 ENGINE_Y = 1.16
 SOLVER_Y = [2.12, 1.24]
-ML_Y = [2.20, 1.30]
+ML_Y = [2.20]
 OUTPUT_Y = 1.40
 
 # WHY 3.11 (was 3.05): at the fit ratio (~0.82) the rule at y 2.93 lands on
@@ -225,11 +225,9 @@ SOLVER_TEXTS = (
     "OpenFOAM\n/ laplacianFoam\n/ (solid thermal)",
 )
 ML_TEXTS = (
-    # The flow-field PINN is pinn_accelerator.py's FNN [2] + [64]*3 + [4],
-    # the network tab:pinn_architecture documents. The [1]+[128]*4+[1] net
-    # in validation_pipeline.py fits a 1-D convergence manifold and is a
-    # different model, so it must not label this box.
-    "PINN\n/ DeepXDE\n/ (FNN 3x64)",
+    # PINN removed 2026-10: the thesis no longer presents PINN; the model
+    # column shows only the Gauss-process surrogate actually used to
+    # produce the optimised body.
     "Bayes Opt\n/ GP Matern 5/2\n/ + EI acquisition",
 )
 OUTPUT_TEXT = "ParaView\n/ VTK\n/ STL\n/ Rendering"
@@ -245,7 +243,7 @@ LEGEND_ROW1 = (
 )
 LEGEND_ROW2 = (
     ("Physics Solvers (SPARTA, OpenFOAM)", SOLVER_FILL, SOLVER_EDGE),
-    ("Models (PINN, Bayes Opt)", ML_FILL, ML_EDGE),
+    ("Models (Bayes Opt)", ML_FILL, ML_EDGE),
 )
 LEGEND_ROW3 = (
     ("Visualization (ParaView)", OUTPUT_FILL, OUTPUT_EDGE),
@@ -399,7 +397,7 @@ def build() -> object:
     # WHY no bbox here, zorder 6, and add_mask_rects() after the fit pass:
     # a text bbox carries a pad that is a fraction of the FONT, so at the
     # fit squeeze (text keeps absolute points, boxes shrink) the padded
-    # white box overpainted the borders of the CadQuery, SPARTA and PINN
+    # white box overpainted the borders of the CadQuery and SPARTA
     # boxes lying just beneath the header row (image audits 2026-10-08,
     # defects N1..N3). The replacement is an explicit white Rectangle in
     # DATA coordinates, computed by add_mask_rects() only after the save
@@ -435,7 +433,7 @@ def build() -> object:
     box(ax, SOLVER_X0, SOLVER_Y[1], SOLVER_X1 - SOLVER_X0, SOLVER_H,
         SOLVER_TEXTS[1], SOLVER_FILL, SOLVER_EDGE, text_color="white")
 
-    pinn_cx = (ML_X0 + ML_X1) / 2
+    ml_cx = (ML_X0 + ML_X1) / 2
     for y0, text in zip(ML_Y, ML_TEXTS):
         box(ax, ML_X0, y0, ML_X1 - ML_X0, ML_H,
             text, ML_FILL, ML_EDGE, text_color="white")
@@ -490,15 +488,12 @@ def build() -> object:
         (output_cx, OUTPUT_Y + OUTPUT_H),
     ])
 
-    pinn_yc = ML_Y[0] + ML_H / 2.0
-    bo_yc = ML_Y[1] + ML_H / 2.0
-    arrow(ax, (SOLVER_X1 - 0.02, sparta_yc), (ML_X0 + 0.02, pinn_yc))
-    arrow(ax, (SOLVER_X1 - 0.02, SOLVER_Y[0] + 0.06), (ML_X0 + 0.02, bo_yc))
-    arrow(ax, (pinn_cx, ML_Y[0]), (pinn_cx, ML_Y[1] + ML_H))
+    ml_yc = ML_Y[0] + ML_H / 2.0
+    arrow(ax, (SOLVER_X1 - 0.02, sparta_yc), (ML_X0 + 0.02, ml_yc))
 
     routed_arrow(ax, [
-        (pinn_cx, ML_Y[1]),
-        (pinn_cx, 0.65),
+        (ml_cx, ML_Y[0]),
+        (ml_cx, 0.65),
         (engine_cx, 0.65),
         (engine_cx, ENGINE_Y),
     ], color=ORANGE)
@@ -518,20 +513,17 @@ def build() -> object:
     # replacement mask, clipped against the solver boxes so it cannot touch
     # their edges; the arrow the label interrupts is the SPARTA->Bayes
     # diagonal crossing y406..423 inside this label's ink span.
-    ax.text((SOLVER_X1 + ML_X0) / 2.0 + 0.02, (SOLVER_Y[0] + ML_Y[1]) / 2.0 + SOLVER_H / 2.0,
+    ax.text((SOLVER_X1 + ML_X0) / 2.0 + 0.02, (SOLVER_Y[1] + SOLVER_H + SOLVER_Y[0]) / 2.0,
             ARROW_LABEL_SURFACE, ha="center", va="center",
             fontsize=LABEL_PT, fontstyle="italic", color=INK,
             zorder=6)
-    ax.text(pinn_cx + 0.12, (ML_Y[0] + ML_Y[1]) / 2.0 + ML_H / 2.0,
-            ARROW_LABEL_REFINED, ha="left", va="center",
-            fontsize=LABEL_PT, fontstyle="italic", color=ORANGE)
     # WHY va=bottom at y 0.70 (was va=center at 0.75): the two-line label
     # centred at 0.75 straddled the orange horizontal at y 0.65 and the
     # second line "/ feedback loop" was struck through (image audit
     # 2026-10-08). Bottom-anchored, the block bottom is 0.05 data above the
     # line = 0.041 in at the fit ratio 0.82 (12 px), and the block top
     # clears the engine bottom (1.16) by 0.46 * 0.82 - 0.32 = 0.057 in.
-    ax.text((pinn_cx + engine_cx) / 2.0, 0.70, ARROW_LABEL_FEEDBACK,
+    ax.text((ml_cx + engine_cx) / 2.0, 0.70, ARROW_LABEL_FEEDBACK,
             ha="center", va="bottom", fontsize=LABEL_PT, fontstyle="italic",
             color=ORANGE)
 

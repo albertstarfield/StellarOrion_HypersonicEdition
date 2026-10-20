@@ -312,7 +312,8 @@ Artwork notes already gathered for these, usable as alt-text source:
 and before committing:
 
 ```
-pages                                : 194 (will change — record the new value)
+pages                                : 179 (recorded 2026-10-20 after the PINN removal;
+                                        was 194 before it)
 LaTeX errors (grep -c '^!' main.log)                     : must be 0
 undefined refs/citations                                     : must be 0
 real rerun requests                                          : must be 0
@@ -328,6 +329,17 @@ conflict markers in tracked .tex                            : must be 0
 git diff --check                                             : must be clean
 "TABLE OF CONTENTS" / "REFERENCES" present, singular absent : must hold
 ```
+
+PINN removal (2026-10-20). PINN is not part of the main pipeline required to
+produce the optimised body, so every PINN reference was removed from the
+thesis: the Chapter 3 PINN section, the Chapter 2 PINN subsection, the A7
+axiom and Step 5 of the derivation chain, the Chapter 4 PINN claims and gate
+leg wording, the Chapter 5 PINN validation subsection, the abstract and
+keyword mentions, the abbreviation entry, and the PINN assets. The literature
+coverage matrix, governing-equation chain, software-pipeline diagram and
+methodology-derivation diagram were regenerated without the PINN column,
+box, node or stage. Removal sites carry a `PINN-HIDDEN` comment. The page
+count dropped from 194 to 179 and the printed-to-PDF offset is now +25.
 
 Also preserve:
 

@@ -43,7 +43,7 @@ This synthesis establishes the theoretical foundation for the numerical methodol
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Five studies form the rows --- Rapisarda 2022 machine learning for HIAD heating, Rapisarda et al. 2024 HIAD parametric study, Masciarelli and Cassis 2021 LOFTID design, Schwartzentruber 2018 DSMC hypersonic, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN refinement, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; Schwartzentruber covers DSMC aerothermal alone and Masciarelli and Cassis cover HIAD geometry and Sutton-Graves heating. Note that the 2022 date in this row differs from the 2023 date of the Rapisarda thesis cited elsewhere in the text.}}%
+    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Five studies form the rows --- Rapisarda 2022 machine learning for HIAD heating, Rapisarda et al. 2024 HIAD parametric study, Masciarelli and Cassis 2021 LOFTID design, Schwartzentruber 2018 DSMC hypersonic, and This Work, the StellarOrion pipeline, outlined in red. Five capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all five columns; Schwartzentruber covers DSMC aerothermal alone and Masciarelli and Cassis cover HIAD geometry and Sutton-Graves heating. Note that the 2022 date in this row differs from the 2023 date of the Rapisarda thesis cited elsewhere in the text.}}%
 \includegraphics[width=0.92\textwidth]{figures/literature_review_map.png}%
 \EndAccSupp{}%
     \caption{Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components. Filled circles indicate full coverage; half-filled indicate partial coverage. The dashed red outline highlights the comprehensive coverage achieved in this work (StellarOrion pipeline).}
@@ -1128,7 +1128,7 @@ Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (R
 
 \section{Machine Learning in Computational Fluid Dynamics}
 
-The integration of machine learning (ML) with computational fluid dynamics has emerged as a powerful paradigm for accelerating simulations, reducing computational cost, and discovering closure models. This section reviews the foundations relevant to the Physics-Informed Neural Network (PINN) refinement used in this study.
+The integration of machine learning (ML) with computational fluid dynamics has emerged as a powerful paradigm for accelerating simulations, reducing computational cost, and discovering closure models. This section reviews the machine-learning foundations relevant to the surrogate modelling used in this study.
 
 \subsection{Neural Network Approximation Theory}
 
@@ -1141,58 +1141,9 @@ The Universal Approximation Theorem (Cybenko, 1989; Hornik et al., 1989) states 
 
 \noindent where $\mathbf{W}_i$ and $\mathbf{b}_i$ are the weight matrices and bias vectors, $\sigma(\cdot)$ is a nonlinear activation function (e.g., $\tanh$), and $L$ is the number of layers. The \textit{depth} (number of layers) and \textit{width} (neurons per layer) determine the network's expressive capacity.
 
-\subsection{Physics-Informed Neural Networks (PINNs)}
-
-Physics-Informed Neural Networks (PINNs), introduced by Raissi et al. (2019), embed the governing partial differential equations (PDEs) directly into the loss function of the neural network. Instead of solving the PDE on a mesh, the PINN learns a continuous solution $\hat{u}(\mathbf{x}, t)$ that satisfies both the PDE and the boundary/initial conditions.
-
-The PINN loss function has two components:
-
-\begin{equation}
-    \mathcal{L}_{\text{total}} = \mathcal{L}_{\text{PDE}} + \mathcal{L}_{\text{BC}} + \mathcal{L}_{\text{data}}
-    \label{eq:pinn_loss_general}
-\end{equation}
-
-\noindent where:
-\begin{itemize}
-    \item $\mathcal{L}_{\text{PDE}} = \frac{1}{N_r} \sum_{i=1}^{N_r} |\mathcal{N}[\hat{u}(\mathbf{x}_i)]|^2$ penalizes violations of the governing PDE at $N_r$ collocation points.
-    \item $\mathcal{L}_{\text{BC}} = \frac{1}{N_b} \sum_{j=1}^{N_b} |\hat{u}(\mathbf{x}_j) - u_{\text{BC}}(\mathbf{x}_j)|^2$ enforces boundary conditions at $N_b$ boundary points.
-    \item $\mathcal{L}_{\text{data}} = \frac{1}{N_d} \sum_{k=1}^{N_d} |\hat{u}(\mathbf{x}_k) - u_{\text{obs}}(\mathbf{x}_k)|^2$ matches observed data at $N_d$ measurement points.
-\end{itemize}
-
-\noindent The PDE residual $\mathcal{N}[\hat{u}]$ is computed using automatic differentiation, which provides exact derivatives of the neural network output with respect to its inputs, up to machine precision.
-
-\subsection{Automatic Differentiation for PDE Residuals}
-
-Unlike finite-difference methods, automatic differentiation (AD) computes exact derivatives of the network output $\hat{u}$ with respect to its inputs $(x, y)$ through the computational graph. For a velocity field $\hat{u}(x, y)$:
-
-\begin{equation}
-    \frac{\partial \hat{u}}{\partial x} = \frac{\partial \hat{u}}{\partial \hat{u}_L} \frac{\partial \hat{u}_L}{\partial \hat{u}_{L-1}} \cdots \frac{\partial \hat{u}_2}{\partial \hat{u}_1} \frac{\partial \hat{u}_1}{\partial x}
-    \label{eq:auto_diff}
-\end{equation}
-
-\noindent This chain rule application through all network layers yields exact gradients without truncation error or mesh dependence. Libraries such as DeepXDE \cite{lu2021deepxde} implement AD through the full PINN pipeline, enabling efficient computation of second-order derivatives (e.g., $\partial^2 \hat{u}/\partial x^2$ for diffusion terms).
-
-\begin{figure}[htbp]
-    \centering
-    \BeginAccSupp{method=escape,ActualText={Schematic of the physics-informed neural network architecture, showing input coordinates entering a multilayer perceptron whose output is constrained by the governing PDE residuals.}}%
-\includegraphics[width=0.9\textwidth]{figures/pinn_architecture.png}%
-\EndAccSupp{}%
-    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, T, u)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring; Chapter 3 documents the training as a single-stage Adam run, with the two-stage schedule planned but not executed.}
-    \label{fig:pinn_architecture}
-\end{figure}
-
-\subsection{Applications in Hypersonic Aerothermodynamics}
-
-PINNs have been applied to several areas relevant to this study:
-
-\begin{itemize}
-    \item \textbf{Flow field reconstruction:} PINNs can fill spatial gaps in sparse DSMC data, providing a continuous field from discrete particle statistics.
-    \item \textbf{Turbulence closure:} ML-based Reynolds stress models have shown promise in capturing non-equilibrium turbulence effects.
-    \item \textbf{Inverse problems:} PINNs enable estimation of unknown parameters (e.g., surface heat flux) from sparse measurements.
-    \item \textbf{Multi-fidelity fusion:} PINNs can combine low-fidelity (RANS) and high-fidelity (DSMC) data into a unified solution.
-\end{itemize}
-
-\noindent In this study, a PINN is implemented using the DeepXDE library \cite{lu2021deepxde} with a fully connected feedforward architecture consisting of 2 input features (axial and radial coordinates in the axisymmetric plane), 3 hidden layers of 64 neurons each with $\tanh$ activation, and 3 output features (density, temperature, and axial velocity). The network is trained in two stages: first, pre-training on synthetic boundary condition data to establish the solution topology, and second, fine-tuning using sampled DSMC field data to correct statistical noise and fill spatial gaps. This two-stage protocol ensures the network satisfies the governing partial differential equations while remaining anchored to the physics captured by the particle simulation. The detailed training protocol and validation results are presented in Chapter~3.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% to produce the optimised body, so all PINN material is removed from this
+% thesis deliberately. Do not reintroduce it.
 
 \section{Parametric HIAD Geometry Modelling}
 
@@ -1447,12 +1398,11 @@ The literature review establishes the theoretical foundations across six pillars
     \item \textbf{Continuum CFD:} The Navier--Stokes equations and RANS turbulence modeling (SST $k$--$\omega$) form the classical approach for hypersonic simulation (Sections 2.6--2.7). However, these are valid only in the continuum regime ($Kn < 0.001$).
     
     \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is the appropriate tool for the transitional regime ($Kn \approx 0.03$) encountered during HIAD re-entry at 52~km altitude (Sections 2.8--2.11).
-    
-    \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks embed governing PDEs into the loss function, enabling mesh-free solution refinement and gap-filling from sparse DSMC data (Section 2.13).
+    % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
     
     \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section 2.14).
     
     \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling, surrogate modelling (Bayes Opt), and genetic algorithm search provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section 2.15).
 \end{enumerate}
 
-\noindent These foundations justify the methodology adopted in Chapter~3: a parametric HIAD geometry engine based on Rapisarda's modified IRVE-3 configuration, DSMC-based simulation (SPARTA) for the primary flow field computation, PINN refinement for continuous field reconstruction, and genetic algorithm optimization for survivability maximization.
+\noindent These foundations justify the methodology adopted in Chapter~3: a parametric HIAD geometry engine based on Rapisarda's modified IRVE-3 configuration, DSMC-based simulation (SPARTA) for the primary flow-field computation, and genetic algorithm optimization for survivability maximization.

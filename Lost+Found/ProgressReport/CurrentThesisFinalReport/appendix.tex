@@ -185,13 +185,13 @@ The StellarOrion simulation engine is implemented in Ada/SPARK and organized int
     \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
     \item \texttt{\seqsplit{stellarorion\_simulation.ads/adb}} -- SPARTA DSMC simulation driver and Docker integration
     \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with LHS/CCD design of experiments
-    \item \texttt{\seqsplit{stellarorion\_pinn.ads/adb}} -- PINN refinement via DeepXDE Python sidecar
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
     \item \texttt{\seqsplit{stellarorion\_calibration.ads/adb}} -- Automated calibration against IRVE-3 flight data
 \end{itemize}
 
 \section{CLI Modes}
 
-The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{\seqsplit{--compareCalibrate}}, \texttt{--optimize}, \texttt{--trajectory}, \texttt{--pinn}, and others. Refer to the StellarOrion README for complete CLI documentation.
+The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{\seqsplit{--compareCalibrate}}, \texttt{--optimize}, \texttt{--trajectory}, and others. Refer to the StellarOrion README for complete CLI documentation.
 
 \section{GNATprove Verification Status}
 
