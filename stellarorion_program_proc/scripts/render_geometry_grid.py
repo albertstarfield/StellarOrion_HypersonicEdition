@@ -91,7 +91,7 @@ sys.path.insert(0, str(_SRC_PYTHON))
 #  The old inline float("nan") default printed "nan%" in this title whenever
 #  the key was absent, indistinguishable from a real measurement.
 #  [Citation: scripts/figure_text.py AXIOMS A1-A3]
-from figure_text import improvement_pct
+from figure_text import cd_change_text
 
 from hiad_geometry import generate_cross_section
 
@@ -658,12 +658,25 @@ def main() -> int:
         # improvement the shared colormap already shows.
         best_cost = min(float(p["cost"]) for p in panels)
         n_optima = sum(1 for p in panels if p["kind"] in ("optimum", "round2"))
+        # AXIOM A6: the suptitle must describe the run that produced the
+        # figure.  The counts and the phase labels are read from the artifact
+        # itself -- a hardcoded "70 history (20 LHD + 50 BO)" misdescribes
+        # every GA run, whose history is one row per generation.
+        ccd_rows = data.get("ccd_samples") or []
+        history_rows = data.get("history") or []
+        phase_labels = sorted({str(r.get("type", "?")) for r in history_rows})
+        history_phases = " + ".join(
+            f"{sum(1 for r in history_rows if str(r.get('type', '?')) == label)} "
+            f"{label}"
+            for label in phase_labels
+        ) or "no phases"
         fig.suptitle(
             f"StellarOrion HIAD — {_EXPECTED_PANELS}-Panel Geometry Grid "
             "(color = cost J, log scale)\n"
-            f"1 default + 15 CCD + 70 history (20 LHD + 50 BO) + "
+            f"1 default + {len(ccd_rows)} CCD + {len(history_rows)} history "
+            f"({history_phases}) + "
             f"{n_optima} optima · best J = {best_cost:.4f} · "
-            f"Cd improvement = {improvement_pct(data)} · "
+            f"{cd_change_text(data)} · "
             f"view elev={_ELEV} azim={_AZIM}",
             color="white", fontsize=14, fontweight="bold", y=0.965,
         )

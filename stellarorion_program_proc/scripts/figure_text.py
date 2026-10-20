@@ -38,10 +38,11 @@ CITATIONS
 
 from __future__ import annotations
 
+import math
 import sys
 from typing import Any
 
-__all__ = ["improvement_pct"]
+__all__ = ["cd_change_text", "improvement_pct"]
 
 # AXIOM A3: the label used when the value is genuinely absent.  Deliberately
 # not a number and not "nan" -- "n/a" is text, so it cannot be misread as a
@@ -113,8 +114,6 @@ def improvement_pct(data: dict[str, Any], key: str = "cd_pct") -> str:
 
     # A finite value is required: inf/nan would again render as text that looks
     # like a measurement.  math.isfinite is the honest test.
-    import math
-
     if not math.isfinite(value):
         print(
             f"[WARNING] figure caption: 'improvement.{key}' = {value!r} is not "
@@ -124,3 +123,76 @@ def improvement_pct(data: dict[str, Any], key: str = "cd_pct") -> str:
         return MISSING
 
     return f"{value:.2f}%"
+
+
+def cd_change_text(data: dict[str, Any]) -> str:
+    """Describe the drag change in words, with an unambiguous sign.
+
+    The pipeline MINIMISES the drag coefficient, so a POSITIVE
+    ``improvement.cd_pct`` means the drag was REDUCED.  A bare percentage
+    with a "+" is easy to misread, so this helper spells the direction out
+    ("drag reduced by 4.73%") and falls back to the sign of the percentage
+    when the newer ``cd_direction`` field is absent.
+
+    Parameters
+    ----------
+    data:
+        The parsed optimisation-results mapping.  ``data["improvement"]`` may
+        be absent or may lack the drag entries.
+
+    Returns
+    -------
+    str
+        ``"drag reduced by 4.73%"`` when the value is present and finite;
+        otherwise the string ``"n/a"``.
+
+    Side effects
+    ------------
+    Writes one ``[WARNING]`` line to ``sys.stderr`` when the drag entry is
+    missing or non-finite, so the log records that the caption is incomplete
+    (AXIOM A2).
+
+    Exceptions
+    ----------
+    None.  Every malformed input degrades to ``"n/a"``; a missing headline
+    annotation must never take down a figure that already rendered.
+    """
+    improvement = data.get("improvement") if hasattr(data, "get") else None
+    if not isinstance(improvement, dict):
+        print(
+            "[WARNING] figure caption: results object has no usable "
+            "'improvement' mapping; reporting the drag change as "
+            f"{MISSING}.",
+            file=sys.stderr,
+        )
+        return MISSING
+
+    raw = improvement.get("cd_pct")
+    try:
+        value = float(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        print(
+            f"[WARNING] figure caption: 'improvement.cd_pct' = {raw!r} is not "
+            f"a number; reporting {MISSING}.",
+            file=sys.stderr,
+        )
+        return MISSING
+    if not math.isfinite(value):
+        print(
+            f"[WARNING] figure caption: 'improvement.cd_pct' = {value!r} is "
+            f"not finite; reporting {MISSING}.",
+            file=sys.stderr,
+        )
+        return MISSING
+
+    direction = improvement.get("cd_direction")
+    if not isinstance(direction, str) or not direction:
+        # Fall back to the sign of the reduction percentage: Cd is minimised,
+        # so a positive percentage is a reduction.
+        if value > 0.0:
+            direction = "reduced"
+        elif value < 0.0:
+            direction = "increased"
+        else:
+            direction = "unchanged"
+    return f"drag {direction} by {abs(value):.2f}%"

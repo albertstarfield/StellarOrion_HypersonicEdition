@@ -48,6 +48,8 @@
   "improvement": {
     "cost_pct": 18.7116313068875,
     "cd_pct": 4.726167590817563,
+    "cd_delta": -0.07596266269683838,
+    "cd_direction": "reduced",
     "total_heat_load_pct": 29.289322883601898
   },
   "ccd_samples": [
