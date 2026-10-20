@@ -131,7 +131,7 @@ _COQ_STATUS_FILE = _PROJECT_ROOT / "results" / "coq_proof_status.json"
 # (Phase 2b) and syncs the generated PNGs/MP4s into a predictable tree.
 #
 # AXIOMS:
-#   1. validation/DSMC/PINN artifacts are authoritative only in ``results/<tree>``
+#   1. validation/DSMC+PINN_AUX artifacts are authoritative only in ``results/<tree>``
 #   2. generated media must have one canonical output tree: ``results/plots``
 #
 # THEORIES:
@@ -1045,7 +1045,7 @@ def _phase2c_generate_media_and_sync() -> None:
 
     What these media scripts are:
       - scripts/make_validation_plots.py: generic validation-timeseries PNGs +
-        full 0–300M DSMC+PINN plots when pinn_trajectory_per_step.csv exists.
+        full 0–300M DSMC+PINN_AUX plots when pinn_trajectory_per_step.csv exists.
       - scripts/make_derived_plots.py: derived aerothermal quantities vs step.
       - scripts/make_vtu_visualization.py: VTU snapshot plots from paraview/*.vtu.
       - scripts/plot_rapisarda_comparison.py: Rapisarda-trajectory comparison PNGs.

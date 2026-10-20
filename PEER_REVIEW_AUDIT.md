@@ -546,7 +546,7 @@ The thesis demonstrates:
 - Strong theoretical foundation in DSMC and rarefied gas dynamics
 - Correct implementation of physics equations in code
 - Proper validation methodology against flight data
-- Novel contribution in PINN-DSMC hybrid approach
+- Novel contribution in DSMC+PINN_AUX hybrid approach
 - Comprehensive optimization framework
 
 ### 10.2 Required Corrections (Priority Order)

@@ -129,7 +129,7 @@ package body StellarOrion_Trajectory_Output is
    --    T2: V(0) = 4300.0, V(300M) = 2700.0 -- monotonic deceleration.
    --    T3: PINN loss in (0, 1.0] -- bounded by construction.
    --    T4: PINN accuracy in [85.0, 99.5] -- clamped range.
-   --    T5: DSMC-PINN error in [0.5, 15.0] -- clamped range.
+   --    T5: DSMC+PINN_AUX error in [0.5, 15.0] -- clamped range.
    --
    --  APPLICATIONS:
    --    A1: Called by Python ctypes FFI for each frame step.
@@ -310,7 +310,7 @@ package body StellarOrion_Trajectory_Output is
          Result.PINN_Accuracy := 99.5;
       end if;
 
-      --  DSMC-PINN error: 15.0% (Step=0) -> 0.5% (Step=TARGET_STEP)
+      --  DSMC+PINN_AUX error: 15.0% (Step=0) -> 0.5% (Step=TARGET_STEP)
       Result.DSMC_PINN_Error := 15.0 * (1.0 - Progress);
       if Result.DSMC_PINN_Error < 0.5 then
          Result.DSMC_PINN_Error := 0.5;

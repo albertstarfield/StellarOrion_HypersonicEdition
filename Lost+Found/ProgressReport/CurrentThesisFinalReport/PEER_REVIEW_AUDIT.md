@@ -388,7 +388,7 @@ StellarOrionEngineMach5Up.py
 | Content | Thesis | Code | Match |
 |---------|--------|------|-------|
 | 5 conclusions | Correct summaries | Supported by code/results | ✅ |
-| 4 contributions | Framework, scalloping, PINN-DSMC, multi-objective | All implemented | ✅ |
+| 4 contributions | Framework, scalloping, DSMC+PINN_AUX, multi-objective | All implemented | ✅ |
 | 6 recommendations | Extended trajectory, 3D, FSI, Gen-2/3, Mars, PINN validation | Forward-looking | ✅ |
 
 **Issues:** None

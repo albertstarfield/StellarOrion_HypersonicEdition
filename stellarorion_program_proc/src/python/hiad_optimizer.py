@@ -188,7 +188,7 @@ def _load_validation_refs() -> dict[str, float]:
 
 
 # ======================================================================
-#  Hybrid validation gate (DSMC + PINN)          -- plan Part B
+#  Hybrid validation gate (DSMC+PINN_AUX)          -- plan Part B
 #  Multi-fidelity correction loop                -- plan Part C
 # ======================================================================
 #
@@ -210,7 +210,7 @@ def _load_validation_refs() -> dict[str, float]:
 #    A3: Fail LOUD: any missing file, non-zero child exit, timeout, or
 #        schema drift aborts with exit code 1 and a full report --
 #        there is never a fabricated verdict (no silent failure).
-#    A4: PASS  <=>  q_hybrid <= q_target  (the DSMC+PINN heat load of
+#    A4: PASS  <=>  q_hybrid <= q_target  (the DSMC+PINN_AUX heat load of
 #        the optimized geometry must not exceed the validated target).
 #    A5: Correction factor c = clamp(q_hybrid / q_analytic, 0.5, 2.0):
 #        a bounded multiplicative bias term, so one bad simulation
@@ -379,19 +379,19 @@ def _parse_args(argv: "list[str] | None" = None) -> "argparse.Namespace":
         prog="hiad_optimizer.py",
         description=(
             "HIAD Bayesian optimizer with optional enforced hybrid "
-            "validation gate (DSMC + PINN re-simulation of the winner)."
+            "validation gate (DSMC+PINN_AUX re-simulation of the winner)."
         ),
     )
     parser.add_argument(
         "--hybrid-validate", action="store_true",
-        help="after BO, re-simulate the winner with SPARTA DSMC + PINN, "
+        help="after BO, re-simulate the winner with SPARTA DSMC+PINN_AUX, "
              "write a pass/fail verdict to the results JSON, apply the "
              "multi-fidelity correction, and re-optimize (round 2)",
     )
     parser.add_argument(
         "--dry-run", action="store_true",
         help="with --hybrid-validate: check preconditions, run the "
-             "geometry QA leg, print the planned DSMC/PINN commands, "
+             "geometry QA leg, print the planned DSMC+PINN_AUX commands, "
              "then stop (no 2-3h simulation, no verdict)",
     )
     parser.add_argument(
@@ -401,7 +401,7 @@ def _parse_args(argv: "list[str] | None" = None) -> "argparse.Namespace":
     )
     parser.add_argument(
         "--validate-round2", action="store_true",
-        help="also run the DSMC+PINN gate on the round-2 geometry "
+        help="also run the DSMC+PINN_AUX gate on the round-2 geometry "
              "(doubles simulation time; default off)",
     )
     parser.add_argument(
@@ -761,7 +761,7 @@ def _gate_verdict(
           loudly instead of returning a garbage percentage.
 
     Args:
-        q_hybrid: fresh DSMC+PINN Total Heat Load [J/cm^2].
+        q_hybrid: fresh DSMC+PINN_AUX Total Heat Load [J/cm^2].
         q_analytic: analytic (Sutton-Graves-based) Q(x) of the winner.
         q_target: validated heat-load target [J/cm^2].
 
@@ -1111,7 +1111,7 @@ def _hybrid_gate(
     References:
         - https://docs.python.org/3/library/argparse.html
     """
-    print("\n[8/8] Hybrid validation gate (DSMC + PINN re-simulation)")
+    print("\n[8/8] Hybrid validation gate (DSMC+PINN_AUX re-simulation)")
     print("=" * 72)
     geo = output["optimized"]
     geometry = {
@@ -1219,7 +1219,7 @@ def _hybrid_gate(
     block["verdict"] = verdict
     block["correction_factor"] = correction
     passed = bool(verdict["passed"])
-    print(f"  q_hybrid   = {verdict['q_hybrid_Jcm2']:.4f} J/cm^2 (DSMC+PINN)")
+    print(f"  q_hybrid   = {verdict['q_hybrid_Jcm2']:.4f} J/cm^2 (DSMC+PINN_AUX)")
     print(f"  q_analytic = {verdict['q_analytic_Jcm2']:.4f} J/cm^2")
     print(f"  q_target   = {verdict['q_target_Jcm2']:.4f} J/cm^2")
     print(f"  prediction error = {verdict['prediction_error_pct']:+.4f} %")
@@ -1348,7 +1348,7 @@ def main(argv: "list[str] | None" = None) -> int:
     All computation is delegated to Ada/SPARK via FFI.
     This function only handles CLI output, JSON serialization, the
     step-7 diagnostic render (subprocess -> render_geometry_grid.py),
-    and -- when --hybrid-validate is given -- the step-8 DSMC+PINN
+    and -- when --hybrid-validate is given -- the step-8 DSMC+PINN_AUX
     validation gate with its multi-fidelity correction loop.
 
     Args:

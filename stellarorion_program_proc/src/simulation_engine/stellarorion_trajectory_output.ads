@@ -13,7 +13,7 @@
 --    AXIOM F4: PINN metrics model training convergence:
 --              loss decays as 1/(1+100*progress),
 --              accuracy improves toward 99.5%,
---              DSMC-PINN error decreases from 15% to 0.5%.
+--              DSMC+PINN_AUX error decreases from 15% to 0.5%.
 --    AXIOM F5: Knudsen number Kn = lambda / L_char, where lambda is the
 --              mean free path from ISA atmosphere and L_char is vehicle
 --              characteristic length (3.0 m for IRVE-3).
@@ -157,7 +157,7 @@ package StellarOrion_Trajectory_Output is
    --    T2: Velocity decreases monotonically: V(0) = 4300 m/s, V(300M) = 2700 m/s.
    --    T3: PINN loss is bounded in (0, 1.0].
    --    T4: PINN accuracy is bounded in [85.0, 99.5].
-   --    T5: DSMC-PINN error is bounded in [0.5, 15.0].
+   --    T5: DSMC+PINN_AUX error is bounded in [0.5, 15.0].
    --
    --  [Citation: NASA TP-2013-4012 -- IRVE-3 trajectory]
    --  [Citation: Sutton & Graves (1972), NASA TR R-376]

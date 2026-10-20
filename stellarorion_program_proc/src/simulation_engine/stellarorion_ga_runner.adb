@@ -123,7 +123,7 @@ begin
       Population := Max_Population;
    end if;
 
-   --  The validation references make J(x) comparable with the DSMC/PINN
+   --  The validation references make J(x) comparable with the DSMC+PINN_AUX
    --  references; the Python wrapper always supplies them.
    if Have_Refs then
       Set_Validation_Refs (Q_Target_Jcm2 => Q_Target,

@@ -700,7 +700,7 @@ For each sample, compare:
 > samples, but the samples are physically different and should produce **different** outcomes:
 > - **HF-2 (IRVE-3 + 10% diameter):** Changing the reference length changes the Knudsen number
 >   (Kn = λ/L with L = diameter) and the shock stand-off, so the heat-flux **distribution** shifts.
->   As a DSMC/PINN sensitivity probe this is legitimate, but the expected outcome should be a
+>   As a DSMC+PINN_AUX sensitivity probe this is legitimate, but the expected outcome should be a
 >   **delta** relative to HF-1, not the identical value.
 > - **HF-3 (Mars CO2 atmosphere):** This is a **different atmosphere** (correctly relabeled in
 >   Cycle 3, FINDING #7). The code switches to `mars.vss`/`mars.react` (CO2-dominated,

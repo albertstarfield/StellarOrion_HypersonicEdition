@@ -1528,7 +1528,7 @@ def pinn_extrapolate_per_step(
     #  hardcoded, so the anchor cannot drift from what the run actually did.
     #  The old literals (51.8 km / 3378 m/s) disagreed with the CSV (52.03 km /
     #  3094.2 m/s); both branches now share whatever the data says, which is also
-    #  what makes them continuous across the DSMC|PINN boundary.
+    #  what makes them continuous across the DSMC+PINN_AUX boundary.
     #  Guard: fall back to the documented values if the columns are absent.
     #  MUST use len(), NOT truthiness: load_convergence_data hands back numpy
     #  arrays, and `if arr` raises "truth value of an array with more than one
@@ -1557,7 +1557,7 @@ def pinn_extrapolate_per_step(
             # INTERFACE (120 km, 4300 m/s) for every DSMC step. The else-branch
             # immediately below starts from _ALT_DSMC_END (the ~52 km run
             # condition), so the curve jumped ~120 km -> ~52 km across the
-            # DSMC|PINN boundary it exists to draw. Anchoring here to the same
+            # DSMC+PINN_AUX boundary it exists to draw. Anchoring here to the same
             # two constants makes the boundary continuous.
             # [Citation: FAILURES_AND_FIXES.md F15]
             trajectory["altitude_km"][i] = _ALT_DSMC_END
@@ -1834,7 +1834,7 @@ def generate_convergence_plot(
     # Transition line at step 2200
     transition_step = int(dsmc_steps[-1])
     ax1.axvline(x=transition_step, color="k", linestyle=":", linewidth=2.0,
-                label=f"DSMC→PINN Switch (step {transition_step})")
+                label=f"DSMC→PINN_AUX Switch (step {transition_step})")
 
     # Right Y-axis: altitude
     ax2 = ax1.twinx()
@@ -1862,7 +1862,7 @@ def generate_convergence_plot(
 
     # Title and legend
     ax1.set_title(
-        f"StellarOrion Hybrid DSMC→PINN Convergence\n"
+        f"StellarOrion Hybrid DSMC→PINN_AUX Convergence\n"
         f"{metric_label} | IRVE-3 Trajectory (120 km → 40 km)",
         fontsize=13, fontweight="bold"
     )
@@ -1921,7 +1921,7 @@ def generate_multi_metric_convergence_plot(
 
     fig, axes = plt.subplots(2, 2, figsize=(18, 12))
     fig.suptitle(
-        "StellarOrion Hybrid DSMC→PINN Multi-Metric Convergence\n"
+        "StellarOrion Hybrid DSMC→PINN_AUX Multi-Metric Convergence\n"
         "IRVE-3 Trajectory (120 km → 40 km) | Step 100 → 300,000,000",
         fontsize=14, fontweight="bold"
     )
@@ -2428,7 +2428,7 @@ def generate_per_step_csv(
 
 
 # ========================================================================
-#  DSMC→PINN In-Place Switch Markdown Section
+#  DSMC→PINN_AUX In-Place Switch Markdown Section
 # ========================================================================
 
 def generate_dsmc_pinn_switch_markdown(
@@ -2437,7 +2437,7 @@ def generate_dsmc_pinn_switch_markdown(
     output_dir: str,
     target_step: int = 300000000,
 ) -> str | None:
-    """Generate markdown section describing the hybrid DSMC→PINN in-place switch.
+    """Generate markdown section describing the hybrid DSMC→PINN_AUX in-place switch.
 
     Produces a markdown section with:
     - Description of the virtual simulation continuation
@@ -2477,7 +2477,7 @@ def generate_dsmc_pinn_switch_markdown(
     dsmc_hload_final = float(data["heat_load_jcm2"][-1])
 
     md_lines = []
-    md_lines.append("## DSMC→PINN In-Place Seamless Switch")
+    md_lines.append("## DSMC→PINN_AUX In-Place Seamless Switch")
     md_lines.append("")
     md_lines.append("### Overview")
     md_lines.append("")
@@ -2654,7 +2654,7 @@ def generate_dsmc_pinn_switch_markdown(
 
 
 # ========================================================================
-#  MP4 Animation: Hybrid DSMC→PINN with Altitude Counter
+#  MP4 Animation: Hybrid DSMC→PINN_AUX with Altitude Counter
 # ========================================================================
 # [Citation: matplotlib.animation — https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html]
 # [Citation: ffmpeg docs — https://ffmpeg.org/ffmpeg.html]
@@ -2674,7 +2674,7 @@ def generate_hybrid_mp4(
     steps_per_frame: int = 100,
     fps: int = 30,
 ) -> str | None:
-    """Generate MP4 animation of hybrid DSMC→PINN simulation.
+    """Generate MP4 animation of hybrid DSMC→PINN_AUX simulation.
 
     The animation shows:
     - Left panel: Vehicle cross-section with color-coded heat flux distribution
@@ -3808,9 +3808,9 @@ def run_validation_pipeline(
     except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] ParaView VTU generation failed ({exc})")
 
-    # ─── Generate Hybrid DSMC→PINN Trajectory Outputs ────────────────
+    # ─── Generate Hybrid DSMC→PINN_AUX Trajectory Outputs ────────────────
     print("\n" + "=" * 90)
-    print("HYBRID DSMC→PINN TRAJECTORY GENERATION")
+    print("HYBRID DSMC→PINN_AUX TRAJECTORY GENERATION")
     print("=" * 90)
 
     # Step 6a: Per-100-step PINN extrapolation curve
@@ -3854,18 +3854,18 @@ def run_validation_pipeline(
     except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Per-step CSV failed ({exc})")
 
-    # Step 6d: DSMC→PINN Switch markdown section
-    print("\n[Step 6d] Generating DSMC→PINN Switch markdown section ...")
+    # Step 6d: DSMC→PINN_AUX Switch markdown section
+    print("\n[Step 6d] Generating DSMC→PINN_AUX Switch markdown section ...")
     try:
         md_path = generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir,
                                                       target_step=target_step)
         results["outputs"] = results.get("outputs", {})
         results["outputs"]["dsmc_pinn_switch_md"] = md_path
     except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
-        print(f"  [WARN] DSMC→PINN Switch markdown failed ({exc})")
+        print(f"  [WARN] DSMC→PINN_AUX Switch markdown failed ({exc})")
 
     # Step 6e: MP4 animation
-    print("\n[Step 6e] Generating hybrid DSMC→PINN MP4 animation ...")
+    print("\n[Step 6e] Generating hybrid DSMC→PINN_AUX MP4 animation ...")
     try:
         mp4_path = generate_hybrid_mp4(data, pinn_curve, output_dir,
                                         target_step=target_step)

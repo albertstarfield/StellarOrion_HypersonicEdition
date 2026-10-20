@@ -1186,7 +1186,7 @@ def run_sbo_ga(
         max_generations: generation cap (>= 1).
         target_beta: target ballistic coefficient handed to the fitness.
         q_target: target heat load J/cm^2 (makes J comparable with the
-            DSMC/PINN reference); None keeps the Ada built-in default.
+            DSMC+PINN_AUX reference); None keeps the Ada built-in default.
         flux_ref: reference surface heat flux W/cm^2.
         tau_sec: reference dwell time s.
         cd_ref: reference drag coefficient.

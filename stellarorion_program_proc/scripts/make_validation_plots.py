@@ -133,7 +133,7 @@ def _plot(
     plt.close(fig)
 
 
-# Candidate columns for the full 0–300M DSMC+PINN trajectory.
+# Candidate columns for the full 0–300M DSMC+PINN_AUX trajectory.
 # These names match `pinn_trajectory_per_step.csv`.
 _FULL_COLUMNS: tuple[str, ...] = (
     "altitude_km",
@@ -164,7 +164,7 @@ def _read_full_trajectory(
 
     AXIOM: The CSV has a `step` column and numeric metric columns.
     THEOREM: Only requested/available metric columns are parsed.
-    APPLICATION: Enables full-span 0–300M DSMC+PINN plots.
+    APPLICATION: Enables full-span 0–300M DSMC+PINN_AUX plots.
 
     Args:
         path: Path to `pinn_trajectory_per_step.csv`.
@@ -236,10 +236,10 @@ def _plot_full_column(
     xlabel: str,
     ylabel: str,
 ) -> None:
-    """Render one full-span 0–300M DSMC+PINN plot and save it.
+    """Render one full-span 0–300M DSMC+PINN_AUX plot and save it.
 
     AXIOM: `steps` covers the full trajectory, including DSMC and PINN.
-    THEOREM: A vertical marker at step 2200 labels the DSMC/PINN boundary.
+    THEOREM: A vertical marker at step 2200 labels the DSMC+PINN_AUX boundary.
     APPLICATION: Writes a PNG that explicitly covers 0–300M steps.
 
     Args:
@@ -255,7 +255,7 @@ def _plot_full_column(
         2, 1, figsize=(12, 8), gridspec_kw={"height_ratios": [2.0, 1.0]}
     )
     ax_top.plot(sampled_steps, sampled_values, linestyle="-", linewidth=1.1, color="tab:blue")
-    ax_top.axvline(2200, color="tab:red", linestyle="--", linewidth=1.5, label="DSMC→PINN boundary (step 2200)")
+    ax_top.axvline(2200, color="tab:red", linestyle="--", linewidth=1.5, label="DSMC→PINN_AUX boundary (step 2200)")
     ax_top.axvspan(0, 2200, alpha=0.10, color="gray", label="DSMC window")
     ax_top.set_title(title)
     ax_top.set_xlabel(xlabel)
@@ -282,10 +282,10 @@ def _plot_full_column(
 
 
 def make_full_pinn_plots(results_dir: str, plots_dir: str) -> int:
-    """Write explicit 0–300M DSMC+PINN PNGs for the validation tree.
+    """Write explicit 0–300M DSMC+PINN_AUX PNGs for the validation tree.
 
     AXIOM: `results_dir` may contain `pinn_trajectory_per_step.csv`.
-    THEOREM: When present, it can render full-span DSMC+PINN metrics.
+    THEOREM: When present, it can render full-span DSMC+PINN_AUX metrics.
     APPLICATION: Adds explicit full-trajectory plots to the generic plot path.
 
     Args:
@@ -319,12 +319,12 @@ def make_full_pinn_plots(results_dir: str, plots_dir: str) -> int:
             steps,
             values,
             os.path.join(plots_dir, fname),
-            f"{pretty} vs Step — Full 0–300M DSMC+PINN",
-            "Step (0=launch offset; 2200=DSMC→PINN boundary)",
+            f"{pretty} vs Step — Full 0–300M DSMC+PINN_AUX",
+            "Step (0=launch offset; 2200=DSMC→PINN_AUX boundary)",
             _unit_for(name),
         )
         count += 1
-    print(f"[plots] Wrote {count} full 0–300M DSMC+PINN PNGs to {plots_dir}")
+    print(f"[plots] Wrote {count} full 0–300M DSMC+PINN_AUX PNGs to {plots_dir}")
     return count
 
 

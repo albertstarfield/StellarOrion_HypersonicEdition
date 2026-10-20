@@ -157,7 +157,7 @@ pipeline is defined in the source.
    │   geometry QA → SPARTA DSMC → PINN            │   (--steps override)
    └──────┬───────────────────────────────────────┘   5-30 min PINN leg
           │
-          ▼  q_hybrid   (fresh DSMC+PINN heat load)
+          ▼  q_hybrid   (fresh DSMC+PINN_AUX heat load)
    ┌────────────────────────────────────────────────────────────┐
    │ Stage 2/3  VERDICT:  PASS  ⟺  q_hybrid ≤ q_target           │
    │ correction c = clamp(q_hybrid / q_analytic, 0.5, 2.0)      │
@@ -180,7 +180,7 @@ pipeline is defined in the source.
 > grid parser mis-places 22.80 % of cells across the axis of symmetry (**F26**). In
 > practice the chain is **SPARTA DSMC → (PINN leg raises) → DSMC heat load**, and the
 > verdict in Stage 2/3 is produced by the DSMC leg alone. That verdict is unaffected,
-> because `q_hybrid` is a DSMC heat load — but the gate is "DSMC+PINN" in name only
+> because `q_hybrid` is a DSMC heat load — but the gate is "DSMC+PINN_AUX" in name only
 > today, and the `clamp(…, 0.5, 2.0)` multi-fidelity correction has no PINN term to
 > correct. See **F24–F27** and the ⁸/⁹ footnotes in `README.md`.
 
@@ -382,7 +382,7 @@ Round 2 reruns the identical budget — 20 LHS + 50 EI at `xi = 0.01`, seed 42 �
 time).
 
 `--dry-run` performs the precondition checks and geometry-QA leg, prints the planned
-DSMC/PINN commands, and stops — the safe way to inspect the gate without paying for it.
+DSMC+PINN_AUX commands, and stops — the safe way to inspect the gate without paying for it.
 
 ---
 
