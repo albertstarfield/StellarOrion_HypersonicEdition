@@ -1,0 +1,27 @@
+\section{Surrogate Fidelity and the Validation Gate}
+\label{sec:hybrid_gate}
+
+\subsection{Motivation}
+An analytic optimum is only meaningful if the closed-form cost that produced it agrees with the high-fidelity DSMC solution at the same geometry. The cost of Eq.~\eqref{eq:ga_cost} is built from the Sutton--Graves correlation and a trajectory model; it cannot represent particle noise, real-gas chemistry, or geometric discretization effects present in the DSMC solution. A correlation that is systematically optimistic would rank designs on an error rather than on physics. The validation gate closes this loop: it re-simulates a selected winner with the high-fidelity chain and measures the analytic-to-DSMC gap before the design is accepted.
+
+\subsection{Gate Protocol}
+The gate executes five legs as a post-optimization stage:
+\begin{enumerate}
+    \item \textbf{Preconditions and geometry QA.} The compiled binary, the Docker daemon, the validation virtual environment, the pipeline module, and the reference CSV are all checked, followed by a seconds-fast \texttt{\seqsplit{bin/main -{}-validate-only}} geometry check. Every failure is reported with a path and a remedy, and the gate exits with status 1.
+    \item \textbf{DSMC leg.} The selected winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless}} at its geometry, writing to a dedicated results directory. The reference dataset used for the baseline comparison is never overwritten.
+    \item \textbf{Refinement leg.} The validation pipeline is executed on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
+    \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and it records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
+    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$, and the optimizer is re-run with the corrected cost, producing a corrected design.
+\end{enumerate}
+
+\subsection{Archived Gate Result}
+The gate was exercised on the 2026-09-26 campaign winner, and the archived record is retained here because it is the only full-fidelity calibration of the analytic model in the project. The analytic prediction for that winner was $q_{analytic} = 155.67$\,J/cm$^2$; the DSMC re-simulation returned
+\begin{equation}
+    q_{hybrid} = 77.93\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.72\ \text{J/cm}^2,
+\end{equation}
+with a prediction error of $-49.94\,\%$ and a clamped correction factor $c = 0.5006$, which sits exactly at the lower clamp bound. The hybrid drag coefficient for that geometry was $C_{d,hybrid} = 2.529$.
+
+Two properties of this calibration matter for the present campaign. First, two independent DSMC runs of the same geometry agreed to within 0.3\,\%, so the $-49.94\,\%$ gap is not particle noise; it is a reproducible systematic bias of the closed-form heat-load model. Second, the bias is one-sided and large, which is exactly the case the bounded correction is designed to absorb rather than hide. The correction is therefore a calibration of the analytic model, not a claim that the analytic cost is accurate in absolute terms.
+
+\subsection{Relation to the Current Optimum}
+The archived gate belongs to the earlier campaign whose objective selected the heat-load regime; its winner satisfied the heat-load target with a large margin. The current objective selects the drag regime by construction, and its optimum is $51\,\%$ above $Q_{target}$ (Table~\ref{tab:ga_before_after}). Re-simulating that geometry would therefore fail the heat-load verdict, and the gate is not reported as a pass for it. What the gate establishes for this thesis is narrower and still useful: the closed-form heat-load model carries a reproducible multiplicative bias that the correction factor can bound, so relative ranking between designs of similar geometry is meaningful while absolute heat-load claims require either the correction or the DSMC re-simulation. The drag-regime result of Sec.~\ref{sec:optimization_results} is reported on that basis, as the optimum of the stated analytic objective and not as a flight-qualified design.

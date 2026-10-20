@@ -71,7 +71,7 @@ APPLICATIONS
 CORRECTIONS APPLIED TO THE OLD ARTWORK
     1. The axiom chips are renumbered A1 through A7 with no duplicate A3 and
        no A7 before A6, matching the research axiom table.
-    2. The sixth main box reads "Bayesian survivability
+    2. The fifth main box reads "Genetic survivability
        optimization" to match the chapter 3 caption, which the
        old artwork shortened to "GA Optimization".
     3. The Boltzmann equation carries proper f' primes, which the old artwork
@@ -147,7 +147,7 @@ BOX_TITLES = (
     ("DSMC", "Method"),
     ("Navier-", "Stokes", "Equations"),
     ("Sutton-", "Graves", "Correlation"),
-    ("Bayesian", "survivability", "optimization"),
+    ("Genetic", "survivability", "optimization"),
 )
 
 TRANSITIONS = (
@@ -275,7 +275,7 @@ def draw_transition_chips(ax: object) -> None:
         for i in indices:
             cx = gap_center(i)
             patch = FancyBboxPatch(
-                (cx - 0.55, y - 0.13), 1.10, 0.26,
+                (cx - 0.67, y - 0.13), 1.34, 0.26,  # widened: A3/A4 text overflowed
                 boxstyle="round,pad=0.0,rounding_size=0.04",
                 linewidth=1.0, edgecolor=CHIP_BORDER, facecolor=CHIP_FILL,
                 zorder=2,
@@ -335,7 +335,7 @@ def draw_axiom_chips(ax: object) -> None:
         for k, (label, desc) in enumerate(group):
             cx = MARGIN_X + spacing * ((k + 0.5) if n == 4 else (k + 1.0))
             patch = FancyBboxPatch(
-                (cx - 0.55, y - 0.13), 1.10, 0.26,
+                (cx - 0.67, y - 0.13), 1.34, 0.26,  # widened: A3/A4 text overflowed
                 boxstyle="round,pad=0.0,rounding_size=0.04",
                 linewidth=1.0, edgecolor=AXIOM_BORDER, facecolor=AXIOM_FILL,
                 zorder=2,

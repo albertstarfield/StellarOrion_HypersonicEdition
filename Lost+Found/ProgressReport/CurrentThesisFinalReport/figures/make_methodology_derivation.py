@@ -84,7 +84,7 @@ DEVIATIONS FROM THE ORIGINAL ARTWORK
        (THEORY T2).
     4. Row 3 columns 3-4 and row 4 columns 3-4 replace the retired MoP and
        Python-engine labels with the current pipeline terms (Gaussian
-       Process Surrogate, Bayesian Optimization, scikit-learn GP, Ada core
+       Cost Function, Genetic Algorithm, Ada GA runner, Ada core
        driven by run.py), matching chapter_03_methodology.tex sections
        sec:axioms and sec:software_pipeline.
 """
@@ -230,8 +230,8 @@ ROWS = (
         "cols": (0, 2, 3),
         "boxes": (
             ("DSMC (Bird", "Algorithm)", "SPARTA"),
-            ("Gaussian", "Process", "Surrogate"),
-            ("Bayesian", "Optimization", "(Expected", "Improvement)"),
+            ("Cost", "Function", "Evaluation"),
+            ("Genetic", "Algorithm", "(selection,", "crossover,", "mutation)"),
         ),
     },
     {
@@ -240,14 +240,17 @@ ROWS = (
         "cols": (0, 2, 3),
         "boxes": (
             ("SPARTA Docker", "Container", "5-species air"),
-            ("scikit-learn", "GP (Matern 5/2)", "LHS + EI"),
+            ("Ada/SPARK", "GA runner", "Ravenscar pool"),
             ("StellarOrion", "Ada core", "run.py", "orchestrator"),
         ),
     },
 )
 
 # Red data-flow arrows in row 3: (source column, target column, label).
-RED_ARROWS = ((0, 2, "data"), (2, 3, "eval"))
+RED_ARROWS = ((0, 2, "data"), (2, 3, "$J$"))
+# WHY "$J$": the gap between the cost box and the GA box is too narrow
+# for the word "eval"; the glyph clipped on the GA border (image audit
+# 2026-10-21). The scalar passed along the arrow is the cost J.
 
 # Bottom legend: (label, patch colour).
 LEGEND = (
@@ -410,12 +413,16 @@ def draw() -> plt.Figure:
     row_centers = []
     for r, row in enumerate(ROWS):
         label_top = y
+        # White backing so the derivation arrows crossing the label band
+        # cannot strike through the words (image audit 2026-10-21).
         ax.text(BOX_AREA_LEFT, label_top - LABEL_PITCH, row["label"][0],
                 ha="left", va="center", fontsize=TEXT_PT, fontweight="bold",
-                fontstyle="italic", color=LAYER)
+                fontstyle="italic", color=LAYER, zorder=6,
+                bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.8})
         ax.text(BOX_AREA_LEFT, label_top - 2.0 * LABEL_PITCH, row["label"][1],
                 ha="left", va="center", fontsize=TEXT_PT, fontweight="bold",
-                fontstyle="italic", color=LAYER)
+                fontstyle="italic", color=LAYER, zorder=6,
+                bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.8})
         box_top = label_top - 2.0 * LABEL_PITCH - LABEL_GAP
         box_h = layout["box_heights"][r]
         box_w = row_box_width(r)
@@ -462,9 +469,10 @@ def draw() -> plt.Figure:
                         "mutation_scale": 10, "linestyle": (0, (5, 3)),
                         "shrinkA": 0.0, "shrinkB": 0.0},
             zorder=3)
-        ax.text(0.5 * (x_from + x_to), cy3 + 0.09, label, ha="center",
+        ax.text(0.5 * (x_from + x_to), cy3 + 0.14, label, ha="center",
                 va="center", fontsize=TEXT_PT, fontstyle="italic", color=RED,
-                zorder=4)
+                zorder=6,
+                bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.6})
 
     # Bottom legend: a 2 by 2 grid of colour patches with labels.
     legend_top = y - 0.12

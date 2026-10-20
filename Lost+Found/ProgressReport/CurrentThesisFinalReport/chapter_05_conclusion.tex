@@ -1,7 +1,7 @@
 \chapter{Conclusion and Recommendations}
 
 \section{Summary of Findings}
-This research developed and validated a computational framework for the aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework integrates parametric CadQuery geometry generation, DSMC rarefied gas dynamics simulation, and Genetic Algorithm optimization with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate.
+This research developed and validated a computational framework for the aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework integrates parametric CadQuery geometry generation, DSMC rarefied gas dynamics simulation, and simple Genetic Algorithm optimization on an analytic cost.
 
 The key findings from the simulation results and validation against IRVE-3 flight data are summarized below.
 
@@ -19,6 +19,9 @@ The Knudsen number field mapping demonstrates that the flow around the HIAD at 5
 \subsection{Grid Independence and Computational Efficiency}
 The grid independence study identified a grid-factor of 0.7 as the optimal balance between accuracy and computational cost. At this resolution, the simulation yields the least error relative to validated flight data while maintaining efficient execution times. The Cartesian grid satisfies the DSMC resolution requirement that cell size be smaller than the local mean free path in the shock layer region.
 
+\subsection{Optimization Trade-Off}
+The recorded optimization campaign (15-point CCD screen plus a population GA of fifty individuals, 72 generations and 3600 evaluations) reduces the composite cost by 20.28\,\% relative to the baseline, but the reduction is bought with a 20.12\,\% increase in total heat load: the optimum moves from 208.5 to 250.4\,J/cm$^2$ while the drag coefficient rises by 3.76\,\%. This is the vertex of the heat-load/drag Pareto front selected by the drag weight of the cost function, not a thermally superior design. The result is reported as a trade-off because the objective weights are a mission statement: lowering the drag weight below the regime boundary selects a heat-load-regime design that reaches about 147\,J/cm$^2$, below the target, at the cost of drag. No geometry inside the feasible envelope achieves both more drag and less heat load than the baseline, so the two outcomes are alternatives rather than successive refinements.
+
 \subsection{Real-Gas Effects and 5-Species Air Model}
 The use of a realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5952\,K. This is critical for accurate heat flux prediction, as energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{anderson2006hypersonic}.
 
@@ -31,7 +34,7 @@ This research contributes the following to the field of hypersonic aerothermal a
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
-    \item \textbf{Multi-Objective Optimization:} Automated GA-based optimization of HIAD geometry using a Gaussian Process surrogate (Mat\'ern 5/2 kernel with Expected Improvement acquisition), targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance simultaneously.
+    \item \textbf{Multi-Objective Optimization:} Automated simple-GA optimization of HIAD geometry, driven by a closed-form cost that combines total heat load, peak heat flux, ballistic coefficient and drag coefficient with envelope and payload penalties, and evaluated without a solver in the loop.
 \end{enumerate}
 
 \section{Recommendations for Future Work}
@@ -55,9 +58,7 @@ The framework is readily extensible to Mars entry conditions by modifying the at
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
-% NOTE (2026-10-20): the main pipeline is analytical (closed-form
-% Sutton-Graves heat flux, not a solver-resolved field). NEXT
-% SUB-ITERATION: change the default optimiser from Bayesian Optimization
-% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
-% analytical surrogate on an analytical objective, (analytical)^2, does
-% not illuminate anything and reads as strange.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimiser is now a simple genetic algorithm; the
+% Bayesian-optimisation material has been removed from this thesis.

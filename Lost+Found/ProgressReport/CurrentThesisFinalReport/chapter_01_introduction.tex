@@ -35,7 +35,7 @@ At hypersonic speeds ($Ma > 5$) and high altitudes ($> 50$ km), the atmospheric 
 
 Furthermore, the optimization of HIAD geometry for survivability -- balancing drag performance, peak heating, ballistic coefficient, and structural mass -- requires an automated, multi-stage computational framework that can efficiently explore a high-dimensional design space. Existing approaches based on parametric CFD sweeps are computationally prohibitive for the thousands of design evaluations required.
 
-Therefore, there is a critical need for an integrated computational framework that: (1) employs DSMC-based rarefied gas dynamics to accurately predict aerothermal loads in the transitional regime, (2) incorporates automated parametric geometry generation for design space exploration, and (3) leverages surrogate-based machine-learning optimization to efficiently identify optimal HIAD configurations.
+Therefore, there is a critical need for an integrated computational framework that: (1) employs DSMC-based rarefied gas dynamics to accurately predict aerothermal loads in the transitional regime, (2) incorporates automated parametric geometry generation for design space exploration, and (3) applies population-based genetic-algorithm optimization to efficiently identify optimal HIAD configurations.
 
 \section{Research Objective}
 In this research, the objective is to develop and validate a computational framework for the aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver and integrated with genetic algorithm optimization.
@@ -52,7 +52,7 @@ The specific objectives are:
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
-    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization (GP Matérn 5/2 surrogate + Expected Improvement) for automated optimization of HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+    \item \textbf{Survivability Optimization:} To implement a simple Genetic Algorithm (GA) with tournament selection, uniform crossover, Gaussian mutation and elitism for automated optimization of HIAD geometry, targeting ballistic coefficient, total heat load, peak heat flux and drag performance.
 \end{enumerate}
 
 \section{Research Gap}
@@ -64,20 +64,20 @@ Based on the literature review, several gaps are identified in the current state
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
-    \item \textbf{Multi-Objective Survivability Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations using surrogate-assisted genetic algorithms has not been demonstrated.
+    \item \textbf{Multi-Objective Survivability Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations using a population genetic algorithm on a closed-form aerothermal cost has not been demonstrated.
 \end{itemize}
 
 \section{Novelty and Contributions}
 The present work makes the following novel contributions to the field of hypersonic aerothermodynamic analysis and HIAD design:
 
 \begin{enumerate}
-    \item \textbf{First Integrated DSMC-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), and surrogate-assisted genetic algorithm optimization in a unified pipeline for HIAD survivability analysis.
+    \item \textbf{First Integrated DSMC-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), and genetic-algorithm optimization in a unified pipeline for HIAD survivability analysis.
 
     \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the transitional flow regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50 km, enabling physically correct aerothermal load prediction for inflatable decelerators.
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 
-    \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance using a Bayesian Optimization (GP surrogate) coupled with a genetic algorithm demonstrates a computationally efficient approach to HIAD design that would be infeasible with direct simulation alone.
+    \item \textbf{Multi-Objective Genetic-Algorithm Optimization:} The simultaneous optimization of ballistic coefficient, total heat load, peak heat flux and drag performance with a population GA on an analytic cost demonstrates a computationally efficient approach to HIAD design that would be infeasible with direct DSMC-in-the-loop simulation alone.
 
     \item \textbf{Comprehensive ML Documentation Standards:} The framework adheres to established machine learning research standards, including explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, RMSE, MAE), and uncertainty quantification through ensemble prediction.
 \end{enumerate}
@@ -99,7 +99,7 @@ The scope of this research is defined to provide aerothermal analysis and surviv
 
     \item \textbf{Thermal Analysis:} Surface heat flux is estimated using the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh}, validated against IRVE-3 flight data. The 1D transient backface temperature model assumes a thermal lag factor ($\eta_{lag} = 0.15$) through the FTPS insulation stack. SPARTA surface kinetic energy quantities are retained as relative shape-ranking signals for the optimizer, not as absolute heat flux values.
 
-    \item \textbf{Optimization:} The Genetic Algorithm explores the design space using Latin Hypercube Sampling (LHS) for initial population generation, with a Gaussian Process (Matérn 5/2) Bayesian Optimization surrogate as the evaluator.
+    \item \textbf{Optimization:} The Genetic Algorithm explores the design space from a random initial population, with a fifteen-point central composite screen setting the factor ranking and an analytic cost function as the evaluator.
 \end{enumerate}
 
 \section{Methodology Overview}
@@ -133,15 +133,13 @@ The SPARTA solver executes the DSMC simulation within a Docker-containerized Lin
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
-% NOTE (2026-10-20): the main pipeline is analytical (closed-form
-% Sutton-Graves heat flux, not a solver-resolved field). NEXT
-% SUB-ITERATION: change the default optimiser from Bayesian Optimization
-% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
-% analytical surrogate on an analytical objective, (analytical)^2, does
-% not illuminate anything and reads as strange.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimiser is now a simple genetic algorithm; the
+% Bayesian-optimisation material has been removed from this thesis.
 
 \subsection*{d. Survivability Optimization}
-A Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate performs multi-objective optimization of the HIAD geometry. Latin Hypercube Sampling (LHS) generates the initial design population. The GA evaluates candidates using the GP surrogate for rapid screening, with expensive SPARTA simulations reserved for elite candidates and final validation. The cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against user-defined targets.
+A simple Genetic Algorithm (GA) performs multi-objective optimization of the HIAD geometry. A fifteen-point central composite screen ranks the geometric factors first, and a random initial population then seeds the GA. Each candidate is evaluated with a closed-form cost built from the Sutton--Graves correlation and the trajectory model, so the search costs no solver time; the expensive SPARTA simulations are reserved for validation of the selected design. The cost function balances total heat load, peak heat flux, ballistic coefficient and drag coefficient against user-defined reference values, with quadratic penalties for envelope and payload violations.
 
 \subsection*{e. Validation and Analysis}
 The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics are peak heat flux (14.36\,W/cm$^2$ flight, 13.83\,W/cm$^2$ from the MDAO Fay--Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation evaluated at the present DSMC run conditions), total heat load (195.06\,J/cm$^2$, 195.17\,J/cm$^2$, and 165.72\,J/cm$^2$ respectively), and peak deceleration (19.7\,$g$ flight against 16.83\,$g$ from this work). The two solver-resolved integrated quantities under-predict the flight values by close to a common $15\%$, which is attributed to the evaluation of a single trajectory point rather than a fully integrated reentry history, whereas the correlation-based stagnation heat flux over-predicts by $+12.4\%$ because the correlation resolves neither the scalloped geometry nor the rarefied-flow departure; both deviations are quantified in Chapter IV. The final optimized design undergoes a high-fidelity SPARTA validation run.

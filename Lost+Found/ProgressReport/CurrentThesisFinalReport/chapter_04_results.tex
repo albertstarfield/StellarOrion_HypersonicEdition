@@ -171,7 +171,7 @@ The MDAO Fay--Riddell prediction of 13.83~W/cm\textsuperscript{2} is within 3.7\
 The present work reports a peak heat flux of 16.14~W/cm\textsuperscript{2}, a total heat load of 165.72~J/cm\textsuperscript{2}, and a peak deceleration of 16.83\,$g$, i.e.\ $+12.4\%$, $-15.0\%$, and $-14.6\%$ relative to the corresponding flight measurements. The deviations are of opposite sign, have distinct causes, and must not be read as a single systematic bias. The total heat load and the peak deceleration are both \emph{resolved by the DSMC run} and both fall short by close to a common $15\%$, because the run samples a \emph{single} trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions whereas the flight reconstruction and the MDAO models integrate the heating and deceleration history over the complete reentry; integrating over the full trajectory raises both the accumulated heat load and the peak deceleration towards the measured values. The heat flux behaves oppositely: the 16.14~W/cm\textsuperscript{2} headline figure is the Sutton--Graves correlation evaluated at the DSMC run condition and is not a quantity resolved by the solver, and it over-predicts the flight value because the correlation is built on a spherical nose cap, carrying neither the heat-shielding effect of the scalloped torus nor the rarefied-flow departure that the DSMC solver resolves. It therefore acts as a conservative upper bound on the stagnation flux, which is the useful direction for TPS sizing. The ballistic coefficient provides an independent check: the simulated 27.70~kg/m\textsuperscript{2} is $+3\%$ relative to the 26.9~kg/m\textsuperscript{2} flight value, indicating that the scalloped geometry is reproduced correctly, so that the residual in the two integrated quantities lies in the trajectory integration while the residual in the heat flux lies in the correlation model.
 
 \paragraph{A second Sutton--Graves value, and why it differs.}
-A reader checking the validation export \texttt{unified\_comparison\_data.json} will find a \emph{different} Sutton--Graves heat flux for the same run: 12.2~W/cm\textsuperscript{2} rather than the 16.14~W/cm\textsuperscript{2} of Table~\ref{tab:validation}. This is not a contradiction, and it is worth stating precisely because both numbers are Sutton--Graves evaluations. Sutton--Graves scales as $\sqrt{\rho/R_N}\,V^3$, so the value is set entirely by the $(V, R_N)$ pair supplied to the correlation, and the two reports use different pairs. The 16.14~W/cm\textsuperscript{2} quoted above is evaluated at the IRVE-3 baseline nose radius $R_N = 1.5$\,m and at the run's own velocity $V = 3{,}378$\,m/s, which is the same baseline condition used for the before/after comparison in Sec.~\ref{sec:bo_results}. The 12.2~W/cm\textsuperscript{2} in the export is evaluated at the engine's \emph{default} nose radius $R_n = 0.55$\,m and at a nominal $V = 2{,}700$\,m/s. The repository's own validation report lists both of those as known sources of discrepancy --- it notes that ``SG uses $R_n = 0.55$\,m (default), but effective HIAD nose radius is larger (blunter body)'' and separately flags the velocity mismatch --- so the 12.2~W/cm\textsuperscript{2} figure is the value produced when two acknowledged-wrong defaults are left in place, and it is not conditioned on the run's actual velocity or geometry. The value used in this thesis is the better-conditioned of the two, and the export's \texttt{root\_causes.heat\_flux\_comparison\_notes} block reaches the same conclusion about how the number should be read, stating that the correct comparison is against the analytical models \emph{at the same trajectory point}, not against a trajectory-integrated flight peak. The same block also records that the DSMC quantity actually resolved by the solver is the per-element average of 56.6~W/cm\textsuperscript{2}, which is a whole-surface mean and is not a stagnation-point peak. Consequently the $+12.4\%$ in Table~\ref{tab:validation} should be read as an order-of-magnitude scale comparison between a single-point correlation and a trajectory-integrated flight peak, not as a validated error bound.
+A reader checking the validation export \texttt{unified\_comparison\_data.json} will find a \emph{different} Sutton--Graves heat flux for the same run: 12.2~W/cm\textsuperscript{2} rather than the 16.14~W/cm\textsuperscript{2} of Table~\ref{tab:validation}. This is not a contradiction, and it is worth stating precisely because both numbers are Sutton--Graves evaluations. Sutton--Graves scales as $\sqrt{\rho/R_N}\,V^3$, so the value is set entirely by the $(V, R_N)$ pair supplied to the correlation, and the two reports use different pairs. The 16.14~W/cm\textsuperscript{2} quoted above is evaluated at the IRVE-3 baseline nose radius $R_N = 1.5$\,m and at the run's own velocity $V = 3{,}378$\,m/s, which is the same baseline condition used for the before/after comparison in Sec.~\ref{sec:optimization_results}. The 12.2~W/cm\textsuperscript{2} in the export is evaluated at the engine's \emph{default} nose radius $R_n = 0.55$\,m and at a nominal $V = 2{,}700$\,m/s. The repository's own validation report lists both of those as known sources of discrepancy --- it notes that ``SG uses $R_n = 0.55$\,m (default), but effective HIAD nose radius is larger (blunter body)'' and separately flags the velocity mismatch --- so the 12.2~W/cm\textsuperscript{2} figure is the value produced when two acknowledged-wrong defaults are left in place, and it is not conditioned on the run's actual velocity or geometry. The value used in this thesis is the better-conditioned of the two, and the export's \texttt{root\_causes.heat\_flux\_comparison\_notes} block reaches the same conclusion about how the number should be read, stating that the correct comparison is against the analytical models \emph{at the same trajectory point}, not against a trajectory-integrated flight peak. The same block also records that the DSMC quantity actually resolved by the solver is the per-element average of 56.6~W/cm\textsuperscript{2}, which is a whole-surface mean and is not a stagnation-point peak. Consequently the $+12.4\%$ in Table~\ref{tab:validation} should be read as an order-of-magnitude scale comparison between a single-point correlation and a trajectory-integrated flight peak, not as a validated error bound.
 
 \section{Scallop Pocket Temperature Analysis}
 The temperature distribution within the toroidal pockets shows that the recirculation zones between toroid crests create regions of reduced heating. Figure~\ref{fig:scallop_pocket} is an axial trace sampled at the centre of a single scallop pocket: the temperature holds at the ambient value upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak of approximately $3.1 \times 10^3$\,K, and then decays through the recirculation region back towards ambient. This confirms quantitatively that the valleys act as thermal buffer zones relative to the heated crests.
@@ -223,60 +223,18 @@ The velocity vector analysis reveals stable recirculation zones in the toroidal 
 \subsection{Real-Gas Effects}
 The 5-species air model captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5952\,K. This is critical for accurate heat flux prediction, as the energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{anderson2006hypersonic}.
 
-\section{Optimization Framework Results}
+\section{Optimization Results}
 \label{sec:optimization_results}
 
-The survivability optimization framework (Sec.~\ref{sec:ga_opt}) was executed across multiple runs to explore the HIAD design space using Latin Hypercube Sampling (LHS), Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate training, and Genetic Algorithm (GA) optimization. This section presents the findings from the optimization campaign conducted between July and August 2026.
+The survivability optimizer of Sec.~\ref{sec:ga_opt} was executed on the validated flight condition with the configuration of Table~\ref{tab:ga_hparams}. The recorded campaign is the newest artifact written by the optimizer (2026-10-20): a fifteen-point central composite screen followed by a simple genetic algorithm with a population of fifty individuals, stopped by the stagnation criterion after 72 generations and 3600 individual evaluations. This section reports that campaign and nothing older. The analytic cost is evaluated in closed form, so every individual is a genuine evaluation of Eq.~\eqref{eq:ga_cost} rather than a surrogate prediction.
 
-\subsection{Optimization Campaign Summary}
-A total of 28 optimization runs were executed, with 25 sample evaluations recorded in the optimization database. Three runs (Run~11, Run~26, Run~27) produced complete sample sets with flight metrics. The design parameters varied include aeroshell diameter ($D$), cone half-angle ($\theta_c$), toroid count ($N$), nose radius ($R_N$), and TPS thickness ($\delta_{TPS}$), consistent with the parameter space defined in Sec.~\ref{sec:ga_opt}.
-
-\subsection{Design Space Exploration Results}
-Table~\ref{tab:optimization_samples} summarizes selected samples from the three active optimization runs, showing the trade-off between ballistic coefficient ($\beta$), deceleration load ($n_G$), and backface temperature ($T_{back}$).
+\subsection{Campaign Summary}
+Table~\ref{tab:ga_reference} lists the reference set that scales the cost. These values are loaded at run time from the validation reference file, so recalibration against a new flight campaign requires a new reference set rather than a recompile.
 
 \begin{table}[H]
     \centering
-    \caption{Selected optimization samples showing flight metric trade-offs across the design space.}
-    \label{tab:optimization_samples}
-    \begin{tabularx}{\textwidth}{ccccccX}
-        \hline
-        \textbf{Run} & \textbf{Sample} & \textbf{Diameter (m)} & \textbf{$\beta$ (kg/m$^2$)} & \textbf{$n_G$ ($g$)} & \textbf{$T_{back}$ (K)} \\
-        \hline
-        11 & 0 & 2.62 & 27.45 & 22.79 & 492.0 \\
-        11 & 8 & 2.62 & 10.33 & 60.57 & 492.0 \\
-        26 & 0 & 3.00 & 29.45 & 21.24 & 492.0 \\
-        27 & 0 & 3.00 & 29.27 & 21.37 & 492.0 \\
-        27 & 4 & 3.00 & 11.36 & 55.06 & 492.0 \\
-        27 & 8 & 3.00 & 29.27 & 21.37 & 492.0 \\
-        \hline
-    \end{tabularx}
-\end{table}
-
-The results reveal a clear trade-off between deceleration capability and structural loading. Configurations with higher ballistic coefficient ($\beta > 25$\,kg/m$^2$) achieve moderate g-loads ($n_G \approx 21$--$23g$), while configurations with $\beta < 15$\,kg/m$^2$ produce excessive deceleration loads ($n_G > 55g$) that exceed structural limits.
-
-\subsection{Thermal Constraint Violation}
-A critical finding across all optimization samples is that the backface temperature consistently reaches 492.0\,K, which exceeds the 350\,K payload thermal limit by 142\,K. This indicates that the current 1D thermal model with the baseline TPS parameters ($\delta_{TPS} = 25.4$\,mm, $\rho_{TPS} = 322.94$\,kg/m$^3$, $C_{p,TPS} = 1000$\,J/(kg$\cdot$K)) is insufficient for payload protection at the 51.8\,km altitude flight condition.
-
-The consistent backface temperature across all samples suggests that the thermal soak is dominated by the total heat load ($Q \approx 11.38$\,MJ/m$^2$) rather than the instantaneous heat flux, as the 1D transient model integrates the heat pulse over the full trajectory duration. This finding has direct implications for TPS design:
-\begin{itemize}
-    \item The TPS thickness must be increased beyond 25.4\,mm to provide sufficient thermal resistance.
-    \item The thermal lag factor ($\eta_{lag} = 0.15$) may need recalibration against higher-fidelity thermal analysis.
-    \item Multi-layer insulation with contact resistance (as in Rapisarda's F-TPS stack~\cite{rapisarda2023mdao}) should be incorporated.
-\end{itemize}
-
-\subsection{Optimal Configuration Identification}
-Despite the thermal constraint violation, the GA identified the GA-optimized configuration (Run~27, Sample~8) as the optimal design point: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. This configuration achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, which are within acceptable ranges for cargo reentry. The convergence of the optimizer toward a near-IRVE-3 geometry validates the physical consistency of the framework, as the IRVE-3 design represents a flight-tested configuration optimized through decades of NASA research~\cite{lau2013irve3}.
-
-\section{Bayesian Optimization Results}
-\label{sec:bo_results}
-
-\subsection{Cost Function and Reference Loading}
-The multi-objective cost function $J(\mathbf{x})$ of Sec.~\ref{sec:ga_opt} is evaluated against reference values that are loaded at run time rather than hard-coded, so that recalibration against a new flight campaign requires only a new reference dataset and not a recompile. The active reference set for the runs reported here is:
-
-\begin{table}[H]
-    \centering
-    \caption{Validation reference set used to scale the multi-objective cost $J(\mathbf{x})$ (official run 2026-09-26).}
-    \label{tab:bo_reference}
+    \caption{Validation reference set used to scale the multi-objective cost $J(\mathbf{x})$ (recorded GA campaign, 2026-10-20).}
+    \label{tab:ga_reference}
     \begin{tabular}{llr}
         \toprule
         \textbf{Symbol} & \textbf{Physical meaning} & \textbf{Value} \\
@@ -284,91 +242,83 @@ The multi-objective cost function $J(\mathbf{x})$ of Sec.~\ref{sec:ga_opt} is ev
         $Q_{target}$ & Total heat load target & 165.716~J/cm\textsuperscript{2} \\
         $\dot{q}_{ref}$  & Peak heat flux reference (IRVE-3) & 14.361~W/cm\textsuperscript{2} \\
         $\tau$           & Aerodynamic heating timescale & 13.582\,s \\
-        $C_{d,ref}$      & Drag coefficient reference (IRVE-3) & 1.4625 \\
+        $C_{d,ref}$      & Drag coefficient reference (IRVE-3) & 1.7655 \\
         $Q_{flight}$     & IRVE-3 flight heat load & 195.058~J/cm\textsuperscript{2} \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-\subsection{Search Strategy and Convergence}
-The design space is explored in two recorded stages preceded by a separate screen. A 15-point central composite design (CCD) is evaluated first as a standalone design-of-experiments screen (best $J = 1.996$ at the factorial-$\pm$ corner). A 20-point Latin Hypercube (LHS) design then populates the initial surrogate training set, after which 50 Bayesian Optimization iterations are run, giving $n_{eval} = 70$ evaluations in the recorded history. The surrogate is a Gaussian Process with a Mat\'ern 5/2 kernel (Eq.~\ref{eq:matern52}) and Expected Improvement acquisition with $\xi = 0.01$ (Eq.~\ref{eq:ei}), as specified in Sec.~\ref{sec:ga_opt}. The 15 CCD points are not members of the 70-entry history and are not seeded into the Bayesian stage; the two datasets are reported separately because they answer different questions.
-
-\begin{figure}[H]
-    \centering
-    \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter of the 15 central composite screen points in the design space of nose radius R N, torus radius r tor and half-cone angle theta c, each marker coloured by its evaluated cost J of x on a logarithmic scale running from about 2 to about 38. The points are the 8 factorial combinations of the low and high levels 1.2 and 1.8 metres in nose radius, 0.10 and 0.18 metres in torus radius and 55 and 65 degrees in half-cone angle; the design centre at 1.5 metres, 0.140 metres and 60 degrees; and 6 axial points stepping one factor at a time away from the centre. Reference markers named in the key are the screen design centre, the IRVE-3 baseline, the best-screened factorial point and the round-1 Bayesian optimisation optimum. The panel is a design layout annotated with measured costs and is not a fitted response surface.}}%
-\includegraphics[width=0.75\textwidth]{figures/bo_ccd_design.png}%
-\EndAccSupp{}%
-    \caption{Central composite screen evaluated in the three-dimensional design space, coloured by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (official run 2026-09-26). The 15 screen points comprise 8 factorial points, the design centre ($R_N = 1.5$\,m, $r_{tor} = 0.140$\,m, $\theta_c = 60^\circ$), and 6 axial points; the screen design centre, the IRVE-3 baseline, the best-screened point of this screen and the round-1 Bayesian-optimisation optimum are all marked and identified in the panel key. This is a design layout annotated with measured costs, not a fitted response surface.}
-    \label{fig:ccd_surface}
-\end{figure}
-
-Figure~\ref{fig:ccd_surface} shows the design layout together with the cost measured at each of the 15 screen points. No response surface is fitted to these data, so the figure supports no claim about continuity or about interaction terms between factors; it is a direct, per-point view of the evaluated cost. Within the screen, the lowest cost is attained at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 55^\circ$ ($J = 1.9959$), which is the best design this particular screen resolves; because the screen is a separate dataset, this point is a useful reference for the scale of the problem but not the incumbent tracked in the convergence history below. The centre point ($J = 2.1674$) and the IRVE-3 baseline ($J = 2.1626$, $r_{tor} = 0.135$\,m) are close in cost but are distinct designs; the larger torus radius of the centre is the only geometric difference between them, and the screen alone cannot resolve which is preferable at this resolution. The nose radius is the factor over which the screened costs vary most widely, which is consistent with the $1/\sqrt{R_N}$ Sutton--Graves scaling, while the half-cone angle enters more weakly. Quantifying that dominance analytically, rather than by inspection of a sparse screen, is left to the Gaussian-process surrogate and acquisition search described next.
-
-\subsection{Optimized Configuration}
-Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline geometry with the round-1 Bayesian Optimization winner. The optimizer reduces the total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} --- 6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target --- while simultaneously reducing the drag coefficient by 2.96\,\% and lowering the aggregate cost $J$ by 25.78\,\%. No constraint is violated at the optimum (penalty term $= 0$).
+Table~\ref{tab:ga_before_after} compares the baseline geometry with the optimized one. The baseline is the validated IRVE-3-adapted stack at $R_N = 1.5$\,m, $r_{tor} = 0.135$\,m and $\theta_c = 60^\circ$. The optimizer reduces the composite cost by 20.28\,\% and raises the drag coefficient by 3.76\,\%, but it does so by increasing the total heat load by 20.12\,\%: the optimum is a drag-regime design, not a heat-load-regime design. That outcome is a property of the stated objective and is examined quantitatively below.
 
 \begin{table}[H]
     \centering
-    \caption{IRVE-3 baseline versus round-1 Bayesian Optimization winner (official run 2026-09-26, 70 evaluations).}
-    \label{tab:bo_before_after}
-    \begin{tabularx}{\textwidth}{l r r r X}
+    \caption{Baseline and optimized geometry from the recorded GA campaign (2026-10-20).}
+    \label{tab:ga_before_after}
+    \begin{tabular}{lccc}
         \toprule
-        \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
+        \textbf{Metric} & \textbf{Baseline} & \textbf{Optimized} & \textbf{Change} \\
         \midrule
-        Nose radius $R_N$ & 1.5000\,m & 2.9714\,m & $+98.10\,\%$ \\
-        Torus radius $r_{tor}$ & 0.1350\,m & 0.0885\,m & $-34.47\,\%$ \\
-        Half-cone angle $\theta_c$ & 60.00$^\circ$ & 40.15$^\circ$ & $-33.09\,\%$ \\
-        Drag coefficient $C_d$ & 1.6073 & 1.5597 & $-2.96\,\%$ \\
-        Sutton--Graves heat flux & 16.14~W/cm\textsuperscript{2} & 11.47~W/cm\textsuperscript{2} & $-28.95\,\%$ \\
-        Total heat load $Q(\mathbf{x})$ & 219.10~J/cm\textsuperscript{2} & 155.67~J/cm\textsuperscript{2} & $-28.95\,\%$ \\
-        Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78\,\%$ \\
+        Nose radius $R_N$ (m) & 1.5000 & 1.0397 & $-30.69\,\%$ \\
+        Torus radius $r_{tor}$ (m) & 0.1350 & 0.2197 & $+62.74\,\%$ \\
+        Half-cone angle $\theta_c$ (deg) & 60.00 & 53.72 & $-10.46\,\%$ \\
+        Drag coefficient $C_d$ & 1.6073 & 1.6677 & $+3.76\,\%$ \\
+        Sutton--Graves heat flux (W/cm\textsuperscript{2}) & 15.36 & 18.45 & $+20.11\,\%$ \\
+        Total heat load $Q(\mathbf{x})$ (J/cm\textsuperscript{2}) & 208.51 & 250.45 & $+20.11\,\%$ \\
+        Cost $J(\mathbf{x})$ & 3.4338 & 2.7375 & $-20.28\,\%$ \\
         \bottomrule
-    \end{tabularx}
+    \end{tabular}
 \end{table}
+
+\subsection{Design-Screen Results}
+Figure~\ref{fig:ga_screen} shows the fifteen CCD points in the three-factor design space, coloured by their evaluated cost. The screen is a separate dataset from the GA history and is not seeded into the population; it is reported because it answers the factor-ranking question before the search begins.
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Bayesian optimization convergence over 70 evaluations, with the subtitle 20 Latin-Hypercube initial points plus 50 GP/Expected-Improvement iterations. Evaluated cost J of x is on a logarithmic vertical axis running from about 1.5 to over 2000, against evaluation index 0 to 69 on the horizontal. Blue circles are the 70 evaluated costs and the solid red line is the running-best incumbent, which falls from 1.7654 at the first evaluation to 1.6051 at index 37 and is then exactly flat. A vertical dashed line at index 20 marks the handover from the Latin-Hypercube design to the Bayesian stage, a horizontal dotted line marks the IRVE-3 baseline cost, and a gold star marks the round-1 optimum. Most early evaluations are expensive, reaching above 2000, and the costs collapse into a narrow band near 2 after about evaluation 30. Source: hiad_optimization_results.json, official run 2026-09-26.}}%
-\includegraphics[width=0.75\textwidth]{figures/bo_convergence.png}%
+    \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter of the 15 central composite screen points in the design space of nose radius R N, torus radius r tor and half-cone angle theta c, each marker coloured by its evaluated cost J on a logarithmic scale running from about 3 to about 39. The points are the 8 factorial combinations of the low and high levels 1.2 and 1.8 metres in nose radius, 0.10 and 0.18 metres in torus radius and 55 and 65 degrees in half-cone angle; the design centre at 1.5 metres, 0.140 metres and 60 degrees; and 6 axial points stepping one factor at a time away from the centre. A gold star marks the lowest-cost screen point, the axial half-cone point at 68.41 degrees, and a red square marks the IRVE-3 baseline. The panel is a design layout annotated with measured costs and is not a fitted response surface.}}%
+\includegraphics[width=0.75\textwidth]{figures/ga_ccd_screen.png}%
 \EndAccSupp{}%
-    \caption{Convergence history of the optimization campaign (official run 2026-09-26). Blue points are the cost $J(\mathbf{x})$ at each of the 70 designs; the red curve is the running-best incumbent, which is non-increasing by construction.}
+    \caption{Central composite screen evaluated in the three-dimensional design space, coloured by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (recorded GA campaign, 2026-10-20). The 15 screen points comprise 8 factorial points, the design centre ($R_N = 1.5$\,m, $r_{tor} = 0.140$\,m, $\theta_c = 60^\circ$), and 6 axial points. This is a design layout annotated with measured costs, not a fitted response surface.}
+    \label{fig:ga_screen}
+\end{figure}
+
+The screen resolves the factor ranking clearly. The lowest cost in the screen is $J = 3.061$ at the axial half-cone point ($\theta_c = 68.41^\circ$), and the centre point costs $J = 3.349$, within 2.5\,\% of the baseline cost $J = 3.434$. The most expensive corner is the factorial $(+,+ ,+)$ point at $J = 39.08$: a large nose radius combined with a large torus radius and a steep cone is strongly penalised, which is the heat-load term at work, because the Sutton--Graves flux falls with $1/\sqrt{R_N}$ while the integrated load over the trajectory rises with the exposed area of the enlarged torus. The nose radius and the torus radius therefore act in opposition, and the axial contrasts of the screen quantify that opposition: moving the half-cone angle from its low to its high axial level lowers the cost, moving the torus radius upward raises it sharply, and moving the nose radius upward raises it moderately.
+
+\subsection{Search Convergence}
+Figure~\ref{fig:ga_convergence} reports the recorded generation-best cost over the 72 generations of the campaign. The recorded series is the best search score found so far at each generation, which includes the model-fidelity penalty of the pre-screen; it is non-increasing by construction because the two elites are copied into every generation.
+
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Step plot of the recorded generation-best cost against generation for the genetic-algorithm campaign. The vertical axis runs from about 2.74 to about 3.44 and the horizontal axis from generation 0 to generation 71. The recorded best falls in discrete steps from 3.42 at generation 0 to 2.78 by generation 15, and is then flat to generation 71; a dotted horizontal line marks the baseline cost 3.43 and a dashed line marks the re-evaluated optimum 2.74. A filled circle marks the last generation at which the recorded best improved.}}%
+\includegraphics[width=0.75\textwidth]{figures/ga_convergence.png}%
+\EndAccSupp{}%
+    \caption{Recorded generation-best cost of the GA campaign against generation (2026-10-20). The step curve is the best search score, which includes the pre-screen fidelity penalty; the dotted line is the baseline cost and the dashed line is the re-evaluated cost of the final optimum.}
     \label{fig:ga_convergence}
 \end{figure}
 
-Figure~\ref{fig:ga_convergence} reports the two series separately, and the distinction matters. The vertical dashed line marks the transition from the 20-point Latin Hypercube initial design to the 50 Bayesian Optimization iterations, the horizontal dotted line marks the IRVE-3 baseline cost, and the marker sits at the round-1 optimum. The evaluated cost $J$ is emphatically \emph{not} monotone: individual proposals are rejected freely, and the log-scale scatter spans more than three decades, with 46 of the 70 evaluations costing more than the IRVE-3 baseline. Those expensive proposals are not one-directional --- 17 of the 46 sit above the baseline nose radius of $1.5$\,m and 29 sit below it --- so the excess cost cannot be attributed to a single geometric excursion. Only the incumbent --- the best cost found so far --- is non-increasing, and that is a property of the running minimum rather than of the search.
+The search makes most of its progress in the first fifteen generations: the recorded best falls from $3.418$ in generation 0 to $2.788$ by generation 15, reaches $2.779$ at generation 51, and does not improve again before the run terminates at generation 72. The remaining generations are a plateau, and the stagnation counter therefore terminates the run at generation 72, well inside the cap of 200. The re-evaluated cost of the final optimum is $2.7375$, slightly below the recorded search score of $2.7793$ because the search score carries the fidelity penalty while the reported cost is the penalty-free evaluation of Eq.~\eqref{eq:ga_cost}. The two quantities are drawn as separate reference lines in Figure~\ref{fig:ga_convergence} and are never conflated.
 
-Two quantitative anchors bound the acquisition phase. The initial screen already reaches $J = 1.7654$ within the first evaluation, so the incumbent entering the Bayesian stage is $1.7654$, not the CCD screen minimum of $1.9959$ reported above --- the 15-point CCD and the 70-entry history are separate datasets, and the CCD optimum does not appear in the history. The Bayesian iterations therefore improve the incumbent from $1.7654$ to $1.6051$, a reduction of 9.08\,\%. The best point occurs at zero-based index 37 of the 70 recorded evaluations, and the incumbent is exactly flat thereafter, so the remaining 32 Expected-Improvement iterations produced no further gain. This is reported rather than concealed: with 50 acquisition steps over a three-dimensional space, the search converged early, and the redundancy in the tail of the curve reflects the cost of a fixed evaluation budget rather than a continuing gain.
+The plateau is a property of the elitist record, not evidence that the population stopped moving: mutation and crossover continue to generate new individuals, but none of them beats the elite. With a population of fifty over a three-dimensional box, the search reaches the neighbourhood of the optimum quickly and then spends its remaining budget confirming it, which is the expected behaviour of a simple GA without an acquisition function driving exploration.
 
-The physical interpretation follows directly from the correlation. Since $\dot{q} \propto 1/\sqrt{R_N}$, nearly doubling the nose radius is the cheapest available route to a large heat-load reduction; the toroid radius and half-cone angle are then reduced to recover the drag and ballistic-coefficient terms that the enlarged nose would otherwise penalize. The optimizer thus discovers the same trade-off that a designer would reach analytically, which is a useful consistency check on the cost function.
+\subsection{Design Trajectory}
+Figure~\ref{fig:ga_trajectory} traces the generation-best design through the design space, coloured by generation. Only generations in which the best design actually changed are drawn, so the path is the sequence of accepted improvements rather than 72 repeated points.
 
-\section{Hybrid Validation Gate}
-\label{sec:hybrid_gate}
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Three-dimensional path of the generation-best design through the space of nose radius R N, torus radius r tor and half-cone angle theta c, coloured by generation from dark purple at generation 0 through orange to yellow at the final generations. The path starts near the upper edge of the nose-radius range at about 1.48 metres and a torus radius of 0.20 metres, moves to a smaller nose radius and a larger torus radius, and ends at the final optimum near 1.04 metres nose radius, 0.22 metres torus radius and 53.7 degrees half-cone angle, marked by a gold star. A red square marks the IRVE-3 baseline at 1.5 metres, 0.135 metres and 60 degrees.}}%
+\includegraphics[width=0.75\textwidth]{figures/ga_design_trajectory.png}%
+\EndAccSupp{}%
+    \caption{Generation-best design path through the three-factor design space, coloured by generation (recorded GA campaign, 2026-10-20). The gold star is the final optimum and the red square is the IRVE-3 baseline.}
+    \label{fig:ga_trajectory}
+\end{figure}
 
-\subsection{Motivation}
-An analytic optimum is only meaningful if it survives re-simulation at full fidelity. The surrogate $J(\mathbf{x})$ is a cheap surrogate built on closed-form correlations; it cannot represent the particle noise, real-gas chemistry, or geometric discretization effects present in the DSMC solution. A surrogate that is systematically optimistic would therefore select a design that fails when actually flown. The hybrid validation gate closes this loop by re-simulating the winner with the high-fidelity chain before its acceptance.
+The path has a clear physical reading. The optimizer moves the nose radius down toward the admissible minimum, the torus radius up toward its upper bound, and the half-cone angle down toward the lower bound. All three moves increase the drag coefficient and the heat load together, which is exactly the Pareto trade-off encoded in the weights: the drag reward is $W_{Cd} = 30$ against a heat-load weight of $1$, so the cost surface prefers the high-drag, high-heat vertex of the feasible front. The final design sits at $R_N = 1.0397$\,m, close to the $1.0$\,m nose-radius floor that protects the payload cavity, with $r_{tor} = 0.2197$\,m and $\theta_c = 53.72^\circ$.
 
-\subsection{Gate Protocol}
-The gate is enforced as a post-optimization stage and executes five legs~\cite{kennedy2000multi}:
-\begin{enumerate}
-    \item \textbf{Preconditions and geometry QA.} The compiled binary, the Docker daemon, the validation virtual environment, the pipeline module, and the reference CSV are all checked, followed by a seconds-fast \texttt{\seqsplit{bin/main -{}-validate-only}} geometry check. Every failure is reported with a path and a remedy, and the gate exits with status 1.
-    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless -{}-nose 2.971440 -{}-tradius 0.088460 -{}-angle 40.147949 -{}-skin scalloped -{}-steps 2200}}, writing to a dedicated results directory. The reference dataset used for the baseline comparison is never overwritten.
-    \item \textbf{Refinement leg.} The validation pipeline is executed on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
-    % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
-    \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and it records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
-    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$ and the optimizer is re-run, producing the corrected round-2 design.
-\end{enumerate}
+\subsection{Interpretation of the Trade-Off}
+The campaign's headline result is not that the optimized geometry is safer than the baseline; it is that the optimizer returns the vertex of the heat-load/drag front selected by the stated weights, and the price of the extra drag is a higher heat load. The numbers are unambiguous: $C_d$ rises from $1.607$ to $1.668$ (+3.76\,\%) while the total heat load rises from $208.5$ to $250.4$\,J/cm\textsuperscript{2} (+20.1\,\%), taking the design from 26\,\% above the heat-load target to 51\,\% above it. A weight sweep of the same cost surface shows that the outcome is binary rather than gradual: weights $W_{Cd}$ between 1 and 20 select the heat-load regime, which reaches $Q \approx 147$\,J/cm\textsuperscript{2} below the target, while $W_{Cd} \ge 21$ selects the drag regime, which reaches $Q \approx 249$\,J/cm\textsuperscript{2}. No geometry inside the feasible envelope achieves both more drag and less heat load than the baseline, so the choice of weight is a choice of mission, not a tuning detail.
 
-\subsection{Gate Result}
-The official gate execution (2026-09-26) returns \textsc{pass}. The analytic prediction for the round-1 winner was $q_{analytic} = 155.67$\,J/cm$^2$; the high-fidelity DSMC re-simulation returned
-\begin{equation}
-    q_{hybrid} = 77.93\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.72\ \text{J/cm}^2,
-\end{equation}
-with a prediction error of $-49.94\,\%$ and a clamped correction factor $c = 0.5006$, which sits exactly at the lower clamp bound. The hybrid drag coefficient is $C_{d,hybrid} = 2.529$.
+The thesis therefore reports the drag-regime optimum as the result of the current objective and states its thermal consequence explicitly. The heat-load-regime configuration remains available by lowering $W_{Cd}$ below 20, and the validation gate of Sec.~\ref{sec:hybrid_gate} documents the high-fidelity check that any candidate must pass before it can be called survivable. Presenting the drag-regime design as thermally superior would be wrong; presenting it as the optimum of the current, drag-prioritized cost is exact.
 
-Two properties of this result deserve emphasis. First, the winner passes with substantial margin, so the round-1 design is genuinely safe rather than marginally acceptable. Second, the $-49.94\,\%$ error is not noise: two independent DSMC runs of the same geometry agreed to within 0.3\,\%, so the analytic-to-hybrid gap is reproducible systematic bias in the closed-form surrogate --- precisely the quantity the multi-fidelity correction is designed to absorb. This is the expected behaviour of a corrector that is being given a real signal to learn from, rather than an error to be hidden.
-
-\subsection{Round-2 Corrected Optimum}
-Re-running the optimizer with the corrected cost function yields a second optimum at $R_N = 2.9979$\,m, $r_{tor} = 0.0530$\,m, $\theta_c = 42.29^\circ$, with $C_d = 1.5440$ and a corrected cost of $J = 1.1415$ (down from an uncorrected $1.6085$ at the same point). The corresponding total heat load is 154.99~J/cm\textsuperscript{2}. The correction shifts the design toward a slightly larger nose and a substantially tighter torus, and it reduces the cost of the design space overall --- the expected outcome when the dominant error in the surrogate is a systematic over-prediction of the heat load.
+\input{chapter_04_gate}
 
 \section{Formal Verification of the Computational Core}
 \label{sec:formal_verification}
@@ -405,7 +355,7 @@ The verified run analyzes 527 checks: 400 are discharged automatically by the pr
 \subsection{Interpretation and Limitations}
 The 103 unproved checks are not distributed across the codebase; they are concentrated entirely in the post-processing analytics unit, with 101 in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} and 2 in the corresponding specification. These are floating-point overflow and array-index obligations arising from numerical post-processing of DSMC output, and this unit was not modified during the present work. Accordingly, the gate introduces no new proof failures.
 
-It is equally important to state what the gate does \emph{not} cover. GNATprove analyses the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 70 evaluations reported in Figures~\ref{fig:ccd_surface} and~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions or the surrogate model are formally proven.
+It is equally important to state what the gate does \emph{not} cover. GNATprove analyses the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 70 evaluations reported in Figures~\ref{fig:ga_screen} and~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions or the surrogate model are formally proven.
 
 This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. Reporting 76\,\% alone would understate the coverage of the physics core; reporting 100\,\% would be false. The defensible statement is the one in Table~\ref{tab:proof_summary}: the contract and proof obligations on the analytical and flight-metric path are discharged, and the residual risk is localized to numerical analytics post-processing.
 
@@ -424,17 +374,15 @@ The Newtonian method assumes a calorically perfect gas with constant specific he
 \subsection{Optimization Methodology}
 Rapisarda's framework uses a sequential, single-objective approach: the aerodynamic coefficients are computed at each design point, and the trajectory and thermal analysis are performed independently~\cite{rapisarda2023mdao}. The design space exploration relies on manual parametric sweeps with individual Newtonian panel computations.
 
-The present framework implements a Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate model for multi-objective optimization. Latin Hypercube Sampling (LHS) generates the initial design population, and the Bayes Opt (GP) surrogate enables rapid evaluation of thousands of candidate geometries. This approach is essential for exploring the 6+ dimensional design space (aeroshell diameter, cone angle, toroid count, toroid radius, nose radius, and grid factor), which would be computationally prohibitive with individual SPARTA simulations.
+The present framework implements a simple Genetic Algorithm (GA) on an analytic cost: a population of fifty designs is evolved with tournament selection, uniform crossover, Gaussian mutation and elitism, and a fifteen-point central composite screen ranks the factors before the search. Because the cost is closed-form, thousands of candidate geometries are evaluated without a solver call, and the high-fidelity DSMC chain is reserved for validation rather than for the search loop. This approach is essential for exploring the three-factor screening space (nose radius, torus radius and half-cone angle) with thousands of evaluations, which would be computationally prohibitive if every candidate required an individual SPARTA simulation.
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
-% NOTE (2026-10-20): the main pipeline is analytical (closed-form
-% Sutton-Graves heat flux, not a solver-resolved field). NEXT
-% SUB-ITERATION: change the default optimiser from Bayesian Optimization
-% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
-% analytical surrogate on an analytical objective, (analytical)^2, does
-% not illuminate anything and reads as strange.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimiser is now a simple genetic algorithm; the
+% Bayesian-optimisation material has been removed from this thesis.
 
 \subsection{Reproducibility and Accessibility}
 The present framework is fully open-source, Python-based, and Docker-containerized. The SPARTA simulation runs in a reproducible Linux environment, while the Python optimization pipeline runs on the native OS with support for global hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS). Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.
@@ -451,8 +399,8 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
         Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$) \\
         Gas Model & Calorically perfect ($\gamma = 1.4$) & 5-species air with VSS collisions \\
         Thermal Analysis & 1D F-TPS with contact conductance & Sutton--Graves + Fay--Riddell correlations + DSMC surface computes \\
-        Optimization & Sequential parametric sweeps & GP Mat\'ern 5/2 + Expected Improvement (Bayes Opt), 70 evaluations \\
-        Design Space & 3--4 parameters & 6+ parameters with CCD + LHS sampling \\
+        Optimization & Sequential parametric sweeps & Simple GA (population 50, up to 200 generations), 3,600 evaluations \\
+        Design Space & 3--4 parameters & 3 optimization factors, 15-point CCD screen \\
         Optimum Verification & Not reported & Enforced DSMC re-simulation gate with multi-fidelity correction \\
         Formal Verification & Not reported & GNATprove level 4; 527 checks, 400 proved \\
         Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\

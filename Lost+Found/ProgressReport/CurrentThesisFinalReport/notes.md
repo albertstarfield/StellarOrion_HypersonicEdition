@@ -312,8 +312,8 @@ Artwork notes already gathered for these, usable as alt-text source:
 and before committing:
 
 ```
-pages                                : 179 (recorded 2026-10-20 after the PINN removal;
-                                        was 194 before it)
+pages                                : 176 (recorded 2026-10-21 after the GA conversion;
+                                        was 179 after the PINN removal, 194 before it)
 LaTeX errors (grep -c '^!' main.log)                     : must be 0
 undefined refs/citations                                     : must be 0
 real rerun requests                                          : must be 0
@@ -341,12 +341,26 @@ methodology-derivation diagram were regenerated without the PINN column,
 box, node or stage. Removal sites carry a `PINN-HIDDEN` comment. The page
 count dropped from 194 to 179 and the printed-to-PDF offset is now +25.
 
-Next sub-iteration (recorded 2026-10-20). The main pipeline is analytical:
-the headline heat flux is the closed-form Sutton-Graves correlation, not a
-solver-resolved field. The default optimiser should therefore change from
-Bayesian Optimization (GP Matern 5/2 + Expected Improvement) to a plain GA.
-Stacking an analytical surrogate on an analytical objective -- (analytical)^2
--- does not illuminate anything and reads as strange.
+Optimizer conversion (2026-10-21). The main pipeline is analytical: the
+headline heat flux is the closed-form Sutton-Graves correlation, not a
+solver-resolved field. The default optimiser is now a simple genetic
+algorithm (population 50, up to 200 generations, tournament selection k=3,
+uniform crossover 0.7, Gaussian mutation 0.1, two elites, stagnation stop at
+20 generations / 1e-6), driven by the Ada/SPARK runner with a Ravenscar
+worker pool. Every Bayesian-Optimization reference was removed from the
+thesis: Chapters 1, 2 (Section 2.15 rewritten), 3 (Section 7 rewritten and
+the standards section retitled), 4 (the optimization sections rewritten from
+the newest artifact, src/python/hiad_optimization_results.json, recorded
+2026-10-20), 5, the abstract, the abstrak and the abbreviations. The
+software-pipeline, governing-equation and methodology-derivation diagrams
+were regenerated with GA labels, and three new GA figures (ga_convergence,
+ga_ccd_screen, ga_design_trajectory) replace the Bayes-Optimization panels.
+The recorded campaign converged in 72 generations (3600 evaluations) with a
+composite cost of 2.7375 against a baseline of 3.4338 (-20.28 %), a drag
+coefficient of 1.6677 (+3.76 %) and a total heat load of 250.45 J/cm2
+(+20.12 %): the objective's drag weight selects the drag regime, and the
+thesis reports that trade-off explicitly. The printed-to-PDF offset is now
++24 and the page count is 176.
 
 Also preserve:
 

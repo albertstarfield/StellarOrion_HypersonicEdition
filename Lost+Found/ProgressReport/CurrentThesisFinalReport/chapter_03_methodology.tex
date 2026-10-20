@@ -69,20 +69,14 @@ where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
-% NOTE (2026-10-20): the main pipeline is analytical (closed-form
-% Sutton-Graves heat flux, not a solver-resolved field). NEXT
-% SUB-ITERATION: change the default optimiser from Bayesian Optimization
-% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
-% analytical surrogate on an analytical objective, (analytical)^2, does
-% not illuminate anything and reads as strange.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimiser is now a simple genetic algorithm; the
+% Bayesian-optimisation material has been removed from this thesis.
 
-\paragraph{Step 5: Surrogate-Assisted Optimization.}
-The Bayes Opt surrogate model approximates the mapping from design variables to performance metrics. The Genetic Algorithm (GA) queries the Bayes Opt surrogate to explore the design space, avoiding the computational cost of repeated DSMC evaluations. The optimization cost function is:
-\begin{equation}
-J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
-\label{eq:cost_function_optimization}
-\end{equation}
-where hard constraint violations (backface temperature $> 350$\,K, g-load $> 25g$) are penalized with $10^{15}$.
+\paragraph{Step 5: Genetic-Algorithm Optimization.}
+The closed-form cost of Eq.~\eqref{eq:ga_cost} is minimized by a simple genetic algorithm: a population of fifty designs is evolved with tournament selection, uniform crossover, Gaussian mutation and elitism until the best cost stagnates. Because the cost is analytic, an individual is evaluated without a solver call, and the search therefore explores thousands of candidate geometries rather than a handful of DSMC cases. A fifteen-point central composite screen is evaluated first to rank the factors and to fit the linear response surface used for pre-screening.
+
 
 Figure~\ref{fig:governing_equations} summarizes the full derivation chain from kinetic theory to optimization, showing the governing equation at each step and the axiom that anchors it.
 
@@ -97,14 +91,14 @@ Figure~\ref{fig:governing_equations} summarizes the full derivation chain from k
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, then routes through the DSMC solver (SPARTA in Docker) and the Bayes Opt surrogate (PyTorch), before producing ParaView-ready VTK and STL files for visualization.
+The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, then routes through the DSMC solver (SPARTA in Docker) and the genetic-algorithm optimiser, before producing ParaView-ready VTK and STL files for visualization.
 
 \begin{figure}[H]
     \centering
     \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline, showing the Ada and SPARK simulation engine, the DSMC solver stage, and the result post-processing stages exchanging data.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ Bayes Opt surrogate $\rightarrow$ ParaView visualization. The feedback loop from Bayes Opt to the core engine enables GA-driven optimization.}
+    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ Genetic Algorithm optimiser $\rightarrow$ ParaView visualization. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -118,7 +112,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \label{tab:default_params}
 \small
 % Two cells here are unbreakable by construction and set the column widths:
-% \multirow{4}{*}{\textbf{Bayes Opt (scikit-learn)}} in column 1, and
+% \multirow{6}{*}{\textbf{GA Optimization}} in column 1, and
 % $\max(2000, \min(4000, steps \times 2))$ in column 3. \multirow with a * width
 % never wraps, so column 1 must be wide enough for the longest label; column 3
 % must be wide enough for the longest math atom. Column 2 absorbs the rest.
@@ -134,16 +128,15 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & $T_\infty$ & 268.41\,K \\
  & $n_\infty$ & $1.63 \times 10^{22}$\,/m$^3$ \\ \midrule
 \multirow{3}{=}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
- & Samples ($N$) & 25 ($2^4 + 2 \times 4 + 1$) \\
- & Active variables & Diameter, Angle, Toroids, Nose \\ \midrule
+ & Samples ($N$) & 15 ($2^3 + 2 \times 3 + 1$) \\
+ & Active variables & Nose radius, Torus radius, Half-cone angle \\ \midrule
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
-\multirow{4}{=}{\textbf{Bayes Opt (scikit-learn)}} & Surrogate & GP, Mat\'ern 5/2 kernel \\
- & Amplitude $c_0$, length scales $\ell_j$ & Initialized at 1, refit in $[10^{-3}, 10^{3}]$ \\
- & Acquisition & Expected Improvement, $\xi = 0.01$ \\
- & Budget & 20 LHS + 50 Bayes Opt ($n_{eval} = 70$), seed 42 \\ \midrule
-\multirow{3}{=}{\textbf{GA Optimization}} & Generations & 20\,000 \\
- & Stagnation stop & 5 windows $\times$ 1000 generations \\
- & Constraint limits & $T_{\text{back}} < 350$\,K, $g < 25g$ \\
+\multirow{6}{=}{\textbf{GA Optimization}} & Population ($P$) & 50 \\
+ & Generations ($G_{\max}$) & 200 \\
+ & Tournament size ($k_t$) & 3 \\
+ & Crossover rate ($p_c$) & 0.7 (uniform) \\
+ & Mutation rate ($p_m$) & 0.1 (Gaussian, $\sigma$ = 10\,\% of range) \\
+ & Elites ($E$), stagnation stop & 2, 20 generations at $\epsilon = 10^{-6}$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -172,7 +165,7 @@ The process is divided into five primary stages:
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation within a Docker-containerized Linux environment, tracking millions of simulated particles through advection, molecular collisions, and surface interactions.
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
-    \item \textbf{Survivability Optimization:} Genetic Algorithm (GA) guided by a Gaussian Process surrogate with a Mat\'ern 5/2 kernel and Expected Improvement acquisition (Bayes Opt) for automated multi-objective optimization of HIAD geometry.
+    \item \textbf{Survivability Optimization:} Simple Genetic Algorithm (GA) with tournament selection, uniform crossover, Gaussian mutation and elitism for automated multi-objective optimization of HIAD geometry.
     \item \textbf{Validation and Analysis:} Verification of the solution through grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
@@ -452,204 +445,78 @@ As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
-% NOTE (2026-10-20): the main pipeline is analytical (closed-form
-% Sutton-Graves heat flux, not a solver-resolved field). NEXT
-% SUB-ITERATION: change the default optimiser from Bayesian Optimization
-% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
-% analytical surrogate on an analytical objective, (analytical)^2, does
-% not illuminate anything and reads as strange.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimiser is now a simple genetic algorithm; the
+% Bayesian-optimisation material has been removed from this thesis.
 
-% NEXT SUB-ITERATION (2026-10-20): because the evaluation pipeline is
-% analytical, the Bayesian-Optimization default (GP Matern 5/2 + Expected
-% Improvement) should be replaced by a plain Genetic Algorithm. An
-% analytical surrogate on top of an analytical objective -- (analytical)^2 --
-% does not light anything up and instead makes the thesis read as strange;
-% the simpler GA default is the honest choice.
 \section{Survivability Optimization}
 \label{sec:ga_opt}
 
-The survivability optimization framework integrates Latin Hypercube Sampling for design space exploration, a Bayesian Optimization (Bayes Opt) surrogate for rapid performance prediction, and a Genetic Algorithm (GA) for global optimization. The complete pipeline is:
-
-\begin{enumerate}
-    \item \textbf{Sampling:} Generate $N$ design points using Stratified LHS across the parameter space $\mathbf{x} \in \mathbb{R}^d$.
-    \item \textbf{Simulation:} Evaluate each design using SPARTA DSMC  to obtain performance metrics $(\beta, \dot{q}, T_{back}, n_G)$.
-    \item \textbf{Bayes Opt Training:} Fit a Gaussian Process surrogate on the $N$ simulation results, giving a posterior mean $\mu(\mathbf{x})$ and standard deviation $\sigma(\mathbf{x})$ over the cost surface.
-    \item \textbf{GA Optimization:} Evolve a population of designs using the Bayes Opt surrogate as a fast evaluator, minimizing the cost function $J$.
-    \item \textbf{Constraint Filtering:} Apply physics-based penalty functions to eliminate non-viable designs.
-    \item \textbf{Final Validation:} Re-evaluate the optimal design using SPARTA DSMC.
-\end{enumerate}
+The optimizer is a simple genetic algorithm (GA) with a population of candidate geometries evolved against a single scalar cost. A fifteen-point central composite design (CCD) screens the space first, and the screen also supplies the contrast data for a low-order response surface that pre-screens individuals before their full cost evaluation. There is no Gaussian-process surrogate and no Bayesian acquisition step: the only learned object is the linear response surface, and the search itself is the population dynamics described in this section.
 
 \subsection{Design Space and Parameters}
-The optimization explores a $d$-dimensional design space defined by the HIAD geometric and material parameters:
+The optimization acts on the three geometric factors that dominate the aerothermal response at the validated flight condition: nose radius $R_N$, torus minor radius $r_{tor}$, and half-cone angle $\theta_c$. The remaining geometric parameters are held at the validated IRVE-3-adapted baseline of Table~\ref{tab:default_params}. The screening box is:
 
 \begin{table}[H]
     \centering
-    \caption{Optimization Design Variables and Their Bounds (Rapisarda 2023 Envelope).}
+    \caption{Optimization design variables and their screening bounds.}
     \label{tab:design_variables}
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|X|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.30\textwidth}|c|c|X|}
         \hline
         \textbf{Variable} & \textbf{Symbol} & \textbf{Bounds} & \textbf{Unit} \\ \hline
-        Aeroshell diameter & $D$ & $[0.5, 15.0]$ & m \\ \hline
-        Half-cone angle & $\theta_c$ & $[40, 80]$ & deg \\ \hline
-        Nose-cone radius & $R_n$ & $[0.1, 2.0]$ & m \\ \hline
-        Toroid count & $N_t$ & $[1, 12]$ & -- \\ \hline
-        Toroid radius & $r_t$ & $[0.05, 0.3]$ & m \\ \hline
-        Total mass & $m$ & $[50, 500]$ & kg \\ \hline
-        TPS thickness & $\delta_{TPS}$ & $[0.005, 0.05]$ & m \\ \hline
+        Nose radius & $R_N$ & $[1.2, 1.8]$ & m \\ \hline
+        Torus minor radius & $r_{tor}$ & $[0.10, 0.18]$ & m \\ \hline
+        Half-cone angle & $\theta_c$ & $[55, 65]$ & deg \\ \hline
     \end{tabularx}
 \end{table}
 
-\subsection{Latin Hypercube Sampling (LHS)}
-To ensure the high-dimensional search space is explored uniformly with minimal samples, Stratified Latin Hypercube Sampling is employed~\cite{mckay1979lhs}. For a $d$-dimensional parameter space with $N$ samples, the $i$-th sample in dimension $j$ is:
+A design is admissible only inside the structural envelope. The maximum body radius derived from $(R_N, r_{tor}, \theta_c)$ must not exceed $R_{\max} = 3.0$\,m (the IRVE-3 diameter limit), and the nose radius must not fall below $R_{N,\min} = 1.0$\,m, which is the minimum that still provides full TPS coverage of the payload cavity. These limits enter the cost function as quadratic penalties rather than as hard filters, so the population is never blocked from moving through an infeasible region on its way to a feasible one.
+
+\subsection{Central Composite Screening}
+The screen is a face-centred central composite design in the three factors~\cite{Montgomery2017}: $2^3 = 8$ factorial points at the low and high levels ($R_N = 1.2$ and $1.8$\,m, $r_{tor} = 0.10$ and $0.18$\,m, $\theta_c = 55^\circ$ and $65^\circ$), one centre point at $(1.5\,\text{m}, 0.14\,\text{m}, 60^\circ)$, and $2 \times 3 = 6$ axial points at $\alpha = 1.682$ along each factor, giving $N = 15$ evaluations. The axial distance is the standard CCD choice $\alpha = (2^d)^{1/4}$ for $d = 3$, which makes the design rotatable. The screen is not seeded into the GA as an initial population: it answers the narrower question of which factor dominates the cost, and its 15 measured costs fit the linear response surface used by the GA for pre-screening.
+
+\subsection{Cost Function}
+The cost is a weighted sum of four normalized physical terms plus a constraint penalty, all evaluated in closed form from the geometry and the validated flight condition:
 
 \begin{equation}
-    x_{i,j} = x_{j}^{\min} + \big(x_{j}^{\max} - x_{j}^{\min}\big) \cdot \frac{i + r_{i,j}}{N}
+    J(\mathbf{x}) = W_{HL}\frac{Q(\mathbf{x})}{Q_{target}} + W_{q}\frac{\dot{q}(\mathbf{x})}{\dot{q}_{ref}} + W_{\beta}\left(\frac{\beta(\mathbf{x})}{\beta_{ref}} - 1\right)^{2} + W_{Cd}\max\!\left(0, \frac{C_{d,goal} - C_d(\mathbf{x})}{C_{d,goal}}\right) + \Lambda_{pen}\,\Phi(\mathbf{x}),
+    \label{eq:ga_cost}
 \end{equation}
 
-where $i \in \{0, 1, \ldots, N-1\}$ is the stratum index, $j \in \{1, 2, \ldots, d\}$ is the parameter dimension, $r_{i,j} \sim \mathcal{U}(0,1)$ is a uniform random offset, and $[x_j^{\min}, x_j^{\max}]$ is the feasible range for parameter $j$.
-
-\subsubsection*{Property of LHS}
-The stratified sampling guarantees that each parameter is sampled at $N$ distinct levels, with exactly one sample per level. This eliminates the clustering and gap artifacts that occur with pure random sampling, and ensures space-filling coverage even for small $N$. The total number of SPARTA evaluations required is $N$, compared to $k^d$ for a full factorial design with $k$ levels per dimension.
-
-\subsubsection*{Central Composite Design (CCD) as Alternative DoE}
-In addition to LHS, the framework supports the Face-Centered Central Composite Design (CCD)~\cite{Montgomery2017}, which is the default Design of Experiments method in the implementation. For a $d$-dimensional parameter space, the CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point replicated at the origin. For the $d = 4$ design variables (Diameter, Angle, Nose Radius, Toroid Radius), this yields $N = 16 + 8 + 1 = 25$ sample points, which is the minimum required for a second-order response surface model. The user may select either LHS or CCD via the \texttt{--doe} flag, with CCD as the default for the optimized IRVE-3 baseline.
-
-\subsection{Bayesian Optimization (Bayes Opt)}
-
-\subsubsection*{Problem Formulation}
-Each SPARTA DSMC simulation requires $O(10^3)$ timesteps and $O(1)$ hours of compute time. For optimization loops requiring $O(10^2)$--$O(10^3)$ design evaluations, direct simulation is prohibitively expensive. Bayesian Optimization (Bayes Opt) provides a fast surrogate that maps design parameters to performance metrics:
+\noindent where $Q(\mathbf{x})$ is the trajectory-integrated total heat load and $\dot{q}(\mathbf{x})$ is the stagnation-point heat flux from the Sutton--Graves correlation of Sec.~\ref{sec:ga_opt}, $\beta(\mathbf{x})$ is the ballistic coefficient, and $C_d(\mathbf{x})$ is the drag coefficient estimated from the same geometric model. The reference values $\beta_{ref}$ and $C_{d,ref}$ are the validated IRVE-3-adapted baseline, and $\Phi(\mathbf{x})$ collects the envelope and payload penalties:
 
 \begin{equation}
-    \hat{y} = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta}): \mathbb{R}^d \to \mathbb{R}
+    \Phi(\mathbf{x}) = \max(0, R_{\max}(\mathbf{x}) - 3.0)^{2} + \max(0, 1.0 - R_N)^{2} + \max(0, R_{N,payload} - R_N)^{2},
 \end{equation}
 
-where $\mathbf{x} = (D, \theta_c, R_n, N_t, \ldots)$ is the design vector and $\hat{y}$ is the predicted performance metric (e.g., drag coefficient $C_d$, peak heat flux $\dot{q}$, or backface temperature $T_{back}$).
+\noindent with $R_{N,payload}$ the nose radius required to house the cylindrical payload inside the spherical nose cap. The weights are fixed at $W_{HL} = 1.0$, $W_{q} = 0.5$, $W_{\beta} = 0.5$, $W_{Cd} = 30$ and $\Lambda_{pen} = 100$. The heat-load term carries the largest physical weight, but the drag term is a normalized deficit and is deliberately weighted high: with $C_{d,goal} = 1.70$, above the largest drag reachable inside the penalty-free envelope, every attainable increase in drag is rewarded. The chosen weight therefore selects the drag regime of the heat-load/drag Pareto front, a trade-off that is reported explicitly in Chapter~\ref{ch:results} rather than hidden inside the objective.
 
-\subsubsection*{Surrogate: Gaussian Process with a Mat\'ern 5/2 Kernel}
-The Bayes Opt surrogate is not a neural network. It is a Gaussian Process (GP) regression model fitted with scikit-learn~\cite{sklearn2024gp}, whose covariance is a constant amplitude multiplied by an isotropic Mat\'ern kernel of smoothness $\nu = 5/2$~\cite{matern1960,rasmussen2003}:
+All terms are dimensionless and non-negative, so $J(\mathbf{x}) \ge 0$ by construction, and the cost is analytic: its evaluation requires no solver call. The high-fidelity DSMC solution enters only through the validation of the closed-form correlations, not through the optimization loop.
 
-\begin{equation}
-    k(\mathbf{x}, \mathbf{x}') = c_0^{2}\left(1 + \sqrt{5}\,\rho + \frac{5}{3}\rho^{2}\right)\exp\!\left(-\sqrt{5}\,\rho\right),
-    \qquad
-    \rho^{2} = \sum_{j=1}^{d}\left(\frac{x_{j} - x_{j}'}{\ell_{j}}\right)^{2}
-    \label{eq:matern52}
-\end{equation}
-
-where $c_0$ is the signal-amplitude hyperparameter, $\ell_{j}$ is the length scale of design variable $j$, and $\rho$ is the scaled Euclidean distance between two design points. The $\nu = 5/2$ choice yields a covariance that is twice continuously differentiable, which is the minimum smoothness required for the first-order derivative-based acquisition used below; $\nu = 1/2$ and $\nu = 3/2$ are both measurably rougher and give noisier acquisition surfaces at the 20--70 evaluation budgets of this thesis.
-
-The implementation initialises $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensions, and re-fits both by marginal-likelihood maximization under the bounds $c_0, \ell_{j} \in [10^{-3}, 10^{3}]$ with five restarts of the internal L-BFGS optimizer. The regressor is instantiated with $\alpha = 10^{-6}$ as the noise term and with response normalization ($\texttt{\seqsplit{normalize\_y=True}}$), so the GP models the mean of the normalized cost rather than its raw scale. This gives a posterior over the cost at any untried design:
-
-\begin{equation}
-    J(\mathbf{x}) \mid \mathcal{D} \sim \mathcal{N}\big(\mu(\mathbf{x}),\, \sigma^{2}(\mathbf{x})\big)
-\end{equation}
-
-where $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ is the accumulated design-and-cost history, $\mu(\mathbf{x})$ is the posterior mean and $\sigma(\mathbf{x})$ the posterior standard deviation, both returned by the fitted regressor.
-
-\subsubsection*{Acquisition Function: Expected Improvement}
-Because the cost $J$ is minimized, the Expected Improvement (EI) acquisition~\cite{morris1992,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by a small exploration parameter $\xi$:
-
-\begin{align}
-    \mathrm{EI}(\mathbf{x}) &= \mathbb{E}\Big[\max\big(0,\, J_{best} - J(\mathbf{x}) - \xi\big)\Big] \nonumber\\
-    &= \big(J_{best} - \mu(\mathbf{x}) - \xi\big)\Phi(Z) + \sigma(\mathbf{x})\,\phi(Z), \nonumber\\
-    Z &= \frac{J_{best} - \mu(\mathbf{x}) - \xi}{\sigma(\mathbf{x})}
-    \label{eq:ei}
-\end{align}
-
-where $\Phi$ and $\phi$ are the standard normal cumulative distribution and density functions. The exploration parameter is fixed at $\xi = 0.01$, which is small relative to the $O(1)$ spread of the cost values recorded in Chapter~\ref{ch:results}; this keeps the search exploitation-dominated while retaining enough stochasticity to escape local minima. The denominator $\sigma(\mathbf{x})$ is floored at $10^{-9}$ so that the ratio defining $Z$ stays finite at points where the posterior variance collapses onto a previously sampled design.
-
-\subsubsection*{Candidate Selection and Loop}
-Expected Improvement does not admit a closed-form maximizer, so each Bayes Opt iteration draws $N_{cand} = 5000$ candidate designs uniformly at random inside the bounded design space, scores them all with Eq.~\eqref{eq:ei}, and appends the arg-max to the history. Because the candidate pool is resampled from a seeded generator every iteration, the run is exactly reproducible at $\texttt{seed} = 42$. The recorded campaign is configured with $n_{initial} = 20$ Latin Hypercube designs and $n_{iter} = 50$ Bayesian iterations, giving $n_{eval} = 70$ entries in the optimization history reported in Chapter~\ref{ch:results}.
-
-\subsubsection*{Single-Objective Scalarization}
-The GP models the scalar cost $J(\mathbf{x})$ directly rather than predicting several physical metrics in parallel. The multi-objective character of the problem is carried entirely by the definition of $J$ in the following subsection, which folds total heat load, peak heat flux, ballistic-coefficient deviation, drag coefficient, and the envelope, nose, and payload constraints into one number. This keeps the acquisition one-dimensional and lets the GP spend its limited $70$-evaluation budget resolving a single well-conditioned response surface instead of $k$ separate ones.
-
-\subsection{Genetic Algorithm Optimization}
+\subsection{Genetic Algorithm}
 \label{sec:ga_operators}
 
-\subsubsection*{Cost Function Derivation}
-The Genetic Algorithm (GA) evolves a population of designs toward the global minimum of a multi-objective cost function $J: \mathbb{R}^d \to \mathbb{R}_{\geq 0}$. The cost function is formulated as a weighted sum of normalized squared deviations from target values:
-
-\begin{equation}
-    J(\mathbf{x}) = w_{\beta} \left( \frac{\beta_{calc}(\mathbf{x}) - \beta_{target}}{\sigma_{\beta}} \right)^2 + w_{y} \left( \frac{y_{pred}(\mathbf{x}) - y_{target}}{\sigma_{y}} \right)^2
-\end{equation}
-
-where:
-\begin{itemize}
-    \item $\beta_{calc}(\mathbf{x}) = \frac{m \cdot q}{F_{drag}}$ is the ballistic coefficient computed from the design parameters (see Sec.~\ref{sec:ballistic}),
-    \item $y_{pred}(\mathbf{x}) = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta})$ is the Bayes Opt surrogate prediction of the optimization objective (e.g., peak heat flux or drag coefficient),
-    \item $\beta_{target}$ and $y_{target}$ are user-specified target values (e.g., from mission requirements),
-    \item $\sigma_{\beta} = 10$\,kg/m$^2$ and $\sigma_{y} = 1$ are normalization constants that ensure both terms contribute equally to the cost,
-    \item $w_{\beta}$ and $w_{y}$ are weight coefficients that control the relative importance of ballistic coefficient vs.\ performance metric.
-\end{itemize}
-
-The normalization by $\sigma$ ensures that the cost function is dimensionless and that neither term dominates due to differing scales. The quadratic form penalizes large deviations more severely than small ones, driving the optimizer toward the target.
-
-\subsubsection*{GA Operators}
-The GA employs the following operators to evolve the population:
+The GA maintains a population of $P = 50$ designs and evolves it for at most $G_{\max} = 200$ generations. The implementation uses the following operators~\cite{Goldberg1989}:
 
 \begin{enumerate}
-    \item \textbf{Selection:} Tournament selection with tournament size $k_t = 3$. The individual with the lowest $J$ among $k_t$ randomly chosen candidates is selected as a parent.
-    
-    \item \textbf{Crossover:} Uniform crossover with probability $p_c = 0.8$. For each gene (design variable), a random binary mask determines which parent contributes the value:
-    \begin{equation}
-        x_i^{child} = 
-        \begin{cases}
-            x_i^{parent_1} & \text{if } m_i = 1 \\
-            x_i^{parent_2} & \text{if } m_i = 0
-        \end{cases}
-    \end{equation}
-    where $m_i \sim \text{Bernoulli}(0.5)$.
-    
-    \item \textbf{Mutation:} Gaussian mutation with probability $p_m = 0.1$. Each gene is perturbed by:
-    \begin{equation}
-        x_i^{mutated} = x_i + \mathcal{N}(0, \sigma_m^2)
-    \end{equation}
-    where $\sigma_m$ is scaled to 10\% of the parameter range $[x_i^{\min}, x_i^{\max}]$. Integer parameters (e.g., $N_t$) are rounded to the nearest integer after mutation.
-    
-    \item \textbf{Elitism:} The best $\lceil 0.1 \times P \rceil$ individuals (where $P$ is the population size) are preserved unchanged in the next generation.
+    \item \textbf{Initialisation.} Each individual is drawn uniformly at random inside the screening box of Table~\ref{tab:design_variables}. There is no Latin-hypercube seeding and no surrogate-trained start: the initial population is a random sample, so the first generation is unbiased with respect to any previously fitted surface.
+
+    \item \textbf{Selection.} Tournament selection with tournament size $k_t = 3$. Three individuals are drawn at random and the one with the lowest cost becomes a parent. Tournament selection needs no fitness scaling and cannot be dominated by a single super-individual, which keeps selection pressure moderate while the population is still dispersed.
+
+    \item \textbf{Crossover.} Uniform crossover with probability $p_c = 0.7$. For each child, every gene is inherited from either parent according to an independent Bernoulli mask; if crossover is not applied, the child is a copy of one parent. Uniform crossover treats the three factors symmetrically, which matters because the nose radius and the torus radius act on different terms of the cost.
+
+    \item \textbf{Mutation.} Gaussian mutation applied gene by gene with probability $p_m = 0.1$. A mutated gene is perturbed by a zero-mean Gaussian whose standard deviation is 10\,\% of that gene's range in Table~\ref{tab:design_variables}, and the result is clamped to the screening box. Mutation is the only operator that can introduce a value absent from the current population.
+
+    \item \textbf{Elitism.} The best $E = 2$ individuals are copied unchanged into the next generation. Elitism guarantees that the recorded best cost is non-increasing, which is what makes the convergence history of Chapter~\ref{ch:results} readable as a monotone curve.
 \end{enumerate}
 
-The GA terminates when either: (a) the maximum number of generations $G_{max}$ is reached, or (b) the best cost $J^*$ has not improved by more than $\epsilon = 10^{-4}$ for $G_{pat} = 20$ consecutive generations.
+The population is evaluated concurrently. A generation is embarrassingly parallel because each individual's cost depends only on that individual, so a fixed pool of worker tasks claims indices from the published generation and stores one cost per index; the master waits for the whole batch before breeding. The worker pool applies the Ravenscar restriction set explicitly in its context clause, which bounds the tasking to a static set of tasks with protected-object rendezvous and no heap allocation. The parallel result is identical to the sequential result by construction: the evaluation of an index depends on that index alone, so the order in which results are stored cannot change any cost.
 
-\subsection{Bayesian Optimization (Bayes Opt Constraint Layer)}
+The search terminates when the generation cap is reached or when the best cost has not improved by more than $\epsilon = 10^{-6}$ for $G_{pat} = 20$ consecutive generations. The stagnation counter is maintained by a SPARK-proved core routine that saturates instead of overflowing and rejects non-finite costs, so a failed evaluation is counted as ``not stagnating'' and the search continues rather than silently spinning. The recorded campaign reported in Chapter~\ref{ch:results} converged on the stagnation criterion after 72 generations and 3600 individual evaluations.
 
-\subsubsection*{Formal Penalty Function}
-The Bayes Opt Constraint Layer is a physics-based post-processing step that filters GA-generated designs against hard physical limits. For a candidate design $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
-
-\begin{equation}
-    J_{constrained}(\mathbf{x}) = J(\mathbf{x}) + \sum_{j=1}^{n_c} \Lambda_j \cdot \phi_j(\mathbf{x})
-\end{equation}
-
-where $\Lambda_j$ is the penalty weight for constraint $j$ (set to $10^{6}$ for hard constraints), and $\phi_j$ is the penalty function:
-
-\begin{equation}
-    \phi_j(\mathbf{x}) = 
-    \begin{cases}
-        0 & \text{if } g_j(\mathbf{x}) \leq 0 \quad \text{(feasible)} \\
-        \big|g_j(\mathbf{x})\big|^2 & \text{if } g_j(\mathbf{x}) > 0 \quad \text{(infeasible)}
-    \end{cases}
-\end{equation}
-
-The constraint functions $g_j(\mathbf{x})$ encode the following physical limits:
-
-\begin{table}[H]
-    \centering
-    \caption{Bayes Opt Constraint Functions.}
-    \label{tab:mop_constraints}
-    \begin{tabular}{|l|l|c|}
-        \hline
-        \textbf{Constraint} & \textbf{Function $g_j(\mathbf{x})$} & \textbf{Limit} \\ \hline
-        Backface temperature & $T_{back}(\mathbf{x}) - T_{back}^{max}$ & 350\,K \\ \hline
-        Peak deceleration & $n_G(\mathbf{x}) - n_G^{max}$ & 25$g$ \\ \hline
-        Structural integrity & $D(\mathbf{x}) - D^{max}$ & 15.0\,m \\ \hline
-        Toroid manufacturability & $N_t(\mathbf{x}) - 12$ & 12 \\ \hline
-    \end{tabular}
-\end{table}
-
-When any constraint is violated ($g_j > 0$), the penalty $\Lambda_j \cdot |g_j|^2$ adds a large cost that effectively removes the design from the GA population. This ensures that only physically viable configurations survive to final high-fidelity validation.
-
-\subsubsection*{Integration with GA}
-The constraint-augmented cost $J_{constrained}$ replaces the unconstrained $J$ in the GA fitness evaluation. The GA operators (selection, crossover, mutation) operate on $J_{constrained}$ as described in Sec.~\ref{sec:ga_operators}. The constraint layer acts as a ``hard filter'' that shapes the fitness landscape without requiring gradient information from the Bayes Opt surrogate.
+\subsection{Surrogate-Assisted Pre-Screening}
+Because the cost is analytic, a full evaluation is cheap, and the GA does not need a surrogate to make the search tractable. A low-order linear response surface is nevertheless fitted to the 15 CCD costs and used to pre-screen candidates: a candidate whose predicted cost is far worse than the current generation's best is not sent to the full evaluation, and a model-fidelity penalty is added to its search score so that the GA cannot exploit a region where the linear surface is inaccurate. The penalty is a function of the disagreement between the surface prediction and the fully evaluated cost, so an individual is never credited with a good score on the strength of the surrogate alone. This is the only place where a fitted model enters the loop; there is no iterative acquisition, no posterior, and no candidate-pool optimisation.
 
 \section{Multi-Solver Architecture}
 
@@ -774,74 +641,44 @@ The framework supports GPU acceleration across multiple vendors:
     \item \textbf{Specialized:} Huawei CANN, Moore Threads MUSA, Biren SUPA, Snapdragon OpenCL
 \end{itemize}
 
-\section{Machine Learning Research Standards Documentation}
+\section{Computational and Optimization Standards}
+\label{sec:comp_standards}
 
-This section documents the machine-learning surrogate components of the framework following established research standards for reproducibility and transparency~\cite{ml_standards}.
+This section records the standards that make the optimization campaign reproducible and auditable. The framework has no trained machine-learning surrogate in its main path: the cost is evaluated analytically and the search is a genetic algorithm, so the reproducibility questions are those of a numerical optimization campaign rather than those of a model-training pipeline.
 
-\subsection{Model Architecture Specifications}
+\subsection{Evaluation Pipeline}
+A candidate design is converted into a geometry, and the cost of Eq.~\eqref{eq:ga_cost} is evaluated in closed form: the Sutton--Graves correlation gives the stagnation heat flux, the trajectory model integrates it into a total heat load, and the ballistic coefficient and drag coefficient follow from the geometry. No solver call is made inside the optimization loop. The DSMC solution is used to validate the closed-form correlations against flight data (Chapter~\ref{ch:results}), not to evaluate individuals, which is why a population of 50 can be evaluated for hundreds of generations at negligible cost.
 
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
-% to produce the optimised body, so all PINN material is removed from this
-% thesis deliberately. Do not reintroduce it.
-% NOTE (2026-10-20): the main pipeline is analytical (closed-form
-% Sutton-Graves heat flux, not a solver-resolved field). NEXT
-% SUB-ITERATION: change the default optimiser from Bayesian Optimization
-% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
-% analytical surrogate on an analytical objective, (analytical)^2, does
-% not illuminate anything and reads as strange.
-
-\subsubsection*{Bayesian Optimization (Bayes Opt)}
-The Bayes Opt surrogate is a Gaussian Process regressor with a Mat\'ern 5/2 kernel, paired with an analytic Expected Improvement acquisition, as derived in Sec.~\ref{sec:ga_opt}:
+\subsection{Optimization Configuration}
+Table~\ref{tab:ga_hparams} lists the configuration of the recorded campaign. Every value is a default in the Ada optimization package, so a run can be reproduced by invoking the optimizer without overrides.
 
 \begin{table}[H]
     \centering
-    \caption{Bayes Opt Gaussian Process Surrogate and Acquisition Hyperparameters.}
-    \label{tab:mop_hparams}
+    \caption{Genetic-algorithm configuration of the recorded campaign.}
+    \label{tab:ga_hparams}
     \begin{tabular}{|l|l|}
         \hline
         \textbf{Component} & \textbf{Specification} \\ \hline
-        Framework & scikit-learn \texttt{\seqsplit{GaussianProcessRegressor}} \\ \hline
-        Input dimension & $d$ (design variables, $d = 4$--$7$) \\ \hline
-        Covariance kernel & Mat\'ern, $\nu = 5/2$ \\ \hline
-        Amplitude $c_0$ & Init. 1.0, refit in $[10^{-3}, 10^{3}]$ \\ \hline
-        Length scales $\ell_j$ & Init. 1.0 per dimension, refit in $[10^{-3}, 10^{3}]$ \\ \hline
-        Hyperparameter optimizer & L-BFGS, $5$ restarts (marginal likelihood) \\ \hline
-        Noise term $\alpha$ & $10^{-6}$ \\ \hline
-        Response normalization & Enabled ($\texttt{\seqsplit{normalize\_y=True}}$) \\ \hline
-        Acquisition & Expected Improvement, $\xi = 0.01$ \\ \hline
-        Candidates per iteration & $N_{cand} = 5000$ (uniform in bounds) \\ \hline
-        Budget & $n_{initial} = 20$ LHS, $n_{iter} = 50$, seed 42 \\ \hline
+        Search & Simple genetic algorithm (no acquisition function) \\ \hline
+        Design variables & $R_N$, $r_{tor}$, $\theta_c$ \\ \hline
+        Screening design & Face-centred CCD, $N = 15$ \\ \hline
+        Population size & 50 \\ \hline
+        Generation cap & 200 \\ \hline
+        Selection & Tournament, $k_t = 3$ \\ \hline
+        Crossover & Uniform, $p_c = 0.7$ \\ \hline
+        Mutation & Gaussian, $p_m = 0.1$, $\sigma$ = 10\,\% of range \\ \hline
+        Elitism & 2 individuals \\ \hline
+        Termination & 20 stagnant generations at $\epsilon = 10^{-6}$ \\ \hline
+        Evaluation & Analytic cost, Eq.~\eqref{eq:ga_cost} \\ \hline
     \end{tabular}
 \end{table}
 
-\subsection{Training Methodology}
-
-\subsubsection*{Data Collection Pipeline}
-Training data is generated through the following pipeline:
-\begin{enumerate}
-    \item \textbf{Design of Experiments:} $N = 25$ sample points generated via Face-Centered CCD (Table~\ref{tab:default_params}) across the design space.
-    \item \textbf{Simulation:} Each design is evaluated using SPARTA DSMC with $O(10^3)$ timesteps.
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
-    \item \textbf{Feature Engineering:} Design parameters $\mathbf{x} = (D, \theta_c, R_n, N_t, r_t, m, \delta_{TPS})$ are normalized to $[0, 1]$ using min-max scaling.
-\end{enumerate}
-
-\subsubsection*{Train/Test Split}
-The dataset is split using a stratified 80/20 partition:
-\begin{itemize}
-    \item \textbf{Training set:} 20 samples (80\%) used for model fitting.
-    \item \textbf{Validation set:} 5 samples (20\%) used for early stopping and hyperparameter selection.
-\end{itemize}
-
-\subsubsection*{Cross-Validation}
-For robust performance estimation, $k$-fold cross-validation ($k = 5$) is employed when sample size permits. The reported metrics represent the mean $\pm$ standard deviation across folds.
-
 \subsection{Validation Metrics}
-
-Model performance is evaluated using the following metrics:
+The analytic predictions are validated against the DSMC solution and the IRVE-3 flight data with the metrics of Table~\ref{tab:ml_metrics}. They are reported for the validation comparisons only; they are not model-training losses.
 
 \begin{table}[H]
     \centering
-    \caption{ML Model Validation Metrics.}
+    \caption{Validation metrics used for the analytic predictions.}
     \label{tab:ml_metrics}
     \begin{tabular}{|l|l|l|}
         \hline
@@ -855,57 +692,25 @@ Model performance is evaluated using the following metrics:
 
 \subsection{Reproducibility Requirements}
 
-To ensure full reproducibility of all ML results, the following standards are enforced:
-
 \subsubsection*{Random Seed Control}
-All stochastic operations (weight initialization, data splitting, CCD point generation) are seeded with a fixed random seed:
-\begin{itemize}
-    \item Bayes Opt: \texttt{\seqsplit{torch.manual\_seed(123)}}, \texttt{\seqsplit{numpy.random.seed(123)}}
-    \item GA: \texttt{\seqsplit{numpy.random.seed(456)}}
-\end{itemize}
+The CCD is generated with \texttt{\seqsplit{numpy.random.seed(456)}}. The GA runner is deterministic for a fixed seed and population size; the initial population is drawn uniformly inside the screening box, and the elitist record of the best cost is non-increasing by construction. A repeated run from the same seed reproduces the same history.
 
 \subsubsection*{Environment Specification}
 \begin{table}[H]
     \centering
-    \caption{Computing Environment for ML Components.}
+    \caption{Computing environment for the optimization campaign.}
     \label{tab:env_spec}
     \begin{tabular}{|l|l|}
         \hline
         \textbf{Component} & \textbf{Version} \\ \hline
         Python & 3.10+ \\ \hline
-        PyTorch & 2.x \\ \hline
         NumPy & 1.24+ \\ \hline
-        Hardware & NVIDIA CUDA / AMD ROCm / Apple MPS \\ \hline
+        Ada/SPARK toolchain & GNAT 16.1, GNATprove \\ \hline
+        DSMC solver & SPARTA (Docker) \\ \hline
     \end{tabular}
 \end{table}
 
-\subsubsection*{Model Checkpointing}
-All trained models are saved with:
-\begin{itemize}
-    \item Full model state dict (\texttt{\seqsplit{model\_state\_dict}})
-    \item Optimizer state dict (\texttt{\seqsplit{optimizer\_state\_dict}})
-    \item Training epoch count
-    \item Final loss values
-    \item Random seed used for initialization
-\end{itemize}
-
-\subsection{Uncertainty Quantification}
-
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
-% to produce the optimised body, so all PINN material is removed from this
-% thesis deliberately. Do not reintroduce it.
-% NOTE (2026-10-20): the main pipeline is analytical (closed-form
-% Sutton-Graves heat flux, not a solver-resolved field). NEXT
-% SUB-ITERATION: change the default optimiser from Bayesian Optimization
-% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
-% analytical surrogate on an analytical objective, (analytical)^2, does
-% not illuminate anything and reads as strange.
-
-\subsubsection*{Bayes Opt Surrogate Uncertainty}
-The Bayes Opt surrogate uncertainty is estimated via:
-\begin{itemize}
-    \item \textbf{Ensemble prediction:} $M = 10$ models with different initializations.
-    \item \textbf{Leave-one-out cross-validation:} Predictive variance from $N$ models trained on $N-1$ samples.
-\end{itemize}
+\subsection{Artifact Record}
+The optimizer writes a single JSON artifact containing the run configuration, the fifteen screen costs, the per-generation best history, and the default and optimized metrics. Every optimization figure and number in Chapter~\ref{ch:results} is read from that artifact, and the figure generator refuses to draw if the artifact config is not the genetic algorithm or if the reported values have drifted. This is the audit trail that replaces the model checkpointing of a machine-learning pipeline: there is no model to checkpoint, only a recorded search.
 
 \clearpage

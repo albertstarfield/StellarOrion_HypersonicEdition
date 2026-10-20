@@ -38,7 +38,7 @@ THEORIES
     T1. Five columns with three input boxes, one engine box, two solver
         boxes, two model boxes and one output box fit the print width at a
         readable size when the canvas is about 3.6 in tall.
-    T2. The feedback arrow from the Bayesian Optimization surrogate to the
+    T2. The feedback arrow from the genetic-algorithm optimiser to the
         engine routes below all boxes so it crosses no text and no other
         arrow.
 
@@ -228,14 +228,14 @@ ML_TEXTS = (
     # PINN removed 2026-10: the thesis no longer presents PINN; the model
     # column shows only the Gauss-process surrogate actually used to
     # produce the optimised body.
-    "Bayes Opt\n/ GP Matern 5/2\n/ + EI acquisition",
+    "Genetic\n/ Algorithm\n/ population 50",
 )
 OUTPUT_TEXT = "ParaView\n/ VTK\n/ STL\n/ Rendering"
 
 ARROW_LABEL_VTK = "VTK data"
 ARROW_LABEL_SURFACE = "surface data"
 ARROW_LABEL_REFINED = "refined"
-ARROW_LABEL_FEEDBACK = "Bayesian optimization\n/ feedback loop"
+ARROW_LABEL_FEEDBACK = "GA optimization\n/ feedback loop"
 
 LEGEND_ROW1 = (
     ("Input (Geometry, Conditions)", INPUT_FILL, INPUT_EDGE),
@@ -243,7 +243,7 @@ LEGEND_ROW1 = (
 )
 LEGEND_ROW2 = (
     ("Physics Solvers (SPARTA, OpenFOAM)", SOLVER_FILL, SOLVER_EDGE),
-    ("Models (Bayes Opt)", ML_FILL, ML_EDGE),
+    ("Models (GA)", ML_FILL, ML_EDGE),
 )
 LEGEND_ROW3 = (
     ("Visualization (ParaView)", OUTPUT_FILL, OUTPUT_EDGE),
@@ -511,7 +511,7 @@ def build() -> object:
     # pad on the old white bbox bit into SPARTA's bottom border and corner
     # (image audit 2026-10-08, defect N4). add_mask_rects() supplies the
     # replacement mask, clipped against the solver boxes so it cannot touch
-    # their edges; the arrow the label interrupts is the SPARTA->Bayes
+    # their edges; the arrow the label interrupts is the SPARTA->GA
     # diagonal crossing y406..423 inside this label's ink span.
     ax.text((SOLVER_X1 + ML_X0) / 2.0 + 0.02, (SOLVER_Y[1] + SOLVER_H + SOLVER_Y[0]) / 2.0,
             ARROW_LABEL_SURFACE, ha="center", va="center",
@@ -528,7 +528,10 @@ def build() -> object:
             color=ORANGE)
 
     draw_legend_row(ax, LEGEND_ROW1, LEGEND_Y1)
-    draw_legend_row(ax, LEGEND_ROW2, LEGEND_Y2)
+    # WHY gap 0.22: the measured advance left the orange patch touching the
+    # tail of "OpenFOAM)" in the rendered PNG (image audit 2026-10-21); the
+    # default 0.10 in is not enough clearance for this row.
+    draw_legend_row(ax, LEGEND_ROW2, LEGEND_Y2, gap=0.22)
     draw_legend_row(ax, LEGEND_ROW3, LEGEND_Y3)
 
     return fig
@@ -570,7 +573,7 @@ def add_mask_rects(fig: object) -> int:
     """Interrupt arrows behind the header row and the surface-data label.
 
     PURPOSE
-        The two routed-arrow verticals and the SPARTA->Bayes diagonal run
+        The two routed-arrow verticals and the SPARTA->GA diagonal run
         straight through three text strings. Before this function existed
         the mask was a white bbox attached to each string, and because a
         bbox pad is a fraction of the font size, the fit squeeze (text
