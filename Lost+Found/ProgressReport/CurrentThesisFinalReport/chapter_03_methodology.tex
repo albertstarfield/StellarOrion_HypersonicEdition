@@ -453,7 +453,7 @@ As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt
 \section{Survivability Optimization}
 \label{sec:ga_opt}
 
-The optimizer is a simple genetic algorithm (GA) with a population of candidate geometries evolved against a single scalar cost. A fifteen-point central composite design (CCD) screens the space first, and the screen also supplies the contrast data for a low-order response surface that pre-screens individuals before their full cost evaluation. There is no Gaussian-process surrogate and no Bayesian acquisition step: the only learned object is the linear response surface, and the search itself is the population dynamics described in this section.
+The optimizer is a simple genetic algorithm (GA) with a population of candidate geometries evolved against a single scalar cost. A fifteen-point central composite design (CCD) screens the space first, and the screen also supplies the contrast data for a low-order response surface that calibrates a model-fidelity penalty. There is no Gaussian-process surrogate and no Bayesian acquisition step: the only learned object is the linear response surface, and the search itself is the population dynamics described in this section.
 
 \subsection{Design Space and Parameters}
 The optimization acts on the three geometric factors that dominate the aerothermal response at the validated flight condition: nose radius $R_N$, torus minor radius $r_{tor}$, and half-cone angle $\theta_c$. The remaining geometric parameters are held at the validated IRVE-3-adapted baseline of Table~\ref{tab:default_params}. The screening box is:
@@ -515,8 +515,13 @@ The population is evaluated concurrently. A generation is embarrassingly paralle
 
 The search terminates when the generation cap is reached or when the best cost has not improved by more than $\epsilon = 10^{-6}$ for $G_{pat} = 20$ consecutive generations. The stagnation counter is maintained by a SPARK-proved core routine that saturates instead of overflowing and rejects non-finite costs, so a failed evaluation is counted as ``not stagnating'' and the search continues rather than silently spinning. The recorded campaign reported in Chapter~\ref{ch:results} converged on the stagnation criterion after 72 generations and 3600 individual evaluations.
 
-\subsection{Surrogate-Assisted Pre-Screening}
-Because the cost is analytic, a full evaluation is cheap, and the GA does not need a surrogate to make the search tractable. A low-order linear response surface is nevertheless fitted to the 15 CCD costs and used to pre-screen candidates: a candidate whose predicted cost is far worse than the current generation's best is not sent to the full evaluation, and a model-fidelity penalty is added to its search score so that the GA cannot exploit a region where the linear surface is inaccurate. The penalty is a function of the disagreement between the surface prediction and the fully evaluated cost, so an individual is never credited with a good score on the strength of the surrogate alone. This is the only place where a fitted model enters the loop; there is no iterative acquisition, no posterior, and no candidate-pool optimisation.
+\subsection{Model-Fidelity Penalty}
+Because the cost is analytic, a full evaluation is cheap, and the GA does not need a surrogate to make the search tractable. A low-order linear response surface is nevertheless fitted to the 15 CCD costs through a $2^{3}$ factorial contrast fit, predicting the dimensionless heat-load ratio. Every individual is still evaluated with the analytic cost; the fitted surface does not replace that evaluation. Instead, the search score adds the squared disagreement between the surface prediction $\hat{y}$ and the evaluated heat-load ratio $y$,
+\begin{equation}
+    \tilde{J}(\mathbf{x}) = J(\mathbf{x}) + \bigl(\hat{y}(\mathbf{x}) - y(\mathbf{x})\bigr)^{2},
+    \label{eq:fidelity_penalty}
+\end{equation}
+\noindent with unit weight because both terms are $O(1)$. The penalty discourages the population from drifting into regions where the linear surface is inaccurate, so a candidate cannot be credited with a good score on the strength of the fitted model alone. This is the only place where a fitted model enters the loop; no candidate is discarded, and there is no iterative acquisition, no posterior and no candidate-pool optimisation.
 
 \section{Multi-Solver Architecture}
 

@@ -1291,7 +1291,7 @@ Much of the optimization literature for expensive simulations relies on surrogat
 
 The objective of this work is analytic. The stagnation heat flux comes from the Sutton--Graves correlation, the trajectory model integrates it into a total heat load, and the ballistic and drag coefficients follow from the geometry; the DSMC solution is used for validation, not inside the loop. A Gaussian-process surrogate fitted to such an objective would be a model of a closed-form function, and its acquisition step would choose where to evaluate a formula that can simply be evaluated everywhere. The information gain is zero and the added complexity is real, which is why the optimizer described in this thesis uses no posterior and no acquisition function.
 
-A response surface is still useful, but only for screening. A low-order linear surface is fitted to the 15 CCD costs and used to decide which candidates deserve a full evaluation; a model-fidelity penalty keeps the search from exploiting regions where that surface is inaccurate. This is a bounded, transparent use of a fitted model: it accelerates the population loop without replacing the objective.
+A response surface is still useful, but only as a diagnostic. A low-order linear surface is fitted to the 15 CCD costs and its disagreement with the analytic heat-load ratio is added to the search score as a model-fidelity penalty; the penalty keeps the search from exploiting regions where that surface is inaccurate. Every individual is still evaluated with the analytic objective. This is a bounded, transparent use of a fitted model: it penalises unreliability rather than replacing the objective.
 
 \subsection{Genetic Algorithm Optimization}
 
