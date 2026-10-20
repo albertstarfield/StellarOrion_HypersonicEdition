@@ -35,7 +35,7 @@ tables and plots under `validation_pipeline_output/`.
 | `validation_pipeline_output/plots/` (10 files) | **THIS RUN** — includes `hybrid_dsmc_pinn_animation.mp4` |
 | `validation_pipeline_output/interactive/` (5 files) | **THIS RUN** |
 | `paraview/` | **MIXED** — `surf_*.vtu` and `surf_pinn_300000000.vtu` rewritten by this run; the older `surf_*.vtu` entries predate it |
-| `plots/` (21 files) | **STALE** — timestamped 2026-10-18 18:00, i.e. the earlier `03_opt_geometry` run. **Not** from this run; regenerate before citing |
+| `plots/` (39 files) | **THIS RUN** — regenerated 2026-10-21 from this run's `validation_timeseries.csv` + `validation_pipeline_output/pinn_trajectory_per_step.csv` (21 per-column + 18 full-span 0–300M DSMC+PINN_AUX). The 21 files that sat here before (2026-10-18 18:00) belonged to the earlier `03_opt_geometry` run and were **deleted** |
 
 ## Headline result (see `DSMC_PINN_AUX_vs_reference.md` for the full table)
 
@@ -51,6 +51,28 @@ tables and plots under `validation_pipeline_output/`.
 
 **Validation gate: PASS** — the DSMC+PINN_AUX heat load (120.82 J/cm^2) is
 below the 165.716 J/cm^2 target.
+
+## Plot refresh (2026-10-21)
+
+The plots in this tree were audited, not assumed. Method: the plotter
+(`scripts/make_validation_plots.py`) is a pure function of
+`<results_dir>/validation_timeseries.csv` (plus the PINN_AUX trajectory CSV
+for the full-span figures), so every plot was re-rendered into a scratch
+directory and compared pixel-wise with the committed PNG.
+
+| Tree | Verdict before | Action |
+|:---|:---|:---|
+| `results/validation_optimized` | 19 of 21 per-column plots **stale** (they rendered the 2026-10-18 run); the 18 full-span figures **missing** | directory cleaned and re-rendered — 39 files, all from this run |
+| `results/00_reference` | per-column plots fresh; 18 full-span figures **stale** (drawn 2026-10-14 from a trajectory CSV now dated 2026-10-18) | full-span figures re-rendered from the current trajectory CSV |
+| `results/03_opt_geometry` | same as above | full-span figures re-rendered |
+| `results/01_smooth` | all 18 fresh | re-rendered (byte-level refresh only) |
+| `results/validation_scalloped`, `results/validation_smooth` | **not regenerable** — their `validation_timeseries.csv` is a Git-LFS pointer, so the source data is absent on this node | left untouched; their plots are the only record of those runs |
+
+Notes: `results/00_reference/plots/`, `results/00_reference/legacy_flat/` and
+`results/00_reference/plots/short_window/` hold **hard links** to the same
+inodes, so one re-render refreshes all three copies. The non-time-series
+figures (ParaView `vtu_*` renders, dashboards, TPS per-ply plots) are not
+produced by this plotter and were not re-derived here.
 
 ## Two findings that must not be lost
 
