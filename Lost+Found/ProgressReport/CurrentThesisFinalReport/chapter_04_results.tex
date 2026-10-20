@@ -429,6 +429,12 @@ The present framework implements a Genetic Algorithm (GA) coupled with a Bayesia
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-20): the main pipeline is analytical (closed-form
+% Sutton-Graves heat flux, not a solver-resolved field). NEXT
+% SUB-ITERATION: change the default optimiser from Bayesian Optimization
+% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
+% analytical surrogate on an analytical objective, (analytical)^2, does
+% not illuminate anything and reads as strange.
 
 \subsection{Reproducibility and Accessibility}
 The present framework is fully open-source, Python-based, and Docker-containerized. The SPARTA simulation runs in a reproducible Linux environment, while the Python optimization pipeline runs on the native OS with support for global hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS). Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.

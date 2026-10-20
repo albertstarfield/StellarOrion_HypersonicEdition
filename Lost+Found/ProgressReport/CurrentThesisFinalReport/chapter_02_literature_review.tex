@@ -1144,6 +1144,12 @@ The Universal Approximation Theorem (Cybenko, 1989; Hornik et al., 1989) states 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-20): the main pipeline is analytical (closed-form
+% Sutton-Graves heat flux, not a solver-resolved field). NEXT
+% SUB-ITERATION: change the default optimiser from Bayesian Optimization
+% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
+% analytical surrogate on an analytical objective, (analytical)^2, does
+% not illuminate anything and reads as strange.
 
 \section{Parametric HIAD Geometry Modelling}
 

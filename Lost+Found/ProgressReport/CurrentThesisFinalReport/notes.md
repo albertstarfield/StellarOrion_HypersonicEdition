@@ -341,6 +341,13 @@ methodology-derivation diagram were regenerated without the PINN column,
 box, node or stage. Removal sites carry a `PINN-HIDDEN` comment. The page
 count dropped from 194 to 179 and the printed-to-PDF offset is now +25.
 
+Next sub-iteration (recorded 2026-10-20). The main pipeline is analytical:
+the headline heat flux is the closed-form Sutton-Graves correlation, not a
+solver-resolved field. The default optimiser should therefore change from
+Bayesian Optimization (GP Matern 5/2 + Expected Improvement) to a plain GA.
+Stacking an analytical surrogate on an analytical objective -- (analytical)^2
+-- does not illuminate anything and reads as strange.
+
 Also preserve:
 
 - The `hidelinks` setting — it is why link borders are zero. Do not remove it.

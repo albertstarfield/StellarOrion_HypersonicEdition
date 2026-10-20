@@ -133,6 +133,12 @@ The SPARTA solver executes the DSMC simulation within a Docker-containerized Lin
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-20): the main pipeline is analytical (closed-form
+% Sutton-Graves heat flux, not a solver-resolved field). NEXT
+% SUB-ITERATION: change the default optimiser from Bayesian Optimization
+% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
+% analytical surrogate on an analytical objective, (analytical)^2, does
+% not illuminate anything and reads as strange.
 
 \subsection*{d. Survivability Optimization}
 A Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate performs multi-objective optimization of the HIAD geometry. Latin Hypercube Sampling (LHS) generates the initial design population. The GA evaluates candidates using the GP surrogate for rapid screening, with expensive SPARTA simulations reserved for elite candidates and final validation. The cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against user-defined targets.

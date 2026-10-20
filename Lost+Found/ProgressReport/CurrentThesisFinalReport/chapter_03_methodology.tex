@@ -69,6 +69,12 @@ where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-20): the main pipeline is analytical (closed-form
+% Sutton-Graves heat flux, not a solver-resolved field). NEXT
+% SUB-ITERATION: change the default optimiser from Bayesian Optimization
+% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
+% analytical surrogate on an analytical objective, (analytical)^2, does
+% not illuminate anything and reads as strange.
 
 \paragraph{Step 5: Surrogate-Assisted Optimization.}
 The Bayes Opt surrogate model approximates the mapping from design variables to performance metrics. The Genetic Algorithm (GA) queries the Bayes Opt surrogate to explore the design space, avoiding the computational cost of repeated DSMC evaluations. The optimization cost function is:
@@ -446,7 +452,19 @@ As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-20): the main pipeline is analytical (closed-form
+% Sutton-Graves heat flux, not a solver-resolved field). NEXT
+% SUB-ITERATION: change the default optimiser from Bayesian Optimization
+% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
+% analytical surrogate on an analytical objective, (analytical)^2, does
+% not illuminate anything and reads as strange.
 
+% NEXT SUB-ITERATION (2026-10-20): because the evaluation pipeline is
+% analytical, the Bayesian-Optimization default (GP Matern 5/2 + Expected
+% Improvement) should be replaced by a plain Genetic Algorithm. An
+% analytical surrogate on top of an analytical objective -- (analytical)^2 --
+% does not light anything up and instead makes the thesis read as strange;
+% the simpler GA default is the honest choice.
 \section{Survivability Optimization}
 \label{sec:ga_opt}
 
@@ -765,6 +783,12 @@ This section documents the machine-learning surrogate components of the framewor
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-20): the main pipeline is analytical (closed-form
+% Sutton-Graves heat flux, not a solver-resolved field). NEXT
+% SUB-ITERATION: change the default optimiser from Bayesian Optimization
+% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
+% analytical surrogate on an analytical objective, (analytical)^2, does
+% not illuminate anything and reads as strange.
 
 \subsubsection*{Bayesian Optimization (Bayes Opt)}
 The Bayes Opt surrogate is a Gaussian Process regressor with a Mat\'ern 5/2 kernel, paired with an analytic Expected Improvement acquisition, as derived in Sec.~\ref{sec:ga_opt}:
@@ -870,6 +894,12 @@ All trained models are saved with:
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
 % to produce the optimised body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-20): the main pipeline is analytical (closed-form
+% Sutton-Graves heat flux, not a solver-resolved field). NEXT
+% SUB-ITERATION: change the default optimiser from Bayesian Optimization
+% (GP Matern 5/2 + Expected Improvement) to a plain GA -- stacking an
+% analytical surrogate on an analytical objective, (analytical)^2, does
+% not illuminate anything and reads as strange.
 
 \subsubsection*{Bayes Opt Surrogate Uncertainty}
 The Bayes Opt surrogate uncertainty is estimated via:
