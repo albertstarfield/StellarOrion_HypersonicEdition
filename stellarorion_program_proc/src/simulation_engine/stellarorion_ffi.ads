@@ -188,7 +188,8 @@ package StellarOrion_FFI is
       Out_Cd_Ratio           : access Interfaces.C.Double;
       Out_Penalty            : access Interfaces.C.Double;
       Out_Total              : access Interfaces.C.Double;
-      Out_Heat_Load_Jcm2     : access Interfaces.C.Double)
+      Out_Heat_Load_Jcm2     : access Interfaces.C.Double;
+      Out_Cd_Deficit        : access Interfaces.C.Double)
    with Pre  => X1 > 0.0 and then X2 > 0.0 and then X3 > 0.0
                 and then X3 < 90.0 and then Out_Total /= null,
         Post => Out_Total.all >= -1.0

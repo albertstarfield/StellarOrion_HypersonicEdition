@@ -11,7 +11,7 @@
     "r_tor": 0.135,
     "half_cone_deg": 60.0,
     "Cd": 1.6072782278060913,
-    "cost": 2.0251433849334717,
+    "cost": 3.433816909790039,
     "total_heat_load_Jcm2": 208.50807189941406,
     "cost_components": {
       "heat_load_ratio": 1.2582255601882935,
@@ -19,38 +19,40 @@
       "beta_dev": 0.00969194620847702,
       "cd_ratio": 0.9103756546974182,
       "penalty": 0.0,
-      "total": 2.0251433849334717,
-      "heat_load_jcm2": 208.50807189941406
+      "total": 3.433816909790039,
+      "heat_load_jcm2": 208.50807189941406,
+      "cd_deficit": 0.05454224720597267
     },
     "sutton_graves_heat_flux_Wcm2": 15.357496875,
     "sutton_graves_heat_flux_Wm2": 153574.96875
   },
   "optimized": {
-    "R_N": 3.0,
-    "r_tor": 0.05,
-    "half_cone_deg": 40.0,
-    "Cd": 1.531315565109253,
-    "cost": 1.646206021308899,
-    "total_heat_load_Jcm2": 147.43746948242188,
+    "R_N": 1.03967,
+    "r_tor": 0.219741,
+    "half_cone_deg": 53.7247,
+    "Cd": 1.6677234172821045,
+    "cost": 2.7375025749206543,
+    "total_heat_load_Jcm2": 250.44981384277344,
     "cost_components": {
-      "heat_load_ratio": 0.8896998167037964,
-      "flux_ratio": 0.7558659315109253,
-      "beta_dev": 0.32347169518470764,
-      "cd_ratio": 0.8673497438430786,
-      "penalty": 0.0,
-      "total": 1.646206021308899,
-      "heat_load_jcm2": 147.43746948242188
+      "heat_load_ratio": 1.511319637298584,
+      "flux_ratio": 1.2839781045913696,
+      "beta_dev": 0.017822451889514923,
+      "cd_ratio": 0.9446122646331787,
+      "penalty": 0.0056953527964651585,
+      "total": 2.7375025749206543,
+      "heat_load_jcm2": 250.44981384277344,
+      "cd_deficit": 0.018986253067851067
     },
-    "sutton_graves_heat_flux_Wcm2": 10.859390625,
-    "sutton_graves_heat_flux_Wm2": 108593.90625,
-    "n_evaluations": 1550
+    "sutton_graves_heat_flux_Wcm2": 18.446684375,
+    "sutton_graves_heat_flux_Wm2": 184466.84375,
+    "n_evaluations": 3600
   },
   "improvement": {
-    "cost_pct": 18.7116313068875,
-    "cd_pct": 4.726167590817563,
-    "cd_delta": -0.07596266269683838,
-    "cd_direction": "reduced",
-    "total_heat_load_pct": 29.289322883601898
+    "cost_pct": 20.278143918627304,
+    "cd_pct": 3.760717244239654,
+    "cd_delta": 0.060445189476013184,
+    "cd_direction": "increased",
+    "total_heat_load_pct": -20.11516463669205
   },
   "ccd_samples": [
     {
@@ -58,354 +60,682 @@
       "R_N": 1.2000000476837158,
       "r_tor": 0.10000000149011612,
       "half_cone_deg": 55.0,
-      "cost": 2.871563196182251
+      "cost": 5.261029243469238
     },
     {
       "label": "factorial--+",
       "R_N": 1.2000000476837158,
       "r_tor": 0.10000000149011612,
       "half_cone_deg": 65.0,
-      "cost": 2.499835252761841
+      "cost": 4.487777233123779
     },
     {
       "label": "factorial-+-",
       "R_N": 1.2000000476837158,
       "r_tor": 0.18000000715255737,
       "half_cone_deg": 55.0,
-      "cost": 2.236048460006714
+      "cost": 3.1848883628845215
     },
     {
       "label": "factorial-++",
       "R_N": 1.2000000476837158,
       "r_tor": 0.18000000715255737,
       "half_cone_deg": 65.0,
-      "cost": 2.6366372108459473
+      "cost": 3.1690897941589355
     },
     {
       "label": "factorial+--",
       "R_N": 1.7999999523162842,
       "r_tor": 0.10000000149011612,
       "half_cone_deg": 55.0,
-      "cost": 1.9225342273712158
+      "cost": 3.967298984527588
     },
     {
       "label": "factorial+-+",
       "R_N": 1.7999999523162842,
       "r_tor": 0.10000000149011612,
       "half_cone_deg": 65.0,
-      "cost": 1.8673590421676636
+      "cost": 3.501481056213379
     },
     {
       "label": "factorial++-",
       "R_N": 1.7999999523162842,
       "r_tor": 0.18000000715255737,
       "half_cone_deg": 55.0,
-      "cost": 9.541157722473145
+      "cost": 10.385552406311035
     },
     {
       "label": "factorial+++",
       "R_N": 1.7999999523162842,
       "r_tor": 0.18000000715255737,
       "half_cone_deg": 65.0,
-      "cost": 38.65488052368164
+      "cost": 39.07723617553711
     },
     {
       "label": "center",
       "R_N": 1.5,
       "r_tor": 0.14000000059604645,
       "half_cone_deg": 60.0,
-      "cost": 2.022416353225708
+      "cost": 3.3487818241119385
     },
     {
       "label": "axial_R_N_+",
       "R_N": 2.00453782081604,
       "r_tor": 0.14000000059604645,
       "half_cone_deg": 60.0,
-      "cost": 6.20120906829834
+      "cost": 7.260076522827148
     },
     {
       "label": "axial_R_N_-",
       "R_N": 0.9954621195793152,
       "r_tor": 0.14000000059604645,
       "half_cone_deg": 60.0,
-      "cost": 2.778644561767578
+      "cost": 4.124975204467773
     },
     {
       "label": "axial_r_tor_+",
       "R_N": 1.5,
       "r_tor": 0.20727171003818512,
       "half_cone_deg": 60.0,
-      "cost": 25.2119083404541
+      "cost": 25.54314422607422
     },
     {
       "label": "axial_r_tor_-",
       "R_N": 1.5,
       "r_tor": 0.07272829115390778,
       "half_cone_deg": 60.0,
-      "cost": 2.4983348846435547
+      "cost": 5.065407752990723
     },
     {
       "label": "axial_half_cone_+",
       "R_N": 1.5,
       "r_tor": 0.14000000059604645,
       "half_cone_deg": 68.40896606445312,
-      "cost": 2.02719783782959
+      "cost": 3.061244487762451
     },
     {
       "label": "axial_half_cone_-",
       "R_N": 1.5,
       "r_tor": 0.14000000059604645,
       "half_cone_deg": 51.591033935546875,
-      "cost": 2.0604238510131836
+      "cost": 3.791316509246826
     }
   ],
   "history": [
     {
       "iteration": 0,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 44.7265,
-      "cost": 1.56177,
+      "R_N": 1.54904,
+      "r_tor": 0.156199,
+      "half_cone_deg": 52.3041,
+      "cost": 3.41774,
       "type": "sbo"
     },
     {
       "iteration": 1,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 44.7265,
-      "cost": 1.55094,
+      "R_N": 1.54904,
+      "r_tor": 0.196622,
+      "half_cone_deg": 50.1078,
+      "cost": 3.20206,
       "type": "sbo"
     },
     {
       "iteration": 2,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 45.374,
-      "cost": 1.53277,
+      "R_N": 1.54904,
+      "r_tor": 0.181569,
+      "half_cone_deg": 52.6636,
+      "cost": 3.0593,
       "type": "sbo"
     },
     {
       "iteration": 3,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 43.1074,
-      "cost": 1.52228,
+      "R_N": 1.54904,
+      "r_tor": 0.181569,
+      "half_cone_deg": 52.6636,
+      "cost": 3.0593,
       "type": "sbo"
     },
     {
       "iteration": 4,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 43.4074,
-      "cost": 1.51982,
+      "R_N": 1.28137,
+      "r_tor": 0.204414,
+      "half_cone_deg": 52.5823,
+      "cost": 2.94276,
       "type": "sbo"
     },
     {
       "iteration": 5,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0714,
-      "cost": 1.51085,
+      "R_N": 1.28137,
+      "r_tor": 0.204414,
+      "half_cone_deg": 52.5823,
+      "cost": 2.94276,
       "type": "sbo"
     },
     {
       "iteration": 6,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0073,
-      "cost": 1.5014,
+      "R_N": 1.28137,
+      "r_tor": 0.204414,
+      "half_cone_deg": 52.5823,
+      "cost": 2.94276,
       "type": "sbo"
     },
     {
       "iteration": 7,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50094,
+      "R_N": 1.13863,
+      "r_tor": 0.212387,
+      "half_cone_deg": 53.3845,
+      "cost": 2.85457,
       "type": "sbo"
     },
     {
       "iteration": 8,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0034,
-      "cost": 1.50084,
+      "R_N": 1.13863,
+      "r_tor": 0.212387,
+      "half_cone_deg": 53.3845,
+      "cost": 2.85457,
       "type": "sbo"
     },
     {
       "iteration": 9,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50078,
+      "R_N": 1.09457,
+      "r_tor": 0.213534,
+      "half_cone_deg": 53.5403,
+      "cost": 2.84709,
       "type": "sbo"
     },
     {
       "iteration": 10,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.07355,
+      "r_tor": 0.218156,
+      "half_cone_deg": 53.4775,
+      "cost": 2.80512,
       "type": "sbo"
     },
     {
       "iteration": 11,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.07355,
+      "r_tor": 0.218156,
+      "half_cone_deg": 53.4775,
+      "cost": 2.80512,
       "type": "sbo"
     },
     {
       "iteration": 12,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.06376,
+      "r_tor": 0.217376,
+      "half_cone_deg": 53.6878,
+      "cost": 2.79964,
       "type": "sbo"
     },
     {
       "iteration": 13,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.05171,
+      "r_tor": 0.218994,
+      "half_cone_deg": 53.5838,
+      "cost": 2.78824,
       "type": "sbo"
     },
     {
       "iteration": 14,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.05171,
+      "r_tor": 0.218994,
+      "half_cone_deg": 53.5838,
+      "cost": 2.78824,
       "type": "sbo"
     },
     {
       "iteration": 15,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.05171,
+      "r_tor": 0.218994,
+      "half_cone_deg": 53.5838,
+      "cost": 2.78824,
       "type": "sbo"
     },
     {
       "iteration": 16,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.05171,
+      "r_tor": 0.218994,
+      "half_cone_deg": 53.5838,
+      "cost": 2.78824,
       "type": "sbo"
     },
     {
       "iteration": 17,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.05171,
+      "r_tor": 0.218994,
+      "half_cone_deg": 53.5838,
+      "cost": 2.78824,
       "type": "sbo"
     },
     {
       "iteration": 18,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04828,
+      "r_tor": 0.219204,
+      "half_cone_deg": 53.5561,
+      "cost": 2.78676,
       "type": "sbo"
     },
     {
       "iteration": 19,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04835,
+      "r_tor": 0.219205,
+      "half_cone_deg": 53.5811,
+      "cost": 2.78605,
       "type": "sbo"
     },
     {
       "iteration": 20,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04875,
+      "r_tor": 0.2194,
+      "half_cone_deg": 53.574,
+      "cost": 2.78538,
       "type": "sbo"
     },
     {
       "iteration": 21,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04865,
+      "r_tor": 0.219441,
+      "half_cone_deg": 53.5772,
+      "cost": 2.78519,
       "type": "sbo"
     },
     {
       "iteration": 22,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04816,
+      "r_tor": 0.219653,
+      "half_cone_deg": 53.5766,
+      "cost": 2.78473,
       "type": "sbo"
     },
     {
       "iteration": 23,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04795,
+      "r_tor": 0.219579,
+      "half_cone_deg": 53.5772,
+      "cost": 2.78453,
       "type": "sbo"
     },
     {
       "iteration": 24,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04795,
+      "r_tor": 0.219579,
+      "half_cone_deg": 53.5772,
+      "cost": 2.78453,
       "type": "sbo"
     },
     {
       "iteration": 25,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04753,
+      "r_tor": 0.21961,
+      "half_cone_deg": 53.577,
+      "cost": 2.7842,
       "type": "sbo"
     },
     {
       "iteration": 26,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04212,
+      "r_tor": 0.219613,
+      "half_cone_deg": 53.5772,
+      "cost": 2.7822,
       "type": "sbo"
     },
     {
       "iteration": 27,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04351,
+      "r_tor": 0.219421,
+      "half_cone_deg": 53.7222,
+      "cost": 2.78102,
       "type": "sbo"
     },
     {
       "iteration": 28,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04195,
+      "r_tor": 0.219705,
+      "half_cone_deg": 53.7112,
+      "cost": 2.78008,
       "type": "sbo"
     },
     {
       "iteration": 29,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04134,
+      "r_tor": 0.219676,
+      "half_cone_deg": 53.6785,
+      "cost": 2.77981,
       "type": "sbo"
     },
     {
       "iteration": 30,
-      "R_N": 3.0,
-      "r_tor": 0.05,
-      "half_cone_deg": 40.0,
-      "cost": 1.50077,
+      "R_N": 1.04074,
+      "r_tor": 0.219694,
+      "half_cone_deg": 53.7087,
+      "cost": 2.77952,
+      "type": "sbo"
+    },
+    {
+      "iteration": 31,
+      "R_N": 1.04074,
+      "r_tor": 0.219694,
+      "half_cone_deg": 53.7087,
+      "cost": 2.77952,
+      "type": "sbo"
+    },
+    {
+      "iteration": 32,
+      "R_N": 1.04074,
+      "r_tor": 0.219694,
+      "half_cone_deg": 53.7087,
+      "cost": 2.77952,
+      "type": "sbo"
+    },
+    {
+      "iteration": 33,
+      "R_N": 1.04057,
+      "r_tor": 0.219694,
+      "half_cone_deg": 53.7134,
+      "cost": 2.77947,
+      "type": "sbo"
+    },
+    {
+      "iteration": 34,
+      "R_N": 1.04029,
+      "r_tor": 0.219696,
+      "half_cone_deg": 53.7131,
+      "cost": 2.77943,
+      "type": "sbo"
+    },
+    {
+      "iteration": 35,
+      "R_N": 1.04022,
+      "r_tor": 0.219695,
+      "half_cone_deg": 53.7137,
+      "cost": 2.77942,
+      "type": "sbo"
+    },
+    {
+      "iteration": 36,
+      "R_N": 1.04019,
+      "r_tor": 0.219696,
+      "half_cone_deg": 53.7128,
+      "cost": 2.77942,
+      "type": "sbo"
+    },
+    {
+      "iteration": 37,
+      "R_N": 1.04008,
+      "r_tor": 0.219696,
+      "half_cone_deg": 53.7168,
+      "cost": 2.7794,
+      "type": "sbo"
+    },
+    {
+      "iteration": 38,
+      "R_N": 1.03999,
+      "r_tor": 0.219696,
+      "half_cone_deg": 53.7175,
+      "cost": 2.77939,
+      "type": "sbo"
+    },
+    {
+      "iteration": 39,
+      "R_N": 1.03999,
+      "r_tor": 0.219696,
+      "half_cone_deg": 53.7175,
+      "cost": 2.77939,
+      "type": "sbo"
+    },
+    {
+      "iteration": 40,
+      "R_N": 1.03997,
+      "r_tor": 0.219696,
+      "half_cone_deg": 53.7174,
+      "cost": 2.77939,
+      "type": "sbo"
+    },
+    {
+      "iteration": 41,
+      "R_N": 1.03997,
+      "r_tor": 0.219742,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77937,
+      "type": "sbo"
+    },
+    {
+      "iteration": 42,
+      "R_N": 1.03997,
+      "r_tor": 0.21974,
+      "half_cone_deg": 53.7171,
+      "cost": 2.77937,
+      "type": "sbo"
+    },
+    {
+      "iteration": 43,
+      "R_N": 1.03997,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77937,
+      "type": "sbo"
+    },
+    {
+      "iteration": 44,
+      "R_N": 1.03997,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77937,
+      "type": "sbo"
+    },
+    {
+      "iteration": 45,
+      "R_N": 1.03997,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77937,
+      "type": "sbo"
+    },
+    {
+      "iteration": 46,
+      "R_N": 1.03997,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77937,
+      "type": "sbo"
+    },
+    {
+      "iteration": 47,
+      "R_N": 1.03997,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77937,
+      "type": "sbo"
+    },
+    {
+      "iteration": 48,
+      "R_N": 1.03966,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77935,
+      "type": "sbo"
+    },
+    {
+      "iteration": 49,
+      "R_N": 1.03965,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7172,
+      "cost": 2.77935,
+      "type": "sbo"
+    },
+    {
+      "iteration": 50,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7295,
+      "cost": 2.77935,
+      "type": "sbo"
+    },
+    {
+      "iteration": 51,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7248,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 52,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7248,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 53,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7248,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 54,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7248,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 55,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 56,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 57,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 58,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 59,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 60,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 61,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 62,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 63,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 64,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 65,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 66,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 67,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 68,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 69,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 70,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
+      "type": "sbo"
+    },
+    {
+      "iteration": 71,
+      "R_N": 1.03967,
+      "r_tor": 0.219741,
+      "half_cone_deg": 53.7247,
+      "cost": 2.77934,
       "type": "sbo"
     }
   ],

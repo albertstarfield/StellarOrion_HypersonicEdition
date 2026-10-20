@@ -2161,9 +2161,14 @@ package body StellarOrion_Optimization is
    -- ============================================================================
    -- AXIOMS (J(x) multi-objective, validation-referenced):
    --   A1: J(x) = W_Heat_Load*Q(x)/Q_target + W_Flux*q(x)/q_ref
-   --            + W_Beta*(beta(x)/beta_ref - 1)^2 + W_Cd*Cd(x)/Cd_ref
+   --            + W_Beta*(beta(x)/beta_ref - 1)^2
+   --            + W_Cd*max(0,(Cd_Goal - Cd(x))/Cd_Goal)
    --            + Lambda_Pen*(max(0,R_max-3)^2 + max(0,1-R_N)^2
    --                          + max(0,R_pay_min-R_N)^2)
+   --       The drag term is a REWARD: minimising J MAXIMISES Cd(x)
+   --       up to Cd_Goal.  The OLD term W_Cd*Cd(x)/Cd_ref was a
+   --       linear PENALTY, so minimising J pushed the drag down and
+   --       the GA traded 4.7 % of drag for heat load.
    --       [full derivation: stellarorion_optimization.ads, J(x) block]
    --   A2: Q(x) = q_SG(x) * Tau_Sec — Sutton-Graves heat flux at the
    --       validated snapshot (h = 51.8 km, V = 3378 m/s) integrated
@@ -2178,8 +2183,9 @@ package body StellarOrion_Optimization is
    -- THEOREMS:
    --   T1: every term >= 0 for Pre-satisfying X => Total >= 0
    --       (Post condition) and Heat_Load_Jcm2 >= 0 (Post).
-   --   T2: at the default geometry with default refs, Total ~= 1.96
-   --       (unit-scale ratio terms, penalties 0).
+   --   T2: at the default geometry with default refs, Total ~= 3.43
+   --       (unit-scale ratio terms, penalties 0) -- the drag REWARD
+   --       term contributes W_Cd*Cd_Deficit = 30*0.0545 = 1.64.
    --   T3: doubling Q_target halves only the heat-load term's
    --       numerator share (exercised by Test_HIAD_Cost_Function).
    -- APPLICATIONS:
@@ -2224,21 +2230,28 @@ package body StellarOrion_Optimization is
          Beta_R : constant Float :=
            (Current_Refs.Cd_Ref * A_Ref) / (Cd_X * A);
          Beta_Dv : constant Float := (Beta_R - 1.0) ** 2;
-         --  Term 4: drag-coefficient ratio
+         --  Term 4: drag-coefficient ratio (REPORTED quantity)
          Cd_R   : constant Float := Cd_X / Current_Refs.Cd_Ref;
+         --  Term 4b: drag DEFICIT to the drag goal -- the drag term
+         --  that actually enters J.  It is a REWARD: minimising J
+         --  maximises Cd.  Normalised and bounded in [0,1] so
+         --  J(x) >= 0 still holds by construction.
+         Cd_Deficit : constant Float :=
+           Max (0.0, (Cd_Goal - Cd_X) / Cd_Goal);
          --  Term 5: quadratic penalties (envelope + TPS + payload)
          Pen_R  : constant Float := Max (0.0, R_Max - Max_Radius_Limit) ** 2;
          Pen_N  : constant Float := Max (0.0, Nose_Radius_Limit - X(1)) ** 2;
          Pen_P  : constant Float :=
            Max (0.0, Payload_Nose_Radius_Min - X(1)) ** 2;
          Penalty : constant Float := Lambda_Pen * (Pen_R + Pen_N + Pen_P);
-         --  Weighted sum — W_Heat_Load dominates (stated objective:
-         --  lowest Total Heat Load, ads AXIOM A2)
+         --  Weighted sum: the heat-load term keeps the largest single
+         --  weight (primary objective, ads AXIOM W2) while the drag
+         --  term rewards a HIGHER drag coefficient (AXIOM W3).
          Total   : constant Float :=
            W_Heat_Load * HL_R
            + W_Flux * Flux_R
            + W_Beta * Beta_Dv
-           + W_Cd * Cd_R
+           + W_Cd * Cd_Deficit
            + Penalty;
       begin
          --  Murphy's-law guards: contracts are not runtime-enforced
@@ -2259,6 +2272,7 @@ package body StellarOrion_Optimization is
                  Flux_Ratio      => Flux_R,
                  Beta_Dev        => Beta_Dv,
                  Cd_Ratio        => Cd_R,
+                 Cd_Deficit      => Cd_Deficit,
                  Penalty         => Penalty,
                  Total           => Total,
                  Heat_Load_Jcm2  => Q_Load);
@@ -3665,8 +3679,9 @@ package body StellarOrion_Optimization is
    --       (R_N = 0.995 < R_pay_min), envelope penalty (R_max > 3),
    --       and DYNAMIC-REF sensitivity (doubling Q_target lowers J).
    -- THEOREMS:
-   --   T1: J(center) ~= 1.96 with default refs (HIAD_Cost_Components
-   --       T2); window [1.0, 5.0] absorbs FP/model jitter.
+   --   T1: J(center) ~= 3.43 with default refs (HIAD_Cost_Components
+   --       T2; it was ~= 1.96 while the drag term was a PENALTY); window
+   --       [1.0, 5.0] absorbs FP/model jitter.
    --   T2: every Cost_Components field is >= 0 by J(x) axiom A1;
    --       Heat_Load_Jcm2 > 0 requires q_SG > 0 at the snapshot.
    --   T3: refs are RESTORED to defaults at the end so later tests
@@ -3705,8 +3720,9 @@ package body StellarOrion_Optimization is
             All_OK := False;
          end if;
 
-         --  (2) Unit-scale range: J(center) ~= 1.96 with default refs
-         --     (Components T2); wide window absorbs FP/model jitter.
+         --  (2) Unit-scale range: J(center) ~= 3.43 with default refs
+         --     (Components T2 -- the drag REWARD term raised the value
+         --     from 1.96); wide window absorbs FP/model jitter.
          if Cost < 1.0 or Cost > 5.0 then
             All_OK := False;
          end if;
@@ -3721,6 +3737,12 @@ package body StellarOrion_Optimization is
            or Comp.Penalty < 0.0
            or Comp.Heat_Load_Jcm2 <= 0.0
          then
+            All_OK := False;
+         end if;
+
+         --  (3b) The drag deficit that enters J is bounded in [0,1]
+         --     (AXIOM W3), so J(x) >= 0 by construction.
+         if Comp.Cd_Deficit < 0.0 or Comp.Cd_Deficit > 1.0 then
             All_OK := False;
          end if;
 

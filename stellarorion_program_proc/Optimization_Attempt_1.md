@@ -8,7 +8,7 @@
 
 ## Objective
 
-Execute headless optimize topology pipeline to minimize drag coefficient (Cd) of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD) geometry, producing actual parameter variation with comparison, and verify trajectory simulation from step 0 to step 300,000,000.
+maximize the drag coefficient (Cd)
 
 ---
 

@@ -317,8 +317,18 @@ package StellarOrion_GA_Parallel with SPARK_Mode => Off is
       Costs       : out Cost_Array);
 
    --  Release the worker pool so the partition can shut down.
+   --
    --  MUST be called once the optimiser is finished, otherwise the
-   --  process waits for the blocked workers at exit.
+   --  process waits for the blocked workers at exit: the four workers are
+   --  library-level task objects blocked in their gate entries, and the
+   --  Ada runtime keeps the partition alive until every task has ended.
+   --
+   --  OBLIGATION: every program that calls Evaluate_Population (or
+   --  Parallel_Batch_Evaluator) DIRECTLY must call this procedure on
+   --  BOTH the normal and the exception path.  The optimiser itself does
+   --  NOT call it -- the caller of the optimiser owns the pool's
+   --  lifetime, because a Ravenscar pool cannot be restarted once
+   --  released.  Calling it more than once is harmless.
    procedure Shut_Down_Workers;
 
    --  Whether the worker pool can still accept batches.

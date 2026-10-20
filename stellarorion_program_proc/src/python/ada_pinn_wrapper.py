@@ -554,8 +554,8 @@ _ada_lib.HIAD_Set_Refs_C.restype = ctypes.c_int
 _ada_lib.HIAD_Set_Refs_C.argtypes = [
     ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double]
 
-# Bind Ada HIAD_Cost_Components_C(X1, X2, X3, Out x7) procedure.
-# Seven caller-allocated c_double write-backs (ffi.adb axiom block).
+# Bind Ada HIAD_Cost_Components_C(X1, X2, X3, Out x8) procedure.
+# Eight caller-allocated c_double write-backs (ffi.adb axiom block).
 # [Citation: stellarorion_ffi.ads — HIAD_Cost_Components_C]
 _ada_lib.HIAD_Cost_Components_C.restype = None
 _ada_lib.HIAD_Cost_Components_C.argtypes = [
@@ -563,7 +563,7 @@ _ada_lib.HIAD_Cost_Components_C.argtypes = [
     ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
     ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
     ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
-    ctypes.POINTER(ctypes.c_double)]
+    ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
 
 
 def estimate_cd(r_n: float, r_tor: float, half_cone_deg: float) -> float:
@@ -730,7 +730,7 @@ def hiad_cost_components(x1: float, x2: float, x3: float) -> dict[str, float]:
     References:
         - https://docs.python.org/3/library/ctypes.html
     """
-    outs = [ctypes.c_double(0.0) for _ in range(7)]
+    outs = [ctypes.c_double(0.0) for _ in range(8)]
     # Narrowing guard (same as set_validation_refs): keeps pyrefly's flow
     # analysis happy and fails loud if the dylib global were ever reset.
     if _ada_lib is None:
@@ -740,7 +740,7 @@ def hiad_cost_components(x1: float, x2: float, x3: float) -> dict[str, float]:
         ctypes.byref(outs[0]), ctypes.byref(outs[1]),
         ctypes.byref(outs[2]), ctypes.byref(outs[3]),
         ctypes.byref(outs[4]), ctypes.byref(outs[5]),
-        ctypes.byref(outs[6]),
+        ctypes.byref(outs[6]), ctypes.byref(outs[7]),
     )
     total = float(outs[5].value)
     # Same sentinel contract as hiad_cost_function (ffi.adb axiom block).
@@ -758,6 +758,7 @@ def hiad_cost_components(x1: float, x2: float, x3: float) -> dict[str, float]:
         "penalty": float(outs[4].value),
         "total": total,
         "heat_load_jcm2": float(outs[6].value),
+        "cd_deficit": float(outs[7].value),
     }
 
 

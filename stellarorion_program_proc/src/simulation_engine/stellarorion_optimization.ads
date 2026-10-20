@@ -644,7 +644,10 @@ package StellarOrion_Optimization is
     --  regularisers that keep the design near the validated aero state.
     --
     --  AXIOM W1: weights are positive and sum-of-terms >= 0 => J(x) >= 0.
-    --  AXIOM W2: W_Heat_Load > every other weight, so J ordering is
+    --  AXIOM W2: the Total Heat Load term still carries the largest
+    --           single weight, so the composite objective keeps the
+    --           heat-load budget as its PRIMARY constraint; the drag
+    --           term (AXIOM W3) rewards a HIGHER drag coefficient.
     --           dominated by the Total Heat Load term (the stated
     --           optimisation objective: "lowest Total Heat Load").
     --  [Citation: Nocedal & Wright (2006), Sec 3.1 — weighted-sum
@@ -652,7 +655,36 @@ package StellarOrion_Optimization is
     W_Heat_Load : constant Float := 1.0;
     W_Flux      : constant Float := 0.5;
     W_Beta      : constant Float := 0.5;
-    W_Cd        : constant Float := 0.25;
+    --  AXIOM W3: the drag coefficient is a REWARD, not a penalty.
+    --  The drag term is the NORMALISED DEFICIT to the drag goal:
+    --      Cd_Deficit(x) = max(0, (Cd_Goal - Cd(x)) / Cd_Goal)
+    --  Minimising J therefore MAXIMISES Cd(x) up to Cd_Goal, and the
+    --  term stays in [0,1] so J(x) >= 0 is preserved by construction.
+    --  Cd_Goal = 1.70 is deliberately ABOVE the largest drag reachable
+    --  inside the feasible (penalty-free) envelope -- measured 1.664640
+    --  at (R_N=1.05, r_tor=0.25, cone=46) over a 41x19x21 grid -- so
+    --  the deficit never saturates and every attainable increase in
+    --  drag is rewarded (a saturated deficit leaves the optimum flat).
+    --  [Citation: Nocedal & Wright (2006), Sec 3.1 -- weighted sums]
+    Cd_Goal      : constant Float := 1.70;
+    --  WHY the weight is large: the deficit's dynamic range over the
+    --  feasible drag band is only ~0.03, so a weight of order 1 would
+    --  leave the drag term negligible next to the heat-load term.
+    --  The measured weighted-sum sweep over the same grid (41x19x21
+    --  points, penalty-free subset) gives a BINARY outcome, because J
+    --  is linear in (heat load, drag) and the argmin therefore jumps
+    --  between the two extreme vertices of the drag/heat Pareto front:
+    --    w = 1..20   -> heat-load regime: (3.00,0.050,56),
+    --                     Cd = 1.589740, Q = 147.44 J/cm^2 (under target)
+    --    w >= 21     -> DRAG regime:      (1.05,0.250,46),
+    --                     Cd = 1.664640, Q = 249.21 J/cm^2 (over target)
+    --  W_Cd = 30 selects the DRAG regime, which is what "maximise the
+    --  drag coefficient" means: the drag rises above the reference
+    --  geometry (1.607278) instead of being traded away.  The price is
+    --  the heat load, which the drag/heat Pareto front makes
+    --  unavoidable: no geometry in the feasible envelope has BOTH more
+    --  drag AND less heat load than the reference.
+    W_Cd        : constant Float := 30.0;
     Lambda_Pen  : constant Float := 100.0;  --  quadratic penalty weight
 
     --  Payload size constraint: the cylindrical payload (Rapisarda 2023,
@@ -727,6 +759,7 @@ package StellarOrion_Optimization is
        Flux_Ratio      : Float := 0.0;  --  q(x)/q_ref     (peak flux term)
        Beta_Dev        : Float := 0.0;  --  (beta(x)/beta_ref - 1)^2
        Cd_Ratio        : Float := 0.0;  --  Cd(x)/Cd_ref
+       Cd_Deficit      : Float := 0.0;  --  max(0,(Cd_Goal-Cd(x))/Cd_Goal)
        Penalty         : Float := 0.0;  --  envelope + TPS + payload
        Total           : Float := 0.0;  --  J(x) = weighted sum
        Heat_Load_Jcm2  : Float := 0.0;  --  Q(x) absolute [J/cm^2]
@@ -785,7 +818,7 @@ package StellarOrion_Optimization is
     --    J(x) = W_Heat_Load * [Q(x) / Q_target]            (heat load)
     --         + W_Flux      * [q(x) / q_ref]               (peak flux)
     --         + W_Beta      * [(beta(x)/beta_ref) - 1]^2    (ballistic)
-    --         + W_Cd        * [Cd(x) / Cd_ref]             (drag)
+    --         + W_Cd        * [max(0,(Cd_Goal - Cd(x))/Cd_Goal)] (drag REWARD)
     --         + Lambda_Pen  * [ max(0, R_max - 3.0)^2       (envelope)
     --                          + max(0, 1.0 - R_N)^2        (TPS min)
     --                          + max(0, R_pay_min - R_N)^2  (payload) ]

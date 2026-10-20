@@ -399,7 +399,10 @@ package body StellarOrion_GA_Parallel with SPARK_Mode => Off is
         StellarOrion_Optimization.No_Surrogate_Model;
    begin
       for I in Items'Range loop
-         Items (I).Diameter_M := 2.0 + 0.1 * Float (I);
+         --  The diameter MUST stay inside Geometry_Parameters'
+         --  Diameter_Range: an out-of-range assignment raises
+         --  Constraint_Error (the range check), not a silent clamp.
+         Items (I).Diameter_M := 2.0 + 0.01 * Float (I);
          Items (I).Angle_Deg := 60.0;
       end loop;
 
@@ -423,6 +426,13 @@ package body StellarOrion_GA_Parallel with SPARK_Mode => Off is
          end loop;
          Ada.Text_IO.Put_Line
            ("[PASS] Test_Parallel_Batch_Evaluator: parallel == sequential");
+
+         --  WHY: this test calls Evaluate_Population DIRECTLY, so it owns
+         --  the worker pool's lifetime.  Without an explicit release the
+         --  four library-level workers stay blocked in their gate entries
+         --  and the Ada runtime keeps the partition alive at exit
+         --  (measured: the harness hung after its last test line).
+         Shut_Down_Workers;
       exception
          when Program_Error =>
             --  The pool was already shut down: the sequential fallback in
@@ -430,11 +440,15 @@ package body StellarOrion_GA_Parallel with SPARK_Mode => Off is
             --  rather than failing the run.
             Ada.Text_IO.Put_Line
               ("[PASS] Test_Parallel_Batch_Evaluator: pool shut down (fallback path)");
+            Shut_Down_Workers;
       end;
    exception
       when E : others =>
          Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Parallel_Batch_Evaluator: " &
                                Ada.Exceptions.Exception_Name (E));
+         --  Release the pool on the failure path too, otherwise a failed
+         --  test leaves the partition unable to shut down.
+         Shut_Down_Workers;
          raise;
    end Test_Parallel_Batch_Evaluator;
 

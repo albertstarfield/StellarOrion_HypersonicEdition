@@ -234,7 +234,8 @@ package body StellarOrion_FFI is
       Out_Cd_Ratio           : access Interfaces.C.Double;
       Out_Penalty            : access Interfaces.C.Double;
       Out_Total              : access Interfaces.C.Double;
-      Out_Heat_Load_Jcm2     : access Interfaces.C.Double)
+      Out_Heat_Load_Jcm2     : access Interfaces.C.Double;
+      Out_Cd_Deficit        : access Interfaces.C.Double)
    is
       X    : Param_Vector;
       Comp : Cost_Components;
@@ -252,6 +253,7 @@ package body StellarOrion_FFI is
       Out_Penalty.all         := Interfaces.C.Double (Comp.Penalty);
       Out_Total.all           := Interfaces.C.Double (Comp.Total);
       Out_Heat_Load_Jcm2.all  := Interfaces.C.Double (Comp.Heat_Load_Jcm2);
+      Out_Cd_Deficit.all      := Interfaces.C.Double (Comp.Cd_Deficit);
    exception
       when others =>
          --  ORDER MATTERS: write the sentinel outputs FIRST so the host
@@ -267,6 +269,7 @@ package body StellarOrion_FFI is
          Out_Penalty.all         := 0.0;
          Out_Total.all           := Interfaces.C.Double (-1.0);
          Out_Heat_Load_Jcm2.all  := 0.0;
+         Out_Cd_Deficit.all      := 0.0;
          Log("[VERBOSE_ERROR] HIAD_Cost_Components_C: Ada exception - sentinel Total=-1.0 returned");
    end HIAD_Cost_Components_C;
 
@@ -1356,12 +1359,17 @@ package body StellarOrion_FFI is
       PEN : aliased Interfaces.C.Double := 0.0;
       TOT : aliased Interfaces.C.Double := 0.0;
       HLJ : aliased Interfaces.C.Double := 0.0;
+      CDD : aliased Interfaces.C.Double := 0.0;
    begin
       HIAD_Cost_Components_C
         (1.5, 0.135, 60.0,
          HLR'Access, FR'Access, BD'Access, CR'Access, PEN'Access,
-         TOT'Access, HLJ'Access);
+         TOT'Access, HLJ'Access, CDD'Access);
       pragma Assert (TOT >= 0.0, "HIAD_Cost_Components_C total cost is negative");
+      --  The drag term is a REWARD: the deficit is bounded in [0,1] and
+      --  vanishes once Cd reaches the drag goal.
+      pragma Assert (CDD >= 0.0 and then CDD <= 1.0,
+                     "HIAD_Cost_Components_C drag deficit out of [0,1]");
    exception
       when E : others =>
          Log ("Test_HIAD_Cost_Components_C FAIL: "

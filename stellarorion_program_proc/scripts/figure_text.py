@@ -128,10 +128,10 @@ def improvement_pct(data: dict[str, Any], key: str = "cd_pct") -> str:
 def cd_change_text(data: dict[str, Any]) -> str:
     """Describe the drag change in words, with an unambiguous sign.
 
-    The pipeline MINIMISES the drag coefficient, so a POSITIVE
-    ``improvement.cd_pct`` means the drag was REDUCED.  A bare percentage
+    The pipeline MAXIMISES the drag coefficient, so a POSITIVE
+    ``improvement.cd_pct`` means the drag was INCREASED.  A bare percentage
     with a "+" is easy to misread, so this helper spells the direction out
-    ("drag reduced by 4.73%") and falls back to the sign of the percentage
+    ("drag increased by 4.73%") and falls back to the sign of the percentage
     when the newer ``cd_direction`` field is absent.
 
     Parameters
@@ -143,7 +143,7 @@ def cd_change_text(data: dict[str, Any]) -> str:
     Returns
     -------
     str
-        ``"drag reduced by 4.73%"`` when the value is present and finite;
+        ``"drag increased by 4.73%"`` when the value is present and finite;
         otherwise the string ``"n/a"``.
 
     Side effects
@@ -187,12 +187,12 @@ def cd_change_text(data: dict[str, Any]) -> str:
 
     direction = improvement.get("cd_direction")
     if not isinstance(direction, str) or not direction:
-        # Fall back to the sign of the reduction percentage: Cd is minimised,
-        # so a positive percentage is a reduction.
+        # Fall back to the sign of the gain percentage: Cd is maximised,
+        # so a positive percentage is an increase.
         if value > 0.0:
-            direction = "reduced"
-        elif value < 0.0:
             direction = "increased"
+        elif value < 0.0:
+            direction = "reduced"
         else:
             direction = "unchanged"
     return f"drag {direction} by {abs(value):.2f}%"

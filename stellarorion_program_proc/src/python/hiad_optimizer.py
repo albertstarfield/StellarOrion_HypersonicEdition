@@ -1544,18 +1544,19 @@ def main(argv: "list[str] | None" = None) -> int:
     else:
         improvement_pct = 0.0
     print(f"\n  Cost improvement: {improvement_pct:+.4f}%")
-    # AXIOM A5: the drag coefficient is a MINIMISATION target -- the pipeline
-    # goal is "minimize drag coefficient (Cd)" and the Ada cost J carries the
-    # one-sided term W_Cd * Cd/Cd_ref.  A Cd REDUCTION is therefore the
-    # improvement, and the reported percentage keeps that historical
-    # contract ("reduction = positive").  The SIGNED DELTA and the direction
-    # word are reported next to it so no reader can mistake a lower Cd for a
-    # regression.
+    # AXIOM A5: the drag coefficient is a MAXIMISATION target -- the pipeline
+    # goal is "maximize the drag coefficient (Cd)" and the Ada cost J now
+    # carries the drag DEFICIT term W_Cd * max(0,(Cd_Goal-Cd(x))/Cd_Goal),
+    # which is a REWARD.  A HIGHER Cd is therefore the improvement and a
+    # LOWER Cd is a negative change, so the reported percentage is a
+    # signed GAIN (positive = more drag).  The SIGNED DELTA and the
+    # direction word are reported next to it so no reader can mistake
+    # the sign.
     cd_delta = opt_cd - default_cd
     if default_cd > 0:
-        cd_reduction_pct = ((default_cd - opt_cd) / default_cd) * 100.0
+        cd_gain_pct = ((opt_cd - default_cd) / default_cd) * 100.0
     else:
-        cd_reduction_pct = 0.0
+        cd_gain_pct = 0.0
     if cd_delta < -1.0e-9:
         cd_direction = "reduced"
     elif cd_delta > 1.0e-9:
@@ -1565,7 +1566,7 @@ def main(argv: "list[str] | None" = None) -> int:
     print(
         f"  Cd: {default_cd:.6f} -> {opt_cd:.6f} "
         f"(delta {cd_delta:+.6f}; drag {cd_direction} by "
-        f"{abs(cd_reduction_pct):.4f}%)"
+        f"{abs(cd_gain_pct):.4f}%)"
     )
 
     # --- Step 6: Save results to JSON ---
@@ -1608,11 +1609,12 @@ def main(argv: "list[str] | None" = None) -> int:
         },
         "improvement": {
             "cost_pct": improvement_pct,
-            # AXIOM A5: "cd_pct" keeps its historical name and meaning (a
-            # POSITIVE value is a drag REDUCTION).  "cd_delta" is the raw
-            # signed change (optimum - default) and "cd_direction" the
+            # AXIOM A5: "cd_pct" keeps its historical name but its MEANING
+            # follows the objective direction: a POSITIVE value is now a
+            # drag GAIN (the objective maximises Cd).  "cd_delta" is the
+            # raw signed change (optimum - default) and "cd_direction" the
             # word -- both ADDITIVE, so existing consumers keep working.
-            "cd_pct": cd_reduction_pct,
+            "cd_pct": cd_gain_pct,
             "cd_delta": cd_delta,
             "cd_direction": cd_direction,
             "total_heat_load_pct": hl_pct,
@@ -1669,7 +1671,7 @@ def main(argv: "list[str] | None" = None) -> int:
     print(f"  Optimized Cd = {opt_cd:.6f}  J = {opt_cost:.6f}")
     print(
         f"  Improvement: {improvement_pct:+.4f}% (cost J), "
-        f"drag {cd_direction} by {abs(cd_reduction_pct):.4f}% (Cd)"
+        f"drag {cd_direction} by {abs(cd_gain_pct):.4f}% (Cd)"
     )
     print(f"  Total Heat Load (PRIMARY OBJECTIVE): "
           f"{default_comp['heat_load_jcm2']:.4f} -> "
