@@ -1998,21 +1998,25 @@ def _post_optimization_outputs(stdout_text: str) -> None:
         m = re.search(pattern, text)
         return float(m.group(1)) if m else default
 
+    #  WHY: mass_kg is not carried here at all. The composite cost J in
+    #  StellarOrion_Optimization.HIAD_Cost_Function weights only heat-load,
+    #  flux, beta deviation and Cd — mass is not an optimisation target and
+    #  is not a comparison metric, so it is never parsed, never compared and
+    #  never emitted (JSON parameter blocks, VTU metadata).
     opt = {
         "diameter_m": _parse_float(r"Diameter\s*=\s*([\d.E+\-]+)", stdout_text),
         "angle_deg": _parse_float(r"Angle\s*=\s*([\d.E+\-]+)", stdout_text),
         "nose_radius_m": _parse_float(r"Nose radius\s*=\s*([\d.E+\-]+)", stdout_text),
         "toroid_count": int(_parse_float(r"Toroid count\s*=\s*([\d.E+\-]+)", stdout_text)),
         "toroid_radius_m": _parse_float(r"Toroid radius\s*=\s*([\d.E+\-]+)", stdout_text),
-        "mass_kg": _parse_float(r"Mass\s*=\s*([\d.E+\-]+)", stdout_text),
         "cost": _parse_float(r"Best cost.*?:\s*([\d.E+\-]+)", stdout_text),
         "generations": int(_parse_float(r"Generations used\s*:\s*(\d+)", stdout_text)),
         "converged": "TRUE" in stdout_text.split("Converged")[-1].split("\n")[0] if "Converged" in stdout_text else False,
     }
 
-    # IRVE-3 reference values
+    # IRVE-3 reference values (geometry only — mass deliberately absent, see above)
     irve3 = {"diameter_m": 3.0, "angle_deg": 60.0, "nose_radius_m": 0.55,
-             "toroid_count": 6, "toroid_radius_m": 0.135, "mass_kg": 281.0}
+             "toroid_count": 6, "toroid_radius_m": 0.135}
 
     # Output directory
     out_dir = os.path.join(_PROJECT_ROOT, "results/00_reference",
@@ -2030,9 +2034,14 @@ def _post_optimization_outputs(stdout_text: str) -> None:
         "| Parameter | Optimised | IRVE-3 Reference | Delta |",
         "|:---|---:|---:|---:|",
     ]
+    #  WHY: mass_kg is deliberately excluded from every comparison surface
+    #  (table, CSV, JSON, bar chart). The composite cost J in
+    #  StellarOrion_Optimization.HIAD_Cost_Function weights only heat-load,
+    #  flux, beta deviation and Cd — mass is not an optimisation target, so
+    #  comparing mass would imply a metric the optimizer never optimised.
     for key, label in [("diameter_m", "Diameter (m)"), ("angle_deg", "Angle (deg)"),
                         ("nose_radius_m", "Nose radius (m)"), ("toroid_count", "Toroid count"),
-                        ("toroid_radius_m", "Toroid radius (m)"), ("mass_kg", "Mass (kg)")]:
+                        ("toroid_radius_m", "Toroid radius (m)")]:
         ov = opt[key]
         rv = irve3[key]
         delta = (ov - rv) / rv * 100 if rv != 0 else 0
@@ -2047,6 +2056,9 @@ def _post_optimization_outputs(stdout_text: str) -> None:
     # 2. CSV
     csv_lines = ["parameter,optimised,irve3_reference,delta_pct"]
     for key, ov in opt.items():
+        #  WHY: mass_kg is absent from both dictionaries by construction, so
+        #  every key of `opt` present in `irve3` is a geometry parameter and
+        #  therefore a legitimate comparison row.
         if key in irve3:
             rv = irve3[key]
             delta = (ov - rv) / rv * 100 if rv != 0 else 0
@@ -2070,6 +2082,8 @@ def _post_optimization_outputs(stdout_text: str) -> None:
         },
         "optimized_geometry": opt,
         "irve3_reference": irve3,
+        #  WHY: mass_kg excluded from deltas — same rationale as the CSV above.
+        #  The key is absent from `irve3` entirely, so no filter is needed.
         "deltas": {k: (opt[k] - irve3[k]) / irve3[k] * 100 if irve3[k] != 0 else 0
                    for k in irve3},
     }
@@ -2094,12 +2108,15 @@ def _post_optimization_outputs(stdout_text: str) -> None:
         import matplotlib.pyplot as plt  # type: ignore[missing-import]
 
         fig, ax = plt.subplots(figsize=(12, 6))
+        #  WHY: no Mass category — mass (~281 kg) dwarfed the geometry bars
+        #  (m/deg values ~0.1–60) on the shared y-axis, and mass is not part
+        #  of cost J, so it is not a comparison metric (see table comment).
         params = ["Diameter\n(m)", "Angle\n(deg)", "Nose radius\n(m)",
-                   "Toroid radius\n(m)", "Mass\n(kg)"]
+                   "Toroid radius\n(m)"]
         opt_vals = [opt["diameter_m"], opt["angle_deg"], opt["nose_radius_m"],
-                     opt["toroid_radius_m"], opt["mass_kg"]]
+                     opt["toroid_radius_m"]]
         irv_vals = [irve3["diameter_m"], irve3["angle_deg"], irve3["nose_radius_m"],
-                     irve3["toroid_radius_m"], irve3["mass_kg"]]
+                     irve3["toroid_radius_m"]]
         x = range(len(params))
         w = 0.35
         ax.bar([i - w/2 for i in x], opt_vals, w, label="Optimised", color="#e74c3c", edgecolor="black", linewidth=0.5)
@@ -2138,7 +2155,6 @@ def _post_optimization_outputs(stdout_text: str) -> None:
             f'        <DataArray type="Float64" Name="nose_radius_m" format="ascii">{opt["nose_radius_m"]}</DataArray>',
             f'        <DataArray type="Int64" Name="toroid_count" format="ascii">{opt["toroid_count"]}</DataArray>',
             f'        <DataArray type="Float64" Name="toroid_radius_m" format="ascii">{opt["toroid_radius_m"]}</DataArray>',
-            f'        <DataArray type="Float64" Name="mass_kg" format="ascii">{opt["mass_kg"]}</DataArray>',
             '      </CellData>',
             '      <Cells>',
             '        <DataArray type="Int64" Name="connectivity" format="ascii"/>',
