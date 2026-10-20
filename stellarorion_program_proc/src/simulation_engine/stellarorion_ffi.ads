@@ -29,9 +29,15 @@
 -- Author: Albert Starfield Wahyu Suryo Samudro
 -- =============================================================================
 
+
 with Interfaces.C; use Interfaces.C;
 with StellarOrion_Types; use StellarOrion_Types;
 with StellarOrion_Physics;
+--  WHY: the C-callable surrogate-based GA entry drives
+--  StellarOrion_Optimization.Run_GA_Optimization and hands the caller the
+--  optimiser's own C-layout history buffer, so the optimiser package has to
+--  be visible here.  No cycle: the optimiser does NOT with the FFI.
+with StellarOrion_Optimization;
 
 package StellarOrion_FFI is
    pragma SPARK_Mode (Off);
@@ -245,6 +251,81 @@ package StellarOrion_FFI is
                            and then Out_N_Iter.all <= Max_Iter)
                   or else Out_Converged.all not in 0 .. 1;
    pragma Export (C, Run_MoP_C, "Run_MoP_C");
+
+   -- -------------------------------------------------------------------------
+   --  Run_SBO_GA_C
+   -- -------------------------------------------------------------------------
+   --  C wrapper for the surrogate-based genetic algorithm:
+   --  StellarOrion_Optimization.Run_GA_Optimization driven by
+   --  StellarOrion_Optimization.SBO_Fitness.
+   --
+   --  AXIOMS:
+   --    A1. The 2^3 factorial design is evaluated in the ANALYTIC screening
+   --        space (R_N, r_tor, half_cone_deg) around the CCD centre
+   --        (CCD_Centre_R_N, CCD_Centre_R_Tor, CCD_Centre_Cone) using the
+   --        half-widths (CCD_Delta_R_N, CCD_Delta_R_Tor, CCD_Delta_Cone).
+   --        The design therefore matches the coded coordinates the surrogate
+   --        is fitted in, so the fitted contrasts are exact.
+   --    A2. The surrogate response is the DIMENSIONLESS heat-load ratio
+   --        Q(x)/Q_target, so the model-fidelity penalty stays O(1) and
+   --        cannot swamp the analytic screening cost J.
+   --    A3. The reported coordinates are projected onto the analytic
+   --        screening box R_N in [0.5, 3.0], r_tor in [0.05, 0.5],
+   --        half_cone in [40, 80] -- the same box the Python Bayesian
+   --        optimiser searches -- so the C caller can compare the two
+   --        optimisers on the same domain.  The reported cost is the fitness
+   --        the GA actually minimised.
+   --    A4. The model-fidelity penalty weight is
+   --        StellarOrion_Optimization.Model_Fidelity_Weight.
+   --    A5. The history buffer is owned by the caller: the wrapper writes
+   --        one row per generation into it in place, with no conversion
+   --        copy and no heap allocation.
+   --
+   --  Parameters:
+   --    Population_Size — GA population size (1 .. Max_Population)
+   --    Max_Generations — GA generation budget (>= 1)
+   --    Target_Beta     — target ballistic coefficient
+   --    History         — caller-allocated history buffer (may be null)
+   --    Out_N_History   — number of history rows written
+   --    Out_X1..Out_X3  — optimum in analytic coordinates
+   --    Out_Cost        — cost at the optimum
+   --    Out_Converged   — output convergence flag (1 = converged, 0 = not)
+   --    Out_N_Iter      — output number of generations used
+   --
+   --  CITATIONS:
+   --    [Jones98]    Jones (1998), Surrogate-Based Optimization.
+   --    [Goldberg89] Goldberg (1989), Genetic Algorithms in Search,
+   --                 Optimization and Machine Learning.
+   --    [Montgomery17] Montgomery (2017), Design and Analysis of Experiments.
+   -- -------------------------------------------------------------------------
+   --  C-callable history buffer: the optimiser's own C-layout row array, so
+   --  the caller's buffer passes straight through with no conversion copy.
+   subtype GA_History_Buffer is StellarOrion_Optimization.GA_History_Array;
+
+   procedure Run_SBO_GA_C
+     (Population_Size : Interfaces.C.int;
+      Max_Generations : Interfaces.C.int;
+      Target_Beta     : Interfaces.C.Double;
+      History         : access GA_History_Buffer;
+      Out_N_History   : access Interfaces.C.int;
+      Out_X1          : access Interfaces.C.Double;
+      Out_X2          : access Interfaces.C.Double;
+      Out_X3          : access Interfaces.C.Double;
+      Out_Cost        : access Interfaces.C.Double;
+      Out_Converged   : access Interfaces.C.int;
+      Out_N_Iter      : access Interfaces.C.int)
+   with Pre  => Population_Size >= 1
+                and then Population_Size <= StellarOrion_Optimization.Max_Population
+                and then Max_Generations >= 1
+                and then Out_N_History /= null and then Out_X1 /= null
+                and then Out_X2 /= null and then Out_X3 /= null
+                and then Out_Cost /= null and then Out_Converged /= null
+                and then Out_N_Iter /= null,
+        Post => Out_Converged.all = 0
+                  or else (Out_Converged.all = 1
+                           and then Out_N_Iter.all <= Max_Generations)
+                  or else Out_Converged.all not in 0 .. 1;
+   pragma Export (C, Run_SBO_GA_C, "Run_SBO_GA_C");
 
    -- -------------------------------------------------------------------------
    --  CCD Sample Array Types for FFI

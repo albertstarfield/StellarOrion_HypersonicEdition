@@ -21,7 +21,9 @@ Author: Albert Starfield Wahyu Suryo Samudro
 
 import ctypes
 import inspect
+import json
 import os
+import subprocess
 from collections.abc import Callable, Sequence
 from itertools import islice
 from typing import TYPE_CHECKING, Any, cast
@@ -1109,6 +1111,176 @@ def run_bayesian_optimize(
         "x_opt": (float(x_opt[0]), float(x_opt[1]), float(x_opt[2])),
         "cost": float(y_opt),
         "n_evals": len(X_obs),
+        "history": history,
+    }
+
+
+
+
+# ---------------------------------------------------------------------------
+# SBO / GA optimiser (Ada; Ravenscar-parallel population evaluation)
+# ---------------------------------------------------------------------------
+
+# Maximum number of history rows the Ada GA can report.
+# [Citation: stellarorion_optimization.ads -- GA_History_Max]
+_GA_HISTORY_MAX = 4096
+
+# Wall-clock ceiling for one GA run (the analytic screening cost is cheap;
+# the ceiling only bounds a pathological run).
+_GA_RUNNER_TIMEOUT_S = 1800.0
+
+# Candidate locations of the stand-alone Ada runner.
+_GA_RUNNER_ROOTS = [
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "bin"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "bin"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bin"),
+]
+_GA_RUNNER_NAMES = ("stellarorion_ga_runner", "stellarorion_ga_runner.exe")
+
+
+def _find_ga_runner() -> str:
+    """Locate the stand-alone Ada GA runner executable.
+
+    Returns:
+        The absolute path of the runner.
+
+    Raises:
+        FileNotFoundError: the runner was not found in any known location.
+    """
+    for root in _GA_RUNNER_ROOTS:
+        for name in _GA_RUNNER_NAMES:
+            candidate = os.path.normpath(os.path.join(root, name))
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                return candidate
+    raise FileNotFoundError(
+        "the Ada GA runner (bin/stellarorion_ga_runner) was not found; "
+        f"searched {sorted(set(_GA_RUNNER_ROOTS))}"
+    )
+
+
+def run_sbo_ga(
+    population_size: int = 50,
+    max_generations: int = 200,
+    target_beta: float = 30.0,
+    q_target: float | None = None,
+    flux_ref: float | None = None,
+    tau_sec: float | None = None,
+    cd_ref: float | None = None,
+) -> dict[str, Any]:
+    """Run the Ada SBO genetic algorithm through the stand-alone runner.
+
+    The Ada side fits a linear response-surface surrogate on a 2^3 factorial
+    design in the analytic screening space and then minimises
+    ``J(x) + model-fidelity penalty`` with a genetic algorithm whose
+    population is evaluated CONCURRENTLY by four Ravenscar-restricted
+    worker tasks.
+
+    WHY A SUBPROCESS: the GNAT secondary stack is never initialised in a
+    shared library that a foreign host (ctypes) dlopen()s, so the C entry
+    ``Run_SBO_GA_C`` faults the host process. The runner owns the runtime
+    and the worker tasks, so it is executed as a child process.
+
+    Parameters:
+        population_size: individuals per generation (1 .. 200).
+        max_generations: generation cap (>= 1).
+        target_beta: target ballistic coefficient handed to the fitness.
+        q_target: target heat load J/cm^2 (makes J comparable with the
+            DSMC/PINN reference); None keeps the Ada built-in default.
+        flux_ref: reference surface heat flux W/cm^2.
+        tau_sec: reference dwell time s.
+        cd_ref: reference drag coefficient.
+
+    Returns:
+        dict with keys "x_opt" (R_N, r_tor, half_cone_deg), "cost" (the GA
+        fitness value), "n_evals" (fitness evaluations), "n_generations",
+        "converged" and "history" (one row per generation, BO-compatible
+        keys: iteration / R_N / r_tor / half_cone_deg / cost / type).
+
+    Raises:
+        ValueError: population_size or max_generations out of range.
+        FileNotFoundError: the Ada runner executable was not found.
+        RuntimeError: the runner failed or produced no parsable JSON.
+    """
+    if not 1 <= population_size <= 200:
+        raise ValueError(
+            f"population_size must be in 1..200, got {population_size!r}"
+        )
+    if max_generations < 1:
+        raise ValueError(f"max_generations must be >= 1, got {max_generations!r}")
+
+    exe = _find_ga_runner()
+    cmd = [
+        exe,
+        "--population", str(population_size),
+        "--generations", str(max_generations),
+        "--target-beta", repr(float(target_beta)),
+    ]
+    for flag, value in (
+        ("--q-target", q_target),
+        ("--flux-ref", flux_ref),
+        ("--tau", tau_sec),
+        ("--cd-ref", cd_ref),
+    ):
+        if value is not None:
+            cmd += [flag, repr(float(value))]
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=_GA_RUNNER_TIMEOUT_S,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError(
+            f"the Ada GA runner could not be executed: {exc!r} (cmd={cmd!r})"
+        ) from exc
+
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"the Ada GA runner exited with {proc.returncode}: "
+            f"{proc.stderr.strip()[:500]!r}"
+        )
+
+    marker = '{"x_opt"'
+    if marker not in proc.stdout:
+        raise RuntimeError(
+            "the Ada GA runner produced no JSON result: "
+            f"{proc.stdout.strip()[:500]!r}"
+        )
+    payload = proc.stdout[proc.stdout.rindex(marker):]
+    end = payload.rindex("]}")
+    try:
+        data = json.loads(payload[: end + 2])
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"the Ada GA runner produced malformed JSON: {exc!r} "
+            f"({payload[:200]!r})"
+        ) from exc
+
+    history: list[dict[str, Any]] = [
+        {
+            "iteration": int(row["iteration"]),
+            "R_N": float(row["R_N"]),
+            "r_tor": float(row["r_tor"]),
+            "half_cone_deg": float(row["half_cone_deg"]),
+            "cost": float(row["cost"]),
+            "type": "sbo",
+        }
+        for row in data.get("history", [])
+    ]
+    x_opt = data["x_opt"]
+
+    return {
+        "x_opt": (float(x_opt[0]), float(x_opt[1]), float(x_opt[2])),
+        "cost": float(data["cost"]),
+        #  The TRUTHFUL evaluation count: the population is evaluated once
+        #  per generation, including the initial generation, and the GA
+        #  stops early when it converges.
+        "n_evals": int(population_size) * (int(data.get("n_generations", 0)) + 1),
+        "n_generations": int(data.get("n_generations", len(history))),
+        "converged": bool(data.get("converged", False)),
         "history": history,
     }
 

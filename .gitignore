@@ -345,3 +345,12 @@ Thread*.md
 
 # PowerPoint decks (Git LFS via .gitattributes)
 *.pptx
+
+# Parametric .par files (generated artifacts, never commit)
+*.par
+
+# Ada GA runner build directory (generated artifacts, never commit)
+stellarorion_program_proc/obj_ga_runner/
+
+# Lean build cache (generated artifacts, never commit)
+stellarorion_program_proc/proofs/lean/.lake/

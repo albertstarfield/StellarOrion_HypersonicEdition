@@ -1,0 +1,96 @@
+project StellarOrion_GA_Runner is
+
+   --  Stand-alone Ada main for the surrogate-based genetic algorithm.
+   --
+   --  WHY A SEPARATE PROJECT: the FFI library is dlopen()ed by a foreign
+   --  host, and neither the GNAT secondary stack nor Ada tasking is
+   --  initialised in such a library (measured: SIGSEGV). This project
+   --  therefore owns the runtime AND the Ravenscar worker tasks.
+   --
+   --  WHY AN EXPLICIT SOURCE LIST: the main project compiles every file in
+   --  src/simulation_engine, including main.adb -- a second main in the
+   --  same partition is illegal. The explicit list also keeps the FFI out
+   --  of the partition (it is not needed here).
+
+   for Source_Dirs use ("src/simulation_engine");
+   for Object_Dir use "obj_ga_runner";
+   for Exec_Dir use "bin";
+   for Main use ("stellarorion_ga_runner.adb");
+   for Source_Files use (
+      "stellarorion_types.ads",
+      "stellarorion_types.adb",
+      "stellarorion_environment.ads",
+      "stellarorion_environment.adb",
+      "stellarorion_speed_of_sound.ads",
+      "stellarorion_speed_of_sound.adb",
+      "stellarorion_geometry.ads",
+      "stellarorion_geometry.adb",
+      "stellarorion_physics.ads",
+      "stellarorion_physics.adb",
+      "stellarorion_pinn_trajectory.ads",
+      "stellarorion_pinn_trajectory.adb",
+      "stellarorion_trajectory_output.ads",
+      "stellarorion_trajectory_output.adb",
+      "stellarorion_pipeline_checkpoint.ads",
+      "stellarorion_pipeline_checkpoint.adb",
+      "stellarorion_optimizer_core.ads",
+      "stellarorion_optimizer_core.adb",
+      "stellarorion_optimization.ads",
+      "stellarorion_optimization.adb",
+      "stellarorion_sensitivity.ads",
+      "stellarorion_sensitivity.adb",
+      "stellarorion_postprocessing.ads",
+      "stellarorion_postprocessing.adb",
+      "stellarorion_diagnostics.ads",
+      "stellarorion_diagnostics.adb",
+      "stellarorion_ga_parallel.ads",
+      "stellarorion_ga_parallel.adb",
+      "stellarorion_ga_runner.adb"
+   );
+
+   package Compiler is
+      for Switches ("ada") use
+        ("-gnat12",
+         "-gnatwa",     --  All warnings
+         "-gnatwe",     --  Warnings as errors
+         "-gnatW8",
+         "-gnatQ",
+         "-gnatdME");
+   end Compiler;
+
+   --  Platform-conditional linker flags (same rationale as the other
+   --  projects): macOS keeps the REQUIRED -Wl,-syslibroot switch;
+   --  Termux/Linux (GNU ld) drops it. Detection: Termux exports
+   --  PREFIX=/data/data/com.termux/files/usr; override with
+   --  STELLARORION_HOST_OS=macos|termux.
+   --  [Citation: GNAT Project Manager External()/case —
+   --   https://docs.adacore.com/gprbuild-docs/html/gpr_build_ref/]
+   Prefix_V := External ("PREFIX", "");
+   Host_OS  := External ("STELLARORION_HOST_OS", "");
+
+   case Host_OS is
+      when "" =>
+         Host_OS := "macos";
+         case Prefix_V is
+            when "/data/data/com.termux/files/usr" => Host_OS := "termux";
+            when others => null;
+         end case;
+      when "macos" | "termux" => null;
+      when others => Host_OS := "macos";
+   end case;
+
+   Linker_Extra := ();
+   case Host_OS is
+      when "macos" =>
+         Linker_Extra :=
+           ("-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      when others =>
+         null;   --  Termux/Linux GNU ld: no syslibroot (flag unsupported)
+   end case;
+
+   package Linker is
+      for Switches ("ada") use
+        ("-g") & Linker_Extra;
+   end Linker;
+
+end StellarOrion_GA_Runner;

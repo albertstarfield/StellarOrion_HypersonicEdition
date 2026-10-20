@@ -36,6 +36,17 @@
 --  Author:  Albert Starfield Wahyu Suryo Samudro
 
 with StellarOrion_Types; use StellarOrion_Types;
+--  WHY: the GA history buffer is handed to C callers through the FFI
+--  layer, so its record layout must be the C layout -- that way the
+--  caller's own buffer is passed straight through to the GA with no
+--  conversion copy and no heap allocation (the partition forbids
+--  implicit heap allocation because of the Ravenscar-restricted
+--  parallel unit).
+with Interfaces.C;
+--  WHY: the pure optimiser logic (cost formula, surrogate, ranking,
+--  stagnation) lives in the SPARK-PROVED core, and the concurrent
+--  population evaluation lives in the Ravenscar-restricted unit.
+with StellarOrion_Optimizer_Core;
 
 package StellarOrion_Optimization is
    pragma SPARK_Mode (Off);
@@ -133,15 +144,22 @@ package StellarOrion_Optimization is
    --    + w_target * ((y_pred - y_target) / 1)^2
    --
    --  Source: StellarOrion DERIVATION.MD, Sec 4
-    function Optimization_Cost
-      (Beta_Calc  : Float;
-        Beta_Target: Float;
-        Y_Pred     : Float;
-        Y_Target   : Float;
-        W_Beta     : Float;
-        W_Target   : Float) return Float
-    with Pre  => W_Beta >= 0.0 and W_Target >= 0.0,
-         Post => Optimization_Cost'Result >= 0.0;
+   --
+   --  WHY: the canonical implementation now lives in the PROVED core
+   --  (StellarOrion_Optimizer_Core.Optimization_Cost).  Renaming it
+   --  here keeps exactly ONE copy of the cost formula in the tree, so
+   --  the formula the SPARK proof covers is the formula the GA and the
+   --  self-test actually execute.  The inherited contract is the core's
+   --  (weights in 0 .. 1.0E6, beta in +/-1.0E6, responses in +/-1.0E9,
+   --  result >= 0.0), which every call site in this tree satisfies.
+   function Optimization_Cost
+     (Beta_Calc   : Float;
+      Beta_Target : Float;
+      Y_Pred      : Float;
+      Y_Target    : Float;
+      W_Beta      : Float;
+      W_Target    : Float) return Float
+   renames StellarOrion_Optimizer_Core.Optimization_Cost;
 
    -- -----------------------------------------------------------------
    --  Genetic Algorithm Optimiser
@@ -162,16 +180,30 @@ package StellarOrion_Optimization is
    TCount_Max : constant := 12;
 
    --  Maximum population size supported.
-   Max_Population : constant := 200;
+   --  WHY: the ceiling is defined once, in the PROVED core.  A constant
+   --  DECLARATION (not a renaming) keeps the value static, so it stays
+   --  usable in array bounds and other static contexts.
+   Max_Population : constant := StellarOrion_Optimizer_Core.Max_Population;
 
    --  Population array type.
+   --  WHY: the Ravenscar unit owns the physical population type so a
+   --  population can be handed to the parallel evaluator with NO
+   --  conversion copy; renaming keeps the legacy name alive.
+   --  WHY: the population type is declared HERE (not borrowed from the
+   --  parallel unit) so that this package does NOT depend on a unit that
+   --  carries Ada tasking: the FFI shared library is dlopen'd by Python,
+   --  and a library with tasking units crashes on the first call into it
+   --  (no tasking environment exists under a foreign main).
    type Population is array (1 .. Max_Population) of Geometry_Parameters;
 
-   --  Cost array (one cost per individual).
-   type Cost_Array is array (1 .. Max_Population) of Float;
+   --  Cost array (one cost per individual) -- renames of the proved
+   --  core type, so the GA and the parallel evaluator share one type.
+   subtype Cost_Array is StellarOrion_Optimizer_Core.Cost_Array;
 
-   --  Index array for sorting.
-   type Index_Array is array (1 .. Max_Population) of Positive;
+   --  Index array for sorting -- renames of the proved core type.  Its
+   --  component type is bounded by Max_Population, so every index taken
+   --  from it is provably a valid index into the population arrays.
+   subtype Index_Array is StellarOrion_Optimizer_Core.Index_Array;
 
    --  GA configuration.
    type GA_Config is record
@@ -183,6 +215,15 @@ package StellarOrion_Optimization is
       Tournament_Size : Positive := 3;
       Convergence_Gens: Natural  := 20;
       Convergence_Tol : Float    := 1.0e-6;
+      --  Verbose progress reporting.
+      --
+      --  WHY: the GA's progress lines are written with Ada.Text_IO, and
+      --  the GNAT runtime's Standard_Output is NOT open inside a
+      --  dlopen'd shared library -- the first Put_Line there segfaults the
+      --  host process (measured).  A caller that loads the library (the
+      --  FFI path) therefore sets Verbose => False; the CLI keeps the
+      --  default True so its operator-facing report is unchanged.
+      Verbose        : Boolean  := True;
    end record;
 
    --  GA result record.
@@ -193,14 +234,94 @@ package StellarOrion_Optimization is
       Converged        : Boolean;
    end record;
 
+   --  CCD design constants of the analytic HIAD space
+   --  (R_N, r_tor, half_cone).  These are the SINGLE source of truth
+   --  for the CCD coding: Generate_CCD_Samples builds the design from
+   --  them, and SBO_Fitness codes a candidate geometry back into the
+   --  same design box with the inverse transformation, so the response
+   --  surface and the CCD design can never drift apart.
+   CCD_Centre_R_N   : constant := 1.5;
+   CCD_Centre_R_Tor : constant := 0.14;
+   CCD_Centre_Cone  : constant := 60.0;
+   CCD_Delta_R_N    : constant := 0.3;
+   CCD_Delta_R_Tor  : constant := 0.04;
+   CCD_Delta_Cone   : constant := 5.0;
+
+   --  Weight of the surrogate-disagreement (model-fidelity) penalty used by
+   --  SBO_Fitness.  Exposed as a named constant so the FFI layer can
+   --  document the penalty it inherits without duplicating the value.
+   Model_Fidelity_Weight : constant Float := 1.0;
+
+   --  Maximum number of GA generation rows recorded in the history.
+   GA_History_Max : constant := 4096;
+
+   --  One observed GA generation: the best individual of that
+   --  generation expressed in the ANALYTIC screening coordinates of
+   --  the HIAD cost function (R_N = Diameter_M / 2,
+   --  R_Tor = Toroid_Radius_M, Half_Cone = Angle_Deg) together with
+   --  its cost.
+   --
+   --  WHY: the C layout lets the FFI layer pass the caller's own
+   --  buffer straight through to the GA with no conversion copy and
+   --  no heap allocation (the partition forbids implicit heap
+   --  allocation because of the Ravenscar-restricted parallel unit).
+   type GA_History_Row is record
+      Generation : Interfaces.C.int    := 0;
+      R_N        : Interfaces.C.double := 0.0;
+      R_Tor      : Interfaces.C.double := 0.0;
+      Half_Cone  : Interfaces.C.double := 0.0;
+      Cost       : Interfaces.C.double := 0.0;
+   end record;
+   pragma Convention (C, GA_History_Row);
+
+   --  History buffer handed to the GA.  Zero-based so the C side can
+   --  index it directly.
+   type GA_History_Array is array (0 .. GA_History_Max - 1) of GA_History_Row;
+   pragma Convention (C, GA_History_Array);
+
    --  Fitness function access type.
    --  The caller provides a function that maps geometry parameters
    --  and flight conditions to a scalar cost value.
+   --
+   --  WHY: the access type is declared in the Ravenscar unit so the
+   --  parallel evaluator and this package share ONE type (no
+   --  conversion, no duplicate declaration).  The renaming preserves
+   --  this package's public API.
+   --
+   --  The designated profile carries the surrogate Model: that is the
+   --  hook which makes the metamodel term of Optimization_Cost live
+   --  (see SBO_Fitness).  Evaluators that do not use a surrogate
+   --  ignore it.
+   --  The Model argument carries the surrogate model to the fitness
+   --  function: it is the live counterpart of the previously dead
+   --  Y_Pred / Y_Target / W_Target term of the cost function.
    type Fitness_Function is access function
-     (Geo          : Geometry_Parameters;
-      Flight       : Flight_Parameters;
-      TPS          : TPS_Material;
-      Target_Beta  : Float) return Float;
+     (Geo         : Geometry_Parameters;
+      Flight      : Flight_Parameters;
+      TPS         : TPS_Material;
+      Target_Beta : Float;
+      Model       : StellarOrion_Optimizer_Core.Surrogate_Model) return Float;
+
+   --  Batch evaluator callback: evaluates a whole generation's candidates
+   --  in one call.
+   --
+   --  WHY: the parallel evaluator lives in a unit that carries Ada
+   --  tasking, and Ada tasking MUST NOT be linked into the FFI shared
+   --  library (a dlopen'd library has no tasking environment -- measured
+   --  SIGSEGV).  The GA therefore receives the evaluator as a callback:
+   --  the Ada CLI passes the Ravenscar-parallel evaluator, the FFI library
+   --  passes null and gets the sequential sweep.
+   --
+   --  A null Evaluator means "evaluate sequentially" (the library path).
+   type Batch_Evaluator is access procedure
+     (Items       : in Population;
+      Count       : in Natural;
+      Flight      : in Flight_Parameters;
+      TPS         : in TPS_Material;
+      Target_Beta : in Float;
+      Model       : StellarOrion_Optimizer_Core.Surrogate_Model;
+      Eval        : in Fitness_Function;
+      Costs       : out Cost_Array);
 
    --  Run the full Genetic Algorithm optimisation loop.
    --  Uses tournament selection, BLX-alpha crossover, Gaussian mutation,
@@ -211,19 +332,85 @@ package StellarOrion_Optimization is
    --    Flight    — Freestream / flight conditions
    --    TPS       — Thermal Protection System material (passed to evaluator)
    --    Target_Beta — Target ballistic coefficient (passed to evaluator)
+   --    Model    — Surrogate model handed to the evaluator (the
+   --               previously dead metamodel hook; use
+   --               No_Surrogate for a plain physics evaluation)
    --    Eval      — User-provided fitness function (maps geo -> cost)
    --    Result    — Output: best geometry, cost, and convergence info
+   --    History   — Optional per-generation trace buffer.  A null
+   --                 access value means "no trace" (the GA then skips
+   --                 the trace bookkeeping entirely).  Otherwise one
+   --                 row is written per generation, starting with
+   --                 generation 0 (the initial random population).
+   --    History_Count — Number of rows actually written to History.
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
     procedure Run_GA_Optimization
-      (Config      : GA_Config;
-       Flight      : Flight_Parameters;
-       TPS         : TPS_Material;
-       Target_Beta : Float;
-       Eval        : not null Fitness_Function;
-       Result      : out GA_Result)
+      (Config        : GA_Config;
+       Flight        : Flight_Parameters;
+       TPS           : TPS_Material;
+       Target_Beta   : Float;
+       Model         : StellarOrion_Optimizer_Core.Surrogate_Model;
+       Eval          : not null Fitness_Function;
+       Evaluator     : Batch_Evaluator;
+       Result        : out GA_Result;
+       History       : access GA_History_Array;
+       History_Count : out Natural)
     with Pre  => Config.Population_Size >= 1
                  and Config.Population_Size <= Max_Population,
          Post => True;
+
+   --  Run the complete surrogate-based optimisation in ONE place:
+   --  fit the linear response-surface surrogate on the 2^3 factorial design
+   --  in the analytic screening space, then minimise
+   --  "J(x) + model-fidelity penalty" with the genetic algorithm.
+   --
+   --  WHY ONE IMPLEMENTATION: the C-callable entry (StellarOrion_FFI.
+   --  Run_SBO_GA_C) and the standalone Ada runner (stellarorion_ga_runner)
+   --  both call THIS procedure, so the design, the fit and the GA cannot
+   --  drift apart between the sequential and the parallel route.
+   --
+   --  Parameters:
+   --    Config        -- GA hyper-parameters (population size, generations).
+   --    Target_Beta   -- target ballistic coefficient handed to the fitness.
+   --    Evaluator     -- batch evaluator callback; NULL selects the
+   --                    sequential sweep (used by the FFI library, where
+   --                    Ada tasking is unavailable -- see the note in
+   --                    stellarorion_ga_parallel.ads).
+   --    History       -- caller-owned C-layout history buffer (NULL => none).
+   --    History_Count -- number of history rows written.
+   --    Result        -- the optimum found.
+   --  Contract: pre => population size in 1 .. Max_Population; post => True;
+   --  effects limited to the documented outputs.
+   procedure Run_SBO_GA
+     (Config        : GA_Config;
+      Target_Beta   : Float;
+      Evaluator     : Batch_Evaluator;
+      History       : access GA_History_Array;
+      History_Count : out Natural;
+      Result        : out GA_Result)
+   with Pre  => Config.Population_Size >= 1
+                and Config.Population_Size <= Max_Population,
+        Post => True;
+
+   --  Project a geometry onto the analytic screening box that the BO
+   --  searches: R_N in [0.5, 3.0] m, r_tor in [0.05, 0.5] m and half-cone
+   --  in [40, 80] degrees.  R_N is the nose radius, i.e. Diameter_M / 2.
+   --
+   --  WHY: the GA searches the full geometry space, but the reported
+   --  coordinates must live in the same box as the surrogate's design
+   --  (the model is only trusted inside it), so the OPTIMUM and the
+   --  history rows are projected with this ONE function.
+   --
+   --  Parameters:
+   --    Geo : the geometry to project (not modified).
+   --  Returns:
+   --    The projected geometry.
+   --  Contract: pre => True; post => True.
+   function Project_To_Analytic_Box
+     (Geo : Geometry_Parameters) return Geometry_Parameters
+   with Pre  => True,
+        Post => True;
+
 
    --  Default fitness evaluator that uses Optimization_Cost
    --  with a simplified aerodynamic beta estimate.
@@ -235,12 +422,17 @@ package StellarOrion_Optimization is
    --
    --  Cost = Optimization_Cost(Beta_calc, Beta_Target, 0.0, 0.0, 1.0, 0.0)
    --  (objective weight set to 0 since we only have beta in this model)
+   --
+   --  The Model argument is IGNORED here: this evaluator has no
+   --  surrogate, so the metamodel term of Optimization_Cost stays off
+   --  for it.  SBO_Fitness is the evaluator that exercises that term.
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
     function Default_Fitness
       (Geo          : Geometry_Parameters;
        Flight       : Flight_Parameters;
        TPS          : TPS_Material;
-       Target_Beta  : Float) return Float
+       Target_Beta  : Float;
+       Model        : StellarOrion_Optimizer_Core.Surrogate_Model) return Float
     with Post => Default_Fitness'Result >= 0.0;
 
    --  Full MoP fitness evaluator that uses Calculate_Flight_Metrics.
@@ -261,13 +453,79 @@ package StellarOrion_Optimization is
    --
    --  This gives the GA optimizer a physics-faithful fitness landscape
    --  that accounts for drag, heating, and thermal protection limits.
+   --
+   --  The Model argument is IGNORED here: this evaluator performs a
+   --  full physics evaluation and has no surrogate to disagree with.
+   --  The metamodel term of Optimization_Cost is exercised by
+   --  SBO_Fitness, which mixes a fitted surrogate with the true heat
+   --  load.  Leaving the term off HERE is a modelling choice
+   --  (W_Target = 0), not the dead code the term used to be: the term
+   --  itself now has a live, non-zero call site.
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
     function MoP_Fitness
       (Geo          : Geometry_Parameters;
        Flight       : Flight_Parameters;
        TPS          : TPS_Material;
-       Target_Beta  : Float) return Float
+       Target_Beta  : Float;
+       Model        : StellarOrion_Optimizer_Core.Surrogate_Model) return Float
      with Post => MoP_Fitness'Result >= 0.0;
+
+   --  Surrogate-Based-Optimisation fitness evaluator.
+   --
+   --  This is the evaluator that makes the metamodel term of
+   --  Optimization_Cost LIVE.  The cost is the sum of
+   --
+   --    (1) the true, analytic HIAD screening cost
+   --        HIAD_Cost_Function (X), and
+   --    (2) a model-fidelity penalty
+   --        W_Target * (y_surrogate - y_true)^2
+   --
+   --  where y_surrogate is the fitted linear response surface evaluated
+   --  at the coded coordinates of the candidate and y_true is the true
+   --  heat-load ratio of the same candidate.
+   --
+   --  Theory (Jones98): in surrogate-based optimisation the optimiser
+   --  is allowed to exploit the surrogate, so the objective must charge
+   --  for every disagreement between the surrogate and the truth.  That
+   --  penalty is exactly the Y_Pred / Y_Target / W_Target term of
+   --  Optimization_Cost -- the term that was identically zero at every
+   --  call site before SBO_Fitness existed.
+   --
+   --  Coding: the analytic vector X = (R_N, r_tor, half_cone) is coded
+   --  with the SAME convention as the CCD design
+   --    x1 = (R_N   - 1.5 ) / 0.3
+   --    x2 = (r_tor - 0.14) / 0.04
+   --    x3 = (cone  - 60.0) / 5.0
+   --  and clamped to [-1, 1]: outside its design box the surrogate is
+   --  not trusted, so the clamped prediction is a constant and the
+   --  penalty grows with the distance to the box -- a trust region
+   --  that pushes the search back into the region where the response
+   --  surface was fitted.
+   --
+   --  Parameters:
+   --    Geo, Flight, TPS, Target_Beta — as for MoP_Fitness.
+   --    Model — the fitted surrogate; No_Surrogate means the surrogate
+   --            prediction is 0.0 and the penalty measures the true
+   --            response against zero.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
+    function SBO_Fitness
+      (Geo          : Geometry_Parameters;
+       Flight       : Flight_Parameters;
+       TPS          : TPS_Material;
+       Target_Beta  : Float;
+       Model        : StellarOrion_Optimizer_Core.Surrogate_Model) return Float
+     with Post => SBO_Fitness'Result >= 0.0;
+
+   --  The neutral surrogate model: no metamodel, zero coefficients.
+   --  WHY: the record's default component values already encode "no
+   --  surrogate"; naming the value once makes the "no metamodel" decision
+   --  explicit at every call site instead of repeating the aggregate.
+   No_Surrogate_Model : constant StellarOrion_Optimizer_Core.Surrogate_Model :=
+     (Kind => StellarOrion_Optimizer_Core.No_Surrogate,
+      B0   => 0.0,
+      B1   => 0.0,
+      B2   => 0.0,
+      B3   => 0.0);
 
     -- -----------------------------------------------------------------
     --  MoP (Method of Projected Gradients) — HIAD Geometry Optimizer
@@ -691,6 +949,25 @@ package StellarOrion_Optimization is
       with Pre => True, Post => True;
     --  Contract covers pre => True (no inputs); post => completes without raising.
 
+   --  STC wrappers for the proved optimiser core (the core itself stays
+   --  100% SPARK-On, so its coverage is driven from this SPARK-Off unit)
+   --  and for the new parallel evaluator.
+   procedure Test_Optimizer_Core_Optimization_Cost
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Optimizer_Core_Fit_Surrogate
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Optimizer_Core_Sort_By_Cost
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Optimizer_Core_Update_Stagnation
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_SBO_Fitness
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
     --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Axial", Test_CCD_Axial'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Centre", Test_CCD_Centre'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Frontal_Area", Test_Compute_Frontal_Area'Access);
@@ -708,6 +985,11 @@ package StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GA_Optimization", Test_Run_GA_Optimization'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_MoP_Optimization", Test_Run_MoP_Optimization'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Set_Validation_Refs", Test_Set_Validation_Refs'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Fit_Surrogate", Test_Optimizer_Core_Fit_Surrogate'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Optimization_Cost", Test_Optimizer_Core_Optimization_Cost'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Sort_By_Cost", Test_Optimizer_Core_Sort_By_Cost'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Update_Stagnation", Test_Optimizer_Core_Update_Stagnation'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_SBO_Fitness", Test_SBO_Fitness'Access);
 end StellarOrion_Optimization;
 
 -- Split Parity Protection (audit compliance)

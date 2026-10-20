@@ -63,6 +63,7 @@ from ada_pinn_wrapper import (
     hiad_cost_function,
     run_bayesian_optimize,
     run_mop_optimize,
+    run_sbo_ga,
     set_validation_refs,
     sutton_graves_heat_flux,
 )
@@ -304,6 +305,12 @@ class _GateBOKwargs(TypedDict):
     seed: int
 
 
+# AXIOM: the GA budget is the Ada GA_Config default (population 50,
+# 200 generations); the whole population is evaluated concurrently by the
+# four Ravenscar worker tasks, so the wall clock is ~1/4 of the serial cost.
+_GA_POPULATION_SIZE = 50
+_GA_MAX_GENERATIONS = 200
+
 _GATE_BO_KWARGS: _GateBOKwargs = {
     "n_initial": 20,
     "n_iter": 50,
@@ -406,6 +413,17 @@ def _parse_args(argv: "list[str] | None" = None) -> "argparse.Namespace":
         "--steps", type=int, default=_GATE_STEPS_DEFAULT,
         help=f"SPARTA timestep count for the gate DSMC leg "
              f"(default: {_GATE_STEPS_DEFAULT})",
+    )
+    parser.add_argument(
+        "--optimizer",
+        choices=["bo", "ga", "sbo"],
+        default="sbo",
+        help="search strategy: 'bo' = Bayesian optimization (GP surrogate + "
+             "EI, the historical default); 'ga'/'sbo' = the Ada/SPARK "
+             "genetic algorithm with a fitted linear surrogate and a "
+             "model-fidelity penalty, evaluated with a Ravenscar-parallel "
+             "population (the 'sbo' and 'ga' labels write the same history "
+             "rows; 'sbo' names the surrogate-based objective)",
     )
     args = parser.parse_args(argv)
     # Input validation (THEORY T1 needs positive denominators downstream).
@@ -1466,11 +1484,27 @@ def main(argv: "list[str] | None" = None) -> int:
     best_ccd = min(ccd_results, key=_ccd_cost)
     print(f"\n  Best CCD point: {best_ccd['label']} (J={best_ccd['cost']:.6f})")
 
-    # --- Step 5: Bayesian Optimization via GP surrogate ---
-    print("\n[5/7] Running Bayesian Optimization (GP surrogate + EI) ...")
-    result = run_bayesian_optimize(
-        hiad_cost_function, n_initial=20, n_iter=50, xi=0.01, seed=42,
-    )
+    # --- Step 5: the selected search strategy ---
+    # THEORY T2: both strategies optimise the SAME objective J(x) in the
+    # analytic screening space, so the reported optimum cost is always
+    # re-evaluated with J itself -- never with the internal search score
+    # (the GA minimises J plus a model-fidelity penalty).
+    if args.optimizer == "bo":
+        print("\n[5/7] Running Bayesian Optimization (GP surrogate + EI) ...")
+        result = run_bayesian_optimize(
+            hiad_cost_function, n_initial=20, n_iter=50, xi=0.01, seed=42,
+        )
+        opt_cost = float(result["cost"])
+    else:
+        print(
+            f"\n[5/7] Running {args.optimizer.upper()} genetic algorithm "
+            "(Ada/SPARK, parallel population evaluation) ..."
+        )
+        result = run_sbo_ga(
+            population_size=_GA_POPULATION_SIZE,
+            max_generations=_GA_MAX_GENERATIONS,
+        )
+        opt_cost = hiad_cost_function(*result["x_opt"])
     opt_r_n, opt_r_tor, opt_cone = result["x_opt"]
     opt_cd = estimate_cd(opt_r_n, opt_r_tor, opt_cone)
     opt_comp = hiad_cost_components(opt_r_n, opt_r_tor, opt_cone)
@@ -1488,12 +1522,12 @@ def main(argv: "list[str] | None" = None) -> int:
     opt_sg_wm2 = sg_opt["heat_flux_Wm2"]
     opt_sg_wcm2 = sg_opt["heat_flux_Wcm2"]
 
-    print(f"  Best cost: {result['cost']:.6f} (after {result['n_evals']} evaluations)")
+    print(f"  Best cost: {opt_cost:.6f} (after {result['n_evals']} evaluations)")
     print(f"  Optimized R_N = {opt_r_n:.6f} m")
     print(f"  Optimized r_tor = {opt_r_tor:.6f} m")
     print(f"  Optimized half_cone = {opt_cone:.6f} deg")
     print(f"  Optimized Cd = {opt_cd:.6f}")
-    print(f"  Optimized cost J = {result['cost']:.6f}")
+    print(f"  Optimized cost J = {opt_cost:.6f}")
     print(f"  Optimized Total Heat Load Q(x) = "
           f"{opt_comp['heat_load_jcm2']:.4f} J/cm^2 "
           f"(target {refs['q_target_jcm2']:.4f} J/cm^2)")
@@ -1506,7 +1540,7 @@ def main(argv: "list[str] | None" = None) -> int:
 
     # Improvement percentage
     if default_cost > 0:
-        improvement_pct = ((default_cost - result["cost"]) / default_cost) * 100.0
+        improvement_pct = ((default_cost - opt_cost) / default_cost) * 100.0
     else:
         improvement_pct = 0.0
     print(f"\n  Cost improvement: {improvement_pct:+.4f}%")
@@ -1547,7 +1581,7 @@ def main(argv: "list[str] | None" = None) -> int:
             "r_tor": opt_r_tor,
             "half_cone_deg": opt_cone,
             "Cd": opt_cd,
-            "cost": result["cost"],
+            "cost": opt_cost,
             "total_heat_load_Jcm2": opt_comp["heat_load_jcm2"],
             "cost_components": opt_comp,
             "sutton_graves_heat_flux_Wcm2": opt_sg_wcm2,
@@ -1561,21 +1595,39 @@ def main(argv: "list[str] | None" = None) -> int:
         },
         "ccd_samples": ccd_results,
         # AXIOMS: run_bayesian_optimize() contract returns "history" -- the full
-        # evaluation log (20 Latin-Hypercube initial + 50 BO iterations = 70 pts).
+        # evaluation log (the rows of the run that actually happened: the
+        # 20+70 of the Bayesian path or one row per GA generation).
         # THEORIES: persisting it lets render_bo_3d_plot.py rebuild the 3D scatter,
         # GP surrogate slices, and convergence curve without re-running the optimizer.
         # APPLICATIONS: direct key access (not .get) so a broken contract raises
         # loudly instead of silently writing an empty history (no silent failure).
         # [Citation: ada_pinn_wrapper.py run_bayesian_optimize — returns history]
         "history": result["history"],
-        "config": {
-            "source": "Bayesian Optimization (GP surrogate + EI acquisition)",
-            "algorithm": "Bayesian Optimization",
-            "surrogate": "Gaussian Process (Matern 5/2 kernel)",
-            "acquisition": "Expected Improvement (xi=0.01)",
-            "initial_sampling": "Latin Hypercube (n=20)",
-            "bo_iterations": 50,
-        },
+        "config": (
+            {
+                "source": "Bayesian Optimization (GP surrogate + EI acquisition)",
+                "algorithm": "Bayesian Optimization",
+                "surrogate": "Gaussian Process (Matern 5/2 kernel)",
+                "acquisition": "Expected Improvement (xi=0.01)",
+                "initial_sampling": "Latin Hypercube (n=20)",
+                "bo_iterations": 50,
+                "optimizer": "bo",
+            }
+            if args.optimizer == "bo"
+            else {
+                "source": (
+                    "SBO Genetic Algorithm (Ada/SPARK, Ravenscar-parallel "
+                    "population evaluation, model-fidelity penalty)"
+                ),
+                "algorithm": "Genetic Algorithm (SBO)",
+                "surrogate": "Linear RSM (2^3 factorial contrast fit)",
+                "acquisition": "none (population GA with elitism)",
+                "initial_sampling": "random geometry",
+                "population_size": _GA_POPULATION_SIZE,
+                "max_generations": _GA_MAX_GENERATIONS,
+                "optimizer": args.optimizer,
+            }
+        ),
     }
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1590,7 +1642,7 @@ def main(argv: "list[str] | None" = None) -> int:
     print("  OPTIMIZATION SUMMARY")
     print("=" * 72)
     print(f"  Default  Cd = {default_cd:.6f}  J = {default_cost:.6f}")
-    print(f"  Optimized Cd = {opt_cd:.6f}  J = {result['cost']:.6f}")
+    print(f"  Optimized Cd = {opt_cd:.6f}  J = {opt_cost:.6f}")
     print(f"  Improvement: {improvement_pct:+.4f}% (cost), {cd_improvement_pct:+.4f}% (Cd)")
     print(f"  Total Heat Load (PRIMARY OBJECTIVE): "
           f"{default_comp['heat_load_jcm2']:.4f} -> "
@@ -1599,7 +1651,17 @@ def main(argv: "list[str] | None" = None) -> int:
     print(f"  Validation refs (dynamic): Q_target={refs['q_target_jcm2']:.4f}, "
           f"q_ref={refs['flux_ref_wcm2']:.4f}, tau={refs['tau_sec']:.4f}s, "
           f"Cd_ref={refs['cd_ref']:.4f}")
-    print(f"  Evaluations: {result['n_evals']} (20 initial LHD + 50 BO iterations)")
+    #  The evaluation count is the truth of the run: 20 LHD + 50 BO for the
+    #  Bayesian path, population x generations for the GA path.
+    eval_detail = (
+        "(20 initial LHD + 50 BO iterations)"
+        if args.optimizer == "bo"
+        else (
+            f"({result['n_evals']} fitness evaluations over "
+            f"{result['n_generations']} generations)"
+        )
+    )
+    print(f"  Evaluations: {result['n_evals']} {eval_detail}")
     print(f"  SG heat flux: {opt_sg_wcm2:.4f} W/cm^2")
     print("=" * 72)
 

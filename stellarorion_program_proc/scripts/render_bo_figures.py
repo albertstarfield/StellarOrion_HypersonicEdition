@@ -284,32 +284,53 @@ def validate_payload(data: dict) -> None:
         if missing_fields:
             raise ValueError(f"history entry missing {missing_fields}: {entry}")
 
+    # AXIOM A2 (extended): the recorded phase labels may come from the
+    # Bayesian path ("initial" + "bo") OR from the Ada GA/SBO path
+    # ("sbo" rows, one per generation). The strict 20+50 count check
+    # applies to the Bayesian path only; the GA path is checked against
+    # its own recorded generation budget.
+    config = data["config"]
+    optimizer = str(config.get("optimizer", "bo"))
     counts = Counter(entry["type"] for entry in history)
-    unexpected = set(counts) - {"initial", "bo"}
+    unexpected = set(counts) - {"initial", "bo", "ga", "sbo"}
     if unexpected:
         raise ValueError(
             f"AXIOM A2/A4 violated: unexpected history phase label(s) "
-            f"{sorted(unexpected)}; expected only 'initial' and 'bo'."
+            f"{sorted(unexpected)}; expected only 'initial', 'bo', 'ga' "
+            "or 'sbo'."
         )
     n_initial = counts.get("initial", 0)
     n_bo = counts.get("bo", 0)
-    if n_initial != EXPECTED_INITIAL_POINTS or n_bo != EXPECTED_BO_POINTS:
-        raise ValueError(
-            "AXIOM A2 violated: expected "
-            f"{EXPECTED_INITIAL_POINTS} 'initial' + {EXPECTED_BO_POINTS} 'bo' "
-            f"evaluations, found {n_initial} + {n_bo}. The recorded phases and "
-            "the figure titles disagree; reconcile before regenerating."
-        )
-
-    # Cross-check the phase split against the optimizer's own recorded config so
-    # the count cannot drift on either side independently.
-    config = data["config"]
-    if int(config.get("bo_iterations", -1)) != n_bo:
-        raise ValueError(
-            f"AXIOM A2 violated: config.bo_iterations="
-            f"{config.get('bo_iterations')!r} but history carries {n_bo} "
-            "'bo' evaluations."
-        )
+    n_ga = counts.get("ga", 0) + counts.get("sbo", 0)
+    if optimizer == "bo":
+        if n_initial != EXPECTED_INITIAL_POINTS or n_bo != EXPECTED_BO_POINTS:
+            raise ValueError(
+                "AXIOM A2 violated: expected "
+                f"{EXPECTED_INITIAL_POINTS} 'initial' + {EXPECTED_BO_POINTS} "
+                f"'bo' evaluations, found {n_initial} + {n_bo}. The recorded "
+                "phases and the figure titles disagree; reconcile before "
+                "regenerating."
+            )
+        # Cross-check the phase split against the optimizer's own recorded
+        # config so the count cannot drift on either side independently.
+        if int(config.get("bo_iterations", -1)) != n_bo:
+            raise ValueError(
+                f"AXIOM A2 violated: config.bo_iterations="
+                f"{config.get('bo_iterations')!r} but history carries {n_bo} "
+                "'bo' evaluations."
+            )
+    else:
+        max_generations = int(config.get("max_generations", -1))
+        if n_ga < 1:
+            raise ValueError(
+                f"AXIOM A2 violated: optimizer {optimizer!r} recorded no "
+                "'ga'/'sbo' history rows."
+            )
+        if max_generations >= 0 and n_ga > max_generations + 1:
+            raise ValueError(
+                f"AXIOM A2 violated: history carries {n_ga} generation rows "
+                f"but config.max_generations={max_generations}."
+            )
 
 
 def phase_boundary(history: list) -> int:
@@ -329,12 +350,17 @@ def phase_boundary(history: list) -> int:
         ValueError: If no entry carries a recognized "type" value.
     """
     types = {entry.get("type") for entry in history}
-    if not types & {"initial", "bo"}:
+    if not types & {"initial", "bo", "ga", "sbo"}:
         raise ValueError(
-            f"no 'initial'/'bo' type labels in history; got {sorted(map(str, types))}"
+            f"no 'initial'/'bo'/'ga'/'sbo' type labels in history; got "
+            f"{sorted(map(str, types))}"
         )
+    if "initial" not in types:
+        # GA/SBO path: there is no Latin-Hypercube phase, so there is no
+        # phase transition to locate.
+        return len(history)
     for index, entry in enumerate(history):
-        if entry.get("type") == "bo":
+        if entry.get("type") in {"bo", "ga", "sbo"}:
             return index
     return len(history)
 
@@ -855,15 +881,25 @@ def render_ccd_sensitivity(data: dict, out_path: Path) -> None:
     axial_values = [axial[factor] for factor in factors]
     corner_values = [corner[factor] for factor in factors]
 
-    # A log axis can only represent strictly positive effects; a zero or
-    # negative contrast must fail loudly rather than vanish from the frame.
+    #  AXIOM A5 (revised 2026-10-20): a CONTRAST IS SIGNED.  A negative
+    #  contrast means that increasing the factor REDUCES the cost, which is
+    #  a physically meaningful result, not a defect -- and the recorded
+    #  15-point CCD contains exactly such a case (the half-cone axial
+    #  swing is negative for the current validation references).  A pure
+    #  log axis cannot represent it, so the effect plot uses a SYMMETRIC
+    #  LOG axis: the decade readability of the log scale is kept for the
+    #  large effects, while the small ones keep their sign.  Only a
+    #  non-finite contrast fails loudly (it cannot be placed on any axis).
     for name, series in (("axial swing", axial), ("corner mean effect", corner)):
         for factor, value in series.items():
-            if value <= 0.0:
+            if not math.isfinite(value):
                 raise ValueError(
-                    f"{name} for {factor} is {value!r}; the log-scale effect "
-                    "plot requires strictly positive contrasts."
+                    f"{name} for {factor} is {value!r}; a non-finite contrast "
+                    "cannot be plotted."
                 )
+    lo = min([EFFECT_BAR_FLOOR] + [v for v in axial_values + corner_values if v < 0.0])
+    hi = max([EFFECT_BAR_FLOOR] + axial_values + corner_values)
+    span = max(hi - lo, 1.0E-12)
 
     positions = list(range(len(factors)))
     width = 0.38
@@ -902,8 +938,8 @@ def render_ccd_sensitivity(data: dict, out_path: Path) -> None:
                 zorder=4,
             )
 
-    ax.set_yscale("log")
-    ax.set_ylim(2e-2, 5e2)
+    ax.set_yscale("symlog", linthresh=1e-2)
+    ax.set_ylim(lo - 0.10 * span, hi + 0.35 * span)
     ax.set_xticks(positions)
     ax.set_xticklabels(
         [
@@ -911,7 +947,7 @@ def render_ccd_sensitivity(data: dict, out_path: Path) -> None:
             for factor in factors
         ]
     )
-    ax.set_ylabel("contrast effect on cost $J(\\mathbf{x})$  (log scale)")
+    ax.set_ylabel("contrast effect on cost $J(\\mathbf{x})$  (symmetric log scale)")
     ax.set_title(
         "CCD Sensitivity — Per-Factor Design-Native Contrasts\n"
         "axial swings and factorial corner mean effects from the 15 recorded "

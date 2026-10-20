@@ -1,0 +1,6 @@
+name = "stellarorion-proofs"
+version = "0.1.0"
+defaultTargets = ["StellarOrionProofs"]
+
+[[lean_lib]]
+name = "StellarOrionProofs"

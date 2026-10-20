@@ -34,12 +34,15 @@
 -- =============================================================================
 
 with StellarOrion_Optimization; use StellarOrion_Optimization;
+--  WHY: the SBO/GA entry fits the linear response-surface surrogate with
+--  the PROVED core routine (exact 2^3 contrast fit).
 with StellarOrion_Physics;     use StellarOrion_Physics;
 with StellarOrion_Postprocessing; use StellarOrion_Postprocessing;
 with StellarOrion_Environment; use StellarOrion_Environment;
 with StellarOrion_Speed_Of_Sound; use StellarOrion_Speed_Of_Sound;
 with Interfaces.C.Strings;
 with Ada.Exceptions;
+with StellarOrion_Diagnostics;
 
 --  Operator visibility for the C scalar types. Interfaces.C is `with`ed but not
 --  `use`d, so its primitive operators are not directly visible (GNAT 6.3).
@@ -50,6 +53,7 @@ use type Interfaces.C.double;
 use type Interfaces.C.int;
 
 package body StellarOrion_FFI is
+
 
    -- -----------------------------------------------------------------
    --  C_PRINTF / C_FFLUSH — dylib-safe logging primitive
@@ -73,46 +77,19 @@ package body StellarOrion_FFI is
      (Format : Interfaces.C.Strings.chars_ptr) return Interfaces.C.int;
    pragma Import (C, C_Printf, "printf");
 
-   --  C_Flush_Stream — flush a libc FILE* stream through the C ABI.
-   --  Forces stdout/stderr to the file descriptor so log lines are visible
-   --  even if the host process dies immediately afterwards.
-   --  Timing analysis: WCET ~ 5us (single fflush syscall); CPU Time O(1);
-   --  Space Complexity O(1) — no allocation, operates on the caller's stream.
-   procedure C_Flush_Stream
-     (Stream : Interfaces.C.Strings.chars_ptr);
-   pragma Import (C, C_Flush_Stream, "fflush");
-
-   --  C_Write_Fd — direct write to a file descriptor (libc write).
-   function C_Write_Fd
-     (FD     : Interfaces.C.int;
-      Buffer : Interfaces.C.Strings.chars_ptr;
-      Count  : Interfaces.C.size_t) return Interfaces.C.int;
-   pragma Import (C, C_Write_Fd, "write");
-
-   --  Log one line to stderr via libc write(2) (dylib-safe; stdout is not used).
-   --  Timing analysis: WCET ~ 6us (printf + fflush syscalls); CPU Time O(1);
+   --  Log one line to stderr via the shared diagnostics package.
+   --  WHY: the logger lives in StellarOrion_Diagnostics so that the
+   --  optimisation package and the FFI share ONE implementation (the
+   --  libc write(2) path is safe inside a dlopen()ed library, where the
+   --  Ada runtime's Standard_Output is not open).
+   --  Timing analysis: WCET ~ 6 us (write + fflush syscalls); CPU Time O(1);
    --  Space Complexity O(len(Msg)) for the NUL-terminated copy, then O(1).
    --  @test: Test_Log exercises this subprogram (see STC block below).
    --  Contract: Pre => True (any string is loggable); Post => True
    --  (logging never propagates an error to the caller).
    procedure Log (Msg : String) with Pre => True, Post => True is
-      NL    : constant String := Msg & Character'Val (10);
-      C_Str : constant Interfaces.C.Strings.chars_ptr :=
-        Interfaces.C.Strings.New_String (NL);
    begin
-      declare
-         Ignored : Interfaces.C.int := C_Write_Fd (FD => 2, Buffer => C_Str, Count => Interfaces.C.size_t (NL'Length));
-         pragma Unreferenced (Ignored);
-      begin
-         null;
-      end;
-      --  flush all streams; stderr writes above are direct FD writes
-      C_Flush_Stream (Interfaces.C.Strings.Null_Ptr);
-   exception
-      when others =>
-         --  Logging must never raise out of Log itself (last resort:
-         --  swallow only if libc itself failed — nothing else to do).
-         null;
+      StellarOrion_Diagnostics.Log (Msg);
    end Log;
 
    -- -------------------------------------------------------------------------
@@ -378,6 +355,84 @@ package body StellarOrion_FFI is
          Out_Converged.all := 0;
          Out_N_Iter.all    := 0;
    end Run_MoP_C;
+
+   --  -------------------------------------------------------------------------
+   --  Run_SBO_GA_C
+   --  -------------------------------------------------------------------------
+   --  AXIOMS: see the specification (A1..A5).
+   --  THEORY: the surrogate is fitted on an exact 2^3 factorial design, so
+   --  its contrasts are the exact paired differences of the true response
+   --  (Montgomery 2017, Ch. 6); the GA then minimises the analytic screening
+   --  cost plus the model-fidelity penalty.
+   --  EXPECTED OUTPUT: the analytic optimum, its cost, the convergence flag
+   --  and one history row per generation.
+   --  ERROR BEHAVIOUR: any Ada exception is caught, logged through the
+   --  package's Log helper and the outputs are zeroed (safety fallback), so
+   --  the C caller never observes a half-written result.
+   --  -------------------------------------------------------------------------
+   procedure Run_SBO_GA_C
+     (Population_Size : Interfaces.C.int;
+      Max_Generations : Interfaces.C.int;
+      Target_Beta     : Interfaces.C.Double;
+      History         : access GA_History_Buffer;
+      Out_N_History   : access Interfaces.C.int;
+      Out_X1          : access Interfaces.C.Double;
+      Out_X2          : access Interfaces.C.Double;
+      Out_X3          : access Interfaces.C.Double;
+      Out_Cost        : access Interfaces.C.Double;
+      Out_Converged   : access Interfaces.C.int;
+      Out_N_Iter      : access Interfaces.C.int)
+   is
+      Config : GA_Config;
+      Result : GA_Result;
+      Count  : Natural := 0;
+   begin
+      --  ONE implementation of "design + fit + GA" lives in the
+      --  optimisation package (Run_SBO_GA) so that the C entry, the Ada
+      --  runner and the sequential/parallel routes cannot drift apart.
+      Config.Population_Size :=
+        Natural (Integer'Min (Integer (Population_Size), Max_Population));
+      Config.Max_Generations := Natural (Integer'Max (1, Integer (Max_Generations)));
+      Config.Mutation_Rate := 0.1;
+      Config.Crossover_Rate := 0.7;
+      Config.Elite_Count := 2;
+      Config.Tournament_Size := 3;
+      Config.Convergence_Gens := 20;
+      Config.Convergence_Tol := 1.0E-6;
+      Config.Verbose := False;
+
+      Run_SBO_GA (Config        => Config,
+                  Target_Beta   => Float (Target_Beta),
+                  Evaluator     => null,
+                  History       => History,
+                  History_Count => Count,
+                  Result        => Result);
+
+      declare
+         Projected : constant Geometry_Parameters :=
+           Project_To_Analytic_Box (Result.Best_Individual);
+      begin
+         Out_X1.all := Interfaces.C.double (Projected.Diameter_M / 2.0);
+         Out_X2.all := Interfaces.C.double (Projected.Toroid_Radius_M);
+         Out_X3.all := Interfaces.C.double (Projected.Angle_Deg);
+      end;
+      Out_Cost.all := Interfaces.C.double (Result.Best_Cost);
+      Out_N_Iter.all := Interfaces.C.int (Result.Generations_Used);
+      Out_N_History.all := Interfaces.C.int (Count);
+      Out_Converged.all := (if Result.Converged then 1 else 0);
+   exception
+      when others =>
+         Log ("[VERBOSE_ERROR] Run_SBO_GA_C: Ada exception - safety fallback applied");
+         Out_N_History.all := 0;
+         Out_X1.all := 0.0;
+         Out_X2.all := 0.0;
+         Out_X3.all := 0.0;
+         Out_Cost.all := 0.0;
+         Out_Converged.all := 0;
+         Out_N_Iter.all := 0;
+         raise;
+   end Run_SBO_GA_C;
+
 
    -- -------------------------------------------------------------------------
    --  Generate_CCD_Samples_C
@@ -1233,15 +1288,6 @@ package body StellarOrion_FFI is
    --  Test_C_Flush_Stream — STC wrapper for C_Flush_Stream.
    --  @test: flushes the C stdout stream through the C ABI (Null_Ptr = all).
    --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
-   procedure Test_C_Flush_Stream with Pre => True, Post => True is
-   begin
-      C_Flush_Stream (Interfaces.C.Strings.Null_Ptr);
-   exception
-      when E : others =>
-         Log ("Test_C_Flush_Stream FAIL: " & Ada.Exceptions.Exception_Information (E));
-         raise;
-   end Test_C_Flush_Stream;
-   pragma Unreferenced (Test_C_Flush_Stream);
 
    --  Test_Log — STC wrapper for Log.
    --  @test: exercises the body-local Log helper (printf + fflush path).
