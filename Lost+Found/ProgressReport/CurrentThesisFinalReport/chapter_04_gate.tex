@@ -15,16 +15,52 @@ The gate executes five legs as a post-optimization stage:
 \end{enumerate}
 
 \subsection{Final DSMC Verification}
-The gate was exercised on the previous campaign winner, the geometry that the random-seeded search selected before the LHS change: $R_N = 1.039670$\,m, $r_{tor} = 0.219741$\,m, $\theta_c = 53.7247^\circ$, six toroids, scalloped skin. The run used 2200 DSMC steps and the in-process PINN\_AUX leg, and its record is \texttt{results/validation\_optimized}. The re-simulation returned
+The gate was exercised on the pass-1 optimum of this campaign: $R_N = 1.3359$\,m, $r_{tor} = 0.1796$\,m,
+$\theta_c = 58.61^\circ$, physical nose radius $0.4898$\,m, six toroids, scalloped skin. The run used
+2200 DSMC steps and the in-process PINN\_AUX leg, and its record is
+\texttt{results/validation\_optimized}. It returned
 \begin{equation}
-    q_{hybrid} = 120.824\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.716\ \text{J/cm}^2,
+    q_{hybrid} = 175.580\ \text{J/cm}^2 \;>\; Q_{target} = 165.716\ \text{J/cm}^2,
+    \label{eq:gate_fail}
+\end{equation}
+so the pass-1 heat-load verdict is a \emph{fail}, by $51.88\,\% of the target. The analytic
+screening model had predicted $364.87$\,J/cm\textsuperscript{2} for the same geometry, so the model
+over-predicts the solver's heat load by $2.08$; the discrepancy is the quantity the correction
+factor is built from.
+
+The correction is formed inside that same run, from the run's own peak surface convection flux
+($1\,688\,940$ W/m\textsuperscript{2}) and the Sutton--Graves prediction for the same flown nose radius
+at the same flight state ($129\,293.3$ W/m\textsuperscript{2}). The raw ratio is $13.0629$, and
+$c = \operatorname{clamp}(\cdot, 0.5, 2.0) = 2.0$ sits at the upper bound. The second pass
+therefore runs the same genetic algorithm with an effective heat-load weight of $c = 2.0$, and the
+resulting vehicle $R_N = 3.0000$\,m (physical $D = 6.0000$\,m, nose $1.1000$\,m, torus
+$0.0500$\,m, half-cone $45.9656^\circ$) is re-simulated in
+\texttt{results/validation\_optimized\_round2}. That run returns
+\begin{equation}
+    q_{hybrid} = 117.526\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.716\ \text{J/cm}^2,
     \label{eq:gate_pass}
 \end{equation}
-so the heat-load verdict is a pass, with a margin of $27.1\,\%$. The same run measured a final surface heat flux of $139.40$\,W/cm$^2$ (Fay--Riddell $117.50$\,W/cm$^2$), a drag force of $108\,248$\,N and a peak deceleration of $54.16$\,g. The geometry is blunter and larger in maximum radius ($R_{\max}=3.0075$\,m against $3.0000$\,m) than the reference, which is why the drag force is $137\,\%$ higher.
+so the pass-2 heat-load verdict is a \emph{pass}, with a margin of $\-29.08\,\%$. Its recorded
+drag coefficient (unclamped) is $2.7813$ against the reference's $1.76551$, and its peak
+deceleration is $8.357$ g against the reference's $22.720$ g.
 
-Two properties of this verification matter for the present campaign. First, the drag coefficient reported in the run's \texttt{cd} column is clamped to $[0,3]$ by the SPARTA writer, and the blunt geometry saturates that clamp: the column reads $3.000000$ at every step while the raw force ratio is $8.72$. Any table or convergence audit that reads the \texttt{cd} column of this run is therefore reading a saturated number, and the body-area value $C_{d,body}=1.0422$ is reconstructed from the raw force instead. Second, the analytic model is not calibrated for this topology: it predicted $250.45$\,J/cm$^2$ and $C_d=1.6677$ for the same geometry, so the DSMC heat load is a factor $0.48$ of the prediction and the measured raw drag coefficient is a factor $5.2$ larger. The analytic model is pessimistic on heat load and strongly under-predicts drag for a blunt body of this size.
+Two properties of these runs matter for how their numbers are read. First, the drag coefficient in the
+run's \texttt{cd} column is clamped to $[0,3]$ by the SPARTA writer: the pass-1 run saturates that
+clamp on one of its twenty-two recorded steps and the pass-2 run on twelve, so the column is not flat in
+either case, but any table that reads it must use the \texttt{cd\_unclamped} column instead. Second,
+the correction factor is clamped, not measured to that value: the solver's peak surface flux is
+$13.0629$ times the correlation's, and the clamp is what keeps the second pass from trusting a
+single-point ratio without bound.
 
-The reference dataset used for that comparison predates the extended CSV schema, so three of its quantities are derived here rather than recorded. Its body-area drag coefficient follows from $\texttt{drag\_sum\_N}/(q\,A_{\mathrm{body}})$ with $A_{\mathrm{body}}=\pi(3.0/2)^2=7.0686$\,m$^2$, and the derivation reproduces the recorded \texttt{cd} column to $10^{-6}$ at both ends of the trajectory ($2.423278$ against $2.423279$ at step 100, and $1.765511$ against $1.765511$ at step 2200), which also establishes that the reference never saturated the $[0,3]$ clamp. Its DSMC surface heat load is $\max(\texttt{heatflux\_avg})\times 13.58$\,s $= 1933.13$\,J/cm$^2$. Its flown geometry is the command-line default: diameter $3.0$\,m, nose $0.55$\,m, torus $0.135$\,m, half-cone $60^\circ$, six toroids.
+The reference dataset used for that comparison predates the extended CSV schema, so three of its
+quantities are derived here rather than recorded. Its body-area drag coefficient follows from
+\texttt{drag\_sum\_N}/(q\,A_{\mathrm{body}}) with $A_{\mathrm{body}} = \pi(3.0/2)^2 =
+7.0686$\,m$^2$, and the derivation reproduces the recorded \texttt{cd} column to $10^{-6}$ at
+both ends of the trajectory ($2.423278$ against $2.423279$ at step 100, and $1.765511$ against
+$1.765511$ at step 2200), which also establishes that the reference never saturated the $[0,3]$ clamp.
+Its DSMC surface heat load is $\max(\texttt{heatflux\_avg})\times 13.58$\,s $= 1933.13$\,J/cm$^2$.
+Its flown geometry is the command-line default: diameter $3.0$\,m, nose $0.55$\,m, torus $0.135$\,m,
+half-cone $60^\circ$, six toroids.
 
 \subsection{Relation to the Current Optimum}
-The final DSMC verification belongs to the previous optimum, not to the geometry of Table~\ref{tab:ga_before_after}. The LHS-seeded campaign changed the winner to $X_1=1.9967$\,m (diameter $3.9934$\,m, physical nose $0.7321$\,m), and no DSMC run exists for that geometry. The gate is therefore reported as a pass for the previous winner and as a calibration of the analytic model, not as a pass for the current optimum. What it establishes for this thesis is narrower and still useful: the closed-form heat-load model carries a reproducible multiplicative bias, so relative ranking between designs of similar geometry is meaningful while absolute heat-load claims require the DSMC re-simulation. The result of Sec.~\ref{sec:optimization_results} is reported on that basis, as the optimum of the stated analytic objective and not as a flight-qualified design.
+The gate was executed on the geometry of Table~\ref{tab:ga_before_after}, and its verdict on that geometry is a fail: the pass-1 candidate carries $175.580$\,J/cm\textsuperscript{{2}} against the $165.716$\,J/cm\textsuperscript{{2}} target. The design that the gate does admit is the pass-2 geometry of Table~\ref{tab:ga_two_pass}, a $6.0000$\,m diameter body, which passes the same gate at $117.526$\,J/cm\textsuperscript{{2}}. The pipeline therefore does what it is meant to do: the first analytic pass proposes a design the solver rejects, the solver's own flux ratio sets the correction, and the second analytic pass proposes a design the solver accepts. What the gate does not establish is a flight-qualified vehicle: every candidate is flown on the reference's matched trajectory, so the trajectory-geometry self-consistency of a $6.0000$\,m body on a $3.0$\,m body's flight path remains open, and it is stated as such rather than absorbed into the result.

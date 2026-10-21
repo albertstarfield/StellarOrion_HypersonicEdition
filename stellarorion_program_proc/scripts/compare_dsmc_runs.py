@@ -308,6 +308,14 @@ def _summarise(
 
     # AXIOM A5: the CALIBRATION DESIGN 2.4 columns are optional; an absent
     # column yields NaN, which the report renders as "n/a".
+    # AXIOM A5: the CALIBRATION DESIGN 2.4 columns are OPTIONAL here, and a
+    # metric that is not recorded is reported as "n/a", never invented.
+    present_optional = tuple(
+        column for column in OPTIONAL_COLUMNS if column in rows[0]
+    )
+    missing_optional = tuple(
+        column for column in OPTIONAL_COLUMNS if column not in rows[0]
+    )
     cd_unclamped = _optional_last(rows, "cd_unclamped")
     cd_raw_body = _optional_last(rows, "cd_raw_body_area")
     cd_raw_presented = _optional_last(rows, "cd_raw_presented_area")
@@ -320,13 +328,31 @@ def _summarise(
     # column when the run carries it -- that is the raw force ratio, and it
     # is what actually saturates the [0, 3] clamp.  A run without the column
     # keeps the legacy behaviour (the flag is inferred from the clamped
-    # `cd` column).
-    if math.isfinite(cd_unclamped):
-        saturated = cd_unclamped >= CD_CLAMP_MAX - 1.0e-9
+    # `cd` column).  Either way the WHOLE column is scanned, so a
+    # mid-trajectory saturation is still detected.
+    cd_unclamped_all = _optional_floats(rows, "cd_unclamped")
+    if cd_unclamped_all is not None:
+        saturated = any(c >= CD_CLAMP_MAX - 1.0e-9 for c in cd_unclamped_all)
         saturation_source = "cd_unclamped"
     else:
         saturated = any(c >= CD_CLAMP_MAX - 1.0e-9 for c in cd_recorded)
         saturation_source = "cd (clamped column)"
+    # AXIOM A2 (extended): the clamp may bite ONLY on the early
+    # peak-heating steps -- the recorded column is then NOT flat, and a note
+    # that claims "the CSV reports a flat 3.0" is factually wrong.  Count the
+    # saturated rows and the peak raw value so the note can state exactly
+    # what happened.  The saturation test uses the UNCLAMPED column when the
+    # run carries it, because a recorded 3.0 can also be a genuine value.
+    if cd_unclamped_all is not None:
+        saturated_rows = sum(
+            1 for c in cd_unclamped_all if c >= CD_CLAMP_MAX - 1.0e-9
+        )
+        unclamped_max = max(cd_unclamped_all)
+    else:
+        saturated_rows = sum(
+            1 for c in cd_recorded if c >= CD_CLAMP_MAX - 1.0e-9
+        )
+        unclamped_max = max(cd_recorded)
     # AXIOM A3: cross-check the reconstruction on the unsaturated steps.
     check_max_abs_err = 0.0
     if not saturated:
@@ -351,6 +377,9 @@ def _summarise(
         "cd_raw": finite_raw[-1] if finite_raw else float("nan"),
         "cd_raw_max": max(finite_raw) if finite_raw else float("nan"),
         "cd_saturated": saturated,
+        "cd_saturated_rows": saturated_rows,
+        "cd_row_count": len(rows),
+        "cd_unclamped_max": unclamped_max,
         "cd_reconstruction_error": check_max_abs_err,
         "final_cl": cl[-1],
         "final_drag_sum_N": drag_sum[-1],
@@ -368,6 +397,8 @@ def _summarise(
         "has_flown_geometry": all(
             math.isfinite(value) for value in geom_values.values()
         ),
+        "optional_columns_present": present_optional,
+        "optional_columns_missing": missing_optional,
     }
 
 
@@ -550,6 +581,15 @@ def _render_markdown(
     lines.append("")
     lines.append("## Flown geometry")
     lines.append("")
+    missing_optional = tuple(reference["optional_columns_missing"]) + tuple(
+        candidate["optional_columns_missing"]
+    )
+    if missing_optional:
+        lines.append(
+            "- CALIBRATION DESIGN 2.4 columns absent from at least one run "
+            f"(the corresponding metrics read `n/a`): "
+            f"{sorted(set(missing_optional))}"
+        )
     if bool(reference["has_flown_geometry"]) and bool(candidate["has_flown_geometry"]):
         lines.append("| Field | Reference | Optimised | Same? |")
         lines.append("|:---|---:|---:|:---|")
@@ -617,15 +657,31 @@ def _render_markdown(
         )
     lines.append("")
     if bool(candidate["cd_saturated"]):
-        lines.append(
-            "> **The recorded drag coefficient of the optimised run is "
-            "CLAMPED.** The Ada writer clamps `cd` to [0, 3] "
-            "(`stellarorion_sparta.adb:3348`); the blunt optimised geometry "
-            "saturates that clamp, so the CSV reports a flat 3.0 while the "
-            "raw force ratio is "
-            f"{float(candidate['cd_raw']):.4f}. The `cd_raw` row above is the "
-            "reconstruction from the raw drag force and is the value to use."
-        )
+        sat_rows = int(candidate["cd_saturated_rows"])
+        total_rows = int(candidate["cd_row_count"])
+        peak_raw = float(candidate["cd_unclamped_max"])
+        if sat_rows >= total_rows:
+            lines.append(
+                "> **The recorded drag coefficient of the optimised run is "
+                "CLAMPED on every step.** The Ada writer clamps `cd` to "
+                "[0, 3] (`stellarorion_sparta.adb:3348`); the blunt optimised "
+                f"geometry saturates that clamp on all {total_rows} recorded "
+                "steps, so the CSV reports a flat 3.0 while the raw force "
+                f"ratio reaches {peak_raw:.4f}. The `cd_raw` row above is the "
+                "reconstruction from the raw drag force and is the value to "
+                "use."
+            )
+        else:
+            lines.append(
+                "> **The recorded drag coefficient of the optimised run "
+                f"SATURATES THE CLAMP on {sat_rows} of {total_rows} recorded "
+                "steps** (the early peak-heating steps; the Ada writer "
+                "clamps `cd` to [0, 3], `stellarorion_sparta.adb:3348`). The "
+                "recorded column is therefore NOT flat: the peak raw force "
+                f"ratio is {peak_raw:.4f} and the final step reports "
+                f"{float(candidate['cd_recorded']):.6f}. Use the "
+                "`cd_raw`/`cd_unclamped` values, not the clamped column."
+            )
         if math.isfinite(float(candidate["cd_unclamped"])):
             lines.append(">")
             lines.append(
@@ -797,6 +853,14 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "compare_dsmc_runs: flown geometry NOT RECORDED (at least one run "
             "predates CALIBRATION DESIGN 2.4 and carries no geom_* columns)"
+        )
+    missing_optional = tuple(
+        reference["optional_columns_missing"]
+    ) + tuple(candidate["optional_columns_missing"])
+    if missing_optional:
+        print(
+            "compare_dsmc_runs: CALIBRATION DESIGN 2.4 columns absent from at "
+            f"least one run (reported as n/a): {sorted(set(missing_optional))}"
         )
     return 0
 
