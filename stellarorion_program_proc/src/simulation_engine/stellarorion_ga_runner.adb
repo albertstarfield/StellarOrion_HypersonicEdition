@@ -230,6 +230,10 @@ procedure StellarOrion_GA_Runner is
    --  it denotes (AXIOM A5).
    X_Opt    : Param_Vector := (others => 0.0);
    Physical : StellarOrion_Types.Geometry_Parameters;
+   --  Effective heat-load weight of J for THIS pass (the double pass GA's
+   --  round-2 injection point: W_Heat_Load + (c - 1)).
+   Heat_Load_Weight_Value : Float := 1.0;
+   Heat_Load_Weight_Seen  : Boolean := False;
 
 begin
    --  ---- command line -------------------------------------------------
@@ -261,6 +265,9 @@ begin
          else
             Calibration_Len := 0;
          end if;
+      elsif Argument (I) = "--heat-load-weight" and then I < Argument_Count then
+         Heat_Load_Weight_Value := Float'Value (Argument (I + 1));
+         Heat_Load_Weight_Seen := True;
       elsif Argument (I) = "--print-geometry-flags" then
          Print_Geometry_Flags := True;
       end if;
@@ -339,6 +346,21 @@ begin
    --  progress log is switched OFF (the history rows carry the trace).
    Config.Verbose := False;
 
+   --  AXIOM (double pass GA): the effective heat-load weight of J.  The
+   --  round-2 pass sets it to W_Heat_Load + (c - 1) (W_Heat_Load = 1.0),
+   --  which is algebraically identical to J_round2 = J + (c-1)*heat_load_ratio
+   --  -- the same genetic-algebra engine, the corrected cost.
+   if Heat_Load_Weight_Seen then
+      if Heat_Load_Weight_Value < 0.0 then
+         StellarOrion_Diagnostics.Log
+           ("[GA_RUNNER] negative heat-load weight "
+            & Float'Image (Heat_Load_Weight_Value)
+            & " - clamped to 0.0");
+         Heat_Load_Weight_Value := 0.0;
+      end if;
+      StellarOrion_Optimization.Set_Heat_Load_Weight (Heat_Load_Weight_Value);
+   end if;
+
    --  The parallel route: the population is evaluated CONCURRENTLY by the
    --  four Ravenscar worker tasks.
    Run_SBO_GA (Config        => Config,
@@ -381,8 +403,10 @@ begin
              & J (Result.Best_Cost) & ", ""converged"": "
              & (if Result.Converged then "true" else "false")
              & ", ""n_generations"": " & Natural'Image (Result.Generations_Used)
+             & ", ""heat_load_weight"": " & J (Heat_Load_Weight_Value)
              & ", ""calibration_active"": "
              & (if Calibration_Is_Active then "true" else "false")
+             & ", ""pipeline"": ""double pass GA"""
              & ", ""history"": [");
    if Count > 0 then
       for R in 0 .. Count - 1 loop

@@ -100,6 +100,16 @@ package body StellarOrion_Optimization is
    end record;
    Current_Refs : Validation_Refs;
 
+   --  Effective heat-load weight of the composite cost J.
+   --
+   --  Default = W_Heat_Load (1.0).  The double pass GA overrides it for the
+   --  round-2 pass: J_round2 = J + (c-1)*heat_load_ratio is algebraically
+   --  identical to using the weight W_Heat_Load + (c-1) (see
+   --  Set_Heat_Load_Weight).  It is package state, exactly like
+   --  Current_Refs, so the concurrent Ravenscar evaluation observes one
+   --  immutable record for the whole run.
+   Current_Heat_Load_Weight : Float := W_Heat_Load;
+
    --  ------------------------------------------------------------------
    --  DSMC calibration state, key table and loader helpers
    --  (design §2.6, §2.6.2)
@@ -1882,7 +1892,8 @@ package body StellarOrion_Optimization is
       History_Count := 0;
 
       T_Start := Clock;
-      Say ("[GA] Starting Genetic Algorithm optimisation...");
+      Say ("[GA] double pass GA engine: LHS-seeded GA over the ANALYTIC"
+            & " screening model (MODEL SPACE)...");
       Say ("[GA] Population:" & Positive'Image (Pop_Size) &
                 "  Max_Gen:" & Positive'Image (Config.Max_Generations) &
                 "  Mutation:" & Float'Image (Config.Mutation_Rate) &
@@ -2656,6 +2667,29 @@ package body StellarOrion_Optimization is
          raise;
    end Set_Validation_Refs;
 
+   function Heat_Load_Weight return Float is -- nosec
+      --  Contract (from spec StellarOrion_Optimization.Heat_Load_Weight):
+      --    Post => Heat_Load_Weight'Result >= 0.0 (the setter's Pre keeps the
+      --            value non-negative; the default W_Heat_Load = 1.0 is
+      --            positive).
+   begin
+      return Current_Heat_Load_Weight;
+   end Heat_Load_Weight;
+
+   procedure Set_Heat_Load_Weight (W : Float) is -- nosec
+      --  Contract (from spec StellarOrion_Optimization.Set_Heat_Load_Weight):
+      --    Pre  => W >= 0.0
+      --    Post => Heat_Load_Weight = W
+   begin
+      --  Defense-in-depth: the spec Pre forbids a negative weight, but a
+      --  host may call this with assertions stripped (the FFI route).
+      if W < 0.0 then
+         raise Constraint_Error
+           with "Set_Heat_Load_Weight: the heat-load weight must be >= 0.0";
+      end if;
+      Current_Heat_Load_Weight := W;
+   end Set_Heat_Load_Weight;
+
    --  ====================================================================
    --  Load_Calibration  (design §2.6.2)
    --  ====================================================================
@@ -3127,7 +3161,10 @@ package body StellarOrion_Optimization is
          --  maximises Cd.  Normalised and bounded in [0,1] so
          --  J(x) >= 0 still holds by construction.
          Cd_Deficit := Max (0.0, (Cd_Goal - Cd_Cal) / Cd_Goal);
-         Total := W_Heat_Load * HL_R
+         --  The heat-load weight is the double pass GA's round-2 injection
+         --  point: W_Heat_Load + (c - 1) reproduces
+         --  J_round2 = J + (c-1)*heat_load_ratio exactly (W_Heat_Load = 1.0).
+         Total := Current_Heat_Load_Weight * HL_R
                   + W_Flux * Flux_R
                   + W_Beta * Beta_Dv
                   + W_Cd * Cd_Deficit
@@ -5245,6 +5282,71 @@ package body StellarOrion_Optimization is
          raise;
    end Test_LHS_Seeded_Population;
 
+   procedure Test_Set_Heat_Load_Weight is -- nosec
+      --  coverage: STC wrapper for the double pass GA's round-2 injection
+      --
+      --  AXIOMS (the double pass GA, round 2):
+      --    A1: the effective heat-load weight of J is W_Heat_Load (1.0) by
+      --        default.
+      --    A2: overriding the weight by (c - 1) is ALGEBRAICALLY IDENTICAL to
+      --        J_round2 = J + (c - 1) * heat_load_ratio -- i.e. the
+      --        DSMC-residual correction enters the SAME cost the genetic
+      --        algorithm minimises, so the round-2 pass is the SAME engine.
+      --    A3: the override is restored on every path, so the package state
+      --        is unchanged for every other test.
+      --
+      --  THEORIES:
+      --    T1: Total (weight W) = Total (weight 1) + (W - 1) * Heat_Load_Ratio.
+      --
+      --  APPLICATIONS:
+      --    The validation gate's round-2 pass sets the weight to
+      --    W_Heat_Load + (c - 1); this test proves the two cost expressions
+      --    agree to the last bit.
+      --
+      --  CITATIONS: Kennedy & O'Hagan (2000) Biometrika 87(1) -- the
+      --    ratio-of-fidelities correction the weight override realises.
+   begin
+      declare
+         X      : constant Param_Vector := (1.5, 0.135, 60.0);
+         Comp_1 : constant Cost_Components := HIAD_Cost_Components (X);
+         Comp_2 : Cost_Components;
+      begin
+         begin
+            Set_Heat_Load_Weight (2.0);
+            Comp_2 := HIAD_Cost_Components (X);
+            pragma Assert
+              (abs (Comp_2.Total - (Comp_1.Total + Comp_1.Heat_Load_Ratio))
+                 <= 1.0e-9 * abs (Comp_1.Total),
+               "the heat-load weight override must reproduce "
+               & "J + (W-1)*heat_load_ratio exactly");
+            pragma Assert
+              (Heat_Load_Weight = 2.0,
+               "the effective heat-load weight must be reported");
+         exception
+            when others =>
+               --  Restore the package state BEFORE re-raising: the weight is
+               --  package state, and a failed test must not shift the J
+               --  values the other tests assert.  The exception is NOT
+               --  named here: the outer handler reports it.
+               Set_Heat_Load_Weight (1.0);
+               raise;
+         end;
+         Set_Heat_Load_Weight (1.0);
+         pragma Assert
+           (abs (HIAD_Cost_Components (X).Total - Comp_1.Total)
+              <= 1.0e-9 * abs (Comp_1.Total),
+            "the override must be restorable, so the package state stays clean");
+         Ada.Text_IO.Put_Line
+           ("[PASS] Test_Set_Heat_Load_Weight: "
+            & "J(w=2) = J(w=1) + heat_load_ratio (the round-2 injection)");
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Set_Heat_Load_Weight: "
+                               & Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Set_Heat_Load_Weight;
+
    procedure Test_Load_Calibration is -- nosec
       --  Contract: Pre => True (no inputs); Post => True (asserts the
       --  loader's three documented behaviours)
@@ -5848,6 +5950,7 @@ package body StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Gaussian_Standard", Test_Gaussian_Standard'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Seeded_Population", Test_LHS_Seeded_Population'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Set_Heat_Load_Weight", Test_Set_Heat_Load_Weight'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Load_Calibration", Test_Load_Calibration'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimization_Cost", Test_Optimization_Cost'Access);

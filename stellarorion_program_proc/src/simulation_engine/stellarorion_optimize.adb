@@ -85,7 +85,8 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
 
    begin
       Write_Status (STATUS_DIR, "optimize", Status_Running, 0.0);
-      Put_Line ("[OPTIMIZE] ====== SBO Optimisation Loop ======");
+      Put_Line ("[OPTIMIZE] ====== double pass GA engine: analytic pass"
+                & " (MODEL SPACE) ======");
       Put_Line ("[OPTIMIZE] Method     : " & DoE_Method'Image (DoE_In));
       Put_Line ("[OPTIMIZE] Objective  : " & Objective'Image (Obj_In));
       Put_Line ("[OPTIMIZE] Samples    :" & Positive'Image (N_Samples));

@@ -1334,6 +1334,7 @@ def run_sbo_ga(
     tau_sec: float | None = None,
     cd_ref: float | None = None,
     calibration_path: str | None = None,
+    heat_load_weight: float = 1.0,
 ) -> dict[str, Any]:
     """Run the Ada SBO genetic algorithm through the stand-alone runner.
 
@@ -1358,6 +1359,10 @@ def run_sbo_ga(
         tau_sec: reference dwell time s.
         cd_ref: reference drag coefficient.
         calibration_path: path of the KEY = VALUE calibration file
+        heat_load_weight: effective heat-load weight of J;
+            the round-2 pass of the double pass GA uses
+            W_Heat_Load + (c - 1) to inject the DSMC-residual
+            correction into the SAME Ada cost.
             (CALIBRATION DESIGN 2.6.2).  The runner loads it BEFORE the
             optimisation, so the optimum is scored with the model the DSMC
             will later be compared against.  None leaves the runner on its
@@ -1370,6 +1375,7 @@ def run_sbo_ga(
         keys: iteration / R_N / r_tor / half_cone_deg / cost / type), plus
         "physical_geometry" (diameter_m / nose_radius_m / toroid_radius_m /
         angle_deg — the VEHICLE, not the analytic triple) and
+        "heat_load_weight": float(heat_load_weight),
         "calibration_active" (whether the runner had a calibration loaded).
 
     Raises:
@@ -1399,6 +1405,7 @@ def run_sbo_ga(
     ):
         if value is not None:
             cmd += [flag, repr(float(value))]
+    cmd += ["--heat-load-weight", repr(float(heat_load_weight))]
     if calibration_path is not None:
         # The runner loads the calibration itself (CALIBRATION DESIGN 2.5
         # decided against the FFI route: the Ada <-> C string conversion).

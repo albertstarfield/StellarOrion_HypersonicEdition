@@ -310,6 +310,13 @@ class _GateBOKwargs(TypedDict):
 # AXIOM: the GA budget is the Ada GA_Config default (population 50,
 # 200 generations); the whole population is evaluated concurrently by the
 # four Ravenscar worker tasks, so the wall clock is ~1/4 of the serial cost.
+#  Base heat-load weight of the composite cost J (the Ada constant
+#  W_Heat_Load in stellarorion_optimization.ads).  The round-2 pass of the
+#  double pass GA injects the DSMC-residual correction c as
+#  J_round2 = J + (c-1)*heat_load_ratio, which is algebraically identical to
+#  using the weight W_Heat_Load + (c-1).  AXIOM A2 of this patch.
+_HEAT_LOAD_WEIGHT_BASE = 1.0
+
 _GA_POPULATION_SIZE = 50
 _GA_MAX_GENERATIONS = 200
 
@@ -1259,19 +1266,46 @@ def _hybrid_gate(
     print(f"  VERDICT: {'PASS' if passed else 'FAIL'}")
 
     # ---------- ROUND 2 (multi-fidelity correction, plan Part C) ---------
-    print("\n  Stage 3/3: round-2 Bayesian Optimization with corrected J ...")
-    try:
-        corrected_cost = _make_corrected_cost(correction)
-        # Explicit keywords, not `**_GATE_BO_KWARGS` -- see _GateBOKwargs.
-        result2 = run_bayesian_optimize(
-            corrected_cost,
-            n_initial=_GATE_BO_KWARGS["n_initial"],
-            n_iter=_GATE_BO_KWARGS["n_iter"],
-            xi=_GATE_BO_KWARGS["xi"],
-            seed=_GATE_BO_KWARGS["seed"],
-        )
-    except (OSError, ValueError, RuntimeError, KeyError) as exc:
-        return _abort(1, f"round-2 optimization failed: {exc}")
+    #  THE ROUND-2 OPTIMISER IS THE SAME OPTIMISER AS PASS 1.
+    #    "bo"  : the Bayesian optimiser accepts a Python cost function, so
+    #            the corrected cost is injected as _make_corrected_cost(c).
+    #    "sbo" : the Ada GA minimises its OWN internal cost, so the
+    #            correction is injected as the effective HEAT-LOAD WEIGHT:
+    #              J_round2 = J + (c-1)*heat_load_ratio
+    #                      = (W_Heat_Load + c - 1)*heat_load_ratio + ...
+    #            (W_Heat_Load = 1.0 in stellarorion_optimization.ads), which
+    #            is algebraically identical to the corrected cost.
+    round2_weight: float | None = None
+    if args.optimizer == "bo":
+        print("\n  Stage 3/3: round-2 Bayesian Optimization with corrected J ...")
+        try:
+            corrected_cost = _make_corrected_cost(correction)
+            # Explicit keywords, not `**_GATE_BO_KWARGS` -- see _GateBOKwargs.
+            result2 = run_bayesian_optimize(
+                corrected_cost,
+                n_initial=_GATE_BO_KWARGS["n_initial"],
+                n_iter=_GATE_BO_KWARGS["n_iter"],
+                xi=_GATE_BO_KWARGS["xi"],
+                seed=_GATE_BO_KWARGS["seed"],
+            )
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            return _abort(1, f"round-2 optimization failed: {exc}")
+    else:
+        round2_weight = _HEAT_LOAD_WEIGHT_BASE + (float(correction) - 1.0)
+        print("\n  Stage 3/3: round-2 double pass GA with the corrected "
+              "heat-load weight ...")
+        print(f"  heat-load weight: {_HEAT_LOAD_WEIGHT_BASE:.6f} -> "
+              f"{round2_weight:.6f}   (correction factor c = "
+              f"{float(correction):.6f})")
+        try:
+            result2 = run_sbo_ga(
+                population_size=_GA_POPULATION_SIZE,
+                max_generations=_GA_MAX_GENERATIONS,
+                calibration_path=args.calibration,
+                heat_load_weight=round2_weight,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            return _abort(1, f"round-2 optimization failed: {exc}")
     x2 = result2["x_opt"]
     r2_cd = estimate_cd(*x2)
     r2_comp = hiad_cost_components(*x2)
@@ -1291,10 +1325,22 @@ def _hybrid_gate(
     }
     # AXIOM (CALIBRATION DESIGN 2.1): the round-2 optimum carries the
     # PHYSICAL vehicle as well as the analytic triple.
-    round2_physical = analytic_to_physical(
-        float(x2[0]), float(x2[1]), float(x2[2])
-    )
+    if round2_weight is None:
+        round2_physical = analytic_to_physical(
+            float(x2[0]), float(x2[1]), float(x2[2])
+        )
+    else:
+        #  The GA runner already reports the PHYSICAL vehicle it scored
+        #  (the unsync-corrected mapping); the Python mirror is only a
+        #  fallback for a runner that did not report one.
+        round2_physical = result2.get("physical_geometry") or (
+            analytic_to_physical(
+                float(x2[0]), float(x2[1]), float(x2[2])
+            )
+        )
     round2["physical_geometry"] = round2_physical
+    if round2_weight is not None:
+        round2["heat_load_weight"] = round2_weight
     block["optimized_round2"] = {
         k: v for k, v in round2.items() if k != "history"}
 

@@ -1000,6 +1000,35 @@ package StellarOrion_Optimization is
                  and Tau_Sec > 0.0 and Cd_Ref > 0.0,
          Post => True;
 
+   --  Effective heat-load weight of the composite cost J (read-only view).
+   --
+   --  WHY (the double pass GA): the round-2 pass of the pipeline injects the
+   --  DSMC-residual correction c = clamp(q_hybrid/q_analytic, 0.5, 2.0) as
+   --     J_round2(x) = J(x) + (c - 1) * heat_load_ratio(x).
+   --  Because W_Heat_Load = 1.0 in this package, that expression is EXACTLY
+   --  a heat-load weight override:
+   --     W_Heat_Load' = W_Heat_Load + (c - 1) = c,
+   --  so overriding the weight reproduces the corrected cost bit-for-bit
+   --  inside the SAME genetic-algebra engine -- no second cost function and
+   --  no Python-side surrogate of J is needed.
+   --
+   --  Contract: post => the effective weight is non-negative (J >= 0 holds
+   --           by construction because every term of J is non-negative).
+    function Heat_Load_Weight return Float
+    with Post => Heat_Load_Weight'Result >= 0.0;
+
+   --  Set the effective heat-load weight of the composite cost J.
+   --
+   --  The value is read by every subsequent evaluation of J (including the
+   --  concurrent Ravenscar population evaluation), so it MUST be set BEFORE
+   --  the optimisation starts -- it is an input, not a live knob.
+   --
+   --  Contract: pre => W >= 0.0 (a negative weight could make J < 0);
+   --           post => Heat_Load_Weight = W (the override took effect).
+    procedure Set_Heat_Load_Weight (W : Float)
+    with Pre  => W >= 0.0,
+         Post => Heat_Load_Weight = W;
+
     --  Minimum nose sphere radius that can enclose the cylindrical
     --  payload (radius r_pay, height h_pay) plus the TPS/structure
     --  standoff:  R_N >= sqrt(r_pay^2 + (h_pay/2)^2) + standoff.
@@ -1227,6 +1256,9 @@ package StellarOrion_Optimization is
     procedure Test_LHS_Seeded_Population
       with Pre => True, Post => True;
     --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Set_Heat_Load_Weight
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
     procedure Test_Load_Calibration
       with Pre => True, Post => True;
     --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -1276,6 +1308,7 @@ package StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Function", Test_HIAD_Cost_Function'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Seeded_Population", Test_LHS_Seeded_Population'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Set_Heat_Load_Weight", Test_Set_Heat_Load_Weight'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Load_Calibration", Test_Load_Calibration'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Max", Test_Max'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);
