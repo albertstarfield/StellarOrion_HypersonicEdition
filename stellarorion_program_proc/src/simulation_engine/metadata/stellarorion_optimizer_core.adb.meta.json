@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_optimizer_core.adb",
+  "source_hash": "aaa93198ae9ad99f3f18cd8c2fadde041a837d1fc34da4846a350ef577f88e6a",
+  "rs_checksum": "d0a580b3cb0ad24a82d990dada6dfd6f11a3b1369af2e89a2acc02a7f7dac09a",
+  "gc_checksum": "75cccd601d631c007ecb3d642503698c605621ebe738f086d04c16e0fdfdae5e",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 38
+}

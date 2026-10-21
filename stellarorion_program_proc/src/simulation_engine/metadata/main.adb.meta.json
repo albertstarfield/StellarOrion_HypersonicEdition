@@ -1,9 +1,9 @@
 {
   "source_file": "main.adb",
-  "source_hash": "3bbe1013c39d5bfd1dc57a79c8b9a0a955df159685a57112c9e529ea08aa6328",
-  "rs_checksum": "85ed9ba7118321aa7c7c03c55c7b9bd9ffef0453ce1cb171abaadbb190183f5d",
-  "gc_checksum": "82982a807aa2c1f416dabd94155028ba80952d55de446eac8d90b402b12279f7",
+  "source_hash": "2edc04a760248305f3351bdd81ea212b5ca5411abf0d2505df7ef5538a843566",
+  "rs_checksum": "5c76b18bcae08270cc6b14606354ab0644f9ceb894bdef4f0bdb2f5575787035",
+  "gc_checksum": "26af07fac5264f630fe0246c9ead3e3c81eef40c4236929c33ddd1310cd918c2",
   "version": "2.0",
   "block_size": 512,
-  "total_blocks": 19
+  "total_blocks": 21
 }

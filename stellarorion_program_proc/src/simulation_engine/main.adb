@@ -12,6 +12,15 @@
 
 with StellarOrion_Project;
 -- with StellarOrion_PostProcessing; -- [removed: not referenced]
+--  WHY: the Ravenscar worker pool is a set of library-level task
+--  objects.  The Ada runtime waits for every dependent task to
+--  terminate before the master task can finish, so a pool that is
+--  never released blocks the partition shutdown and the process
+--  HANGS at exit (measured: `bin/main --validate-only` printed its
+--  TIMING_ANCHOR and then never terminated).  The entry point owns
+--  the release on every path, exactly as the GA driver and the
+--  ga_runner already do.
+with StellarOrion_GA_Parallel;
 with Ada.Text_IO;
 with Ada.Exceptions;
 with Ada.Real_Time; use Ada.Real_Time;
@@ -108,6 +117,10 @@ procedure Main with Pre => True, Post => True is -- nosec
 
 begin
    StellarOrion_Project.Main_Program;
+   --  WHY: release the Ravenscar worker pool so the partition can shut
+   --  down.  Calling it twice is harmless (the GA driver already releases
+   --  the pool when it ran the optimisation).
+   StellarOrion_GA_Parallel.Shut_Down_Workers;
    declare
       Stop_Time  : constant Ada.Real_Time.Time := Ada.Real_Time.Clock; -- Nanosecond anchor stop
       Elapsed    : constant Ada.Real_Time.Time_Span := Stop_Time - Start_Time;
@@ -120,6 +133,14 @@ begin
       when E : others =>
          -- VERBOSE ERROR: Full details required per code-quality.md §5.2
          -- Uses Ada.Calendar for Ada 2012-compatible wall-clock timestamp
+         -- WHY: release the worker pool on the failure path too, otherwise
+         -- a failed run HANGS at partition shutdown instead of reporting.
+         begin
+            StellarOrion_GA_Parallel.Shut_Down_Workers;
+         exception
+            when others =>
+               null; -- the pool release must never mask the original error
+         end;
          declare
             Now   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
             Yr    : Ada.Calendar.Year_Number;

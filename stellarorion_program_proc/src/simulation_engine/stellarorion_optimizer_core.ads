@@ -32,6 +32,45 @@
 --         space of this project (the 5-gene HIAD geometry and the 3-gene
 --         (R_N, r_tor, half_cone) analytic space) without copy-paste
 --         divergence.
+--     A6. The DSMC calibration of the screening model is an ADDITIVE
+--         RESIDUAL over the seven-term ORTHOGONAL basis of the
+--         canonical 2^3 factorial design:
+--             {1, x1, x2, x3, x1*x2, x1*x3, x2*x3}.
+--         Every term of that basis has squared norm 8 over the eight
+--         design points, so the fit is closed-form (no matrix
+--         inversion), the coefficients are independent, and NO
+--         divisor that could be zero is involved.
+--     A7. Every coded coordinate is bounded by [-1, +1] (subtype
+--         Coded_Coordinate), so every basis monomial is bounded by 1
+--         in absolute value and every contrast sum is bounded by the
+--         number of design points times the largest response.
+--     A8. CONTRACT FORM of the calibration fit. The Post of
+--         Fit_Orthogonal_Factorial names the two closed forms through
+--         the accessors Residual_Grand_Mean ("the grand mean of
+--         Values") and Residual_Contrast ("the k-th orthogonal
+--         contrast") instead of spelling the eight-term array sums out
+--         inline. The reason is PROVABILITY, and it is the ONLY
+--         deviation from the literal wording of CALIBRATION_DESIGN.md
+--         Sec. 2.6.1:
+--           (a) the accessors evaluate the closed form with a LOOP
+--               (the package style) whose accumulator is bounded by a
+--               loop invariant;
+--           (b) Ada has no array-sum operator and GNATprove does not
+--               perform induction over an array of partial sums, so a
+--               loop-computed sum CANNOT be equated by the prover to
+--               an inline eight-term expression over the same array;
+--           (c) naming the accessors therefore states the SAME
+--               mathematical property the design asks for --
+--               Coefficients (1) is the grand mean of Values and
+--               Coefficients (k) is the k-th orthogonal contrast --
+--               while remaining machine-checkable.
+--         The Pre aspects of the accessors restate the design domains
+--         that the declared subtypes already enforce (the response
+--         domain, the +-1 coded design, the coded-point box). They
+--         add no new restriction; they make the design assumptions
+--         visible in the contract at every call site, which is the
+--         convention of this package (cf. Fit_Linear_Surrogate,
+--         Optimization_Cost).
 --
 --  THEORIES
 --     T1. Optimization_Cost is a weighted sum of squares with
@@ -52,6 +91,19 @@
 --     T5. Elitism (copying the ranked head of a generation unchanged into
 --         the next one) guarantees that the best cost of generation
 --         g+1 is no larger than the best cost of generation g.
+--     T6. Fit_Orthogonal_Factorial reproduces the grand mean of the
+--         design responses in Coefficients (1) and the k-th orthogonal
+--         contrast in Coefficients (k). For the canonical 2^3 design
+--         the cross-product matrix is 8*I, so the normal equations
+--         decouple and
+--             b_0  = (1/8) SUM_i y_i
+--             b_k  = (1/8) SUM_i x_ik y_i
+--             b_ij = (1/8) SUM_i x_ik x_jk y_i
+--         which is exactly the closed form the fit evaluates.
+--     T7. Evaluate_Residual_Model is the response surface
+--             b_0 + b_1 x1 + b_2 x2 + b_3 x3 + b_4 x1 x2 + b_5 x1 x3
+--               + b_6 x2 x3
+--         evaluated at a coded point.
 --
 --  APPLICATIONS
 --     - StellarOrion_Optimization delegates its GA bookkeeping here.
@@ -80,6 +132,11 @@
 --                 of Genetic Algorithms 4, 155-199, 1993. — BLX-alpha.
 --     [Jones98]  Jones, D. R. J. "Global Optimization" 13, 455-483, 1998.
 --                 — model-fidelity (trust-region) penalty.
+--     [Kennedy00]  Kennedy, M. C., O'Hagan, A. "Bayesian Calibration of
+--                 Computer Models." Biometrika 87(1), 239-247, 2000. —
+--                 the model-discrepancy (calibration) framework that the
+--                 orthogonal residual correction implements.
+--                 [Citation: https://doi.org/10.1093/biomet/87.1.239]
 
 package StellarOrion_Optimizer_Core with SPARK_Mode => On is
 
@@ -239,6 +296,180 @@ package StellarOrion_Optimizer_Core with SPARK_Mode => On is
           Pre  => W in 0.0 .. 1.0E6
                    and True_Y in -1.0E9 .. 1.0E9,
           Post => Surrogate_Disagreement'Result >= 0.0;
+
+   --  ==================================================================
+   --  Orthogonal residual correction (the calibration fit)
+   --
+   --  AXIOM A6: the residual of the analytic screening model against
+   --  the DSMC response is corrected by an ADDITIVE term over the
+   --  seven-term ORTHOGONAL basis of the canonical 2^3 factorial
+   --  design:
+   --      {1, x1, x2, x3, x1*x2, x1*x3, x2*x3}.
+   --  THEORY T6: every term of that basis has squared norm 8 over the
+   --  eight design points, so the normal equations of the fit decouple
+   --  and the closed-form coefficients are the grand mean and the
+   --  contrasts. No divisor that could be zero is involved.
+   --  ==================================================================
+
+   --  WHY: the index of a term of the seven-term orthogonal basis.
+   --  The index order IS the basis order:
+   --     1 = the constant term, 2 = x1, 3 = x2, 4 = x3,
+   --     5 = x1*x2, 6 = x1*x3, 7 = x2*x3.
+   subtype Residual_Basis_Index is Integer range 1 .. 7;
+
+   --  WHY: the index of a CONTRAST term of the basis. The constant term
+   --  (index 1) is the grand mean of the responses and has its own
+   --  accessor, so the contrast accessor starts at 2.
+   subtype Residual_Contrast_Index is Integer range 2 .. 7;
+
+   --  WHY: a fitted coefficient of the residual model. The bound is
+   --  three orders of magnitude above the largest coefficient the fit
+   --  can produce (|SUM| <= 8 * 1.0E6 and the divisor is 8, so
+   --  |b| <= 1.0E6), so the assignment of a fitted coefficient can
+   --  never fail a range check.
+   subtype Residual_Coefficient is Float range -1.0E9 .. 1.0E9;
+
+   --  WHY: the seven fitted coefficients of the orthogonal residual
+   --  model, in the basis order of Residual_Basis_Index.
+   type Residual_Coefficient_Array is
+     array (Residual_Basis_Index) of Residual_Coefficient;
+
+   --  ----------------------------------------------------------------
+   --  Residual_Grand_Mean
+   --
+   --  AXIOMS
+   --    A1. Values are the responses observed at the eight design
+   --        points; each is bounded by Response_Value
+   --        (-1.0E6 .. 1.0E6).
+   --  THEORIES
+   --    T1. The result is the grand mean of the eight responses,
+   --          m = (1/8) SUM_i y_i.
+   --    T2. |m| <= 1.0E6.
+   --    Proof: the partial sums are bounded by the loop invariant and
+   --    the divisor is the positive constant 8, so the quotient cannot
+   --    exceed the largest response.
+   --  APPLICATIONS
+   --    The constant term (b_0) of the orthogonal residual model.
+   --  CITATIONS
+   --    [Montgomery17] Ch. 6 — the grand mean of a factorial design.
+   --  ----------------------------------------------------------------
+   function Residual_Grand_Mean
+     (Values : Factorial_Value_Array) return Float
+     with Global => null,
+          Pre  => (for all I in 1 .. Factorial_Point_Count =>
+                      Values (I) in -1.0E6 .. 1.0E6),
+          Post => Residual_Grand_Mean'Result in -1.0E6 .. 1.0E6;
+
+   --  ----------------------------------------------------------------
+   --  Residual_Contrast
+   --
+   --  AXIOMS
+   --    A1. Coded is the canonical 2^3 factorial design: every coded
+   --        coordinate is exactly +1.0 or exactly -1.0 (the same
+   --        precondition as Fit_Linear_Surrogate).
+   --    A2. The monomial of term K at design point I is x_1 for K = 2,
+   --        x_2 for K = 3, x_3 for K = 4, x_1*x_2 for K = 5,
+   --        x_1*x_3 for K = 6 and x_2*x_3 for K = 7.
+   --  THEORIES
+   --    T1. The result is the k-th ORTHOGONAL CONTRAST of the design,
+   --          c_k = (1/8) SUM_i m_k (x_i) y_i,
+   --        where m_k is the monomial of term K.
+   --    T2. |c_k| <= 1.0E6.
+   --    Proof: every monomial is bounded by 1 (AXIOM A7), so the
+   --    partial sums are bounded by the loop invariant and the
+   --    quotient by the largest response.
+   --  APPLICATIONS
+   --    The six non-constant coefficients (b_1 .. b_6) of the
+   --    orthogonal residual model.
+   --  CITATIONS
+   --    [Montgomery17] Ch. 6 — contrasts in an orthogonal factorial
+   --    design; [Gauss1809] — the normal equations they solve.
+   --  ----------------------------------------------------------------
+   function Residual_Contrast
+     (Coded  : Factorial_Point_Array;
+      Values : Factorial_Value_Array;
+      K      : Residual_Contrast_Index) return Float
+     with Global => null,
+          Pre  => (for all I in 1 .. Factorial_Point_Count =>
+                     (for all J in 1 .. 3 =>
+                        Coded (I) (J) = 1.0
+                        or else Coded (I) (J) = -1.0)),
+          Post => Residual_Contrast'Result in -1.0E6 .. 1.0E6;
+
+   --  ----------------------------------------------------------------
+   --  Fit_Orthogonal_Factorial
+   --
+   --  AXIOMS
+   --    A1. The design is the canonical 2^3 factorial: every coded
+   --        coordinate of every point is exactly +1.0 or exactly -1.0.
+   --        This is the precondition that makes the closed-form
+   --        contrast estimator exact (THEORY T6).
+   --    A2. The responses are the measured values at the design points.
+   --  THEORIES
+   --    T1. Coefficients (1) is the grand mean of Values.
+   --    T2. Coefficients (k) is the k-th orthogonal contrast of the
+   --        design, for k = 2 .. 7.
+   --    Proof: the fit evaluates the closed forms of THEORY T6
+   --    directly; the loop invariant carries the closed form of every
+   --    coefficient already written.
+   --    NOTE (AXIOM A8): the Post states T1 and T2 through the
+   --    accessors Residual_Grand_Mean and Residual_Contrast rather
+   --    than through inline array expressions, because a loop-computed
+   --    sum cannot be equated by the prover to an inline eight-term
+   --    expression. The mathematical content is unchanged.
+   --  APPLICATIONS
+   --    Fits the ADDITIVE calibration residual of the screening model
+   --    against the DSMC response (CALIBRATION_DESIGN.md Sec. 2.6).
+   --  CITATIONS
+   --    [Gauss1809] least squares; [Montgomery17] Ch. 6 — contrasts
+   --    and the orthogonality of a factorial design; [Kennedy00] — the
+   --    model-discrepancy framework the correction belongs to.
+   --  ----------------------------------------------------------------
+   procedure Fit_Orthogonal_Factorial
+     (Coded        : Factorial_Point_Array;
+      Values       : Factorial_Value_Array;
+      Coefficients : out Residual_Coefficient_Array)
+     with Global => null,
+          Pre  => (for all I in 1 .. Factorial_Point_Count =>
+                     (for all K in 1 .. 3 =>
+                        Coded (I) (K) = 1.0
+                        or else Coded (I) (K) = -1.0)),
+          Post => Coefficients (1) = Residual_Grand_Mean (Values)
+                  and (for all K in 2 .. Residual_Basis_Index'Last =>
+                        Coefficients (K) = Residual_Contrast (Coded, Values, K));
+
+   --  ----------------------------------------------------------------
+   --  Evaluate_Residual_Model
+   --
+   --  AXIOMS
+   --    A1. X is a CODED point: each coordinate lies in [-1, +1]
+   --        (subtype Coded_Coordinate). The caller codes the physical
+   --        point against the design bounds before calling; no scale is
+   --        stored here because a scale is a property of the DESIGN.
+   --    A2. The seven coefficients are the fitted basis coefficients,
+   --        in the basis order of Residual_Basis_Index.
+   --  THEORIES
+   --    T1. The result is the model
+   --          b_0 + b_1 x1 + b_2 x2 + b_3 x3 + b_4 x1 x2 + b_5 x1 x3
+   --            + b_6 x2 x3
+   --        evaluated at X.
+   --    T2. |result| <= 7.0E9.
+   --    Proof: every coefficient is bounded by 1.0E9 and every monomial
+   --    of the coded point is bounded by 1, so each of the seven terms
+   --    is bounded by 1.0E9.
+   --  APPLICATIONS
+   --    The additive correction the calibrated screening model adds to
+   --    the analytic drag and heat laws.
+   --  CITATIONS
+   --    [Montgomery17] Ch. 7 — first-order response surface with
+   --    two-factor interactions.
+   --  ----------------------------------------------------------------
+   function Evaluate_Residual_Model
+     (Coefficients : Residual_Coefficient_Array;
+      X            : Coded_Vector) return Float
+     with Global => null,
+          Pre  => (for all K in 1 .. 3 => X (K) in -1.0 .. 1.0),
+          Post => Evaluate_Residual_Model'Result in -7.0E9 .. 7.0E9;
 
    --  ==================================================================
    --  Objective function

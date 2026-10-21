@@ -11,7 +11,9 @@ by its cost J on a single shared logarithmic colormap.
 Panel composition (88 = 1 + 15 + 70 + 1 + 1):
   [1]     IRVE-3 default baseline          (explicit reference)
   [15]    CCD design points                 (ccd_samples in JSON)
-  [70]    BO evaluation history             (20 LHD initial + 50 BO)
+  [H]     the recorded optimizer history     (one row per evaluation or
+                                                  generation, depending on
+                                                  the optimiser)
   [1]     Round-1 optimum                   (optimized, highlighted)
   [1]     Round-2 optimum                   (optimized_round2, highlighted)
           = the post-hybrid-gate re-optimization winner. Kennedy & O'Hagan
@@ -103,12 +105,28 @@ _ACCENT = "#e94560"
 _DIM = "#555555"
 _EDGE = "#0f3460"
 
-# Panel-grid geometry: 10 rows x 9 cols = 90 slots, first 88 filled.
-# 88 = 1 default + 15 CCD + 70 history + 1 round-1 optimum + 1 round-2 optimum.
-_EXPECTED_PANELS = 88
+# Panel-grid geometry: the COLUMN count is fixed; the ROW count is DERIVED
+# from the ACTUAL panel count.  The panel count is campaign-dependent: the
+# Bayesian campaign had 88 panels (1 default + 15 CCD + 70 history + 2
+# optima), while a Genetic Algorithm campaign records one history row per
+# generation (a 134-generation run has 152 panels).  A hard-coded row count
+# overflowed the GridSpec and killed the whole render, so the layout adapts.
+_EXPECTED_PANELS = 88  # the reference Bayesian campaign (informational only)
 _COLS = 9
-_ROWS = 10
-_N_EMPTY_SLOTS = _ROWS * _COLS - _EXPECTED_PANELS  # = 2 trailing blanks
+
+
+def _rows_for(n_panels: int) -> int:
+    """Number of grid rows needed for ``n_panels`` panels at ``_COLS`` columns.
+
+    Parameters:
+        n_panels: the number of panels actually built.
+
+    Returns:
+        The smallest row count (>= 1) that fits every panel.
+
+    WHY: the layout must follow the data, never a hard-coded campaign size.
+    """
+    return max(1, -(-n_panels // _COLS))
 
 # Revolution resolution: 48 azimuthal steps x 57 profile pts ≈ 2.7k verts.
 # [Citation: hiad_geometry.generate_cross_section default n_per_segment=15
@@ -329,8 +347,8 @@ def build_panels(data: dict) -> list:
     if round2 is None:
         print(
             "WARNING: 'optimized_round2' absent from the optimizer JSON — "
-            f"rendering {_EXPECTED_PANELS - 1} panels instead of "
-            f"{_EXPECTED_PANELS}.\n"
+            "rendering one panel fewer than a gated campaign would "
+            "produce.\n"
             "  Cause: the hybrid validation gate has not produced a "
             "round-2 re-optimization yet.\n"
             "  Fix:   python3 src/python/hiad_optimizer.py --hybrid-validate",
@@ -342,7 +360,15 @@ def build_panels(data: dict) -> list:
         )
 
     n_ccd = sum(1 for p in panels if p["kind"] == "ccd")
-    n_hist = sum(1 for p in panels if p["kind"] in ("initial", "bo"))
+    # The history panels carry the optimizer's own phase label as their kind
+    # ("initial" for the Latin-Hypercube phase, "bo" for the Bayesian phase,
+    # "ga"/"sbo" for the Genetic Algorithm phases).  Count the labels the
+    # ARTIFACT actually uses: a hard-coded ("initial", "bo") tuple reported
+    # "0 history" for every Genetic Algorithm campaign.
+    history_kinds = {
+        str(e.get("type", "?")) for e in data.get("history") or []
+    }
+    n_hist = sum(1 for p in panels if p["kind"] in history_kinds)
     print(
         f"  Panels built: {len(panels)} "
         f"(1 default + {n_ccd} CCD + {n_hist} history "
@@ -351,10 +377,12 @@ def build_panels(data: dict) -> list:
     )
     if len(panels) != _EXPECTED_PANELS:
         print(
-            f"WARNING: expected {_EXPECTED_PANELS} panels (doc contract), "
-            f"got {len(panels)}.\n"
-            f"  Cause: optimizer config changed (n_initial/n_iter/ccd).\n"
-            f"  Effect: grid renders anyway; row/col layout unchanged.",
+            f"NOTE: the reference campaign had {_EXPECTED_PANELS} panels; "
+            f"this artifact has {len(panels)}.\n"
+            "  Cause: the optimizer configuration changed (the Genetic "
+            "Algorithm records one history row per generation).\n"
+            "  Effect: the grid adapts -- the row count follows the panel "
+            "count, so every panel is drawn.",
             file=sys.stderr,
         )
     return panels
@@ -594,7 +622,8 @@ def main() -> int:
         error).
     """
     print("=" * 72)
-    print(f"  Rendering {_EXPECTED_PANELS}-panel HIAD 3D geometry grid")
+    print("  Rendering HIAD 3D geometry grid "
+          "(the panel count follows the artifact)")
     print("=" * 72)
     panel_errors: list = []
 
@@ -612,11 +641,15 @@ def main() -> int:
         x_max, r_max = compute_global_limits(panels)
 
         # --- Step 3: draw ---
+        rows = _rows_for(len(panels))
         print(f"\n[3/4] Drawing {len(panels)} 3D panels "
-              f"({_ROWS}x{_COLS} grid) ...")
-        fig = plt.figure(figsize=(18, 24), facecolor=_BG)
+              f"({rows}x{_COLS} grid) ...")
+        # The figure height scales with the row count so every panel keeps
+        # the same physical size (the 10-row Bayesian campaign was 24 in
+        # tall => 2.4 in per row).
+        fig = plt.figure(figsize=(18, 2.4 * rows), facecolor=_BG)
         gs = fig.add_gridspec(
-            _ROWS, _COLS,
+            rows, _COLS,
             left=0.03, right=0.93, top=0.93, bottom=0.04,
             wspace=0.08, hspace=0.28,
         )
@@ -636,8 +669,8 @@ def main() -> int:
             if (i + 1) % 15 == 0:
                 print(f"  ... {i + 1}/{len(panels)} panels drawn")
 
-        # Trailing empty slots (90 - 88 = 2) — blank, no axes clutter
-        for slot in range(len(panels), _ROWS * _COLS):
+        # Trailing empty slots (rows*cols - len(panels)) — blank, no clutter
+        for slot in range(len(panels), rows * _COLS):
             ax = fig.add_subplot(
                 gs[slot // _COLS, slot % _COLS], projection="3d"
             )
@@ -671,7 +704,7 @@ def main() -> int:
             for label in phase_labels
         ) or "no phases"
         fig.suptitle(
-            f"StellarOrion HIAD — {_EXPECTED_PANELS}-Panel Geometry Grid "
+            f"StellarOrion HIAD — {len(panels)}-Panel Geometry Grid "
             "(color = cost J, log scale)\n"
             f"1 default + {len(ccd_rows)} CCD + {len(history_rows)} history "
             f"({history_phases}) + "

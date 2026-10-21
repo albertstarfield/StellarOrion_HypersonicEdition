@@ -39,10 +39,36 @@ AXIOM A4 -- Every comparison states its direction.  A metric whose meaning is
     whose meaning is "higher is better" (drag coefficient) are reported with an
     explicit "better/worse" verdict, not a bare delta.
 
+AXIOM A5 -- The CALIBRATION DESIGN 2.4 columns are OPTIONAL here, and a
+    metric that is not recorded is reported as "n/a", never invented.  A run
+    that predates the new schema (no ``cd_unclamped``, no
+    ``cd_raw_body_area``, no ``cd_raw_presented_area``, no
+    ``dsmc_surface_heat_load_jcm2``, no ``geom_*``) still compares exactly as
+    before: the existing metric names, the existing CLI and the existing
+    output columns are unchanged, and the new metric rows simply carry
+    "n/a".
+
+AXIOM A6 -- THE TWO HEAT LOADS ARE DIFFERENT THINGS AND ARE NEVER MIXED.
+    ``total_heat_load_Jcm2`` is the ANALYTIC value: the Sutton-Graves
+    correlation integrated over the heating window (sparta.adb:1870,
+    ``Heat_Flux_Wm2 * 13.58``) -- a correlation, NOT a DSMC measurement.
+    ``dsmc_surface_heat_load_jcm2`` (CALIBRATION DESIGN 2.4) is the DSMC
+    SURFACE INTEGRAL: the time integral of the DSMC surface heat flux.  The
+    report labels them "analytic (Sutton-Graves x window)" and "DSMC surface
+    integral" respectively, so no reader can mistake one for the other.
+
+AXIOM A7 -- The flown geometry is reported from the ``geom_*`` columns of
+    the runs themselves, so a reader can see AT A GLANCE whether the two runs
+    flew the same vehicle.  When the columns are absent the report says so
+    explicitly instead of guessing from the CLI arguments.
+
 CITATIONS
 ----------
 [Reference: stellarorion_sparta.adb:3348] -- the [0, 3] drag-coefficient clamp.
 [Reference: stellarorion_sparta.adb:3443] -- the timeseries CSV schema.
+[Reference: stellarorion_sparta.adb:1870] -- Total_Heat_Load = Heat_Flux_Wm2
+    * 13.58 (the Sutton-Graves x window value reported as heat_load_jcm2).
+[Reference: CALIBRATION_DESIGN.md 2.4] -- the new CSV columns.
 [Reference: Anderson, Hypersonic and High-Temperature Gas Dynamics, 2006,
     Sec. 8.4] -- F = 0.5 * Cd * A * rho * V^2, the definition used here.
 [Reference: NASA/TP-2013-4012] -- the IRVE-3 reference geometry (R_N = 1.5 m).
@@ -85,6 +111,50 @@ REQUIRED_COLUMNS = (
     "heat_load_jcm2",
     "heat_flux_fr_wm2",
 )
+
+# CALIBRATION DESIGN 2.4 columns.  They are OPTIONAL: a run that predates
+# the new schema simply does not have them and the corresponding metric is
+# reported as "n/a" (AXIOM A5).
+OPTIONAL_COLUMNS = (
+    "cd_unclamped",
+    "cd_raw_body_area",
+    "cd_raw_presented_area",
+    "dsmc_surface_heat_load_jcm2",
+    "geom_diameter_m",
+    "geom_nose_radius_m",
+    "geom_toroid_radius_m",
+    "geom_angle_deg",
+    "ref_area_body_m2",
+    "ref_area_presented_m2",
+)
+
+#: The geometry fields of the flown vehicle, in reporting order.
+GEOMETRY_FIELDS = (
+    ("geom_diameter_m", "body diameter", "m"),
+    ("geom_nose_radius_m", "nose radius", "m"),
+    ("geom_toroid_radius_m", "toroid radius", "m"),
+    ("geom_angle_deg", "cone angle", "deg"),
+)
+
+#: Which source each heat-load metric comes from (AXIOM A6).
+HEAT_LOAD_SOURCES = {
+    "total_heat_load_Jcm2": "analytic (Sutton-Graves x window)",
+    "dsmc_surface_heat_load_Jcm2": "DSMC surface integral",
+}
+
+#: Which source each other metric comes from (empty string = derived).
+METRIC_SOURCES = {
+    "cd_recorded": "DSMC (clamped to [0,3])",
+    "cd_unclamped": "DSMC (unclamped)",
+    "cd_raw": "reconstructed from the DSMC drag force",
+    "cd_body": "reconstructed from the DSMC drag force",
+    "cd_raw_body_area": "DSMC (body-area normalisation)",
+    "cd_raw_presented_area": "DSMC (presented-area normalisation)",
+    "geom_diameter_m": "flown geometry",
+    "geom_nose_radius_m": "flown geometry",
+    "geom_toroid_radius_m": "flown geometry",
+    "geom_angle_deg": "flown geometry",
+}
 
 
 class ComparisonError(RuntimeError):
@@ -144,6 +214,48 @@ def _floats(rows: list[dict[str, str]], column: str) -> list[float]:
     return out
 
 
+def _optional_floats(
+    rows: list[dict[str, str]], column: str
+) -> list[float] | None:
+    """Extract one OPTIONAL column as floats, or None when it is absent.
+
+    AXIOM A5: a column that the run does not carry is reported as absent,
+    never as zero and never as an error.
+
+    Parameters:
+        rows: the parsed CSV rows.
+        column: the column name.
+
+    Returns:
+        The column values as floats, or None when the column is not in the
+        CSV header.
+
+    Raises:
+        ComparisonError: the column IS present but a value is not a finite
+            number.
+    """
+    if not rows or column not in rows[0]:
+        return None
+    return _floats(rows, column)
+
+
+def _optional_last(rows: list[dict[str, str]], column: str) -> float:
+    """Return the last value of an optional column, or NaN when absent.
+
+    Parameters:
+        rows: the parsed CSV rows.
+        column: the column name.
+
+    Returns:
+        The final value of the column, or ``nan`` when the run does not
+        carry the column.
+    """
+    values = _optional_floats(rows, column)
+    if values is None:
+        return float("nan")
+    return values[-1]
+
+
 def _summarise(
     rows: list[dict[str, str]],
     r_n: float,
@@ -194,7 +306,27 @@ def _summarise(
         body_area = math.pi * r_max * r_max
         cd_body = drag_sum[-1] / (dyn_press[-1] * body_area) if dyn_press[-1] > 0.0 else float("nan")
 
-    saturated = any(c >= CD_CLAMP_MAX - 1.0e-9 for c in cd_recorded)
+    # AXIOM A5: the CALIBRATION DESIGN 2.4 columns are optional; an absent
+    # column yields NaN, which the report renders as "n/a".
+    cd_unclamped = _optional_last(rows, "cd_unclamped")
+    cd_raw_body = _optional_last(rows, "cd_raw_body_area")
+    cd_raw_presented = _optional_last(rows, "cd_raw_presented_area")
+    dsmc_surface_heat = _optional_last(rows, "dsmc_surface_heat_load_jcm2")
+    geom_values = {
+        key: _optional_last(rows, key) for key, _, _ in GEOMETRY_FIELDS
+    }
+
+    # AXIOM A2 (extended): the saturation flag now reads the UNCLAMPED
+    # column when the run carries it -- that is the raw force ratio, and it
+    # is what actually saturates the [0, 3] clamp.  A run without the column
+    # keeps the legacy behaviour (the flag is inferred from the clamped
+    # `cd` column).
+    if math.isfinite(cd_unclamped):
+        saturated = cd_unclamped >= CD_CLAMP_MAX - 1.0e-9
+        saturation_source = "cd_unclamped"
+    else:
+        saturated = any(c >= CD_CLAMP_MAX - 1.0e-9 for c in cd_recorded)
+        saturation_source = "cd (clamped column)"
     # AXIOM A3: cross-check the reconstruction on the unsaturated steps.
     check_max_abs_err = 0.0
     if not saturated:
@@ -223,6 +355,19 @@ def _summarise(
         "final_cl": cl[-1],
         "final_drag_sum_N": drag_sum[-1],
         "cd_body": cd_body,
+        # --- CALIBRATION DESIGN 2.4 metrics (NaN when not recorded) ---
+        "cd_unclamped": cd_unclamped,
+        "cd_raw_body_area": cd_raw_body,
+        "cd_raw_presented_area": cd_raw_presented,
+        "dsmc_surface_heat_load_Jcm2": dsmc_surface_heat,
+        "geom_diameter_m": geom_values["geom_diameter_m"],
+        "geom_nose_radius_m": geom_values["geom_nose_radius_m"],
+        "geom_toroid_radius_m": geom_values["geom_toroid_radius_m"],
+        "geom_angle_deg": geom_values["geom_angle_deg"],
+        "cd_saturation_source": saturation_source,
+        "has_flown_geometry": all(
+            math.isfinite(value) for value in geom_values.values()
+        ),
     }
 
 
@@ -276,6 +421,9 @@ def _rows_for_table(
     """
     # (name, unit, direction): "lower" = lower is better, "higher" = higher is
     # better, "info" = no single direction (reported without a verdict).
+    # The first thirteen rows are the HISTORICAL metrics, unchanged in name,
+    # order and meaning (AXIOM A5); the rows after them are the CALIBRATION
+    # DESIGN 2.4 additions.
     metrics: list[tuple[str, str, str]] = [
         ("heat_flux_max_final_Wcm2", "W/cm^2", "lower"),
         ("heat_flux_max_run_max_Wcm2", "W/cm^2", "lower"),
@@ -290,6 +438,15 @@ def _rows_for_table(
         ("cd_body", "-", "higher"),
         ("final_cl", "-", "info"),
         ("final_drag_sum_N", "N", "higher"),
+        # --- CALIBRATION DESIGN 2.4 ---
+        ("cd_unclamped", "-", "higher"),
+        ("cd_raw_body_area", "-", "higher"),
+        ("cd_raw_presented_area", "-", "higher"),
+        ("dsmc_surface_heat_load_Jcm2", "J/cm^2", "lower"),
+        ("geom_diameter_m", "m", "info"),
+        ("geom_nose_radius_m", "m", "info"),
+        ("geom_toroid_radius_m", "m", "info"),
+        ("geom_angle_deg", "deg", "info"),
     ]
     rows: list[tuple[str, str, float, float, float, str]] = []
     for name, unit, direction in metrics:
@@ -309,6 +466,24 @@ def _rows_for_table(
             )
         )
     return rows
+
+
+def _fmt(value: float, spec: str = ".6g") -> str:
+    """Format a number for the report, rendering a missing value as "n/a".
+
+    AXIOM A5: a metric the run does not carry is reported as "n/a", never
+    as a zero and never as "nan".
+
+    Parameters:
+        value: the value to format.
+        spec: the format specification for a finite value.
+
+    Returns:
+        The formatted value, or "n/a" when it is not finite.
+    """
+    if not math.isfinite(value):
+        return "n/a"
+    return format(value, spec)
 
 
 def _render_markdown(
@@ -366,15 +541,79 @@ def _render_markdown(
         "body's own frontal area; `cd_body` is the body-area-normalised value "
         "where the body radius is known."
     )
+    lines.append(
+        "- Saturation flag: inferred from "
+        f"`{candidate['cd_saturation_source']!s}`; `cd_unclamped` is the "
+        "DSMC drag force ratio WITHOUT the [0, 3] clamp applied by the Ada "
+        "writer, and a run that carries it is flagged from that column."
+    )
+    lines.append("")
+    lines.append("## Flown geometry")
+    lines.append("")
+    if bool(reference["has_flown_geometry"]) and bool(candidate["has_flown_geometry"]):
+        lines.append("| Field | Reference | Optimised | Same? |")
+        lines.append("|:---|---:|---:|:---|")
+        differences: list[str] = []
+        for key, label, unit in GEOMETRY_FIELDS:
+            ref_value = float(reference[key])
+            cand_value = float(candidate[key])
+            same = math.isclose(ref_value, cand_value, rel_tol=1.0e-9,
+                                abs_tol=1.0e-12)
+            if not same:
+                differences.append(label)
+            lines.append(
+                f"| {label} [{unit}] | {ref_value:.6g} | {cand_value:.6g} | "
+                f"{'yes' if same else 'NO'} |"
+            )
+        lines.append("")
+        if differences:
+            lines.append(
+                "> **The two runs did NOT fly the same vehicle** -- the "
+                f"following differ: {', '.join(differences)}. Every "
+                "comparison below therefore compares two different "
+                "geometries under the same solver and flight condition."
+            )
+        else:
+            lines.append(
+                "> The two runs flew the SAME vehicle (all four geometry "
+                "fields agree to 1e-9 relative)."
+            )
+    else:
+        lines.append(
+            "> **Not determinable from these files.** At least one run "
+            "predates CALIBRATION DESIGN 2.4 and carries no `geom_*` "
+            "columns, so the flown geometry cannot be read from the run "
+            "itself. The CLI reference radii below are the values the "
+            "comparison was asked to use, NOT a reading of what was flown."
+        )
+        lines.append("")
+        lines.append(
+            f"- Reference CLI reference radius: R_N = "
+            f"{float(reference['r_n']):.6f} m "
+            f"(frontal area {float(reference['frontal_area']):.6f} m^2)"
+        )
+        lines.append(
+            f"- Candidate CLI reference radius: R_N = "
+            f"{float(candidate['r_n']):.6f} m "
+            f"(frontal area {float(candidate['frontal_area']):.6f} m^2)"
+        )
     lines.append("")
     lines.append("## Comparison")
     lines.append("")
-    lines.append("| Metric | Unit | Reference | Optimised | Delta | Verdict |")
-    lines.append("|:---|---:|---:|---:|---:|:---|")
+    lines.append(
+        "| Metric | Unit | Source | Reference | Optimised | Delta | Verdict |"
+    )
+    lines.append("|:---|---:|:---|---:|---:|---:|:---|")
     for name, unit, ref, cand, delta, verdict in rows:
+        source = HEAT_LOAD_SOURCES.get(name, METRIC_SOURCES.get(name, ""))
+        delta_cell = (
+            _fmt(delta, "+.2f") + "%"
+            if math.isfinite(delta)
+            else "n/a"
+        )
         lines.append(
-            f"| {name} | {unit} | {ref:.6g} | {cand:.6g} | "
-            f"{delta:+.2f}% | {verdict} |"
+            f"| {name} | {unit} | {source} | {_fmt(ref)} | {_fmt(cand)} | "
+            f"{delta_cell} | {verdict} |"
         )
     lines.append("")
     if bool(candidate["cd_saturated"]):
@@ -387,6 +626,14 @@ def _render_markdown(
             f"{float(candidate['cd_raw']):.4f}. The `cd_raw` row above is the "
             "reconstruction from the raw drag force and is the value to use."
         )
+        if math.isfinite(float(candidate["cd_unclamped"])):
+            lines.append(">")
+            lines.append(
+                "> The run also carries `cd_unclamped` (CALIBRATION DESIGN "
+                "2.4): the DSMC drag force ratio with NO clamp, final step "
+                f"{float(candidate['cd_unclamped']):.6f}. That is the "
+                "authoritative drag coefficient of the flown vehicle."
+            )
         lines.append("")
     else:
         lines.append(
@@ -401,16 +648,36 @@ def _render_markdown(
         lines.append("## Validation gate")
         lines.append("")
         lines.append(
-            f"- DSMC+PINN_AUX heat load: **{heat:.6f} J/cm^2** "
+            f"- Heat load (analytic: Sutton-Graves x window): "
+            f"**{heat:.6f} J/cm^2** "
             f"(reference {float(reference['total_heat_load_Jcm2']):.6f} J/cm^2)"
         )
+        lines.append(
+            "  NOTE: this is the Sutton-Graves correlation integrated over "
+            "the 13.58 s heating window (`stellarorion_sparta.adb:1870`), "
+            "NOT a quantity measured by DSMC."
+        )
+        dsmc_surface = float(candidate["dsmc_surface_heat_load_Jcm2"])
+        if math.isfinite(dsmc_surface):
+            lines.append(
+                f"- Heat load (DSMC surface integral): **{dsmc_surface:.6f} "
+                f"J/cm^2** "
+                f"(reference {_fmt(float(reference['dsmc_surface_heat_load_Jcm2']))} "
+                "J/cm^2) -- the time integral of the DSMC surface heat flux"
+            )
+        else:
+            lines.append(
+                "- Heat load (DSMC surface integral): n/a -- the run carries "
+                "no `dsmc_surface_heat_load_jcm2` column (it predates "
+                "CALIBRATION DESIGN 2.4)."
+            )
         lines.append(f"- Target: **{q_target:.6f} J/cm^2**")
         lines.append(f"- Verdict (heat load <= target): **{verdict}**")
         if analytic_q is not None:
             ratio = heat / analytic_q if analytic_q else float("nan")
             lines.append(
                 f"- Analytic screening prediction: {analytic_q:.6f} J/cm^2 "
-                f"(DSMC/analytic = {ratio:.4f})"
+                f"(ratio CSV/analytic = {_fmt(ratio, '.4f')})"
             )
         if analytic_cd is not None:
             lines.append(
@@ -483,15 +750,53 @@ def main(argv: list[str] | None = None) -> int:
             ["metric", "unit", "reference", "optimised", "delta_pct", "verdict"]
         )
         for name, unit, ref, cand, delta, verdict in rows:
-            writer.writerow([name, unit, f"{ref:.10g}", f"{cand:.10g}",
-                             f"{delta:.6f}", verdict])
+            writer.writerow([name, unit, _fmt(ref, ".10g"), _fmt(cand, ".10g"),
+                             _fmt(delta, ".6f"), verdict])
 
     print(f"compare_dsmc_runs: wrote {args.out_md}")
     print(f"compare_dsmc_runs: wrote {args.out_csv}")
+    # The console summary states the truth about the two heat loads (AXIOM
+    # A6) and about the two drag coefficients (AXIOM A2), because those are
+    # the two places a reader is most likely to mis-read the report.
+    print(
+        "compare_dsmc_runs: heat load (analytic: Sutton-Graves x window) "
+        f"reference={float(reference['total_heat_load_Jcm2']):.6f} "
+        f"optimised={float(candidate['total_heat_load_Jcm2']):.6f} J/cm^2"
+    )
+    dsmc_reference = float(reference["dsmc_surface_heat_load_Jcm2"])
+    dsmc_candidate = float(candidate["dsmc_surface_heat_load_Jcm2"])
+    print(
+        "compare_dsmc_runs: heat load (DSMC surface integral) "
+        f"reference={_fmt(dsmc_reference)} optimised={_fmt(dsmc_candidate)} "
+        "J/cm^2"
+    )
     if bool(candidate["cd_saturated"]):
         print(
             "compare_dsmc_runs: WARNING the optimised run's recorded cd is "
             "clamped at 3.0; use the reconstructed cd_raw column"
+            + (
+                f" (cd_unclamped = {float(candidate['cd_unclamped']):.6f})"
+                if math.isfinite(float(candidate["cd_unclamped"]))
+                else ""
+            )
+        )
+    if bool(reference["has_flown_geometry"]) and bool(candidate["has_flown_geometry"]):
+        same_geometry = all(
+            math.isclose(float(reference[key]), float(candidate[key]),
+                         rel_tol=1.0e-9, abs_tol=1.0e-12)
+            for key, _, _ in GEOMETRY_FIELDS
+        )
+        print(
+            "compare_dsmc_runs: flown geometry "
+            + ("IDENTICAL (the two runs flew the same vehicle)"
+               if same_geometry
+               else "DIFFERENT (the two runs flew different vehicles -- see "
+                    "the Flown geometry table)")
+        )
+    else:
+        print(
+            "compare_dsmc_runs: flown geometry NOT RECORDED (at least one run "
+            "predates CALIBRATION DESIGN 2.4 and carries no geom_* columns)"
         )
     return 0
 

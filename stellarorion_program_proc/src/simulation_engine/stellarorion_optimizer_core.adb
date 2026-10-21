@@ -157,6 +157,171 @@ package body StellarOrion_Optimizer_Core with SPARK_Mode => On is
    end Surrogate_Disagreement;
 
    -- ==================================================================
+   --  Orthogonal residual correction (the calibration fit)
+   -- ==================================================================
+
+   --  WHY: the value of one basis monomial at one design point. Every
+   --  monomial of the basis {1, x1, x2, x3, x1*x2, x1*x3, x2*x3} is
+   --  bounded by 1 in absolute value (the coded coordinates are), and
+   --  that bound is what keeps the contrast accumulator inside its
+   --  declared range.
+   subtype Basis_Monomial_Value is Float range -1.0 .. 1.0;
+
+   --  AXIOM A6/T6: the grand mean of the eight design responses.
+   --  THEORIES
+   --    T1. The result is (1/8) SUM_i y_i.
+   --    T2. |result| <= 1.0E6.
+   --    Proof: the partial sums are bounded by the loop invariant and
+   --    the divisor is the positive constant 8.
+   --  APPLICATIONS
+   --    The constant term (b_0) of the orthogonal residual model.
+   --  CITATIONS
+   --    [Montgomery17] Ch. 6 — the grand mean of a factorial design.
+   -- ==================================================================
+   function Residual_Grand_Mean (Values : Factorial_Value_Array) return Float
+   is
+      Sum_V : Design_Sum := 0.0;
+   begin
+      for I in 1 .. Factorial_Point_Count loop
+         --  AXIOM A3: after I-1 terms the sum is bounded by I-1
+         --  responses (each in -1.0E6 .. 1.0E6).
+         pragma Loop_Invariant
+           (Sum_V in -(Float (I - 1) * 1.0E6) .. (Float (I - 1) * 1.0E6));
+         Sum_V := Sum_V + Values (I);
+      end loop;
+
+      --  WHY: the divisor is the constant 8 — the squared norm of the
+      --  canonical 2^3 factorial — so it can never be zero and the
+      --  division can never overflow.
+      return Sum_V / Float (Factorial_Point_Count);
+   end Residual_Grand_Mean;
+
+   --  AXIOM A6/T6: the k-th orthogonal contrast of the design.
+   --  THEORIES
+   --    T1. The result is (1/8) SUM_i m_k (x_i) y_i, where m_k is the
+   --        monomial of basis term K.
+   --    T2. |result| <= 1.0E6.
+   --    Proof: every monomial is bounded by 1 (AXIOM A7), so the
+   --    partial sums are bounded by the loop invariant and the
+   --    quotient by the largest response.
+   --  APPLICATIONS
+   --    The six non-constant coefficients (b_1 .. b_6) of the
+   --    orthogonal residual model.
+   --  CITATIONS
+   --    [Montgomery17] Ch. 6 — contrasts in an orthogonal factorial
+   --    design; [Gauss1809] — the normal equations they solve.
+   -- ==================================================================
+   function Residual_Contrast
+     (Coded  : Factorial_Point_Array;
+      Values : Factorial_Value_Array;
+      K      : Residual_Contrast_Index) return Float
+   is
+      Num  : Design_Sum := 0.0;
+      --  WHY: no initial value on Term -- it is assigned inside the
+      --  loop before every read, so a declaration default would be a
+      --  dead initialisation (GNATprove reports it as a warning).
+      Term : Basis_Monomial_Value;
+   begin
+      for I in 1 .. Factorial_Point_Count loop
+         --  AXIOM A3/A7: after I-1 terms the contrast sum is bounded
+         --  by I-1 responses (every basis monomial is bounded by 1).
+         pragma Loop_Invariant
+           (Num in -(Float (I - 1) * 1.0E6) .. (Float (I - 1) * 1.0E6));
+
+         --  WHY: the monomial of basis term K at design point I. The
+         --  main effects take one coded coordinate; the two-factor
+         --  terms take the product of the two coordinates they couple.
+         Term := (case K is
+                    when 2      => Coded (I) (1),
+                    when 3      => Coded (I) (2),
+                    when 4      => Coded (I) (3),
+                    when 5      => Coded (I) (1) * Coded (I) (2),
+                    when 6      => Coded (I) (1) * Coded (I) (3),
+                    when 7      => Coded (I) (2) * Coded (I) (3));
+         Num := Num + Term * Values (I);
+      end loop;
+
+      --  WHY: the divisor is the constant 8 — the squared norm of the
+      --  canonical 2^3 factorial — so it can never be zero and the
+      --  division can never overflow.
+      return Num / Float (Factorial_Point_Count);
+   end Residual_Contrast;
+
+   --  AXIOM A6/T6: the closed-form fit of the seven orthogonal
+   --  coefficients of the residual model.
+   --  THEORIES
+   --    T1. Coefficients (1) is the grand mean of Values.
+   --    T2. Coefficients (k) is the k-th orthogonal contrast of the
+   --        design, for k = 2 .. 7.
+   --    Proof: the fit evaluates the closed forms of THEORY T6
+   --    directly; the loop invariant carries the closed form of every
+   --    coefficient already written.
+   --  APPLICATIONS
+   --    The ADDITIVE calibration residual of the screening model
+   --    against the DSMC response (CALIBRATION_DESIGN.md Sec. 2.6).
+   --  CITATIONS
+   --    [Montgomery17] Ch. 6 — contrasts and the orthogonality of a
+   --    factorial design; [Kennedy00] — model discrepancy.
+   -- ==================================================================
+   procedure Fit_Orthogonal_Factorial
+     (Coded        : Factorial_Point_Array;
+      Values       : Factorial_Value_Array;
+      Coefficients : out Residual_Coefficient_Array)
+   is
+   begin
+      --  WHY: an OUT array parameter must be fully defined on return;
+      --  the aggregate assignment defines every element before any
+      --  read.
+      Coefficients := (others => 0.0);
+
+      --  THEORY T1: the constant basis term is the grand mean.
+      Coefficients (1) := Residual_Grand_Mean (Values);
+
+      for K in 2 .. Residual_Basis_Index'Last loop
+         --  THEORY T2: every coefficient already written is the
+         --  closed-form contrast of its column.
+         pragma Loop_Invariant
+           (Coefficients (1) = Residual_Grand_Mean (Values)
+            and (for all J in 2 .. Residual_Basis_Index'Last =>
+                   (if J < K then
+                      Coefficients (J) = Residual_Contrast (Coded, Values, J))));
+         Coefficients (K) := Residual_Contrast (Coded, Values, K);
+      end loop;
+   end Fit_Orthogonal_Factorial;
+
+   --  AXIOM A6/T7: the 7-term orthogonal model at a coded point.
+   --  THEORIES
+   --    T1. The result is
+   --          b_0 + b_1 x1 + b_2 x2 + b_3 x3 + b_4 x1 x2 + b_5 x1 x3
+   --            + b_6 x2 x3.
+   --    T2. |result| <= 7.0E9.
+   --    Proof: every coefficient is bounded by 1.0E9 and every monomial
+   --    of the coded point is bounded by 1 (AXIOM A7), so each of the
+   --    seven terms is bounded by 1.0E9.
+   --  APPLICATIONS
+   --    The additive calibration correction the screening model adds to
+   --    the analytic drag and heat laws.
+   --  CITATIONS
+   --    [Montgomery17] Ch. 7 — response surface with two-factor
+   --    interactions.
+   -- ==================================================================
+   function Evaluate_Residual_Model
+     (Coefficients : Residual_Coefficient_Array;
+      X            : Coded_Vector) return Float
+   is
+      Total : Float;
+   begin
+      Total := Coefficients (1)
+        + Coefficients (2) * X (1)
+        + Coefficients (3) * X (2)
+        + Coefficients (4) * X (3)
+        + Coefficients (5) * X (1) * X (2)
+        + Coefficients (6) * X (1) * X (3)
+        + Coefficients (7) * X (2) * X (3);
+      return Total;
+   end Evaluate_Residual_Model;
+
+   -- ==================================================================
    --  Objective function
    -- ==================================================================
    --  AXIOM A1/T1: weighted sum of squares, weights non-negative.

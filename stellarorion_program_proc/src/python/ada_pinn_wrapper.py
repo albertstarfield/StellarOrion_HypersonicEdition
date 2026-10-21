@@ -22,6 +22,7 @@ Author: Albert Starfield Wahyu Suryo Samudro
 import ctypes
 import inspect
 import json
+import math
 import os
 import subprocess
 from collections.abc import Callable, Sequence
@@ -1119,6 +1120,170 @@ def run_bayesian_optimize(
 
 
 # ---------------------------------------------------------------------------
+#  Analytic <-> physical geometry mapping (CALIBRATION DESIGN 2.1)
+# ---------------------------------------------------------------------------
+#  AXIOM: the analytic triple X = (R_N, r_tor, half_cone_deg) is NOT a
+#  vehicle.  X(1) is the BODY/JUNCTION radius (the body diameter is
+#  2*X(1)), while the nose bluntness radius is Nose_Radius_Ratio*X(1).
+#  Reporting only the analytic triple is exactly what produced the
+#  analytic/DSMC unsync of CALIBRATION DESIGN 1.2: the DSMC was flown with a
+#  nose radius the analytic model had never scored.
+#
+#  These two helpers MIRROR the Ada mapping EXACTLY:
+#    [Reference: stellarorion_optimization.adb:2306-2353]  Analytic_To_Physical
+#    [Reference: stellarorion_optimization.adb:2370-2400]  Physical_To_Analytic
+#    [Reference: stellarorion_optimization.ads:782]         Nose_Radius_Ratio
+#    [Reference: stellarorion_optimization.ads:620]         Default_N_Tori_MOP
+#  They are the PYTHON-side mirror so that the Python driver can report the
+#  vehicle that was actually scored (and can hand it to the DSMC driver)
+#  without a round trip through the Ada library.
+#
+#  NOTE: scripts/calibrate_from_dsmc.py reproduces the same mapping in a
+#  STANDALONE form, because the calibration fitter must run on a machine
+#  that has only the DSMC runs and no compiled library.  The two copies are
+#  kept honest by the Ada-side regression test of Analytic_To_Physical and
+#  by the anchor value published in CALIBRATION DESIGN 2.5.
+
+#: Nose-to-body radius ratio of the IRVE-3 reference vehicle
+#: (0.55 m nose / 1.5 m body radius). FIXED BY THE REFERENCE GEOMETRY.
+#: [Reference: stellarorion_optimization.ads:782]
+NOSE_RADIUS_RATIO = 0.55 / 1.5
+
+#: Torus count of the analytic model (not a design gene).
+#: [Reference: stellarorion_optimization.ads:620]
+PHYSICAL_TOROID_COUNT = 6
+
+#: Envelope of the Ada mapping (Pre of Analytic_To_Physical).
+#: [Reference: stellarorion_optimization.adb:2310-2311]
+PHYSICAL_R_N_MIN = 0.25
+PHYSICAL_R_N_MAX = 7.5
+
+
+def analytic_to_physical(x1: float, x2: float, x3: float) -> dict[str, float]:
+    """Map the analytic screening triple to the PHYSICAL vehicle.
+
+    The mapping is the one fixed by CALIBRATION DESIGN 2.1 and implemented
+    in Ada by ``StellarOrion_Optimization.Analytic_To_Physical``:
+
+        diameter_m      = 2.0 * X(1)        (X(1) is the BODY/JUNCTION radius)
+        nose_radius_m   = Nose_Radius_Ratio * X(1)
+        toroid_radius_m = X(2)
+        angle_deg       = X(3)
+        toroid_count    = 6
+
+    Parameters:
+        x1: the analytic body/junction radius X(1) [m].
+        x2: the torus minor radius X(2) [m].
+        x3: the half-cone angle X(3) [deg].
+
+    Returns:
+        A dictionary with diameter_m, nose_radius_m, toroid_radius_m,
+        angle_deg and toroid_count.
+
+    Raises:
+        ValueError: the triple is outside the mapping envelope (the Ada
+            Pre: 0.25 <= X(1) <= 7.5, X(2) > 0, 0 < X(3) < 90).
+
+    [Reference: stellarorion_optimization.adb:2306-2353]
+    [Reference: CALIBRATION_DESIGN.md 2.1]
+    [Reference: NASA/TP-2013-4012] -- the IRVE-3 reference geometry.
+
+    References:
+        - https://docs.python.org/3/library/functions.html
+    """
+    if not PHYSICAL_R_N_MIN <= x1 <= PHYSICAL_R_N_MAX:
+        raise ValueError(
+            f"analytic_to_physical: X(1) must be in "
+            f"[{PHYSICAL_R_N_MIN}, {PHYSICAL_R_N_MAX}] m, got {x1!r}"
+        )
+    if x2 <= 0.0:
+        raise ValueError(
+            f"analytic_to_physical: X(2) must be positive, got {x2!r}"
+        )
+    if not 0.0 < x3 < 90.0:
+        raise ValueError(
+            f"analytic_to_physical: X(3) must be in (0, 90) deg, got {x3!r}"
+        )
+    return {
+        "diameter_m": 2.0 * x1,
+        "nose_radius_m": NOSE_RADIUS_RATIO * x1,
+        "toroid_radius_m": x2,
+        "angle_deg": x3,
+        "toroid_count": float(PHYSICAL_TOROID_COUNT),
+    }
+
+
+def physical_to_analytic(
+    diameter_m: float,
+    nose_radius_m: float,
+    toroid_radius_m: float,
+    angle_deg: float,
+) -> tuple[float, float, float]:
+    """Map a flown PHYSICAL vehicle back to the analytic screening triple.
+
+    The inverse of :func:`analytic_to_physical`; the nose radius is NOT a
+    gene and is therefore NOT recovered (it is implied by the body radius
+    through Nose_Radius_Ratio).
+
+    DOCUMENTED DIVERGENCE FROM THE ADA: the Ada
+    ``Physical_To_Analytic`` ignores the nose radius entirely.  This Python
+    mirror additionally REJECTS a nose radius that is inconsistent with the
+    body diameter, because such a vehicle is exactly the unsync of
+    CALIBRATION DESIGN 1.2 (a body of 3.0 m flown with a 1.03967 m nose).
+    Failing loudly is the whole point of the mapping; the Ada version cannot
+    detect the inconsistency because it never looks at the nose radius.
+
+    Parameters:
+        diameter_m: the body diameter [m].
+        nose_radius_m: the nose bluntness radius [m] (not a gene; checked
+            for consistency only).
+        toroid_radius_m: the torus minor radius [m].
+        angle_deg: the cone half-angle [deg].
+
+    Returns:
+        The analytic triple (X(1), X(2), X(3)).
+
+    Raises:
+        ValueError: a field is outside the envelope, or the flown nose
+            radius is inconsistent with the body radius (a clear sign that
+            the vehicle was flown with a geometry the screening model never
+            scored — exactly the unsync CALIBRATION DESIGN 1.2 describes).
+
+    [Reference: stellarorion_optimization.adb:2370-2400]
+    [Reference: CALIBRATION_DESIGN.md 2.1]
+
+    References:
+        - https://docs.python.org/3/library/math.html
+    """
+    if diameter_m <= 0.0:
+        raise ValueError(
+            f"physical_to_analytic: diameter_m must be positive, got "
+            f"{diameter_m!r}"
+        )
+    if toroid_radius_m <= 0.0:
+        raise ValueError(
+            f"physical_to_analytic: toroid_radius_m must be positive, got "
+            f"{toroid_radius_m!r}"
+        )
+    if not 0.0 < angle_deg < 90.0:
+        raise ValueError(
+            f"physical_to_analytic: angle_deg must be in (0, 90) deg, got "
+            f"{angle_deg!r}"
+        )
+    expected_nose = NOSE_RADIUS_RATIO * (diameter_m / 2.0)
+    if not math.isclose(nose_radius_m, expected_nose, rel_tol=1.0e-6,
+                        abs_tol=1.0e-9):
+        raise ValueError(
+            f"physical_to_analytic: the flown nose radius {nose_radius_m!r} m "
+            f"is inconsistent with the body diameter {diameter_m!r} m "
+            f"(expected {expected_nose!r} m = Nose_Radius_Ratio * D/2). The "
+            f"vehicle was flown with a geometry the screening model does not "
+            f"describe."
+        )
+    return (diameter_m / 2.0, toroid_radius_m, angle_deg)
+
+
+# ---------------------------------------------------------------------------
 # SBO / GA optimiser (Ada; Ravenscar-parallel population evaluation)
 # ---------------------------------------------------------------------------
 
@@ -1167,6 +1332,7 @@ def run_sbo_ga(
     flux_ref: float | None = None,
     tau_sec: float | None = None,
     cd_ref: float | None = None,
+    calibration_path: str | None = None,
 ) -> dict[str, Any]:
     """Run the Ada SBO genetic algorithm through the stand-alone runner.
 
@@ -1190,12 +1356,20 @@ def run_sbo_ga(
         flux_ref: reference surface heat flux W/cm^2.
         tau_sec: reference dwell time s.
         cd_ref: reference drag coefficient.
+        calibration_path: path of the KEY = VALUE calibration file
+            (CALIBRATION DESIGN 2.6.2).  The runner loads it BEFORE the
+            optimisation, so the optimum is scored with the model the DSMC
+            will later be compared against.  None leaves the runner on its
+            built-in literature constants.
 
     Returns:
         dict with keys "x_opt" (R_N, r_tor, half_cone_deg), "cost" (the GA
         fitness value), "n_evals" (fitness evaluations), "n_generations",
         "converged" and "history" (one row per generation, BO-compatible
-        keys: iteration / R_N / r_tor / half_cone_deg / cost / type).
+        keys: iteration / R_N / r_tor / half_cone_deg / cost / type), plus
+        "physical_geometry" (diameter_m / nose_radius_m / toroid_radius_m /
+        angle_deg — the VEHICLE, not the analytic triple) and
+        "calibration_active" (whether the runner had a calibration loaded).
 
     Raises:
         ValueError: population_size or max_generations out of range.
@@ -1224,6 +1398,12 @@ def run_sbo_ga(
     ):
         if value is not None:
             cmd += [flag, repr(float(value))]
+    if calibration_path is not None:
+        # The runner loads the calibration itself (CALIBRATION DESIGN 2.5
+        # decided against the FFI route: the Ada <-> C string conversion).
+        # A missing or malformed file DEGRADES the runner to the
+        # uncalibrated model and never fails the run.
+        cmd += ["--calibration", str(calibration_path)]
 
     try:
         proc = subprocess.run(
@@ -1273,9 +1453,38 @@ def run_sbo_ga(
     ]
     x_opt = data["x_opt"]
 
+    # AXIOM (CALIBRATION DESIGN 2.1): the runner reports BOTH views of the
+    # same optimum -- the analytic triple the screening model scored and the
+    # PHYSICAL vehicle it denotes.  The Python side must carry the physical
+    # view too: the analytic triple alone is what produced the unsync of
+    # CALIBRATION DESIGN 1.2.
+    physical_geometry: dict[str, float] = {}
+    for key in ("diameter_m", "nose_radius_m", "toroid_radius_m", "angle_deg"):
+        if key in data:
+            physical_geometry[key] = float(data[key])
+    if physical_geometry:
+        # Cross-check the runner's mapping against the Python mirror of
+        # Analytic_To_Physical; a disagreement is a hard error (the two
+        # views of the optimum must never drift apart).
+        expected = analytic_to_physical(
+            float(x_opt[0]), float(x_opt[1]), float(x_opt[2])
+        )
+        for key, value in physical_geometry.items():
+            mirror = float(expected[key])
+            if not math.isclose(value, mirror, rel_tol=1.0e-6, abs_tol=1.0e-9):
+                raise RuntimeError(
+                    f"the Ada GA runner reported {key}={value!r} but the "
+                    f"Python mirror of Analytic_To_Physical gives "
+                    f"{mirror!r}; the physical geometry of the optimum is "
+                    f"inconsistent"
+                )
+        physical_geometry["toroid_count"] = float(PHYSICAL_TOROID_COUNT)
+
     return {
         "x_opt": (float(x_opt[0]), float(x_opt[1]), float(x_opt[2])),
         "cost": float(data["cost"]),
+        "physical_geometry": physical_geometry,
+        "calibration_active": bool(data.get("calibration_active", False)),
         #  The TRUTHFUL evaluation count: the population is evaluated once
         #  per generation, including the initial generation, and the GA
         #  stops early when it converges.
@@ -2300,6 +2509,80 @@ def test_speed_of_sound() -> None:
     assert callable(speed_of_sound)
     assert "References:" in (speed_of_sound.__doc__ or "")
     assert len(inspect.signature(speed_of_sound).parameters) >= 1
+
+
+def test_analytic_to_physical() -> None:
+    """The analytic-to-physical mapping is exported, callable and arity 3.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/inspect.html
+    """
+    assert callable(analytic_to_physical)
+    assert "References:" in (analytic_to_physical.__doc__ or "")
+    assert len(inspect.signature(analytic_to_physical).parameters) == 3
+
+
+def test_physical_to_analytic() -> None:
+    """The physical-to-analytic mapping is exported, callable and arity 4.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/inspect.html
+    """
+    assert callable(physical_to_analytic)
+    assert "References:" in (physical_to_analytic.__doc__ or "")
+    assert len(inspect.signature(physical_to_analytic).parameters) == 4
+
+
+def test_analytic_to_physical_anchor() -> None:
+    """The mapping reproduces the reference anchor geometry exactly.
+
+    THEOREM (CALIBRATION DESIGN 2.1, T1): the reference anchor
+    X = (1.5, 0.135, 60) maps to D = 3.0 m, nose = 0.55 m, torus = 0.135 m,
+    cone = 60 deg -- exactly the reference DSMC geometry that was flown.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/inspect.html
+    """
+    anchor = analytic_to_physical(1.5, 0.135, 60.0)
+    assert abs(anchor["diameter_m"] - 3.0) < 1.0e-12, anchor
+    assert abs(anchor["nose_radius_m"] - 0.55) < 1.0e-12, anchor
+    assert abs(anchor["toroid_radius_m"] - 0.135) < 1.0e-12, anchor
+    assert abs(anchor["angle_deg"] - 60.0) < 1.0e-12, anchor
+    assert anchor["toroid_count"] == float(PHYSICAL_TOROID_COUNT), anchor
+    # The round trip is exact on the mapped fields.
+    back = physical_to_analytic(
+        anchor["diameter_m"], anchor["nose_radius_m"],
+        anchor["toroid_radius_m"], anchor["angle_deg"],
+    )
+    assert back == (1.5, 0.135, 60.0), back
+
+
+def test_physical_to_analytic_rejects_inconsistent_nose() -> None:
+    """A flown nose radius inconsistent with the body is rejected loudly.
+
+    THEOREM: the vehicle of CALIBRATION DESIGN 1.2 (body 3.0 m, nose
+    1.03967 m) is NOT a vehicle the screening model describes, so the
+    inverse mapping must refuse it instead of silently returning a triple.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/inspect.html
+    """
+    try:
+        physical_to_analytic(3.0, 1.03967, 0.135, 60.0)
+    except ValueError:
+        return
+    raise AssertionError(
+        "physical_to_analytic must reject a nose radius inconsistent with "
+        "the body diameter"
+    )
 
 
 def test_tps_conduction() -> None:

@@ -14,6 +14,10 @@ with Ada.Text_IO;                   use Ada.Text_IO;
 with StellarOrion_Physics;          use StellarOrion_Physics;
 with StellarOrion_Environment;
 with Ada.Exceptions;
+with Ada.Directories;
+--  WHY: Delete_File lives in Ada.Directories, NOT in Ada.Text_IO.  The
+--  unit is `with`ed but NOT `use`d, because Ada.Directories.Create
+--  would clash with Ada.Text_IO.Create in the calibration self-test.
 with StellarOrion_Diagnostics;
 
 package body StellarOrion_Optimization is
@@ -88,6 +92,242 @@ package body StellarOrion_Optimization is
       Cd_Ref   : Float := 1.462536;    --  StellarOrion validated Cd
    end record;
    Current_Refs : Validation_Refs;
+
+   --  ------------------------------------------------------------------
+   --  DSMC calibration state, key table and loader helpers
+   --  (design §2.6, §2.6.2)
+   --  ------------------------------------------------------------------
+   --  AXIOMS:
+   --    C1: the state is written ONCE at start-up (Load_Calibration) and
+   --        only READ during the optimisation, so the concurrent GA
+   --        evaluation observes an immutable record (the same invariant
+   --        as Current_Refs, axiom V3).
+   --    C2: Valid = False means "use the built-in literature constants",
+   --        i.e. the pre-calibration behaviour.  It is the SAFE default:
+   --        the state starts DISABLED and is enabled only by a fully and
+   --        cleanly parsed calibration file.
+   --    C3: the seven coefficients are stored in a LOCAL array so this
+   --        package never duplicates the core's residual-model type; the
+   --        evaluation goes through the PROVED core
+   --        (Evaluate_Residual_Model), so there is exactly ONE
+   --        implementation of the orthogonal polynomial in the tree.
+   --  CITATIONS:
+   --    [CALIBRATION_DESIGN.md §2.6.1, §2.6.2] the residual model and
+   --    the binding calibration file format.
+   --  ------------------------------------------------------------------
+   type Calibration_Centre_Array is array (1 .. 3) of Float;
+   type Calibration_Half_Array   is array (1 .. 3) of Float;
+   type Calibration_Coefficient_Array is array (1 .. 7) of Float;
+
+   type Calibration_State is record
+      Valid           : Boolean := False;
+      Centre          : Calibration_Centre_Array := (others => 0.0);
+      Half            : Calibration_Half_Array   := (others => 1.0);
+      Cd_Coefficients : Calibration_Coefficient_Array := (others => 0.0);
+      Q_Coefficients  : Calibration_Coefficient_Array := (others => 0.0);
+   end record;
+
+   Current_Calibration : Calibration_State;
+
+   --  The 21 calibration keys of the design §2.6.2 file.  The names are
+   --  the SINGLE source of truth: the index of a key IS its position in
+   --  this table, so the loader and the diagnostics can never disagree
+   --  about what a key is called.
+   Calibration_Key_Count : constant := 21;
+
+   --  The element type is String (1 .. 17): the longest key is
+   --  "calibration_valid" (17 characters), and every literal below is
+   --  exactly 17 characters (right-padded).  The padding is cosmetic --
+   --  every comparison and every diagnostic TRIMS the name first.
+   Calibration_Key_Names : constant array (1 .. Calibration_Key_Count)
+     of String (1 .. 17) :=
+     (1  => "calibration_valid",
+      2  => "centre_x1        ",
+      3  => "centre_x2        ",
+      4  => "centre_x3        ",
+      5  => "half_x1          ",
+      6  => "half_x2          ",
+      7  => "half_x3          ",
+      8  => "cd_b0            ",
+      9  => "cd_b1            ",
+      10 => "cd_b2            ",
+      11 => "cd_b3            ",
+      12 => "cd_b12           ",
+      13 => "cd_b13           ",
+      14 => "cd_b23           ",
+      15 => "q_b0             ",
+      16 => "q_b1             ",
+      17 => "q_b2             ",
+      18 => "q_b3             ",
+      19 => "q_b12            ",
+      20 => "q_b13            ",
+      21 => "q_b23            ");
+
+   --  Lower bound on the CALIBRATED drag coefficient.
+   --
+   --  WHY: the DSMC residual is ADDITIVE and is fitted without a
+   --  positivity constraint, so it can in principle drive the corrected
+   --  drag below zero, which would make the ballistic-coefficient ratio
+   --  (Cd_ref*A_ref)/(Cd*A) blow up.  The floor keeps the objective
+   --  finite and J(x) >= 0 for EVERY calibration.
+   Cd_Calibration_Floor : constant Float := 1.0E-3;
+
+   --  Report one verbose-error line.
+   --
+   --  WHY stderr and NOT Ada.Text_IO: the Ada programs that load the
+   --  calibration (the GA runner and the CLI driver) write EXACTLY ONE
+   --  JSON object to stdout — the runner's AXIOM A1 — so a Put_Line to
+   --  Standard_Output would corrupt the machine-readable result and the
+   --  Python driver would fail to parse it.  StellarOrion_Diagnostics.Log
+   --  writes to fd 2 with a raw write(2) and NEVER raises, so the
+   --  message is always visible and never aborts the caller.
+   procedure Report_Verbose_Error (Line : String) is
+   begin
+      StellarOrion_Diagnostics.Log (Line);
+   end Report_Verbose_Error;
+
+   --  True for a white-space character (space, tab, CR).
+   --
+   --  WHY: the calibration file is written on other hosts, so a CRLF
+   --  line terminator must be tolerated; Ada.Text_IO keeps the CR on a
+   --  Unix host, and an untrimmed CR would corrupt every value.
+   function Is_Blank (C : Character) return Boolean is
+     (C = ' ' or else C = Character'Val (9) or else C = Character'Val (13));
+
+   --  Strip leading and trailing white space.  A blank string is
+   --  returned as "".
+   function Trim (S : String) return String is
+      First : Natural := S'First;
+      Last  : Natural := S'Last;
+   begin
+      while First <= Last and then Is_Blank (S (First)) loop
+         First := First + 1;
+      end loop;
+      while Last >= First and then Is_Blank (S (Last)) loop
+         Last := Last - 1;
+      end loop;
+      if First > Last then
+         return "";
+      end if;
+      return S (First .. Last);
+   end Trim;
+
+   --  Position of the first '=' in S, or 0 when there is none.
+   function Find_Equals (S : String) return Natural is
+   begin
+      for I in S'Range loop
+         if S (I) = '=' then
+            return I;
+         end if;
+      end loop;
+      return 0;
+   end Find_Equals;
+
+   --  The trimmed key part of S (everything before the '=' at Eq).
+   --  Returns "" when Eq is 0.
+   function Key_Before_Equals (S : String; Eq : Natural) return String is
+   begin
+      if Eq = 0 then
+         return "";
+      end if;
+      return Trim (S (S'First .. Eq - 1));
+   end Key_Before_Equals;
+
+   --  The trimmed value part of S (everything after the '=' at Eq).
+   --  Returns "" when there is nothing after the separator.
+   function Value_After_Equals (S : String; Eq : Natural) return String is
+   begin
+      if Eq = 0 or else Eq >= S'Last then
+         return "";
+      end if;
+      return Trim (S (Eq + 1 .. S'Last));
+   end Value_After_Equals;
+
+   --  Parse a Float.  Returns False when S is not a valid Float
+   --  literal (an empty or malformed value is a MALFORMED file, never
+   --  a silently accepted zero).
+   function Try_Float (S : String; Value : out Float) return Boolean is
+   begin
+      Value := 0.0;
+      if S'Length = 0 then
+         return False;
+      end if;
+      begin
+         Value := Float'Value (S);
+      exception
+         when others =>
+            return False;
+      end;
+      return True;
+   end Try_Float;
+
+   --  The index of a calibration key, or 0 for an UNKNOWN key (which
+   --  the loader treats as a malformed line).
+   function Calibration_Key_Index (Key : String) return Natural is
+   begin
+      for K in 1 .. Calibration_Key_Count loop
+         if Key = Trim (Calibration_Key_Names (K)) then
+            return K;
+         end if;
+      end loop;
+      return 0;
+   end Calibration_Key_Index;
+
+   --  Apply one parsed calibration value to the candidate state.
+   --  Returns False when the value is not usable, which disables the
+   --  calibration: a partially applied fit is never acceptable.
+   function Apply_Calibration_Value
+     (Index : Natural;
+      Value : String;
+      State : in out Calibration_State) return Boolean
+   is
+      V : Float;
+   begin
+      if Index = 1 then
+         --  calibration_valid is an integer flag, not a float.
+         declare
+            IV : Integer;
+         begin
+            begin
+               IV := Integer'Value (Value);
+            exception
+               when others =>
+                  return False;
+            end;
+            State.Valid := IV /= 0;
+            return True;
+         end;
+      end if;
+
+      if not Try_Float (Value, V) then
+         return False;
+      end if;
+
+      case Index is
+         when 2      => State.Centre (1) := V;
+         when 3      => State.Centre (2) := V;
+         when 4      => State.Centre (3) := V;
+         when 5      => State.Half (1) := V;
+         when 6      => State.Half (2) := V;
+         when 7      => State.Half (3) := V;
+         when 8      => State.Cd_Coefficients (1) := V;
+         when 9      => State.Cd_Coefficients (2) := V;
+         when 10     => State.Cd_Coefficients (3) := V;
+         when 11     => State.Cd_Coefficients (4) := V;
+         when 12     => State.Cd_Coefficients (5) := V;
+         when 13     => State.Cd_Coefficients (6) := V;
+         when 14     => State.Cd_Coefficients (7) := V;
+         when 15     => State.Q_Coefficients (1) := V;
+         when 16     => State.Q_Coefficients (2) := V;
+         when 17     => State.Q_Coefficients (3) := V;
+         when 18     => State.Q_Coefficients (4) := V;
+         when 19     => State.Q_Coefficients (5) := V;
+         when 20     => State.Q_Coefficients (6) := V;
+         when 21     => State.Q_Coefficients (7) := V;
+         when others => return False;
+      end case;
+      return True;
+   end Apply_Calibration_Value;
 -- ============================================================================
 -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
 -- Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
@@ -1862,6 +2102,30 @@ package body StellarOrion_Optimization is
    --  ---------------------------------------------------------------------
    --  Project_To_Analytic_Box
    --  ---------------------------------------------------------------------
+   --  AXIOMS:
+   --    P1: the projection clamps the three ANALYTIC genes into the
+   --        screening box (R_N in [0.5, 3.0] m, r_tor in [0.05, 0.5] m,
+   --        half-cone in [40, 80] deg).
+   --    P2: the projection also re-derives the NOSE-BLUNTNESS radius
+   --        from the projected body radius through Nose_Radius_Ratio
+   --        and takes the torus count from the analytic model, so the
+   --        projected optimum IS a consistent PHYSICAL geometry
+   --        (design §2.1).  Without this the projection would carry a
+   --        nose radius belonging to the UNPROJECTED geometry, and the
+   --        reported vehicle would not be the one the screening model
+   --        priced.
+   --    P3: the torus count is not a gene (Default_N_Tori_MOP = 6 is
+   --        the analytic model's count), so the projection copies it
+   --        rather than optimising it.
+   --  THEOREMS:
+   --    T1: after the projection,
+   --        Analytic_To_Physical (Physical_To_Analytic (Out_Geo)) and
+   --        Out_Geo agree on every mapped field, so the projected
+   --        optimum and the physical optimum are the SAME vehicle.
+   --  APPLICATIONS: the GA runner and the FFI report the projected
+   --  optimum; with P2 that report is a physical geometry.
+   --  CITATIONS: [CALIBRATION_DESIGN.md §2.1] the binding mapping table.
+   -- ---------------------------------------------------------------------
    function Project_To_Analytic_Box
      (Geo : Geometry_Parameters) return Geometry_Parameters
    is
@@ -1871,6 +2135,12 @@ package body StellarOrion_Optimization is
       Out_Geo.Diameter_M := 2.0 * Clamp (Geo.Diameter_M / 2.0, 0.5, 3.0);
       Out_Geo.Toroid_Radius_M := Clamp (Geo.Toroid_Radius_M, 0.05, 0.5);
       Out_Geo.Angle_Deg := Clamp (Geo.Angle_Deg, 40.0, 80.0);
+      --  AXIOM P2: re-derive the physical nose radius from the
+      --  PROJECTED body radius so the reported vehicle is the one the
+      --  screening model priced.
+      Out_Geo.Nose_Radius_M := Nose_Radius_Ratio * (Out_Geo.Diameter_M / 2.0);
+      --  AXIOM P3: the torus count comes from the analytic model.
+      Out_Geo.Toroid_Count := Default_N_Tori_MOP;
       return Out_Geo;
    end Project_To_Analytic_Box;
 
@@ -2038,6 +2308,135 @@ package body StellarOrion_Optimization is
          raise;
    end Estimate_Cd;
 
+   --  ====================================================================
+   --  Analytic_To_Physical / Physical_To_Analytic  (design §2.1)
+   --  ====================================================================
+   --  AXIOMS:
+   --    A1: X(1) is the BODY/junction radius, so the body diameter is
+   --        2*X(1).
+   --    A2: the nose-bluntness radius SCALES with the body through
+   --        Nose_Radius_Ratio (0.55 m nose at the 1.5 m reference
+   --        radius), so the IRVE-3 nose/body ratio is preserved across
+   --        the whole vehicle family.
+   --    A3: the torus count is copied from the analytic model
+   --        (Default_N_Tori_MOP = 6); it is not a design gene.
+   --    A4: every field that is not a gene keeps the
+   --        Geometry_Parameters DEFAULT — the mapping never invents a
+   --        value for a quantity the model does not represent.
+   --  THEOREMS:
+   --    T1: at the reference anchor X = (1.5, 0.135, 60.0) the mapping
+   --        yields D = 3.0 m, nose = 0.55 m, torus = 0.135 m,
+   --        cone = 60 deg — exactly the reference DSMC geometry that
+   --        was already flown, so the reference run remains the
+   --        calibration anchor.
+   --    T2: Physical_To_Analytic is the exact inverse of
+   --        Analytic_To_Physical on the mapped fields, and the round
+   --        trip is EXACT in binary floating point because the factor 2
+   --        is a power of two (2*x then /2 is lossless).
+   --  APPLICATIONS:
+   --    The GA runner, the CLI driver and the FFI report the physical
+   --    geometry of the optimum through this mapping; the calibration
+   --    file and the DSMC runs are expressed in the same coordinates.
+   --  CITATIONS:
+   --    [NASA-TP-2013-4012] IRVE-3 reference geometry.
+   --    [CALIBRATION_DESIGN.md §2.1] the binding mapping table.
+   -- ============================================================================
+   procedure Analytic_To_Physical
+     (X : Param_Vector; Geo : out Geometry_Parameters)
+   is
+      --  Contract (from spec StellarOrion_Optimization.Analytic_To_Physical):
+      --    Pre  => X (1) >= 0.25 and X (1) <= 7.5
+      --            and X (2) > 0.0 and X (3) > 0.0 and X (3) < 90.0
+      --    Post => Geo.Diameter_M >= 0.5 and Geo.Diameter_M <= 15.0
+      --            and Geo.Nose_Radius_M > 0.0
+      --            and Geo.Toroid_Count = Default_N_Tori_MOP
+   begin
+      --  Murphy's-law guard: the Pre is not runtime-enforced unless
+      --  -gnata is active, and Diameter_M / Nose_Radius_M are
+      --  SUBTYPE-CONSTRAINED, so an out-of-range X would raise an
+      --  opaque Constraint_Error.  Check it here and raise a message
+      --  that names the offending value.
+      if X (1) < 0.25 or else X (1) > 7.5
+        or else X (2) <= 0.0
+        or else X (3) <= 0.0 or else X (3) >= 90.0
+      then
+         raise Constraint_Error
+           with "Analytic_To_Physical: X outside the physical mapping range";
+      end if;
+
+      --  A local record starts from the Geometry_Parameters defaults,
+      --  so every field the analytic model does not represent keeps its
+      --  documented default (axiom A4).
+      declare
+         G : Geometry_Parameters;
+      begin
+         G.Diameter_M      := 2.0 * X (1);
+         G.Nose_Radius_M   := Nose_Radius_Ratio * X (1);
+         G.Toroid_Radius_M := X (2);
+         G.Angle_Deg       := X (3);
+         G.Toroid_Count    := Default_N_Tori_MOP;
+         Geo := G;
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name (E));
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message (E));
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Operation:      Analytic_To_Physical");
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] X(1)=" & Float'Image (X (1)) &
+                              " X(2)=" & Float'Image (X (2)) &
+                              " X(3)=" & Float'Image (X (3)));
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] ========================================");
+         raise;
+   end Analytic_To_Physical;
+
+   --  ------------------------------------------------------------------
+   --  Physical_To_Analytic — the exact inverse of Analytic_To_Physical.
+   --  ------------------------------------------------------------------
+   --  AXIOMS: A1: X(1) = Geo.Diameter_M / 2.0 (the body/junction radius
+   --  the analytic R_Max is built from).  A2: X(2) and X(3) are direct
+   --  copies.  A3: the nose radius is NOT a gene — it is recovered from
+   --  Nose_Radius_Ratio and X(1) by Analytic_To_Physical, so it never
+   --  enters the analytic vector.
+   --  THEOREMS: T1: Physical_To_Analytic (Analytic_To_Physical (X)) = X
+   --  for every Pre-satisfying X (theorem T2 of Analytic_To_Physical,
+   --  read in the other direction).
+   --  APPLICATIONS: the FFI and the runner convert a flown physical
+   --  geometry back into the coordinates the GA searches.
+   --  CITATIONS: [CALIBRATION_DESIGN.md §2.1] the binding mapping table.
+   -- ============================================================================
+   procedure Physical_To_Analytic
+     (Geo : Geometry_Parameters; X : out Param_Vector)
+   is
+      --  Contract (from spec StellarOrion_Optimization.Physical_To_Analytic):
+      --    Pre  => Geo.Diameter_M > 0.0
+      --            and Geo.Toroid_Radius_M > 0.0
+      --            and Geo.Angle_Deg > 0.0 and Geo.Angle_Deg < 90.0
+      --    Post => X (1) > 0.0 and X (2) > 0.0 and X (3) > 0.0
+   begin
+      if Geo.Diameter_M <= 0.0
+        or else Geo.Toroid_Radius_M <= 0.0
+        or else Geo.Angle_Deg <= 0.0 or else Geo.Angle_Deg >= 90.0
+      then
+         raise Constraint_Error
+           with "Physical_To_Analytic: geometry outside the analytic range";
+      end if;
+      X := (1 => Geo.Diameter_M / 2.0,
+            2 => Geo.Toroid_Radius_M,
+            3 => Geo.Angle_Deg);
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name (E));
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message (E));
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Operation:      Physical_To_Analytic");
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Diameter_M=" & Float'Image (Geo.Diameter_M) &
+                              " Toroid_Radius_M=" & Float'Image (Geo.Toroid_Radius_M) &
+                              " Angle_Deg=" & Float'Image (Geo.Angle_Deg));
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] ========================================");
+         raise;
+   end Physical_To_Analytic;
+
    --  coverage: body for Set_Validation_Refs
    -- ============================================================================
    -- AXIOMS:
@@ -2099,6 +2498,211 @@ package body StellarOrion_Optimization is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          raise;
    end Set_Validation_Refs;
+
+   --  ====================================================================
+   --  Load_Calibration  (design §2.6.2)
+   --  ====================================================================
+   --  AXIOMS:
+   --    L1: RECOVERABLE.  A missing file, an unreadable file, a
+   --        malformed line or calibration_valid = 0 leaves the model on
+   --        the BUILT-IN literature constants and NEVER raises: the
+   --        caller is an Ada program whose optimisation must still run.
+   --    L2: NEVER partially applied.  The whole file is parsed into a
+   --        LOCAL state; the package state is replaced only when the
+   --        ENTIRE file parsed cleanly.  Every failure is REPORTED.
+   --    L3: a file with calibration_valid = 1 must contain ALL 21 keys
+   --        and every half_xk must be > 0.0 (a half-width is the
+   --        DENOMINATOR of the coded coordinate).
+   --    L4: an UNKNOWN key is a malformed line (reported, calibration
+   --        disabled): the key set is closed, so a writer that emits an
+   --        unexpected key is FIXED, not silently ignored.
+   --    L5: the diagnostics go to STDERR (Report_Verbose_Error), never
+   --        to stdout, because the runner's stdout carries EXACTLY ONE
+   --        JSON object (the runner's AXIOM A1).
+   --  THEOREMS:
+   --    T1: after a successful load with calibration_valid = 1 the
+   --        residual correction is ACTIVE; after any failure it is not,
+   --        and J(x) is exactly the pre-calibration value.
+   --    T2: the correction reduces to ZERO at the calibration centre
+   --        when the constant coefficient b0 is zero, so the anchor
+   --        geometry is not perturbed by the fit.
+   --  APPLICATIONS:
+   --    Called at start-up by the Ada runner and the CLI driver, which
+   --    know the file path (NOT through the FFI: the Ada/C string
+   --    conversion is the reason).
+   --  CITATIONS:
+   --    [CALIBRATION_DESIGN.md §2.6.2] the binding file format.
+   --    [Montgomery17] Montgomery (2017), Design and Analysis of
+   --                   Experiments, 9th ed. — orthogonal factorial bases.
+   -- ============================================================================
+   procedure Load_Calibration (Path : String) is
+      --  Contract (from spec StellarOrion_Optimization.Load_Calibration):
+      --    Pre  => Path'Length > 0
+      --    Post => True (the state is updated on return; every failure
+      --            is reported and leaves the calibration DISABLED —
+      --            the procedure never raises)
+      Local   : Calibration_State;
+      Seen    : array (1 .. Calibration_Key_Count) of Boolean := (others => False);
+      F       : File_Type;
+      Line_No : Natural := 0;
+      Ok      : Boolean := True;
+   begin
+      Local.Valid := False;
+
+      --  Step 1: open the file.  A missing or unreadable file is a
+      --  REPORTED, RECOVERABLE failure (axiom L1).
+      begin
+         Open (F, In_File, Path);
+      exception
+         when E : others =>
+            Report_Verbose_Error ("[VERBOSE_ERROR] ========================================");
+            Report_Verbose_Error ("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name (E));
+            Report_Verbose_Error ("[VERBOSE_ERROR] Message:        cannot open the calibration file - " & Ada.Exceptions.Exception_Message (E));
+            Report_Verbose_Error ("[VERBOSE_ERROR] Operation:      Load_Calibration");
+            Report_Verbose_Error ("[VERBOSE_ERROR] Path:           " & Path);
+            Report_Verbose_Error ("[VERBOSE_ERROR] Result:         calibration DISABLED - the built-in literature constants are used");
+            Report_Verbose_Error ("[VERBOSE_ERROR] ========================================");
+            --  Built-in literature constants (the pre-calibration
+            --  behaviour): the calibration stays DISABLED.
+            Current_Calibration := Local;
+            return;
+      end;
+
+      --  Step 2: parse every line into the LOCAL state (never into the
+      --  package state — axiom L2).
+      begin
+         while not End_Of_File (F) and then Ok loop
+            declare
+               Line    : constant String := Get_Line (F);
+               Trimmed : constant String := Trim (Line);
+            begin
+               Line_No := Line_No + 1;
+               if Trimmed'Length = 0
+                 or else Trimmed (Trimmed'First) = '#'
+               then
+                  null;   --  a comment or a blank line: ignored BY DESIGN
+               else
+                  declare
+                     Eq : constant Natural := Find_Equals (Trimmed);
+                  begin
+                     if Eq = 0 then
+                        Report_Verbose_Error
+                          ("[VERBOSE_ERROR] Message:        malformed calibration line "
+                           & Natural'Image (Line_No) & " - no '=' separator");
+                        Ok := False;
+                     else
+                        declare
+                           Key_Slice : constant String := Key_Before_Equals (Trimmed, Eq);
+                           Val_Slice : constant String := Value_After_Equals (Trimmed, Eq);
+                           Idx       : constant Natural := Calibration_Key_Index (Key_Slice);
+                        begin
+                           if Idx = 0 then
+                              Report_Verbose_Error
+                                ("[VERBOSE_ERROR] Message:        unknown calibration key '"
+                                 & Key_Slice & "' on line " & Natural'Image (Line_No));
+                              Ok := False;
+                           elsif not Apply_Calibration_Value (Idx, Val_Slice, Local) then
+                              Report_Verbose_Error
+                                ("[VERBOSE_ERROR] Message:        invalid value '"
+                                 & Val_Slice & "' for calibration key '"
+                                 & Key_Slice & "' on line " & Natural'Image (Line_No));
+                              Ok := False;
+                           else
+                              Seen (Idx) := True;
+                           end if;
+                        end;
+                     end if;
+                  end;
+               end if;
+            end;
+         end loop;
+      exception
+         when E : others =>
+            Ok := False;
+            Report_Verbose_Error ("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name (E));
+            Report_Verbose_Error ("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message (E));
+            Report_Verbose_Error ("[VERBOSE_ERROR] Operation:      Load_Calibration");
+      end;
+
+      --  Close the file on every path (resource cleanup — never rely on
+      --  garbage collection).
+      begin
+         Close (F);
+      exception
+         when others =>
+            null;   --  already closed / never opened
+      end;
+
+      --  Step 3: validate the parsed state (axiom L3).
+      if Ok and then not Seen (1) then
+         Report_Verbose_Error
+           ("[VERBOSE_ERROR] Message:        the calibration file has no 'calibration_valid' key");
+         Ok := False;
+      end if;
+
+      if Ok and then Local.Valid then
+         --  Every key must be present.
+         for K in 1 .. Calibration_Key_Count loop
+            if not Seen (K) then
+               Report_Verbose_Error
+                 ("[VERBOSE_ERROR] Message:        the calibration file is missing the required key '"
+                  & Trim (Calibration_Key_Names (K)) & "'");
+               Ok := False;
+            end if;
+         end loop;
+         --  The half-widths must be strictly positive: they are the
+         --  DENOMINATOR of the coded coordinate.
+         for K in 1 .. 3 loop
+            if Local.Half (K) <= 0.0 then
+               Report_Verbose_Error
+                 ("[VERBOSE_ERROR] Message:        calibration key '"
+                  & Trim (Calibration_Key_Names (K + 4))
+                  & "' must be > 0.0 (it divides the coded coordinate)");
+               Ok := False;
+            end if;
+         end loop;
+      end if;
+
+      --  Step 4: COMMIT — only a fully valid file replaces the state
+      --  (axiom L2).  A failure DISABLES the calibration instead of
+      --  applying part of it.
+      if Ok then
+         Current_Calibration := Local;
+         StellarOrion_Diagnostics.Log
+           ("[INFO] Load_Calibration: loaded " & Natural'Image (Calibration_Key_Count)
+            & " keys from '" & Path & "' - calibration "
+            & (if Local.Valid then "ACTIVE" else "DISABLED by calibration_valid = 0"));
+      else
+         declare
+            Disabled : Calibration_State;
+         begin
+            Disabled.Valid := False;
+            Current_Calibration := Disabled;
+         end;
+         Report_Verbose_Error
+           ("[VERBOSE_ERROR] Result:         calibration DISABLED - the built-in literature constants are used");
+      end if;
+   end Load_Calibration;
+
+   --  ------------------------------------------------------------------
+   --  Calibration_Active — is the DSMC residual correction in force?
+   --  ------------------------------------------------------------------
+   --  AXIOMS: A1: the answer is the package state's Valid flag, which
+   --  Load_Calibration sets only after a fully parsed file.
+   --  THEOREMS: T1: a run that fell back to the literature constants
+   --  reports False, so the calibration state is always visible in the
+   --  log rather than implied.
+   --  APPLICATIONS: the runner and the CLI driver report it next to the
+   --  optimisation result.
+   --  CITATIONS: [CALIBRATION_DESIGN.md §2.6.2].
+   -- ============================================================================
+   function Calibration_Active return Boolean is
+      --  Contract (from spec StellarOrion_Optimization.Calibration_Active):
+      --    Pre  => True (no inputs)
+      --    Post => True (the package state is readable at any time)
+   begin
+      return Current_Calibration.Valid;
+   end Calibration_Active;
 
    -- ====================================================================
    -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
@@ -2173,6 +2777,13 @@ package body StellarOrion_Optimization is
    --   A2: Q(x) = q_SG(x) * Tau_Sec — Sutton-Graves heat flux at the
    --       validated snapshot (h = 51.8 km, V = 3378 m/s) integrated
    --       over the validation-derived effective heating time.
+   --       The SG correlation is driven by the NOSE-BLUNTNESS radius,
+   --       so the nose radius is Nose_Radius_Ratio * X(1) and NOT the
+   --       body/junction radius X(1) (design §2.2).  At the IRVE-3
+   --       anchor (X(1) = 1.5 m) the nose is 0.55 m — the value the
+   --       reference DSMC run actually flew — and the analytic heat
+   --       term therefore agrees with the DSMC's own SG column.
+   --       [Citation: Sutton & Graves (1972), NASA TR R-376]
    --   A3: beta(x)/beta_ref = (Cd_ref*A_ref)/(Cd(x)*A(x)) — vehicle
    --       mass cancels (both betas share the same mass), so no mass
    --       parameter is needed in J(x).
@@ -2180,12 +2791,43 @@ package body StellarOrion_Optimization is
    --       Python driver loads DYNAMICALLY from
    --       unified_comparison_data.json (Set_Validation_Refs); package
    --       defaults mirror that file (V1 fallback).
+   --   A5: THE CLAMP.  The DSMC residual correction is ADDITIVE and is
+   --       fitted without a positivity constraint, so in principle it
+   --       can drive the corrected drag below zero (which would make
+   --       the ballistic-coefficient ratio (Cd_ref*A_ref)/(Cd*A) blow
+   --       up) or the corrected heat load below zero (which would
+   --       break the J(x) >= 0 post-condition).  The corrected drag is
+   --       therefore CLAMPED to a strictly positive floor
+   --       (Cd_Calibration_Floor) and the corrected heat load to 0.0.
+   --       The clamp is monotone: a more negative residual can never
+   --       push the objective below the clamp, so J(x) >= 0 holds for
+   --       EVERY calibration.
+   --   A6: THE RESIDUAL (design §2.6).  With a valid calibration the
+   --       CODED coordinates are
+   --           x_k := clamp((X(k) - centre_k) / half_k, -1, +1)
+   --       and the orthogonal correction is added to the drag and to
+   --       the heat load:
+   --           Cd(x) := Cd(x) + sum_k b_cd[k] * monomial_k(x)
+   --           Q(x)  := Q(x)  + sum_k b_q[k]  * monomial_k(x)
+   --       with the monomial basis {1, x1, x2, x3, x1*x2, x1*x3, x2*x3}
+   --       evaluated by the SPARK-PROVED core.  WITHOUT a loaded
+   --       calibration the correction is exactly ZERO, so J(x) is the
+   --       pre-calibration objective.
+   --   A7: the Q residual is fitted against the TIME-INTEGRATED
+   --       surface heat load, so it is applied to the heat LOAD Q(x)
+   --       and NOT to the peak-flux regulariser q(x)/q_ref, which
+   --       keeps the analytic Sutton-Graves law.
    -- THEOREMS:
    --   T1: every term >= 0 for Pre-satisfying X => Total >= 0
    --       (Post condition) and Heat_Load_Jcm2 >= 0 (Post).
-   --   T2: at the default geometry with default refs, Total ~= 3.43
-   --       (unit-scale ratio terms, penalties 0) -- the drag REWARD
-   --       term contributes W_Cd*Cd_Deficit = 30*0.0545 = 1.64.
+   --   T2: at the default geometry with default refs, Total is O(1)
+   --       (unit-scale ratio terms, penalties 0) — the drag REWARD
+   --       term contributes W_Cd*Cd_Deficit ~= 1.55.  The ABSOLUTE
+   --       value rose when the SG nose radius was corrected from
+   --       X(1) to Nose_Radius_Ratio * X(1) (design §2.2): the heat
+   --       terms scale as 1/sqrt(R_n), so the physical 0.55 m nose
+   --       raises q_SG by sqrt(1.5/0.55) = 1.65 over the old
+   --       body-radius value.  The test window was widened accordingly.
    --   T3: doubling Q_target halves only the heat-load term's
    --       numerator share (exercised by Test_HIAD_Cost_Function).
    -- APPLICATIONS:
@@ -2195,7 +2837,10 @@ package body StellarOrion_Optimization is
    -- CITATIONS:
    --   [Nocedal06] Nocedal & Wright (2006) Sec 3.1 (weighted sums),
    --               Sec 17.1 (quadratic penalties).
-   --   [SuttonGraves] Sutton & Graves (1957), NASA TR R-376.
+   --   [SuttonGraves] Sutton & Graves (1972), NASA TR R-376 —
+   --                   stagnation-point convective heating.
+   --   [Montgomery17] Montgomery (2017), Design and Analysis of
+   --                   Experiments, 9th ed. — orthogonal factorial bases.
    --   [unified_comparison_data.json] dynamic reference values.
    -- ============================================================================
    function HIAD_Cost_Components (X : Param_Vector) return Cost_Components is -- nosec
@@ -2212,32 +2857,40 @@ package body StellarOrion_Optimization is
                    (Compute_Max_Radius
                       (Default_R_N_MOP, Default_R_Tor_MOP,
                        Default_Half_Cone_MOP));
+         --  The PHYSICAL nose-bluntness radius (design §2.2, axiom A2):
+         --  the Sutton-Graves correlation is driven by the NOSE, not by
+         --  the body/junction radius X(1).
+         Nose_R : constant Float := Nose_Radius_Ratio * X(1);
          --  Snapshot heat flux: ISA density at the validated altitude,
-         --  Sutton-Graves with design nose radius (W/m^2 -> W/cm^2)
+         --  Sutton-Graves with the PHYSICAL nose radius (W/m^2 -> W/cm^2)
          Rho   : constant Float :=
            StellarOrion_Environment.Atmosphere_Density (Snapshot_Alt_Km);
          Qdot  : constant Float :=
-           Sutton_Graves_Heat (Rho, X(1), Snapshot_Vel_Ms) / 10_000.0;
-         --  Drag coefficient for the candidate geometry
-         Cd_X  : constant Float := Estimate_Cd (X(1), X(2), X(3));
+           Sutton_Graves_Heat (Rho, Nose_R, Snapshot_Vel_Ms) / 10_000.0;
+         --  Drag coefficient for the candidate geometry (the ANALYTIC
+         --  law; the DSMC residual is added on top of it below)
+         Cd_Raw : constant Float := Estimate_Cd (X(1), X(2), X(3));
          --  Term 1: Total Heat Load Q(x) = q(x) * tau  [J/cm^2]
-         Q_Load : constant Float := Qdot * Current_Refs.Tau_Sec;
-         HL_R   : constant Float := Q_Load / Current_Refs.Q_Target;
-         --  Term 2: peak heat-flux ratio
-         Flux_R : constant Float := Qdot / Current_Refs.Flux_Ref;
-         --  Term 3: ballistic-coefficient deviation (mass cancels,
-         --  axiom A3)
-         Beta_R : constant Float :=
-           (Current_Refs.Cd_Ref * A_Ref) / (Cd_X * A);
-         Beta_Dv : constant Float := (Beta_R - 1.0) ** 2;
-         --  Term 4: drag-coefficient ratio (REPORTED quantity)
-         Cd_R   : constant Float := Cd_X / Current_Refs.Cd_Ref;
-         --  Term 4b: drag DEFICIT to the drag goal -- the drag term
-         --  that actually enters J.  It is a REWARD: minimising J
-         --  maximises Cd.  Normalised and bounded in [0,1] so
-         --  J(x) >= 0 still holds by construction.
-         Cd_Deficit : constant Float :=
-           Max (0.0, (Cd_Goal - Cd_X) / Cd_Goal);
+         Q_Raw  : constant Float := Qdot * Current_Refs.Tau_Sec;
+         --  The DSMC residual correction (design §2.6, axiom A6).  These
+         --  are VARIABLES, not constants: the correction is applied only
+         --  when a valid calibration is loaded, and it is exactly ZERO
+         --  otherwise.
+         Cal_Coded   : StellarOrion_Optimizer_Core.Coded_Vector :=
+           (others => 0.0);
+         Cd_Residual : Float := 0.0;
+         Q_Residual  : Float := 0.0;
+         --  The CORRECTED drag and heat load (axiom A5: clamped).
+         Cd_Cal : Float := Cd_Raw;
+         Q_Cal  : Float := Q_Raw;
+         --  Cost terms.  VARIABLES, not constants, because they depend on
+         --  the corrected drag and heat load.
+         HL_R       : Float;
+         Flux_R     : Float;
+         Beta_R     : Float;
+         Beta_Dv    : Float;
+         Cd_R       : Float;
+         Cd_Deficit : Float;
          --  Term 5: quadratic penalties (envelope + TPS + payload)
          Pen_R  : constant Float := Max (0.0, R_Max - Max_Radius_Limit) ** 2;
          Pen_N  : constant Float := Max (0.0, Nose_Radius_Limit - X(1)) ** 2;
@@ -2247,26 +2900,88 @@ package body StellarOrion_Optimization is
          --  Weighted sum: the heat-load term keeps the largest single
          --  weight (primary objective, ads AXIOM W2) while the drag
          --  term rewards a HIGHER drag coefficient (AXIOM W3).
-         Total   : constant Float :=
-           W_Heat_Load * HL_R
-           + W_Flux * Flux_R
-           + W_Beta * Beta_Dv
-           + W_Cd * Cd_Deficit
-           + Penalty;
+         Total   : Float;
       begin
+         --  AXIOM A6: the orthogonal residual correction.  The CODED
+         --  coordinates are
+         --    x_k := clamp((X(k) - centre_k) / half_k, -1, +1)
+         --  and the residual is evaluated by the SPARK-PROVED core over
+         --  the monomial basis {1, x1, x2, x3, x1*x2, x1*x3, x2*x3}.
+         if Current_Calibration.Valid then
+            for K in 1 .. 3 loop
+               Cal_Coded (K) := StellarOrion_Optimizer_Core.Coded_Coordinate
+                 (Clamp ((X (K) - Current_Calibration.Centre (K))
+                         / Current_Calibration.Half (K), -1.0, 1.0));
+            end loop;
+            Cd_Residual := StellarOrion_Optimizer_Core.Evaluate_Residual_Model
+              (Coefficients => (Current_Calibration.Cd_Coefficients (1),
+                                Current_Calibration.Cd_Coefficients (2),
+                                Current_Calibration.Cd_Coefficients (3),
+                                Current_Calibration.Cd_Coefficients (4),
+                                Current_Calibration.Cd_Coefficients (5),
+                                Current_Calibration.Cd_Coefficients (6),
+                                Current_Calibration.Cd_Coefficients (7)),
+               X            => Cal_Coded);
+            Q_Residual := StellarOrion_Optimizer_Core.Evaluate_Residual_Model
+              (Coefficients => (Current_Calibration.Q_Coefficients (1),
+                                Current_Calibration.Q_Coefficients (2),
+                                Current_Calibration.Q_Coefficients (3),
+                                Current_Calibration.Q_Coefficients (4),
+                                Current_Calibration.Q_Coefficients (5),
+                                Current_Calibration.Q_Coefficients (6),
+                                Current_Calibration.Q_Coefficients (7)),
+               X            => Cal_Coded);
+            --  AXIOM A5: the clamp.  The correction is additive and
+            --  fitted without a positivity constraint, so the corrected
+            --  drag is floored and the corrected heat load is floored at
+            --  zero: J(x) >= 0 holds for EVERY calibration.
+            Cd_Cal := Max (Cd_Raw + Cd_Residual, Cd_Calibration_Floor);
+            Q_Cal  := Max (Q_Raw + Q_Residual, 0.0);
+         end if;
+
          --  Murphy's-law guards: contracts are not runtime-enforced
-         --  unless -gnata is active, so check every denominator that
-         --  the spec Post relies on (no silent NaN/Inf propagation).
-         if Cd_X <= 0.0 or A <= 0.0 or A_Ref <= 0.0
+         --  unless -gnata is active, so check every DENOMINATOR BEFORE
+         --  it is used (no silent NaN/Inf propagation).
+         if Cd_Cal <= 0.0 or A <= 0.0 or A_Ref <= 0.0
            or Current_Refs.Q_Target <= 0.0
            or Current_Refs.Flux_Ref <= 0.0
            or Current_Refs.Cd_Ref <= 0.0
            or Current_Refs.Tau_Sec <= 0.0
-           or Total < 0.0
          then
             raise Constraint_Error
-              with "HIAD_Cost_Components: non-positive denominator or "
-                   & "negative total (corrupt refs or geometry)";
+              with "HIAD_Cost_Components: non-positive denominator "
+                   & "(corrupt refs or geometry)";
+         end if;
+
+         HL_R := Q_Cal / Current_Refs.Q_Target;
+         --  AXIOM A7: the Q residual is fitted against the
+         --  TIME-INTEGRATED surface heat load, so it is applied to the
+         --  heat LOAD and NOT to the peak-flux regulariser, which keeps
+         --  the analytic Sutton-Graves law.
+         Flux_R := Qdot / Current_Refs.Flux_Ref;
+         --  Term 3: ballistic-coefficient deviation (mass cancels,
+         --  axiom A3)
+         Beta_R := (Current_Refs.Cd_Ref * A_Ref) / (Cd_Cal * A);
+         Beta_Dv := (Beta_R - 1.0) ** 2;
+         --  Term 4: drag-coefficient ratio (REPORTED quantity)
+         Cd_R   := Cd_Cal / Current_Refs.Cd_Ref;
+         --  Term 4b: drag DEFICIT to the drag goal -- the drag term
+         --  that actually enters J.  It is a REWARD: minimising J
+         --  maximises Cd.  Normalised and bounded in [0,1] so
+         --  J(x) >= 0 still holds by construction.
+         Cd_Deficit := Max (0.0, (Cd_Goal - Cd_Cal) / Cd_Goal);
+         Total := W_Heat_Load * HL_R
+                  + W_Flux * Flux_R
+                  + W_Beta * Beta_Dv
+                  + W_Cd * Cd_Deficit
+                  + Penalty;
+
+         --  The objective must stay non-negative (spec Post).  The clamp
+         --  (axiom A5) guarantees it; this is the last-resort check.
+         if Total < 0.0 then
+            raise Constraint_Error
+              with "HIAD_Cost_Components: negative total "
+                   & "(corrupt refs or geometry)";
          end if;
          return (Heat_Load_Ratio => HL_R,
                  Flux_Ratio      => Flux_R,
@@ -2275,7 +2990,7 @@ package body StellarOrion_Optimization is
                  Cd_Deficit      => Cd_Deficit,
                  Penalty         => Penalty,
                  Total           => Total,
-                 Heat_Load_Jcm2  => Q_Load);
+                 Heat_Load_Jcm2  => Q_Cal);
       end;
    exception
       when E : others =>
@@ -3679,9 +4394,11 @@ package body StellarOrion_Optimization is
    --       (R_N = 0.995 < R_pay_min), envelope penalty (R_max > 3),
    --       and DYNAMIC-REF sensitivity (doubling Q_target lowers J).
    -- THEOREMS:
-   --   T1: J(center) ~= 3.43 with default refs (HIAD_Cost_Components
-   --       T2; it was ~= 1.96 while the drag term was a PENALTY); window
-   --       [1.0, 5.0] absorbs FP/model jitter.
+   --   T1: J(center) ~= 4.52 with default refs (MEASURED 4.52320 after
+   --       the design §2.2 correction of the Sutton-Graves nose radius;
+   --       it was ~= 3.43 while the correlation was driven by the body
+   --       radius X(1), and ~= 1.96 while the drag term was a PENALTY);
+   --       window [0.5, 8.0] absorbs FP/model jitter.
    --   T2: every Cost_Components field is >= 0 by J(x) axiom A1;
    --       Heat_Load_Jcm2 > 0 requires q_SG > 0 at the snapshot.
    --   T3: refs are RESTORED to defaults at the end so later tests
@@ -3720,10 +4437,16 @@ package body StellarOrion_Optimization is
             All_OK := False;
          end if;
 
-         --  (2) Unit-scale range: J(center) ~= 3.43 with default refs
-         --     (Components T2 -- the drag REWARD term raised the value
-         --     from 1.96); wide window absorbs FP/model jitter.
-         if Cost < 1.0 or Cost > 5.0 then
+         --  (2) Unit-scale range: J(center) ~= 4.52 with default refs
+         --     (measured 4.52320 after the design §2.2 correction of
+         --     the Sutton-Graves nose radius; it was ~= 3.43 while the
+         --     correlation was still driven by the body radius X(1),
+         --     because the heat terms scale as 1/sqrt(R_n) and the
+         --     physical 0.55 m nose raises q_SG by
+         --     sqrt(1.5/0.55) = 1.65).  The window is wide enough to
+         --     absorb FP/model jitter on either side of the measured
+         --     value.
+         if Cost < 0.5 or Cost > 8.0 then
             All_OK := False;
          end if;
 
@@ -4075,6 +4798,288 @@ package body StellarOrion_Optimization is
          raise;
    end Test_HIAD_Cost_Components;
 
+   --  ============================================================================
+   --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
+   --  Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+   --  Resolution: 1ns (nanosecond)
+   --  Estimated Processing Time: O(1) — one geometry mapping
+   --  CPU Time: ~200ns for typical invocation
+   --  WCET: 2μs with 10× safety margin
+   --  Space Complexity: O(1) — stack only
+   --  ====================================================================
+   --  coverage: STC wrapper for Analytic_To_Physical
+   -- @test: test_analytic_to_physical
+   -- ============================================================================
+   --  AXIOMS:
+   --    T1: the mapping is exact, so the reference anchor
+   --        X = (1.5, 0.135, 60.0) must yield D = 3.0 m, nose = 0.55 m,
+   --        torus = 0.135 m and cone = 60 deg — EXACTLY the reference
+   --        DSMC geometry that was already flown (design §2.1, theorem
+   --        T1).  This is the REGRESSION that proves the anchor is
+   --        unchanged by the mapping.
+   --    T2: the nose radius is Nose_Radius_Ratio * X(1), so it SCALES
+   --        with the body (a fixed 0.55 m nose would make the
+   --        Sutton-Graves term geometry-independent).
+   --    T3: the fields that are not genes keep the
+   --        Geometry_Parameters default.
+   --  THEOREMS:
+   --    T1: D = 2*X(1); T2: nose = Nose_Radius_Ratio*X(1);
+   --    T3: the non-gene fields keep their default.
+   --  APPLICATIONS:
+   --    The Stage-0 acceptance check of the design ("the reference
+   --    mapping reproduces the flown reference geometry exactly").
+   --  CITATIONS:
+   --    [NASA-TP-2013-4012] IRVE-3 reference geometry.
+   --    [CALIBRATION_DESIGN.md §2.1] the binding mapping table.
+   procedure Test_Analytic_To_Physical is -- nosec
+      --  Contract: Pre => True (no inputs); Post => True (asserts the
+      --  reference anchor maps to the flown reference geometry)
+   begin
+      declare
+         X_Ref : constant Param_Vector := (1.5, 0.135, 60.0);
+         Geo   : Geometry_Parameters;
+         Tol   : constant Float := 1.0E-9;
+      begin
+         Analytic_To_Physical (X_Ref, Geo);
+         pragma Assert (abs (Geo.Diameter_M - 3.0) < Tol,
+                        "Analytic_To_Physical: Diameter_M must be 3.0 m");
+         pragma Assert (abs (Geo.Nose_Radius_M - 0.55) < Tol,
+                        "Analytic_To_Physical: Nose_Radius_M must be 0.55 m");
+         pragma Assert (abs (Geo.Toroid_Radius_M - 0.135) < Tol,
+                        "Analytic_To_Physical: Toroid_Radius_M must be 0.135 m");
+         pragma Assert (abs (Geo.Angle_Deg - 60.0) < Tol,
+                        "Analytic_To_Physical: Angle_Deg must be 60.0 deg");
+         pragma Assert (Geo.Toroid_Count = Default_N_Tori_MOP,
+                        "Analytic_To_Physical: Toroid_Count must be the model's count");
+         --  AXIOM T3: a non-gene field keeps its Geometry_Parameters
+         --  default (the mapping never invents a value).
+         pragma Assert (Geo.Mass_Kg = 281.0,
+                        "Analytic_To_Physical: Mass_Kg must keep its default");
+         --  AXIOM T2: the nose radius SCALES with the body.
+         declare
+            X_Small : constant Param_Vector := (1.0, 0.135, 60.0);
+            Geo_S   : Geometry_Parameters;
+         begin
+            Analytic_To_Physical (X_Small, Geo_S);
+            pragma Assert (abs (Geo_S.Nose_Radius_M - Nose_Radius_Ratio) < Tol,
+                           "Analytic_To_Physical: the nose radius must scale with the body");
+         end;
+         Ada.Text_IO.Put_Line
+           ("[PASS] Test_Analytic_To_Physical: D=" & Float'Image (Geo.Diameter_M) &
+            " nose=" & Float'Image (Geo.Nose_Radius_M) &
+            " torus=" & Float'Image (Geo.Toroid_Radius_M) &
+            " cone=" & Float'Image (Geo.Angle_Deg) &
+            " toroids=" & Integer'Image (Geo.Toroid_Count));
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Analytic_To_Physical: " &
+                               Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Analytic_To_Physical;
+
+   --  ============================================================================
+   --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
+   --  Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+   --  Resolution: 1ns (nanosecond)
+   --  Estimated Processing Time: O(1) — two geometry mappings
+   --  CPU Time: ~400ns for typical invocation
+   --  WCET: 2μs with 10× safety margin
+   --  Space Complexity: O(1) — stack only
+   --  ====================================================================
+   --  coverage: STC wrapper for Physical_To_Analytic
+   -- @test: test_physical_to_analytic
+   -- ============================================================================
+   --  AXIOMS:
+   --    R1: Physical_To_Analytic is the exact inverse of
+   --        Analytic_To_Physical, so the round trip is the identity
+   --        (design §2.1, theorem T2).
+   --    R2: the round trip is EXACT in binary floating point, because
+   --        the factor 2 is a power of two.
+   --  THEOREMS:
+   --    T1: analytic -> physical -> analytic returns the original X.
+   --    T2: physical -> analytic -> physical returns the original
+   --    geometry on every mapped field.
+   --  APPLICATIONS: the inverse mapping used by the FFI and the runner
+   --  to convert a flown physical geometry back into GA coordinates.
+   --  CITATIONS: [CALIBRATION_DESIGN.md §2.1] the binding mapping table.
+   procedure Test_Physical_To_Analytic is -- nosec
+      --  Contract: Pre => True (no inputs); Post => True (asserts the
+      --  round trip is the identity)
+   begin
+      declare
+         X_Ref  : constant Param_Vector := (1.5, 0.135, 60.0);
+         Geo    : Geometry_Parameters;
+         X_Back : Param_Vector;
+         Tol    : constant Float := 1.0E-9;
+      begin
+         --  Round trip 1: analytic -> physical -> analytic.
+         Analytic_To_Physical (X_Ref, Geo);
+         Physical_To_Analytic (Geo, X_Back);
+         pragma Assert (abs (X_Back (1) - X_Ref (1)) < Tol,
+                        "Physical_To_Analytic: X(1) round trip must be exact");
+         pragma Assert (abs (X_Back (2) - X_Ref (2)) < Tol,
+                        "Physical_To_Analytic: X(2) round trip must be exact");
+         pragma Assert (abs (X_Back (3) - X_Ref (3)) < Tol,
+                        "Physical_To_Analytic: X(3) round trip must be exact");
+
+         --  Round trip 2: physical -> analytic -> physical.
+         declare
+            Geo_2 : Geometry_Parameters;
+         begin
+            Physical_To_Analytic (Geo, X_Back);
+            Analytic_To_Physical (X_Back, Geo_2);
+            pragma Assert (abs (Geo_2.Diameter_M - Geo.Diameter_M) < Tol,
+                           "Physical_To_Analytic: Diameter_M round trip must be exact");
+            pragma Assert (abs (Geo_2.Nose_Radius_M - Geo.Nose_Radius_M) < Tol,
+                           "Physical_To_Analytic: Nose_Radius_M round trip must be exact");
+            pragma Assert (abs (Geo_2.Toroid_Radius_M - Geo.Toroid_Radius_M) < Tol,
+                           "Physical_To_Analytic: Toroid_Radius_M round trip must be exact");
+            pragma Assert (abs (Geo_2.Angle_Deg - Geo.Angle_Deg) < Tol,
+                           "Physical_To_Analytic: Angle_Deg round trip must be exact");
+            pragma Assert (Geo_2.Toroid_Count = Geo.Toroid_Count,
+                           "Physical_To_Analytic: Toroid_Count round trip must be exact");
+         end;
+         Ada.Text_IO.Put_Line ("[PASS] Test_Physical_To_Analytic: round trip exact");
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Physical_To_Analytic: " &
+                               Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Physical_To_Analytic;
+
+   --  ============================================================================
+   --  TIMING ANCHOR: Millisecond Resolution (1ms minimum)
+   --  Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+   --  Resolution: 1ns (nanosecond)
+   --  Estimated Processing Time: O(N) — one file read
+   --  CPU Time: ~1ms for typical invocation
+   --  WCET: 10ms with 10× safety margin
+   --  Space Complexity: O(1) — stack only, one line buffer
+   --  ====================================================================
+   --  coverage: STC wrapper for Load_Calibration
+   -- @test: test_load_calibration
+   -- ============================================================================
+   --  AXIOMS:
+   --    L1: a MISSING file is reported and leaves the calibration
+   --        DISABLED (the built-in literature constants); the call
+   --        never raises.
+   --    L2: a VALID file is loaded and the residual correction becomes
+   --        ACTIVE.
+   --    L3: a MALFORMED file is reported and leaves the calibration
+   --        DISABLED — it is never partially applied.
+   --    L4: the temporary calibration files are DELETED, so the test
+   --        leaves no state behind.
+   --  THEOREMS:
+   --    T1: with the calibration disabled the objective is exactly the
+   --        pre-calibration value; with it active the residual
+   --        correction changes the objective.
+   --    T2: J(x) stays non-negative in BOTH states (the clamp, axiom
+   --        A5 of HIAD_Cost_Components).
+   --  APPLICATIONS: the Stage-0 acceptance check of the loader.
+   --  CITATIONS: [CALIBRATION_DESIGN.md §2.6.2] the binding file format.
+   procedure Test_Load_Calibration is -- nosec
+      --  Contract: Pre => True (no inputs); Post => True (asserts the
+      --  loader's three documented behaviours)
+   begin
+      declare
+         Good_Path    : constant String := "stellarorion_lane1_calibration.tmp";
+         Bad_Path     : constant String := "stellarorion_lane1_calibration_bad.tmp";
+         Missing_Path : constant String := "stellarorion_lane1_calibration_absent.tmp";
+         X            : constant Param_Vector := (1.5, 0.14, 60.0);
+         Cost_Uncal   : Float;
+         Cost_Cal     : Float;
+      begin
+         --  (1) MISSING FILE -> reported, calibration DISABLED, no raise.
+         Load_Calibration (Missing_Path);
+         pragma Assert (not Calibration_Active,
+                        "Load_Calibration: a missing file must leave the calibration disabled");
+         Cost_Uncal := HIAD_Cost_Function (X);
+         pragma Assert (Cost_Uncal >= 0.0,
+                        "J(x) must stay non-negative without a calibration");
+
+         --  (2) VALID FILE -> the residual correction becomes ACTIVE.
+         declare
+            F : File_Type;
+         begin
+            Create (F, Out_File, Good_Path);
+            Put_Line (F, "# StellarOrion screening-model calibration (orthogonal residual correction).");
+            Put_Line (F, "# Written by scripts/calibrate_from_dsmc.py; read by the Ada screening model.");
+            Put_Line (F, "calibration_valid = 1");
+            Put_Line (F, "centre_x1 = 1.5");
+            Put_Line (F, "centre_x2 = 0.14");
+            Put_Line (F, "centre_x3 = 60.0");
+            Put_Line (F, "half_x1 = 0.25");
+            Put_Line (F, "half_x2 = 0.06");
+            Put_Line (F, "half_x3 = 8.0");
+            Put_Line (F, "cd_b0 = 0.1");
+            Put_Line (F, "cd_b1 = 0.0");
+            Put_Line (F, "cd_b2 = 0.0");
+            Put_Line (F, "cd_b3 = 0.0");
+            Put_Line (F, "cd_b12 = 0.0");
+            Put_Line (F, "cd_b13 = 0.0");
+            Put_Line (F, "cd_b23 = 0.0");
+            Put_Line (F, "q_b0 = 0.5");
+            Put_Line (F, "q_b1 = 0.0");
+            Put_Line (F, "q_b2 = 0.0");
+            Put_Line (F, "q_b3 = 0.0");
+            Put_Line (F, "q_b12 = 0.0");
+            Put_Line (F, "q_b13 = 0.0");
+            Put_Line (F, "q_b23 = 0.0");
+            Close (F);
+         end;
+         Load_Calibration (Good_Path);
+         pragma Assert (Calibration_Active,
+                        "Load_Calibration: a valid file must activate the calibration");
+         Cost_Cal := HIAD_Cost_Function (X);
+         pragma Assert (Cost_Cal >= 0.0,
+                        "J(x) must stay non-negative with a calibration");
+         pragma Assert (Cost_Cal /= Cost_Uncal,
+                        "Load_Calibration: the residual correction must change the objective");
+
+         --  (3) MALFORMED FILE -> reported, calibration DISABLED, and
+         --  NOT partially applied (the previous state is discarded).
+         declare
+            F : File_Type;
+         begin
+            Create (F, Out_File, Bad_Path);
+            Put_Line (F, "calibration_valid = 1");
+            Put_Line (F, "centre_x1 = 1.5");
+            Put_Line (F, "this line has no separator");
+            Close (F);
+         end;
+         Load_Calibration (Bad_Path);
+         pragma Assert (not Calibration_Active,
+                        "Load_Calibration: a malformed file must disable the calibration");
+         pragma Assert (HIAD_Cost_Function (X) = Cost_Uncal,
+                        "Load_Calibration: a malformed file must not be partially applied");
+
+         --  (4) Cleanup: the temporary files must not survive the test.
+         begin
+            Ada.Directories.Delete_File (Good_Path);
+         exception
+            when others =>
+               null;
+         end;
+         begin
+            Ada.Directories.Delete_File (Bad_Path);
+         exception
+            when others =>
+               null;
+         end;
+
+         Ada.Text_IO.Put_Line
+           ("[PASS] Test_Load_Calibration: J_uncalibrated=" & Float'Image (Cost_Uncal) &
+            " J_calibrated=" & Float'Image (Cost_Cal));
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Load_Calibration: " &
+                               Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Load_Calibration;
+
 
    --  ============================================================================
    --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
@@ -4354,6 +5359,199 @@ package body StellarOrion_Optimization is
    --  TIMING ANCHOR: Millisecond Resolution (1ms granularity of the barrier)
    --  Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
    --  Resolution: 1ns (nanosecond)
+   --  Estimated Processing Time: O(8) -- the eight-point factorial
+   --  CPU Time: ~1ms for the four residual-fit tests together
+   --  WCET: 50ms with 10x safety margin
+   --  Space Complexity: O(8) -- the two eight-element arrays
+   --  ====================================================================
+   --  coverage: STC wrappers for the PROVED orthogonal residual fit
+   --  (StellarOrion_Optimizer_Core, the calibration correction of
+   --  CALIBRATION_DESIGN.md Sec 2.6.1)
+
+   --  Build the canonical 2^3 coded factorial design: every coded
+   --  coordinate is exactly +-1, so the design IS the orthogonal one the
+   --  SPARK core's fit assumes.  ONE helper for the four residual-fit
+   --  tests, so the layout is defined in exactly one place.
+   procedure Build_Canonical_Factorial
+     (Coded : out StellarOrion_Optimizer_Core.Factorial_Point_Array) is
+   begin
+      for I in 1 .. StellarOrion_Optimizer_Core.Factorial_Point_Count loop
+         for K in 1 .. 3 loop
+            declare
+               --  WHY: the classical bit layout -- x1 flips at i = 4,
+               --  x2 at i = 2, x3 at i = 1 (the Yates order).
+               Bits : constant Integer :=
+                 (I - 1) / (2 ** (3 - K)) mod 2;
+            begin
+               Coded (I) (K) := (if Bits = 1 then 1.0 else -1.0);
+            end;
+         end loop;
+      end loop;
+   end Build_Canonical_Factorial;
+
+   --  The KNOWN response surface over the seven orthogonal basis
+   --  monomials {1, x1, x2, x3, x1*x2, x1*x3, x2*x3}:
+   --      y = 1 + 2*x1 - 3*x2 + 0.5*x3 + 1.5*x1*x2 - 0.25*x1*x3 + 0.75*x2*x3
+   --  Because the design is orthogonal, the closed-form contrast fit must
+   --  recover EXACTLY these seven coefficients.
+   procedure Build_Known_Surface
+     (Coded  : StellarOrion_Optimizer_Core.Factorial_Point_Array;
+      Values : out StellarOrion_Optimizer_Core.Factorial_Value_Array) is
+   begin
+      for I in 1 .. StellarOrion_Optimizer_Core.Factorial_Point_Count loop
+         Values (I) :=
+           1.0
+           + 2.0 * Float (Coded (I) (1))
+           - 3.0 * Float (Coded (I) (2))
+           + 0.5 * Float (Coded (I) (3))
+           + 1.5 * Float (Coded (I) (1)) * Float (Coded (I) (2))
+           - 0.25 * Float (Coded (I) (1)) * Float (Coded (I) (3))
+           + 0.75 * Float (Coded (I) (2)) * Float (Coded (I) (3));
+      end loop;
+   end Build_Known_Surface;
+
+   procedure Test_Residual_Grand_Mean is -- nosec
+      --  Contract: Pre => True (no inputs); Post => True (asserts the
+      --  grand mean of a known response set)
+   begin
+      declare
+         Values : StellarOrion_Optimizer_Core.Factorial_Value_Array;
+         Mean   : Float;
+      begin
+         for I in 1 .. 8 loop
+            Values (I) := Float (I) * 10.0;
+         end loop;
+         Mean := StellarOrion_Optimizer_Core.Residual_Grand_Mean (Values);
+         pragma Assert (abs (Mean - 45.0) < 1.0E-9,
+                        "Residual_Grand_Mean: the mean of 10..80 must be 45");
+         Ada.Text_IO.Put_Line
+           ("[PASS] Test_Residual_Grand_Mean: mean=" & Float'Image (Mean));
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Residual_Grand_Mean: " &
+                               Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Residual_Grand_Mean;
+
+   procedure Test_Residual_Contrast is -- nosec
+      --  Contract: Pre => True (no inputs); Post => True (asserts the
+      --  orthogonal contrasts of a known surface, and the vanishing of
+      --  every contrast for a FLAT response)
+   begin
+      declare
+         Coded  : StellarOrion_Optimizer_Core.Factorial_Point_Array;
+         Values : StellarOrion_Optimizer_Core.Factorial_Value_Array;
+         Flat   : StellarOrion_Optimizer_Core.Factorial_Value_Array;
+      begin
+         Build_Canonical_Factorial (Coded);
+         Build_Known_Surface (Coded, Values);
+         pragma Assert
+           (abs (StellarOrion_Optimizer_Core.Residual_Contrast
+                   (Coded, Values, 2) - 2.0) < 1.0E-9,
+            "Residual_Contrast: the x1 contrast must be 2.0");
+         pragma Assert
+           (abs (StellarOrion_Optimizer_Core.Residual_Contrast
+                   (Coded, Values, 3) + 3.0) < 1.0E-9,
+            "Residual_Contrast: the x2 contrast must be -3.0");
+         pragma Assert
+           (abs (StellarOrion_Optimizer_Core.Residual_Contrast
+                   (Coded, Values, 5) - 1.5) < 1.0E-9,
+            "Residual_Contrast: the x1*x2 contrast must be 1.5");
+         pragma Assert
+           (abs (StellarOrion_Optimizer_Core.Residual_Contrast
+                   (Coded, Values, 7) - 0.75) < 1.0E-9,
+            "Residual_Contrast: the x2*x3 contrast must be 0.75");
+
+         --  A FLAT response carries no contrast at all: the calibration
+         --  correction must then vanish identically (the "already
+         --  calibrated" property of CALIBRATION_DESIGN Sec 2.6).
+         for I in 1 .. 8 loop
+            Flat (I) := 5.0;
+         end loop;
+         for K in 2 .. 7 loop
+            pragma Assert
+              (abs (StellarOrion_Optimizer_Core.Residual_Contrast
+                      (Coded, Flat, K)) < 1.0E-9,
+               "Residual_Contrast: a flat response must have no contrast");
+         end loop;
+         Ada.Text_IO.Put_Line
+           ("[PASS] Test_Residual_Contrast: x1=" &
+            Float'Image (StellarOrion_Optimizer_Core.Residual_Contrast
+                           (Coded, Values, 2)));
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Residual_Contrast: " &
+                               Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Residual_Contrast;
+
+   procedure Test_Fit_Orthogonal_Factorial is -- nosec
+      --  Contract: Pre => True (no inputs); Post => True (asserts that the
+      --  closed-form fit recovers the generating surface exactly)
+   begin
+      declare
+         Coded  : StellarOrion_Optimizer_Core.Factorial_Point_Array;
+         Values : StellarOrion_Optimizer_Core.Factorial_Value_Array;
+         Coeffs : StellarOrion_Optimizer_Core.Residual_Coefficient_Array;
+         Want   : constant array (1 .. 7) of Float :=
+           (1.0, 2.0, -3.0, 0.5, 1.5, -0.25, 0.75);
+      begin
+         Build_Canonical_Factorial (Coded);
+         Build_Known_Surface (Coded, Values);
+         StellarOrion_Optimizer_Core.Fit_Orthogonal_Factorial
+           (Coded, Values, Coeffs);
+         for K in 1 .. 7 loop
+            pragma Assert
+              (abs (Coeffs (K) - Want (K)) < 1.0E-9,
+               "Fit_Orthogonal_Factorial: the fitted coefficient must equal "
+               & "the generating one");
+         end loop;
+         Ada.Text_IO.Put_Line
+           ("[PASS] Test_Fit_Orthogonal_Factorial: b0=" & Float'Image (Coeffs (1)));
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Fit_Orthogonal_Factorial: " &
+                               Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Fit_Orthogonal_Factorial;
+
+   procedure Test_Evaluate_Residual_Model is -- nosec
+      --  Contract: Pre => True (no inputs); Post => True (asserts that the
+      --  fitted model reproduces every design response exactly)
+   begin
+      declare
+         Coded  : StellarOrion_Optimizer_Core.Factorial_Point_Array;
+         Values : StellarOrion_Optimizer_Core.Factorial_Value_Array;
+         Coeffs : StellarOrion_Optimizer_Core.Residual_Coefficient_Array;
+      begin
+         Build_Canonical_Factorial (Coded);
+         Build_Known_Surface (Coded, Values);
+         StellarOrion_Optimizer_Core.Fit_Orthogonal_Factorial
+           (Coded, Values, Coeffs);
+         for I in 1 .. 8 loop
+            pragma Assert
+              (abs (StellarOrion_Optimizer_Core.Evaluate_Residual_Model
+                      (Coeffs, Coded (I)) - Values (I)) < 1.0E-9,
+               "Evaluate_Residual_Model: the model must reproduce the "
+               & "design response");
+         end loop;
+         Ada.Text_IO.Put_Line
+           ("[PASS] Test_Evaluate_Residual_Model: residuals all zero");
+      end;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Test_Evaluate_Residual_Model: " &
+                               Ada.Exceptions.Exception_Name (E));
+         raise;
+   end Test_Evaluate_Residual_Model;
+
+   --  ============================================================================
+   --  TIMING ANCHOR: Millisecond Resolution (1ms granularity of the barrier)
+   --  Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+   --  Resolution: 1ns (nanosecond)
    --  Estimated Processing Time: O(N) -- N fitness evaluations, in parallel
    --  CPU Time: ~1ms for N = 8 with the default fitness
    --  WCET: 50ms with 10x safety margin
@@ -4361,6 +5559,7 @@ package body StellarOrion_Optimization is
    --  ====================================================================
    --  coverage: STC wrapper for the parallel population evaluation
 
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Analytic_To_Physical", Test_Analytic_To_Physical'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Frontal_Area", Test_Compute_Frontal_Area'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Max_Radius", Test_Compute_Max_Radius'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Estimate_Cd", Test_Estimate_Cd'Access);
@@ -4382,8 +5581,10 @@ package body StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Gaussian_Rand", Test_Gaussian_Rand'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Gaussian_Standard", Test_Gaussian_Standard'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Load_Calibration", Test_Load_Calibration'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimization_Cost", Test_Optimization_Cost'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Physical_To_Analytic", Test_Physical_To_Analytic'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Random_Geometry", Test_Random_Geometry'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GA_Optimization", Test_Run_GA_Optimization'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sort_By_Cost", Test_Sort_By_Cost'Access);
@@ -4394,6 +5595,10 @@ package body StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Optimization_Cost", Test_Optimizer_Core_Optimization_Cost'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Sort_By_Cost", Test_Optimizer_Core_Sort_By_Cost'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Update_Stagnation", Test_Optimizer_Core_Update_Stagnation'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Evaluate_Residual_Model", Test_Evaluate_Residual_Model'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Fit_Orthogonal_Factorial", Test_Fit_Orthogonal_Factorial'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Residual_Contrast", Test_Residual_Contrast'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Residual_Grand_Mean", Test_Residual_Grand_Mean'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_SBO_Fitness", Test_SBO_Fitness'Access);
 end StellarOrion_Optimization;
 

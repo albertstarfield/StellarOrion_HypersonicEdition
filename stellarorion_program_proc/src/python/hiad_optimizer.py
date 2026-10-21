@@ -56,6 +56,7 @@ from typing import Any, TypedDict
 # --- Import FFI wrappers from ada_pinn_wrapper ---
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ada_pinn_wrapper import (
+    analytic_to_physical,
     estimate_cd,
     generate_ccd_samples,
     get_hiad_cross_section,
@@ -413,6 +414,14 @@ def _parse_args(argv: "list[str] | None" = None) -> "argparse.Namespace":
         "--steps", type=int, default=_GATE_STEPS_DEFAULT,
         help=f"SPARTA timestep count for the gate DSMC leg "
              f"(default: {_GATE_STEPS_DEFAULT})",
+    )
+    parser.add_argument(
+        "--calibration", type=str, default=None, metavar="PATH",
+        help="path of the KEY = VALUE calibration file "
+             "(CALIBRATION DESIGN 2.6.2). The Ada GA runner loads it BEFORE "
+             "the optimisation, so the optimum is scored with the model the "
+             "DSMC will later be compared against. Omit it to run on the "
+             "built-in literature constants.",
     )
     parser.add_argument(
         "--optimizer",
@@ -1111,7 +1120,8 @@ def _hybrid_gate(
     References:
         - https://docs.python.org/3/library/argparse.html
     """
-    print("\n[8/8] Hybrid validation gate (DSMC+PINN_AUX re-simulation)")
+    print("\n[8/8] Hybrid validation gate -- physical-space DSMC+PINN_AUX "
+          "validation (re-simulation of the winner)")
     print("=" * 72)
     geo = output["optimized"]
     geometry = {
@@ -1119,17 +1129,30 @@ def _hybrid_gate(
         "r_tor": geo["r_tor"],
         "half_cone_deg": geo["half_cone_deg"],
     }
+    # AXIOM (CALIBRATION DESIGN 2.1): the vehicle that is FLYN must be the
+    # PHYSICAL geometry of the optimum, not the analytic triple.  The CLI's
+    # --nose is the nose BLUNTNESS radius (project.adb:574) and --diameter
+    # is the body diameter (project.adb:570), while the analytic X(1) is
+    # the BODY/JUNCTION radius.  Passing X(1) as --nose is exactly the
+    # unsync of CALIBRATION DESIGN 1.2, so the physical geometry is what
+    # goes on the command line.
+    physical = geo.get("physical_geometry") or analytic_to_physical(
+        float(geometry["R_N"]), float(geometry["r_tor"]),
+        float(geometry["half_cone_deg"]),
+    )
     q_analytic = float(geo["total_heat_load_Jcm2"])
     q_target = float(refs["q_target_jcm2"])
     geo_flags = [
-        "--nose", f"{geometry['R_N']:.6f}",
-        "--tradius", f"{geometry['r_tor']:.6f}",
-        "--angle", f"{geometry['half_cone_deg']:.6f}",
+        "--diameter", f"{float(physical['diameter_m']):.6f}",
+        "--nose", f"{float(physical['nose_radius_m']):.6f}",
+        "--tradius", f"{float(physical['toroid_radius_m']):.6f}",
+        "--angle", f"{float(physical['angle_deg']):.6f}",
         "--skin", _GATE_SKIN,
     ]
     block: dict[str, Any] = {
         "mode": "dry_run" if args.dry_run else "full",
         "geometry": geometry,
+        "physical_geometry": physical,
         "skin": _GATE_SKIN,
         "steps": args.steps,
         "q_analytic_Jcm2": q_analytic,
@@ -1138,9 +1161,14 @@ def _hybrid_gate(
         "verdict": None,
         "error": None,
     }
-    print(f"  Geometry: R_N={geometry['R_N']:.4f} m  "
+    print(f"  Analytic triple (MODEL SPACE): R_N={geometry['R_N']:.4f} m  "
           f"r_tor={geometry['r_tor']:.4f} m  "
-          f"cone={geometry['half_cone_deg']:.4f} deg  skin={_GATE_SKIN}")
+          f"cone={geometry['half_cone_deg']:.4f} deg")
+    print(f"  PHYSICAL vehicle (PHYSICAL SPACE): "
+          f"D={float(physical['diameter_m']):.4f} m  "
+          f"nose={float(physical['nose_radius_m']):.4f} m  "
+          f"torus={float(physical['toroid_radius_m']):.4f} m  "
+          f"cone={float(physical['angle_deg']):.4f} deg  skin={_GATE_SKIN}")
     print(f"  Analytic Q(x) = {q_analytic:.4f} J/cm^2   "
           f"target = {q_target:.4f} J/cm^2   steps = {args.steps}")
 
@@ -1219,7 +1247,9 @@ def _hybrid_gate(
     block["verdict"] = verdict
     block["correction_factor"] = correction
     passed = bool(verdict["passed"])
-    print(f"  q_hybrid   = {verdict['q_hybrid_Jcm2']:.4f} J/cm^2 (DSMC+PINN_AUX)")
+    print(f"  q_hybrid   = {verdict['q_hybrid_Jcm2']:.4f} J/cm^2 "
+          f"(DSMC+PINN_AUX validation run; the heat-load column is the "
+          f"Sutton-Graves x window value, NOT a DSMC surface measurement)")
     print(f"  q_analytic = {verdict['q_analytic_Jcm2']:.4f} J/cm^2")
     print(f"  q_target   = {verdict['q_target_Jcm2']:.4f} J/cm^2")
     print(f"  prediction error = {verdict['prediction_error_pct']:+.4f} %")
@@ -1258,6 +1288,12 @@ def _hybrid_gate(
         "n_evaluations": result2["n_evals"],
         "history": result2["history"],
     }
+    # AXIOM (CALIBRATION DESIGN 2.1): the round-2 optimum carries the
+    # PHYSICAL vehicle as well as the analytic triple.
+    round2_physical = analytic_to_physical(
+        float(x2[0]), float(x2[1]), float(x2[2])
+    )
+    round2["physical_geometry"] = round2_physical
     block["optimized_round2"] = {
         k: v for k, v in round2.items() if k != "history"}
 
@@ -1275,10 +1311,15 @@ def _hybrid_gate(
         if not _prep_out_dir(out2_abs, args.force):
             return _abort(1, "could not prepare round-2 output directory")
 
+        # AXIOM (CALIBRATION DESIGN 2.1): fly the PHYSICAL vehicle of the
+        # round-2 optimum -- --nose is the nose bluntness radius, not the
+        # analytic body/junction radius.
+        physical2 = round2_physical
         geo2_flags = [
-            "--nose", f"{x2[0]:.6f}",
-            "--tradius", f"{x2[1]:.6f}",
-            "--angle", f"{x2[2]:.6f}",
+            "--diameter", f"{float(physical2['diameter_m']):.6f}",
+            "--nose", f"{float(physical2['nose_radius_m']):.6f}",
+            "--tradius", f"{float(physical2['toroid_radius_m']):.6f}",
+            "--angle", f"{float(physical2['angle_deg']):.6f}",
             "--skin", _GATE_SKIN,
         ]
         rc2, info2 = _gate_dsmc_pipeline(paths, geo2_flags, args.steps,
@@ -1368,6 +1409,10 @@ def main(argv: "list[str] | None" = None) -> int:
     print("=" * 72)
     print("  HIAD Geometry Optimizer (Bayesian Optimization)")
     print("  CCD Sampling + Multi-Objective Cost (J) + GP Surrogate + EI")
+    print("  MODEL SPACE: the CCD/GA/BO describe the ANALYTIC SCREENING "
+          "MODEL.")
+    print("  PHYSICAL SPACE: the vehicle is the 'DSMC+PINN_AUX validation' "
+          "runs.")
     if args.hybrid_validate:
         mode = "DRY-RUN" if args.dry_run else "FULL"
         print(f"  Hybrid validation gate: ENABLED ({mode}, "
@@ -1449,20 +1494,27 @@ def main(argv: "list[str] | None" = None) -> int:
           f"beta_dev={default_comp['beta_dev']:.6f} "
           f"cd={default_comp['cd_ratio']:.4f} "
           f"penalty={default_comp['penalty']:.4f}")
-    print(f"  SG heat flux = {default_sg_wcm2:.4f} W/cm^2 "
+    print(f"  SG heat flux (Sutton-Graves correlation, analytic -- NOT a "
+          f"DSMC measurement) = {default_sg_wcm2:.4f} W/cm^2 "
           f"({default_sg_wm2:.2f} W/m^2)")
 
     # --- Step 3: Generate CCD sample points via Ada FFI ---
-    print("\n[3/7] Generating CCD sample points (via Ada FFI) ...")
+    #  AXIOM (CALIBRATION DESIGN 5): the CCD is a MODEL-SPACE design -- it
+    #  describes the ANALYTIC SCREENING MODEL, not the vehicle.  The
+    #  physical-space runs are the "DSMC+PINN_AUX validation" and are
+    #  reported by a different tool (scripts/compare_dsmc_runs.py).
+    print("\n[3/7] Generating CCD sample points (via Ada FFI) -- "
+          "screening-model CCD design (MODEL SPACE) ...")
     ccd_samples = generate_ccd_samples()
-    print(f"  Generated {len(ccd_samples)} CCD samples:")
+    print(f"  Generated {len(ccd_samples)} screening-model CCD samples:")
     for i, s in enumerate(ccd_samples):
         print(f"    [{i:2d}] {s['label']:25s}  "
               f"R_N={s['R_N']:.4f}  r_tor={s['r_tor']:.4f}  "
               f"cone={s['half_cone_deg']:.2f}")
 
     # --- Step 4: Evaluate cost at all CCD points via Ada FFI ---
-    print("\n[4/7] Evaluating cost at CCD sample points (via Ada FFI) ...")
+    print("\n[4/7] Evaluating cost at CCD sample points (via Ada FFI) -- "
+          "screening-model CCD design (MODEL SPACE) ...")
     # Explicit annotation so pyrefly can infer the lambda parameter type
     # in the min(...) key below (dict[str, str | float]: label is a str,
     # every other entry is a float).
@@ -1482,7 +1534,8 @@ def main(argv: "list[str] | None" = None) -> int:
     # Named key function (_ccd_cost): pyrefly cannot infer inline lambda
     # parameters through min()'s overloads; the helper is fully typed.
     best_ccd = min(ccd_results, key=_ccd_cost)
-    print(f"\n  Best CCD point: {best_ccd['label']} (J={best_ccd['cost']:.6f})")
+    print(f"\n  Best CCD point: {best_ccd['label']} (J={best_ccd['cost']:.6f}) "
+          "-- screening-model CCD design (MODEL SPACE)")
 
     # --- Step 5: the selected search strategy ---
     # THEORY T2: both strategies optimise the SAME objective J(x) in the
@@ -1490,7 +1543,10 @@ def main(argv: "list[str] | None" = None) -> int:
     # re-evaluated with J itself -- never with the internal search score
     # (the GA minimises J plus a model-fidelity penalty).
     if args.optimizer == "bo":
-        print("\n[5/7] Running Bayesian Optimization (GP surrogate + EI) ...")
+        print(
+            "\n[5/7] Running Bayesian Optimization (GP surrogate + EI) "
+            "-- MODEL SPACE (analytic screening model) ..."
+        )
         result = run_bayesian_optimize(
             hiad_cost_function, n_initial=20, n_iter=50, xi=0.01, seed=42,
         )
@@ -1498,16 +1554,38 @@ def main(argv: "list[str] | None" = None) -> int:
     else:
         print(
             f"\n[5/7] Running {args.optimizer.upper()} genetic algorithm "
-            "(Ada/SPARK, parallel population evaluation) ..."
+            "(Ada/SPARK, parallel population evaluation) -- MODEL SPACE "
+            "(analytic screening model) ..."
         )
+        if args.calibration:
+            print(f"  Calibration file: {args.calibration}")
         result = run_sbo_ga(
             population_size=_GA_POPULATION_SIZE,
             max_generations=_GA_MAX_GENERATIONS,
+            calibration_path=args.calibration,
         )
         opt_cost = hiad_cost_function(*result["x_opt"])
     opt_r_n, opt_r_tor, opt_cone = result["x_opt"]
     opt_cd = estimate_cd(opt_r_n, opt_r_tor, opt_cone)
     opt_comp = hiad_cost_components(opt_r_n, opt_r_tor, opt_cone)
+
+    # PHYSICAL geometry of the optimum (CALIBRATION DESIGN 2.1).  The
+    # analytic triple is NOT a vehicle: X(1) is the BODY/JUNCTION radius
+    # (the body diameter is 2*X(1)) and the nose bluntness radius is
+    # Nose_Radius_Ratio*X(1).  Reporting only the analytic triple is
+    # exactly what produced the analytic/DSMC unsync of CALIBRATION
+    # DESIGN 1.2, so BOTH views are reported from now on.
+    # The GA runner already returns the physical geometry it scored; the
+    # Python mirror is used for the BO path and as the cross-checked
+    # fallback.
+    runner_physical = result.get("physical_geometry") or {}
+    opt_physical = analytic_to_physical(opt_r_n, opt_r_tor, opt_cone)
+    for key, value in runner_physical.items():
+        if key in opt_physical:
+            opt_physical[key] = float(value)
+    default_physical = analytic_to_physical(
+        _DEFAULT_R_N, _DEFAULT_R_TOR, _DEFAULT_HALF_CONE_DEG
+    )
 
     # Compute SG at optimized geometry via Ada/SPARK FFI.
     #  ONE TRUTH, ONE VALUE (2026-10-06): no Python fallback -- see block above.
@@ -1526,6 +1604,13 @@ def main(argv: "list[str] | None" = None) -> int:
     print(f"  Optimized R_N = {opt_r_n:.6f} m")
     print(f"  Optimized r_tor = {opt_r_tor:.6f} m")
     print(f"  Optimized half_cone = {opt_cone:.6f} deg")
+    print("  Optimized PHYSICAL geometry (the vehicle to fly; "
+          "CALIBRATION DESIGN 2.1):")
+    print(f"    body diameter   = {opt_physical['diameter_m']:.6f} m")
+    print(f"    nose radius     = {opt_physical['nose_radius_m']:.6f} m")
+    print(f"    toroid radius   = {opt_physical['toroid_radius_m']:.6f} m")
+    print(f"    cone angle      = {opt_physical['angle_deg']:.6f} deg")
+    print(f"    toroid count    = {int(opt_physical['toroid_count'])}")
     print(f"  Optimized Cd = {opt_cd:.6f}")
     print(f"  Optimized cost J = {opt_cost:.6f}")
     print(f"  Optimized Total Heat Load Q(x) = "
@@ -1536,7 +1621,9 @@ def main(argv: "list[str] | None" = None) -> int:
           f"beta_dev={opt_comp['beta_dev']:.6f} "
           f"cd={opt_comp['cd_ratio']:.4f} "
           f"penalty={opt_comp['penalty']:.4f}")
-    print(f"  SG heat flux = {opt_sg_wcm2:.4f} W/cm^2 ({opt_sg_wm2:.2f} W/m^2)")
+    print(f"  SG heat flux (Sutton-Graves correlation, analytic -- NOT a "
+          f"DSMC measurement) = {opt_sg_wcm2:.4f} W/cm^2 "
+          f"({opt_sg_wm2:.2f} W/m^2)")
 
     # Improvement percentage
     if default_cost > 0:
@@ -1588,6 +1675,7 @@ def main(argv: "list[str] | None" = None) -> int:
             "R_N": _DEFAULT_R_N,
             "r_tor": _DEFAULT_R_TOR,
             "half_cone_deg": _DEFAULT_HALF_CONE_DEG,
+            "physical_geometry": default_physical,
             "Cd": default_cd,
             "cost": default_cost,
             "total_heat_load_Jcm2": default_comp["heat_load_jcm2"],
@@ -1599,6 +1687,7 @@ def main(argv: "list[str] | None" = None) -> int:
             "R_N": opt_r_n,
             "r_tor": opt_r_tor,
             "half_cone_deg": opt_cone,
+            "physical_geometry": opt_physical,
             "Cd": opt_cd,
             "cost": opt_cost,
             "total_heat_load_Jcm2": opt_comp["heat_load_jcm2"],
@@ -1655,6 +1744,25 @@ def main(argv: "list[str] | None" = None) -> int:
             }
         ),
     }
+    # --- AXIOM (CALIBRATION DESIGN 5): the SPACES ARE NOT INTERCHANGEABLE.
+    #  The CCD/GA/BO figures above describe the ANALYTIC SCREENING MODEL
+    #  (model space); the DSMC runs describe the VEHICLE (physical space)
+    #  and are labelled "DSMC+PINN_AUX validation".  Both facts are recorded
+    #  in the JSON so no downstream reader can confuse them.
+    output["config"]["design_space"] = (
+        "MODEL SPACE -- the CCD, the surrogate and the GA search describe the "
+        "ANALYTIC SCREENING MODEL (screening-model CCD design), not the "
+        "vehicle."
+    )
+    output["config"]["validation_space"] = (
+        "PHYSICAL SPACE -- the DSMC runs are the 'DSMC+PINN_AUX validation' "
+        "of the vehicle; they are reported by scripts/compare_dsmc_runs.py."
+    )
+    output["config"]["physical_geometry"] = opt_physical
+    output["config"]["calibration_file"] = args.calibration
+    output["config"]["calibration_active"] = bool(
+        result.get("calibration_active", False)
+    )
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_path = os.path.join(script_dir, "hiad_optimization_results.json")
@@ -1669,6 +1777,11 @@ def main(argv: "list[str] | None" = None) -> int:
     print("=" * 72)
     print(f"  Default  Cd = {default_cd:.6f}  J = {default_cost:.6f}")
     print(f"  Optimized Cd = {opt_cd:.6f}  J = {opt_cost:.6f}")
+    print(f"  Optimized PHYSICAL geometry (the vehicle): "
+          f"D={float(opt_physical['diameter_m']):.6f} m  "
+          f"nose={float(opt_physical['nose_radius_m']):.6f} m  "
+          f"torus={float(opt_physical['toroid_radius_m']):.6f} m  "
+          f"cone={float(opt_physical['angle_deg']):.6f} deg")
     print(
         f"  Improvement: {improvement_pct:+.4f}% (cost J), "
         f"drag {cd_direction} by {abs(cd_gain_pct):.4f}% (Cd)"
@@ -1691,7 +1804,8 @@ def main(argv: "list[str] | None" = None) -> int:
         )
     )
     print(f"  Evaluations: {result['n_evals']} {eval_detail}")
-    print(f"  SG heat flux: {opt_sg_wcm2:.4f} W/cm^2")
+    print(f"  SG heat flux (Sutton-Graves correlation, analytic): "
+          f"{opt_sg_wcm2:.4f} W/cm^2")
     print("=" * 72)
 
     # --- Step 7: Render the 87-panel geometry grid (diagnostic figure) ---
@@ -1817,6 +1931,22 @@ if __name__ == "__main__":
     cd_val = estimate_cd(_DEFAULT_R_N, _DEFAULT_R_TOR, _DEFAULT_HALF_CONE_DEG)
     assert cd_val > 0, "Cd should be positive"
     print(f"  Default Cd = {cd_val:.6f} -- OK")
+
+    # Test the ANALYTIC -> PHYSICAL geometry mapping (CALIBRATION DESIGN 2.1).
+    # THEOREM T1: the reference anchor maps to exactly the reference DSMC
+    # geometry (D = 3.0 m, nose = 0.55 m, torus = 0.135 m, cone = 60 deg).
+    anchor_phys = analytic_to_physical(1.5, 0.135, 60.0)
+    assert abs(anchor_phys["diameter_m"] - 3.0) < 1e-12, anchor_phys
+    assert abs(anchor_phys["nose_radius_m"] - 0.55) < 1e-12, anchor_phys
+    assert abs(anchor_phys["toroid_radius_m"] - 0.135) < 1e-12, anchor_phys
+    assert abs(anchor_phys["angle_deg"] - 60.0) < 1e-12, anchor_phys
+    default_phys = analytic_to_physical(
+        _DEFAULT_R_N, _DEFAULT_R_TOR, _DEFAULT_HALF_CONE_DEG)
+    assert abs(default_phys["diameter_m"] - 3.0) < 1e-12, default_phys
+    print(f"  Physical geometry (anchor): D={anchor_phys['diameter_m']:.4f} m "
+          f"nose={anchor_phys['nose_radius_m']:.4f} m "
+          f"torus={anchor_phys['toroid_radius_m']:.4f} m "
+          f"cone={anchor_phys['angle_deg']:.4f} deg -- OK")
 
     # Test MoP optimization via Ada FFI (still available for comparison)
     result = run_mop_optimize((_DEFAULT_R_N, _DEFAULT_R_TOR, _DEFAULT_HALF_CONE_DEG),

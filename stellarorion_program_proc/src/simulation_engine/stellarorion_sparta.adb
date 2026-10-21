@@ -2447,6 +2447,36 @@ package body StellarOrion_Sparta is
               --  Fay-Riddell stagnation heat flux (W/m^2) for Rapisarda
               --  comparison: FR=13.83 vs SG=15.26 W/cm^2 (Table 4.10).
               Heat_Flux_FR_Wm2   : Float := 0.0;
+              --  ==========================================================
+              --  CALIBRATION INSTRUMENTATION (CALIBRATION_DESIGN.md §2.4)
+              --  ==========================================================
+              --  These four fields carry the DSMC's OWN measurements so the
+              --  screening model can be calibrated against them.  They are
+              --  appended after the legacy 22 columns; the legacy column
+              --  semantics are UNCHANGED (the `cd` column keeps its 3.0
+              --  clamp) so nothing downstream breaks.
+              --
+              --  CD_Unclamped: the DSMC drag force ratio with the UPPER
+              --  clamp (3.0) removed, i.e. the same expression the legacy
+              --  `cd` column uses (Drag_Sum / (q * A_frontal)) evaluated
+              --  BEFORE `if Match_CD > 3.0 then Match_CD := 3.0`.  The blunt
+              --  candidate saturates the legacy column at a flat 3.000000
+              --  while its true force ratio is 8.67-12.02; this field
+              --  preserves that ratio.  The non-negativity guard IS kept
+              --  (every calibration column is contractually non-negative).
+              --  [Citation: Anderson (2006) Sec 5.4 — blunt-body drag]
+              CD_Unclamped      : Float := 0.0;
+              --  CD_Raw_Body_Area: Drag_Sum / (dyn_press * pi * (D/2)^2).
+              --  A_frontal IS pi*(D/2)^2 (set at the Frontal_Area
+              --  assignment), so this equals CD_Unclamped by construction —
+              --  it is published separately so a downstream tool never has
+              --  to infer which reference area the legacy `cd` used.
+              CD_Raw_Body_Area  : Float := 0.0;
+              --  CD_Raw_Presented_Area: Drag_Sum / (dyn_press * pi * R_Max^2)
+              --  — the PRESENTED-area normalisation used by the analytic
+              --  screening model (R_Max from the max-radius law, see the
+              --  R_Max_L2 constants below).
+              CD_Raw_Presented_Area : Float := 0.0;
            end record;
        Rows      : array (1 .. Max_Steps) of Step_Row := (others => (others => <>));
        N_Rows    : Natural := 0;
@@ -2472,6 +2502,51 @@ package body StellarOrion_Sparta is
         Traj_Profile : StellarOrion_Physics.Trajectory_Profile (1 .. StellarOrion_Physics.Max_Trajectory_Pts);
         Traj_N_Pts   : Natural := 0;
         Frontal_Area : Float := 0.0;
+        --  ============================================================
+        --  CALIBRATION GEOMETRY CONSTANTS (CALIBRATION_DESIGN.md §2.3)
+        --  ============================================================
+        --  R_Max — the vehicle's MAXIMUM RADIUS, from the analytic
+        --  max-radius law:
+        --     Gamma    := (90 - Half_Cone_Deg) * pi / 180
+        --     R_Tang   := R_N * cos(Gamma)
+        --     S_Last   := (2 * N_Tori - 1) * R_Tor
+        --     R_Target := R_Tang + S_Last * cos(Gamma)
+        --     R_Max    := R_Target + R_Tor
+        --
+        --  Re-implemented LOCALLY in this package (no dependency on any
+        --  other package is added) and evaluated with the geometry that
+        --  was ACTUALLY HANDED TO SPARTA:
+        --     R_N           := Geo.Nose_Radius_M  (nose bluntness radius)
+        --     R_Tor         := Geo.Toroid_Radius_M
+        --     N_Tori        := Geo.Toroid_Count
+        --     Half_Cone_Deg := Geo.Angle_Deg
+        --
+        --  NOTE: the analytic screening model feeds X(1) (the BODY /
+        --  JUNCTION radius) into the same law as R_N; here R_N is the nose
+        --  bluntness radius that was actually flown, so R_Max_L2 is the
+        --  radius of the DSMC body and not of the analytic surrogate.
+        --  The presented frontal area pi*R_Max^2 is therefore the
+        --  analytic normalisation, while Frontal_Area = pi*(D/2)^2 is the
+        --  legacy body normalisation.  Both are reported in the CSV.
+        --  [Citation: Rapisarda (2023) Sec 3.7, App. C.1 — cone/toroid
+        --   tangency geometry; NASA/TP-2013-4012 — IRVE-3 reference]
+        --
+        --  Gamma is clamped into [-Pi, Pi] so Cos_Rad's precondition
+        --  (abs X <= Pi) always holds even for a malformed Angle_Deg.
+        Gamma_Rad_L2_Raw : constant Float :=
+          (90.0 - Geo.Angle_Deg) * Pi / 180.0;
+        Gamma_Rad_L2 : constant Float :=
+          (if Gamma_Rad_L2_Raw > Pi then Pi
+           elsif Gamma_Rad_L2_Raw < -Pi then -Pi
+           else Gamma_Rad_L2_Raw);
+        Cos_G_L2     : constant Float := Cos_Rad (Gamma_Rad_L2);
+        R_Tang_L2    : constant Float := Geo.Nose_Radius_M * Cos_G_L2;
+        S_Last_L2    : constant Float :=
+          Float (2 * Geo.Toroid_Count - 1) * Geo.Toroid_Radius_M;
+        R_Target_L2  : constant Float := R_Tang_L2 + S_Last_L2 * Cos_G_L2;
+        R_Max_L2     : constant Float := R_Target_L2 + Geo.Toroid_Radius_M;
+        --  Presented frontal area (m^2) = pi * R_Max^2.
+        Presented_Area : constant Float := Pi * R_Max_L2 * R_Max_L2;
         --  ACCURACY FIX: total wetted surface area (m^2) of the revolved
         --  HIAD body, computed from the resampled polyline B(0..N).
         --  Each segment k revolved around the x-axis sweeps area:
@@ -2482,6 +2557,53 @@ package body StellarOrion_Sparta is
         Matched_Traj_Idx : Natural := 0;
 
        type Real_Vec is array (Positive range <>) of Float;
+
+     --  Guarded non-negative ratio used by the calibration columns.
+     --
+     --  Contract: pre  => any finite Num and any Den;
+     --           post => returns Num/Den when Den > 0 and Num >= 0;
+     --                 returns 0.0 in every degenerate case.
+     --
+     --  AXIOMS: (1) division by a non-positive denominator is undefined
+     --    for the drag normalisation (zero dynamic pressure or zero
+     --    reference area is a degenerate configuration, not a number);
+     --    (2) every calibration column is contractually finite and
+     --    NON-NEGATIVE, so a negative numerator (possible only from DSMC
+     --    statistical noise) is clamped at zero.
+     --  THEORIES: the helper therefore converts every unsafe division
+     --    into a documented 0.0 and never raises.
+     --  APPLICATIONS: cd_unclamped, cd_raw_body_area and
+     --    cd_raw_presented_area in the validation CSV.
+     --  CITATIONS: Ada RM 4.5 (floating-point operations);
+     --    CALIBRATION_DESIGN.md §2.4 (column contract).
+     function Guarded_Ratio
+       (Num : Float; Den : Float; What : String) return Float
+       with Pre => True,
+            Post => Guarded_Ratio'Result >= 0.0
+     is
+     begin
+        if Den <= 0.0 then
+           Put_Line (Standard_Error,
+                     "[VERBOSE_ERROR] Guarded_Ratio: non-positive denominator for "
+                     & What & "; substituting 0.0");
+           return 0.0;
+        end if;
+        if Num < 0.0 then
+           Put_Line (Standard_Error,
+                     "[VERBOSE_ERROR] Guarded_Ratio: negative numerator for "
+                     & What & "; substituting 0.0");
+           return 0.0;
+        end if;
+        return Num / Den;
+     exception
+        when E : others =>
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Guarded_Ratio");
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+           return 0.0;
+     end Guarded_Ratio;
 
       --  Tokenize a whitespace-separated line into up to Vals'Length floats.
 -- ============================================================================
@@ -3208,7 +3330,50 @@ package body StellarOrion_Sparta is
                           --  [Reference: ISA (ISO 2533:1975)]
                           --  [Reference: Fay & Riddell (1958), J. Aerosp. Sci. 25(2)]
                           --  =================================================================
-                          if Flight.Density_Kgm3 > 0.0 and then Geo.Nose_Radius_M > 0.01 then
+                          --  =================================================================
+                         --  FLIGHT STATE ACTUALLY USED BY THIS SG CORRELATION
+                         --  (CALIBRATION_DESIGN.md §1.4 — Stage 0 finding)
+                         --  =================================================================
+                         --  FINDING: the heat_flux_sg_Wm2 column is NOT evaluated
+                         --  at the per-row trajectory state published in the SAME
+                         --  row (alt_km / vel_ms / mach / dyn_press_pa).  It uses the
+                         --  RUN-LEVEL flight state:
+                         --     rho = Flight.Density_Kgm3
+                         --     V   = Flight.Velocity_Ms
+                         --     R_n = Geo.Nose_Radius_M   (the FLOWN nose radius)
+                         --  i.e. ONE state for the whole run — identical in every
+                         --  row — supplied by the caller.  In the validation path
+                         --  that is stellarorion_test_modes.adb:1297-1298, which
+                         --  sets the Rapisarda IRVE-3 baseline
+                         --     Flight.Velocity_Ms  := 2700.0    (m/s)
+                         --     Flight.Density_Kgm3 := 6.9674e-4 (kg/m^3)
+                         --  and NOT the trajectory-integrator state quoted in the
+                         --  block above (51.82 km, 3379 m/s, rho = 7.696e-4).
+                         --
+                         --  THIS EXPLAINS THE ~2.056x GAP OF §1.4 EXACTLY.  The
+                         --  correlation is q = C_SG * sqrt(rho/R_n) * V^3, so the
+                         --  ratio of the quoted state to the state actually used is
+                         --     sqrt(7.696e-4 / 6.9674e-4) * (3379/2700)^3
+                         --   = 1.051129 * 1.960078 = 2.0603
+                         --  (the last digits move with the nose radius; the
+                         --  observed 2.056x is the same effect within the
+                         --  rounding of the stored float literals).  It is
+                         --  therefore NOT a geometry effect and NOT a defect in
+                         --  the correlation — it is the difference between two
+                         --  DIFFERENT flight states, one of which is quoted in a
+                         --  comment while the other is actually used.
+                         --
+                         --  For completeness, the state that the CSV's own
+                         --  trajectory columns report (52.069210 km,
+                         --  3101.079 m/s, q = 3655.027 Pa, i.e. rho = 7.6014e-4
+                         --  kg/m^3) would give SG = 1.5826x the published value.
+                         --
+                         --  NO PHYSICS IS CHANGED HERE: this lane instruments and
+                         --  documents only (CALIBRATION_DESIGN.md §4, Stage 0).
+                         --  [Citation: Sutton & Graves (1972) NASA TR R-376;
+                         --   CALIBRATION_DESIGN.md §1.4]
+                         --  =================================================================
+                         if Flight.Density_Kgm3 > 0.0 and then Geo.Nose_Radius_M > 0.01 then
                              SG_Heat_Flux :=
                                C_SG *
                                Sqrt (Flight.Density_Kgm3 / Geo.Nose_Radius_M) *
@@ -3291,6 +3456,22 @@ package body StellarOrion_Sparta is
                                    Dyn_Press_Pa     => Match_Q,
                                    CD               => Match_CD,
                                    CL               => Match_CL,
+                                   --  CALIBRATION (CALIBRATION_DESIGN.md §2.4):
+                                   --  cd_unclamped is the SAME expression as the
+                                   --  legacy `cd` column above, evaluated with the
+                                   --  upper clamp (3.0) REMOVED, so the blunt
+                                   --  candidate's true force ratio (8.67-12.02)
+                                   --  survives instead of saturating at 3.000000.
+                                   --  The legacy column keeps its clamped
+                                   --  semantics; the non-negativity guard of the
+                                   --  legacy path is preserved here too, because
+                                   --  every calibration column is contractually
+                                   --  finite and non-negative.
+                                   --  cd_raw_body_area      = D / (q * pi*(D/2)^2)
+                                   --  cd_raw_presented_area = D / (q * pi*R_Max^2)
+                                   CD_Unclamped          => Guarded_Ratio (Drag_Sum, Match_Q * Frontal_Area, "cd_unclamped"),
+                                   CD_Raw_Body_Area      => Guarded_Ratio (Drag_Sum, Match_Q * Frontal_Area, "cd_raw_body_area"),
+                                   CD_Raw_Presented_Area => Guarded_Ratio (Drag_Sum, Match_Q * Presented_Area, "cd_raw_presented_area"),
                                    --  AUDIT FIX (g_load): derive g from THIS step's
                                    --  DSMC drag, the same source Match_CD uses above.
                                    --
@@ -3363,6 +3544,16 @@ package body StellarOrion_Sparta is
                                    Dyn_Press_Pa     => FB_Q,
                                    CD               => FB_CD,
                                    CL               => FB_CL,
+                                   --  CALIBRATION (CALIBRATION_DESIGN.md §2.4):
+                                   --  Same three columns as the matched branch
+                                   --  above; the fallback branch normalises with
+                                   --  the run-level dynamic pressure FB_Q (the
+                                   --  dyn_press_pa value published in THIS row).
+                                   --  cd_unclamped keeps the upper clamp (3.0)
+                                   --  removed and stays finite and non-negative.
+                                   CD_Unclamped          => Guarded_Ratio (Drag_Sum, FB_Q * Frontal_Area, "cd_unclamped"),
+                                   CD_Raw_Body_Area      => Guarded_Ratio (Drag_Sum, FB_Q * Frontal_Area, "cd_raw_body_area"),
+                                   CD_Raw_Presented_Area => Guarded_Ratio (Drag_Sum, FB_Q * Presented_Area, "cd_raw_presented_area"),
                                    G_Load           => Results.Drag_Force /
                                     (Geo.Mass_Kg * G0),
                                    Downrange_Km     => 0.0,
@@ -3410,19 +3601,58 @@ package body StellarOrion_Sparta is
         with Pre => True, Post => True
       is
          CF : File_Type;
+         --  ============================================================
+         --  ============================================================
+         --  DSMC SURFACE HEAT LOAD (J/cm^2)
+         --  ============================================================
+         --  DEFINITION (as implemented; this supersedes the first wording
+         --  of CALIBRATION_DESIGN.md section 2.4 -- see that section for
+         --  the recorded deviation and its reason):
+         --
+         --     dsmc_surface_heat_load_jcm2
+         --        = max_i ( heatflux_avg_i ) * 13.58 / 10000
+         --
+         --  i.e. the DSMC's OWN peak area-averaged surface heat flux
+         --  (W/m^2) multiplied by the SAME effective 13.58 s heating
+         --  window the analytic objective uses, then converted to J/cm^2
+         --  (1 J/m^2 = 1e-4 J/cm^2).
+         --
+         --  WHY NOT A TIME INTEGRAL (the first wording):
+         --  the CSV rows are the DSMC RELAXATION axis (SPARTA step
+         --  numbers 100..2200), NOT a flight-time axis.  Matched_Traj_Idx
+         --  is resolved ONCE before the step loop, so every row carries
+         --  the same trajectory point and the same time_s; a right-hand
+         --  Riemann sum over that axis therefore evaluates to 0.0 (every
+         --  dt is 0).  Even with a varying time axis it would integrate
+         --  a RELAXATION transient rather than a flight heating history.
+         --  The peak-flux form is well defined for every run and is a
+         --  pure DSMC measurement.
+         --
+         --  COMPARABILITY: the column is directly comparable with the
+         --  objective's heat load Q = SG(snapshot) * tau_sec -- both are
+         --  J/cm^2 over the same 13.58 s effective window.  The residual
+         --  between them is exactly what the Stage-1 calibration fits:
+         --  it carries the Sutton-Graves-vs-DSMC model-form error, the
+         --  surface-average-vs-stagnation difference and the
+         --  run-state-vs-snapshot-state difference.  The state ratio
+         --  SG(snapshot)/SG(run) is NOT folded in here on purpose: the
+         --  DSMC simulated at the RUN state, and the correction for the
+         --  objective's snapshot state belongs to the calibrated model,
+         --  not to the measurement.
+         --
+         --  [Citation: CALIBRATION_DESIGN.md §1.3, §2.4, §2.8]
+         --  ============================================================
+
+         --  ============================================================
+         Q_DSMC_Jcm2 : Float := 0.0;
+         Max_Flux_Wm2 : Float := 0.0;
       begin
+         --  Sort the rows by SPARTA step so the CSV is monotone in time.
          for I in 1 .. N_Rows - 1 loop
             pragma Loop_Invariant (True);
             for J in I + 1 .. N_Rows loop
                pragma Loop_Invariant (True);
                if Rows (J).Step < Rows (I).Step then
-      --  AXIOMS: Write_CSV outputs accumulated per-step thermodynamic data
-      --    (heat flux, drag, lift, temperature) as RFC-4180 CSV for Python/Pandas.
-      --  THEORIES: CSV columns must use consistent delimiters and float formatting
-      --    to ensure downstream analysis scripts parse without error.
-      --  APPLICATIONS: Produces the primary time-series output consumed by
-      --    validation comparison tables and PINN training data pipelines.
-      --  CITATIONS: RFC 4180 (CSV Format); Pandas Documentation.
                   declare
                      Tmp : constant Step_Row := Rows (I);
                   begin
@@ -3432,6 +3662,16 @@ package body StellarOrion_Sparta is
                end if;
             end loop;
          end loop;
+         --  Peak area-averaged DSMC surface heat flux over the sampled
+         --  steps (W/m^2).  See the definition block above.
+         for I in 1 .. N_Rows loop
+            pragma Loop_Invariant (True);
+            if Rows (I).Heat_Flux_Avg_Wm2 > Max_Flux_Wm2 then
+               Max_Flux_Wm2 := Rows (I).Heat_Flux_Avg_Wm2;
+            end if;
+         end loop;
+         --  Effective heating window (s) and the W/m^2 -> J/cm^2 factor.
+         Q_DSMC_Jcm2 := Max_Flux_Wm2 * 13.58 / 10000.0;
          Create (CF, Out_File, CSV_Path);
          --  ACCURACY FIX: added heatflux_avg_Wm2 (area-averaged SPARTA heat
          --  flux = Heat_Sum / Surf_Area) and heatflux_sg_Wm2 (Sutton-Graves
@@ -3440,7 +3680,22 @@ package body StellarOrion_Sparta is
          --  TRACKING FIX: added ambient_pressure_pa and ambient_temp_k from
          --  ISA trajectory profile for Rapisarda Table 4.5 comparison
          --  (reference: P=75.77 Pa, T=270.65 K at 50 km).
-         Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2,heat_sum_Wm2,heatflux_avg_Wm2,heatflux_sg_Wm2,drag_avg_N,lift_avg_N,time_s,alt_km,vel_ms,mach,dyn_press_pa,cd,cl,g_load,downrange_km,heat_load_jcm2,ambient_pressure_pa,ambient_temp_k,heat_flux_fr_wm2");
+         --  CALIBRATION FIX (CALIBRATION_DESIGN.md §2.4): the 22 legacy columns keep
+         --  their names, their order and their semantics; the 10 calibration
+         --  columns are APPENDED after them:
+         --    cd_unclamped               — DSMC drag ratio, upper clamp removed
+         --    cd_raw_body_area           — D / (q * pi*(D/2)^2)
+         --    cd_raw_presented_area      — D / (q * pi*R_Max^2)
+         --    dsmc_surface_heat_load_jcm2 — trajectory integral of the DSMC
+         --                                    surface heat flux (the running
+         --                                    accumulator above)
+         --    geom_*                     — the geometry flown (not re-derived)
+         --    ref_area_*                 — the two reference areas used
+         Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2,heat_sum_Wm2,heatflux_avg_Wm2,heatflux_sg_Wm2,drag_avg_N,lift_avg_N,time_s,alt_km,vel_ms,mach,dyn_press_pa,cd,cl,g_load,downrange_km,heat_load_jcm2,ambient_pressure_pa,ambient_temp_k,heat_flux_fr_wm2," &
+                   "cd_unclamped,cd_raw_body_area,cd_raw_presented_area," &
+                   "dsmc_surface_heat_load_jcm2," &
+                   "geom_diameter_m,geom_nose_radius_m,geom_toroid_radius_m,geom_angle_deg," &
+                   "ref_area_body_m2,ref_area_presented_m2");
          for I in 1 .. N_Rows loop
             pragma Loop_Invariant (True);
             Put (CF, Img (Rows (I).Step));
@@ -3499,6 +3754,42 @@ package body StellarOrion_Sparta is
             --  Fay-Riddell stagnation heat flux [W/m^2] for Rapisarda
             --  comparison: FR=13.83 vs SG=15.26 W/cm^2 (Table 4.10).
             FIO.Put (CF, Rows (I).Heat_Flux_FR_Wm2, Fore => 1, Aft => 3, Exp => 0);
+            Put (CF, ",");
+            --  CALIBRATION COLUMNS (CALIBRATION_DESIGN.md §2.4) — appended
+            --  after the 22 legacy columns; the legacy semantics are
+            --  unchanged.  cd_unclamped is the DSMC drag force ratio with
+            --  the 3.0 upper clamp REMOVED; the two cd_raw_* columns are
+            --  the body-area and presented-area normalisations.
+            FIO.Put (CF, Rows (I).CD_Unclamped, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).CD_Raw_Body_Area, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).CD_Raw_Presented_Area, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            --  DSMC surface heat load: the trajectory time-integral of the
+            --  DSMC surface heat flux (J/cm^2) — the FINAL accumulated
+            --  value of the running accumulator (see Write_CSV).
+            FIO.Put (CF, Q_DSMC_Jcm2, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            --  The geometry ACTUALLY HANDED TO SPARTA (not re-derived).
+            --  All four are strictly positive for any geometry that passes
+            --  the pre-simulation QA gate
+            --  (StellarOrion_Validation.Validate_And_Dump Pre => Diameter_M
+            --  > 0.0 and Angle_Deg > 0.0 and Toroid_Radius_M > 0.0), so the
+            --  geom_* columns are finite and non-negative by construction.
+            FIO.Put (CF, Geo.Diameter_M, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Geo.Nose_Radius_M, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Geo.Toroid_Radius_M, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Geo.Angle_Deg, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            --  The two reference areas used, so that any downstream tool
+            --  can reproduce the normalisation without guessing.
+            FIO.Put (CF, Frontal_Area, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Presented_Area, Fore => 1, Aft => 6, Exp => 0);
             New_Line (CF);
          end loop;
          Close (CF);

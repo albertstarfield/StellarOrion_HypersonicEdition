@@ -4,17 +4,21 @@
 SCRIPT: render_bo_figures.py — Source-grounded figures for the BO results chapter
 ================================================================================
 
-Generates three figures from the official 2026-09-26 optimizer artifact:
+Generates three figures from the shipped optimizer artifact. The artifact's
+"history" is whatever the DEFAULT optimiser recorded: with --optimizer sbo
+(the default) it holds the Genetic Algorithm's per-generation rows, with
+--optimizer bo it holds the Bayesian Optimisation log. Every number below
+is read from the artifact; nothing about the campaign is hardcoded.
 
   1. bo_ccd_design.png    3D layout of the 15-point central composite screen
                           (8 factorial + 1 center + 6 axial) over the three
                           design factors, colored by the evaluated cost J.
 
-  2. bo_convergence.png   Convergence over the 70-point evaluation log
-                          (20 Latin-Hypercube initial + 50 BO iterations):
+  2. bo_convergence.png   Convergence over the recorded evaluation log:
                           raw evaluated cost per point on a log axis, plus the
-                          running-best (incumbent) curve, the LHS -> BO phase
-                          boundary, and the round-1 optimum.
+                          running-best (incumbent) curve, the phase boundary
+                          (drawn only when the log really has two phases) and
+                          the optimum of the recorded campaign.
 
   3. bo_ccd_sensitivity.png
                            Per-factor sensitivity contrasts computed directly
@@ -27,8 +31,16 @@ Generates three figures from the official 2026-09-26 optimizer artifact:
 
 DATA SOURCE (single source of truth):
   src/python/hiad_optimization_results.json  — written by hiad_optimizer.py.
-  Keys used: "ccd_samples" (list[15]), "history" (list[70]), "default",
-             "optimized", "config".
+  Keys used: "ccd_samples" (list[15]), "history" (the recorded evaluation
+             log), "default", "optimized", "config".
+
+GA-NAMED TWIN OUTPUTS:
+  The thesis cites the optimizer figures under GA names (figures/ga_convergence.
+  png). The DEFAULT optimiser is now the Genetic Algorithm, so the same three
+  truthful figures are ALSO written under their GA names -- ga_ccd_design.png,
+  ga_ccd_sensitivity.png and ga_convergence.png -- as BYTE-IDENTICAL COPIES of
+  the bo_* renders (a file copy, never a second render), so the two naming
+  conventions can never disagree. Both sets are written into the same --outdir.
 
 WHY THIS SCRIPT EXISTS:
   The thesis previously cited figures/ga_convergence.png and
@@ -47,15 +59,18 @@ WHY THIS SCRIPT EXISTS:
 
 AXIOMS:
   A1: The optimizer MINIMIZES J(x); lower is better on every axis below.
-  A2: "history" holds exactly the points the GP+EI loop observed (n=70),
-      each carrying its own design vector and evaluated cost.
+  A2: "history" holds exactly the points the recorded optimiser observed,
+      each carrying its own design vector and evaluated cost. Its length and
+      its phase labels are READ from the artifact, never assumed.
   A3: "ccd_samples" holds exactly the 15 screened points
       (8 factorial + 1 center + 6 axial), as asserted by hiad_optimizer.py.
-  A4: The LHS -> BO boundary is derived from the per-entry "type" field, not
-      hardcoded, so it stays correct if the split changes.
+  A4: The phase boundary is derived from the per-entry "type" field, not
+      hardcoded, so it stays correct if the split changes -- and it is drawn
+      ONLY when the log really has two phases (the GA campaign has none).
   A5: Cost is plotted on a log axis because the evaluated range spans
-      1.6 to 2238 across the 70 points; a linear axis would flatten the
-      converged region into an unreadable band at the bottom of the frame.
+      several orders of magnitude across the recorded points; a linear axis
+      would flatten the converged region into an unreadable band at the
+      bottom of the frame.
   A6: The Figure-3 estimators are design-native contrasts computed at render
       time from the recorded CCD costs: the axial swing y(+alpha) - y(-alpha)
       along each factor axis, and the factorial corner mean effect
@@ -109,6 +124,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import shutil
 import sys
 import time
 from collections import Counter
@@ -1064,11 +1080,28 @@ def main(argv: list[str] | None = None) -> int:
         render_ccd_design(data, args.outdir / "bo_ccd_design.png")
         render_ccd_sensitivity(data, args.outdir / "bo_ccd_sensitivity.png")
         render_convergence(data, args.outdir / "bo_convergence.png")
+        #  WHY: the thesis cites the optimizer figures under GA names
+        #  (figures/ga_convergence.png).  The DEFAULT optimiser is now the
+        #  Genetic Algorithm, so the SAME truthful figures are also written
+        #  under their GA names.  The GA-named files are BYTE-IDENTICAL
+        #  copies (not a second render) so the two naming conventions can
+        #  never disagree about the plotted data, and the cost is one file
+        #  copy instead of a second matplotlib pass.
+        for bo_name, ga_name in (
+            ("bo_ccd_design.png", "ga_ccd_design.png"),
+            ("bo_ccd_sensitivity.png", "ga_ccd_sensitivity.png"),
+            ("bo_convergence.png", "ga_convergence.png"),
+        ):
+            shutil.copyfile(args.outdir / bo_name, args.outdir / ga_name)
     except (FileNotFoundError, KeyError, ValueError, OSError) as exc:
         print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
-    print("all three figures generated from the official artifact")
+    print(
+        "all three figures generated from the official artifact "
+        "(+ the three GA-named copies: ga_ccd_design.png, "
+        "ga_ccd_sensitivity.png, ga_convergence.png)"
+    )
     return 0
 
 

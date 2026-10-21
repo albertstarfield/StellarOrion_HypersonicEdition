@@ -281,6 +281,42 @@ package StellarOrion_FFI is
    --    A5. The history buffer is owned by the caller: the wrapper writes
    --        one row per generation into it in place, with no conversion
    --        copy and no heap allocation.
+   --    A6. THE PHYSICAL-GEOMETRY CONVENTION (CALIBRATION DESIGN 2.1).
+   --        Out_X1..Out_X3 stay ANALYTIC (they are what the GA
+   --        minimised and what the existing callers compare), and FOUR
+   --        APPENDED out-pointers carry the PHYSICAL vehicle:
+   --          Out_Diameter_M      — 2 * X(1)   (body diameter [m])
+   --          Out_Nose_Radius_M   — Nose_Radius_Ratio * X(1) (bluntness [m])
+   --          Out_Toroid_Radius_M — X(2)       (torus tube radius [m])
+   --          Out_Angle_Deg       — X(3)       (half-cone angle [deg])
+   --        They come from the SAME projected triple through
+   --        StellarOrion_Optimization.Analytic_To_Physical, so the C
+   --        caller never re-derives the mapping.  It is exactly that
+   --        re-derivation — the analytic triple being read as if it
+   --        were a flight geometry — that produced the analytic/DSMC
+   --        unsync documented in CALIBRATION DESIGN 1.2.
+   --        The four pointers are APPENDED (not inserted) so the
+   --        positional indices of the existing pointers stay stable for
+   --        the already-shipped callers.
+   --    A7. THIS ROUTE IS SEQUENTIAL, AND IT MUST STAY THAT WAY.
+   --        Run_SBO_GA_C calls Run_SBO_GA with Evaluator => null, which
+   --        selects the SEQUENTIAL population sweep.  A dlopen()ed GNAT
+   --        library has NO INITIALISED SECONDARY STACK (the System
+   --        package is elaborated by an Ada MAIN program, and a library
+   --        has no main) and NO TASKING ENVIRONMENT (the master task is
+   --        created by the Ada main).  Driving the Ravenscar worker pool
+   --        from the library route therefore faults the host process:
+   --        measured SIGSEGV (EXIT=139; faulthandler:
+   --        system__secondary_stack__ss_mark).  The Ada MAIN
+   --        (stellarorion_ga_runner) owns the tasking and the secondary
+   --        stack and is the ONLY route that uses the parallel
+   --        evaluator.
+   --    A8. The calibration file is NOT loaded through this layer.
+   --        CALIBRATION DESIGN 2.5 decided that the Ada/C string
+   --        conversion makes the FFI route the wrong place for it: the
+   --        calibration is loaded by the Ada PROGRAMS (the GA runner and
+   --        the CLI driver), which know the path.  A C caller that wants
+   --        the calibrated model must go through those programs.
    --
    --  Parameters:
    --    Population_Size — GA population size (1 .. Max_Population)
@@ -288,12 +324,26 @@ package StellarOrion_FFI is
    --    Target_Beta     — target ballistic coefficient
    --    History         — caller-allocated history buffer (may be null)
    --    Out_N_History   — number of history rows written
-   --    Out_X1..Out_X3  — optimum in analytic coordinates
+   --    Out_X1..Out_X3  — optimum in ANALYTIC coordinates
+   --                      (R_N, r_tor, half_cone_deg)
    --    Out_Cost        — cost at the optimum
    --    Out_Converged   — output convergence flag (1 = converged, 0 = not)
    --    Out_N_Iter      — output number of generations used
+   --    Out_Diameter_M  — PHYSICAL body diameter [m]
+   --    Out_Nose_Radius_M   — PHYSICAL nose bluntness radius [m]
+   --    Out_Toroid_Radius_M — PHYSICAL torus tube radius [m]
+   --    Out_Angle_Deg   — PHYSICAL half-cone angle [deg]
    --
    --  CITATIONS:
+   --    [Anderson06] Anderson (2006), Hypersonic Gas Dynamics, Sec. 5.4 —
+   --                 blunt-body drag: the nose bluntness radius is part
+   --                 of the vehicle definition (it sets the drag
+   --                 increment and the stagnation heating), so the
+   --                 analytic triple is NOT a flight geometry.
+   --    [NASA-TP-2013-4012] NASA/TP-2013-4012 — IRVE-3 reference
+   --                 geometry (body radius 1.5 m, nose 0.55 m, torus
+   --                 0.135 m, cone 60 deg): the anchor of the
+   --                 analytic-to-physical convention.
    --    [Jones98]    Jones (1998), Surrogate-Based Optimization.
    --    [Goldberg89] Goldberg (1989), Genetic Algorithms in Search,
    --                 Optimization and Machine Learning.
@@ -314,18 +364,32 @@ package StellarOrion_FFI is
       Out_X3          : access Interfaces.C.Double;
       Out_Cost        : access Interfaces.C.Double;
       Out_Converged   : access Interfaces.C.int;
-      Out_N_Iter      : access Interfaces.C.int)
+      Out_N_Iter      : access Interfaces.C.int;
+      --  APPENDED physical-geometry outputs (axiom A6).  The pointers
+      --  above keep their positional indices.
+      Out_Diameter_M      : access Interfaces.C.Double;
+      Out_Nose_Radius_M   : access Interfaces.C.Double;
+      Out_Toroid_Radius_M : access Interfaces.C.Double;
+      Out_Angle_Deg       : access Interfaces.C.Double)
    with Pre  => Population_Size >= 1
                 and then Population_Size <= StellarOrion_Optimization.Max_Population
                 and then Max_Generations >= 1
                 and then Out_N_History /= null and then Out_X1 /= null
                 and then Out_X2 /= null and then Out_X3 /= null
                 and then Out_Cost /= null and then Out_Converged /= null
-                and then Out_N_Iter /= null,
-        Post => Out_Converged.all = 0
+                and then Out_N_Iter /= null
+                and then Out_Diameter_M /= null
+                and then Out_Nose_Radius_M /= null
+                and then Out_Toroid_Radius_M /= null
+                and then Out_Angle_Deg /= null,
+        Post => (Out_Converged.all = 0
                   or else (Out_Converged.all = 1
                            and then Out_N_Iter.all <= Max_Generations)
-                  or else Out_Converged.all not in 0 .. 1;
+                  or else Out_Converged.all not in 0 .. 1)
+                  and then Out_Diameter_M.all >= 0.0
+                  and then Out_Nose_Radius_M.all >= 0.0
+                  and then Out_Toroid_Radius_M.all >= 0.0
+                  and then Out_Angle_Deg.all >= 0.0;
    pragma Export (C, Run_SBO_GA_C, "Run_SBO_GA_C");
 
    -- -------------------------------------------------------------------------

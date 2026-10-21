@@ -747,6 +747,211 @@ package StellarOrion_Optimization is
          Post => Estimate_Cd'Result > 0.0;
 
     --  -----------------------------------------------------------------
+    --  Analytic <-> Physical Geometry Mapping  (design §2.1)
+    --  -----------------------------------------------------------------
+    --
+    --  WHY THIS SECTION EXISTS: the analytic screening model, the GA
+    --  genes, the runner's CLI flags and the DSMC vehicle were FOUR
+    --  DIFFERENT geometries.  The analytic model parameterises the
+    --  vehicle by the BODY/junction radius X(1) (the radius its
+    --  R_Max is built from), while the vehicle that is actually flown
+    --  is parameterised by a NOSE-BLUNTNESS radius; the body diameter
+    --  was never even passed to the DSMC run.  These two subprograms
+    --  are the SINGLE authoritative translation between the two
+    --  parameterisations, so the screening model and the flown vehicle
+    --  can no longer drift apart.
+    --
+    --  [Reference: CALIBRATION_DESIGN.md §2.1]
+
+    --  Nose-to-body radius ratio of the IRVE-3 reference vehicle
+    --  (0.55 m nose / 1.5 m body radius).  FIXED BY THE REFERENCE
+    --  GEOMETRY.  0.55 / 1.5 = 0.366666667.
+    --
+    --  WHY: the Sutton-Graves correlation is driven by the NOSE
+    --  (stagnation-point) radius and goes as 1/sqrt(R_n), so feeding it
+    --  the body/junction radius X(1) instead of the 0.55 m nose
+    --  DEFLATED the reference heat term by sqrt(1.5/0.55) = 1.65
+    --  (measured: the analytic heat load was 206.5 J/cm^2 against the
+    --  flown 341.1 J/cm^2).  The ratio is a property of the VEHICLE
+    --  FAMILY, so it SCALES with the body: pinning the nose at a
+    --  fixed 0.55 m would make the SG heat term geometry-independent
+    --  over the whole design space.
+    --  At the IRVE-3 anchor (X(1) = 1.5 m) it yields the flown
+    --  0.55 m nose exactly, so the reference run stays the calibration
+    --  anchor and no 2 h re-fly is needed.
+    --  [Citation: NASA/TP-2013-4012 — IRVE-3 reference geometry]
+    --  [Reference: CALIBRATION_DESIGN.md §2.1]
+    Nose_Radius_Ratio : constant Float := 0.55 / 1.5;
+
+    --  Map the analytic screening vector to the PHYSICAL vehicle
+    --  geometry.
+    --
+    --  Mapping (exact, design §2.1):
+    --    Geo.Diameter_M      := 2.0 * X(1)
+    --    Geo.Nose_Radius_M   := Nose_Radius_Ratio * X(1)
+    --    Geo.Toroid_Radius_M := X(2)
+    --    Geo.Angle_Deg       := X(3)
+    --    Geo.Toroid_Count    := Default_N_Tori_MOP
+    --    every other field   := the Geometry_Parameters default
+    --
+    --  Parameters:
+    --    X   — the analytic vector [R_N, r_tor, half_cone_deg].
+    --    Geo — the physical vehicle geometry (out).
+    --
+    --  AXIOMS:
+    --    A1: X(1) is the BODY/junction radius, so the body diameter is
+    --        2*X(1); the analytic R_Max is built from X(1), and D = 2*R_N
+    --        keeps the two parameterisations consistent.
+    --    A2: the nose-bluntness radius SCALES with the body through
+    --        Nose_Radius_Ratio, so the vehicle family keeps the IRVE-3
+    --        nose/body ratio (0.55 m nose at the 1.5 m reference radius).
+    --        A FIXED 0.55 m nose would make the Sutton-Graves term
+    --        geometry-independent, which is physically wrong.
+    --    A3: the torus count is a property of the analytic model
+    --        (Default_N_Tori_MOP = 6); it is not a design gene, so it is
+    --        copied, never optimised.
+    --    A4: every field that is not a gene keeps the
+    --        Geometry_Parameters default — the mapping NEVER invents a
+    --        value for a quantity the model does not represent.
+    --  THEOREMS:
+    --    T1: at the reference anchor X = (1.5, 0.135, 60.0) the mapping
+    --        yields D = 3.0 m, nose = 0.55 m, torus = 0.135 m,
+    --        cone = 60 deg — exactly the reference DSMC geometry that was
+    --        already flown, so the reference run remains the calibration
+    --        anchor.
+    --    T2: Physical_To_Analytic is the inverse of Analytic_To_Physical
+    --        on the mapped fields: X(1) = D/2, X(2) = r_tor,
+    --        X(3) = cone, so the composition is the identity (and the
+    --        round trip is exact in binary floating point because the
+    --        factor 2 is a power of two).
+    --  APPLICATIONS:
+    --    The runner and the CLI driver report the physical geometry of
+    --    the optimum through this mapping; the calibration file and the
+    --    DSMC runs are expressed in the same physical coordinates.
+    --  CITATIONS:
+    --    [NASA-TP-2013-4012] IRVE-3 flight reference data.
+    --    [CALIBRATION_DESIGN.md §2.1] the binding mapping table.
+    procedure Analytic_To_Physical
+      (X : Param_Vector; Geo : out Geometry_Parameters)
+    with Pre  => X (1) >= 0.25 and X (1) <= 7.5
+                 and X (2) > 0.0 and X (3) > 0.0 and X (3) < 90.0,
+         Post => Geo.Diameter_M >= 0.5 and Geo.Diameter_M <= 15.0
+                 and Geo.Nose_Radius_M > 0.0
+                 and Geo.Toroid_Count = Default_N_Tori_MOP;
+
+    --  Map the PHYSICAL vehicle geometry back to the analytic screening
+    --  vector (the exact inverse of Analytic_To_Physical).
+    --
+    --  Parameters:
+    --    Geo — the physical vehicle geometry.
+    --    X   — the analytic vector [R_N, r_tor, half_cone_deg] (out).
+    --
+    --  AXIOMS:
+    --    A1: X(1) = Geo.Diameter_M / 2.0 (the body/junction radius the
+    --        analytic R_Max is built from).
+    --    A2: X(2) = Geo.Toroid_Radius_M and X(3) = Geo.Angle_Deg are
+    --        direct copies.
+    --    A3: the nose radius is NOT a gene — it is recovered from
+    --        Nose_Radius_Ratio and X(1) by Analytic_To_Physical, so it
+    --        never enters the analytic vector.
+    --  THEOREMS:
+    --    T1: Physical_To_Analytic (Analytic_To_Physical (X)) = X for
+    --        every Pre-satisfying X (theorem T2 of Analytic_To_Physical,
+    --        read in the other direction).
+    --  APPLICATIONS:
+    --    The FFI and the runner convert a flown physical geometry back
+    --    into the coordinates the GA searches.
+    --  CITATIONS:
+    --    [CALIBRATION_DESIGN.md §2.1] the binding mapping table.
+    procedure Physical_To_Analytic
+      (Geo : Geometry_Parameters; X : out Param_Vector)
+    with Pre  => Geo.Diameter_M > 0.0
+                 and Geo.Toroid_Radius_M > 0.0
+                 and Geo.Angle_Deg > 0.0 and Geo.Angle_Deg < 90.0,
+         Post => X (1) > 0.0 and X (2) > 0.0 and X (3) > 0.0;
+
+    --  -----------------------------------------------------------------
+    --  DSMC Calibration  (design §2.6, §2.6.2)
+    --  -----------------------------------------------------------------
+
+    --  Load the DSMC calibration file and install the orthogonal
+    --  residual correction that maps the analytic screening model onto
+    --  the DSMC response (design §2.6).
+    --
+    --  File format (KEY = VALUE, design §2.6.2 — the key names are
+    --  BINDING; comments start with '#', blank lines are ignored):
+    --
+    --    calibration_valid = 1
+    --    centre_x1 = 1.03967
+    --    centre_x2 = 0.219741
+    --    centre_x3 = 53.7247
+    --    half_x1 = 0.25
+    --    half_x2 = 0.06
+    --    half_x3 = 8.0
+    --    cd_b0 = 0.0   cd_b1 = 0.0   cd_b2 = 0.0   cd_b3 = 0.0
+    --    cd_b12 = 0.0  cd_b13 = 0.0  cd_b23 = 0.0
+    --    q_b0  = 0.0   q_b1  = 0.0   q_b2  = 0.0   q_b3  = 0.0
+    --    q_b12 = 0.0   q_b13 = 0.0   q_b23 = 0.0
+    --
+    --  AXIOMS:
+    --    L1: the loader is RECOVERABLE.  A missing file, an unreadable
+    --        file, a malformed line or calibration_valid = 0 leaves the
+    --        model on the BUILT-IN literature constants (the
+    --        pre-calibration behaviour) and NEVER raises — the caller
+    --        is an Ada program whose optimisation must still run.
+    --    L2: a malformed file is NEVER partially applied.  The whole
+    --        file is parsed into a LOCAL state and the package state is
+    --        replaced only when the ENTIRE file parsed cleanly; every
+    --        failure is REPORTED through the package's verbose-error
+    --        mechanism ("[VERBOSE_ERROR] Operation: Load_Calibration").
+    --    L3: a file with calibration_valid = 1 must contain ALL 21 keys
+    --        and every half_xk must be > 0.0 (a zero half-width would
+    --        divide by zero in the coded coordinate).  A missing or
+    --        invalid key disables the calibration and is reported.
+    --    L4: an UNKNOWN key is treated as a malformed line (reported,
+    --        calibration disabled).  The key set is closed, so a writer
+    --        that emits an unexpected key must be fixed, not ignored.
+    --    L5: the package state is written once at start-up and only READ
+    --        during the optimisation, so the concurrent GA evaluation
+    --        sees an immutable record (same invariant as Current_Refs).
+    --    L6: the residual is EVALUATED by the SPARK-PROVED core,
+    --        StellarOrion_Optimizer_Core.Evaluate_Residual_Model, over
+    --        the monomial basis {1, x1, x2, x3, x1*x2, x1*x3, x2*x3}.
+    --        This package therefore holds the FITTED COEFFICIENTS and
+    --        the CODED COORDINATES only; there is exactly ONE
+    --        implementation of the orthogonal polynomial in the tree.
+    --  THEOREMS:
+    --    T1: after a successful load with calibration_valid = 1, the
+    --        residual correction is active in HIAD_Cost_Components; after
+    --        any failure it is not, and J(x) is exactly the
+    --        pre-calibration value.
+    --    T2: the correction reduces to ZERO at the calibration centre
+    --        when the constant coefficient b0 is zero, so the anchor
+    --        geometry is not perturbed by the fit.
+    --  APPLICATIONS:
+    --    Called at start-up by the Ada runner and the CLI driver, which
+    --    know the file path.  NOT called through the FFI (Ada string to
+    --    C string conversion is the reason).
+    --  CITATIONS:
+    --    [CALIBRATION_DESIGN.md §2.6.2] the binding file format.
+    --    [Montgomery17] Montgomery (2017), Design and Analysis of
+    --                   Experiments, 9th ed. — orthogonal factorial bases.
+    --    [Kennedy00] Kennedy & O'Hagan (2000), Biometrika 87(1) —
+    --                model-fidelity discrepancy terms.
+    procedure Load_Calibration (Path : String)
+    with Pre  => Path'Length > 0,
+         Post => True;
+
+    --  True when a calibration file was loaded successfully AND its
+    --  residual correction is ACTIVE (calibration_valid /= 0).
+    --
+    --  WHY: the runner and the CLI driver report the calibration state
+    --  alongside the result, so a run that silently fell back to the
+    --  literature constants is visible in the log rather than implied.
+    function Calibration_Active return Boolean
+    with Post => True;
+
+    --  -----------------------------------------------------------------
     --  HIAD Cost Function J(x) — multi-objective, validation-referenced
     -- -----------------------------------------------------------------
 
@@ -828,11 +1033,27 @@ package StellarOrion_Optimization is
     --    Q(x)     = q_SG(x) * Tau_Sec   [J/cm^2]  — SG heat flux at the
     --               validated snapshot condition (h=51.8 km, V=3378 m/s)
     --               integrated over the validation-derived heating time
-    --    q(x)     = Sutton_Graves_Heat(rho_ISA(h), R_N, V)  [W/cm^2]
+    --    q(x)     = Sutton_Graves_Heat(rho_ISA(h), Nose_Radius_Ratio * R_N, V)
+    --               [W/cm^2]  — the SG correlation is driven by the
+    --               NOSE-BLUNTNESS radius, NOT by the body/junction
+    --               radius R_N (design §2.2).  At the IRVE-3 anchor
+    --               (R_N = 1.5 m) the nose is 0.55 m, the value the
+    --               reference DSMC run actually flew.
     --    beta(x)  = m / (Cd(x) * A(x));  beta ratio reduces to
     --               (Cd_ref * A_ref) / (Cd(x) * A(x)) — mass cancels
     --    Cd(x)    = Estimate_Cd(R_N, r_tor, half_cone)
     --    A(x)     = pi * R_max(x)^2
+    --
+    --  When a DSMC calibration file is loaded (Load_Calibration), the
+    --  orthogonal residual correction of design §2.6 is added to the
+    --  drag and to the heat load:
+    --    Cd(x) := Cd(x) + sum_k b_cd[k] * monomial_k(x)
+    --    Q(x)  := Q(x)  + sum_k b_q[k]  * monomial_k(x)
+    --  with the CODED coordinates
+    --    x_k := clamp((X(k) - centre_k) / half_k, -1, +1)
+    --  and the monomial basis {1, x1, x2, x3, x1*x2, x1*x3, x2*x3}.
+    --  Without a calibration the correction is exactly ZERO, so J(x) is
+    --  the pre-calibration objective.
     --
     --  Parameters:
     --    X — parameter vector [R_N, r_tor, half_cone_deg]
@@ -844,9 +1065,19 @@ package StellarOrion_Optimization is
     --        subject to flux/beta/Cd staying near validated reference.
     --    A3: payload constraint R_N >= ~1.043 m rejects geometries
     --        whose nose cap cannot enclose the 0.275 m x 1.7 m payload.
+    --    A4: the Sutton-Graves nose radius is the PHYSICAL nose
+    --        (Nose_Radius_Ratio * R_N), so the analytic heat term and
+    --        the DSMC's own SG column use the SAME nose radius.
+    --    A5: the calibration correction is ADDITIVE and is applied only
+    --        when a valid calibration is loaded.  The corrected drag and
+    --        the corrected heat load are CLAMPED (drag to a strictly
+    --        positive floor, heat load to >= 0) so that J(x) >= 0 and the
+    --        ballistic-coefficient ratio stays finite for every X.
     --  THEOREMS:
     --    T1: at the default IRVE-3 geometry with default refs,
-    --        J ≈ 1.96 (unit-scale: ratio terms O(1), penalties 0).
+    --        J ≈ 4.52 (MEASURED 4.52320 at the CCD centre (1.5, 0.14,
+    --        60.0) after the design §2.2 nose-radius correction: unit
+    --        scale ratio terms O(1), penalties 0).
     --    T2: halving Q_target doubles only the heat-load term (test).
     --  APPLICATIONS:
     --    Consumed by HIAD_Cost_C (Ada FFI) -> hiad_optimizer.py
@@ -982,6 +1213,19 @@ package StellarOrion_Optimization is
       with Pre => True, Post => True;
     --  Contract covers pre => True (no inputs); post => completes without raising.
 
+    --  STC wrappers for the analytic <-> physical geometry mapping and
+    --  for the DSMC calibration loader (design §2.1, §2.6.2).  The
+    --  bodies live in stellarorion_optimization.adb.
+    procedure Test_Analytic_To_Physical
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Physical_To_Analytic
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Load_Calibration
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+
    --  STC wrappers for the proved optimiser core (the core itself stays
    --  100% SPARK-On, so its coverage is driven from this SPARK-Off unit)
    --  and for the new parallel evaluator.
@@ -997,11 +1241,26 @@ package StellarOrion_Optimization is
    procedure Test_Optimizer_Core_Update_Stagnation
      with Pre => True, Post => True;
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC wrappers for the PROVED orthogonal residual fit of the SPARK core
+   --  (the calibration correction of CALIBRATION_DESIGN.md Sec 2.6.1).
+   procedure Test_Residual_Grand_Mean
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Residual_Contrast
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Fit_Orthogonal_Factorial
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Evaluate_Residual_Model
+     with Pre => True, Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
    procedure Test_SBO_Fitness
      with Pre => True, Post => True;
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
-    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Axial", Test_CCD_Axial'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Analytic_To_Physical", Test_Analytic_To_Physical'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Axial", Test_CCD_Axial'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Centre", Test_CCD_Centre'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Frontal_Area", Test_Compute_Frontal_Area'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Max_Radius", Test_Compute_Max_Radius'Access);
@@ -1011,9 +1270,11 @@ package StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Components", Test_HIAD_Cost_Components'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Function", Test_HIAD_Cost_Function'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Load_Calibration", Test_Load_Calibration'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Max", Test_Max'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimization_Cost", Test_Optimization_Cost'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Physical_To_Analytic", Test_Physical_To_Analytic'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Payload_Nose_Radius_Min", Test_Payload_Nose_Radius_Min'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GA_Optimization", Test_Run_GA_Optimization'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_MoP_Optimization", Test_Run_MoP_Optimization'Access);
@@ -1022,6 +1283,10 @@ package StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Optimization_Cost", Test_Optimizer_Core_Optimization_Cost'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Sort_By_Cost", Test_Optimizer_Core_Sort_By_Cost'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimizer_Core_Update_Stagnation", Test_Optimizer_Core_Update_Stagnation'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Evaluate_Residual_Model", Test_Evaluate_Residual_Model'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Fit_Orthogonal_Factorial", Test_Fit_Orthogonal_Factorial'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Residual_Contrast", Test_Residual_Contrast'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Residual_Grand_Mean", Test_Residual_Grand_Mean'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_SBO_Fitness", Test_SBO_Fitness'Access);
 end StellarOrion_Optimization;
 

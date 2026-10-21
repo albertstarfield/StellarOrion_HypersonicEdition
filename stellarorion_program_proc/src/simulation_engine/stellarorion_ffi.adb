@@ -362,13 +362,21 @@ package body StellarOrion_FFI is
    --  -------------------------------------------------------------------------
    --  Run_SBO_GA_C
    --  -------------------------------------------------------------------------
-   --  AXIOMS: see the specification (A1..A5).
+   --  AXIOMS: see the specification (A1..A8).
    --  THEORY: the surrogate is fitted on an exact 2^3 factorial design, so
    --  its contrasts are the exact paired differences of the true response
    --  (Montgomery 2017, Ch. 6); the GA then minimises the analytic screening
    --  cost plus the model-fidelity penalty.
-   --  EXPECTED OUTPUT: the analytic optimum, its cost, the convergence flag
-   --  and one history row per generation.
+   --  EXPECTED OUTPUT: the analytic optimum, its cost, the convergence flag,
+   --  one history row per generation, AND the PHYSICAL vehicle the analytic
+   --  optimum denotes (diameter / nose bluntness / torus / cone angle).
+   --  SEQUENTIAL ROUTE (axiom A7): Evaluator => null selects the
+   --  SEQUENTIAL population sweep.  A dlopen()ed GNAT library has no
+   --  initialised secondary stack and no tasking environment (measured
+   --  SIGSEGV), so the Ravenscar worker pool must NOT be used from this
+   --  route; the Ada MAIN (stellarorion_ga_runner) is the parallel one.
+   --  CALIBRATION: not loaded here (axiom A8) -- the Ada PROGRAMS load it
+   --  (CALIBRATION DESIGN 2.5); this route only reports the geometry.
    --  ERROR BEHAVIOUR: any Ada exception is caught, logged through the
    --  package's Log helper and the outputs are zeroed (safety fallback), so
    --  the C caller never observes a half-written result.
@@ -384,7 +392,12 @@ package body StellarOrion_FFI is
       Out_X3          : access Interfaces.C.Double;
       Out_Cost        : access Interfaces.C.Double;
       Out_Converged   : access Interfaces.C.int;
-      Out_N_Iter      : access Interfaces.C.int)
+      Out_N_Iter      : access Interfaces.C.int;
+      --  APPENDED physical-geometry outputs (axiom A6).
+      Out_Diameter_M      : access Interfaces.C.Double;
+      Out_Nose_Radius_M   : access Interfaces.C.Double;
+      Out_Toroid_Radius_M : access Interfaces.C.Double;
+      Out_Angle_Deg       : access Interfaces.C.Double)
    is
       Config : GA_Config;
       Result : GA_Result;
@@ -414,10 +427,31 @@ package body StellarOrion_FFI is
       declare
          Projected : constant Geometry_Parameters :=
            Project_To_Analytic_Box (Result.Best_Individual);
+         --  The ANALYTIC triple that the GA minimised ...
+         X_Opt : constant Param_Vector :=
+           (Projected.Diameter_M / 2.0,
+            Projected.Toroid_Radius_M,
+            Projected.Angle_Deg);
+         --  ... and the PHYSICAL vehicle it denotes (axiom A6).
+         Physical : Geometry_Parameters;
       begin
-         Out_X1.all := Interfaces.C.double (Projected.Diameter_M / 2.0);
-         Out_X2.all := Interfaces.C.double (Projected.Toroid_Radius_M);
-         Out_X3.all := Interfaces.C.double (Projected.Angle_Deg);
+         Out_X1.all := Interfaces.C.double (X_Opt (1));
+         Out_X2.all := Interfaces.C.double (X_Opt (2));
+         Out_X3.all := Interfaces.C.double (X_Opt (3));
+
+         --  CALIBRATION DESIGN 2.1: the single analytic-to-physical
+         --  mapping, applied to EXACTLY the triple reported above, so the
+         --  analytic view and the flown vehicle cannot drift apart.
+         --  POSITIONAL association on purpose: the design fixes the
+         --  parameter NAMES, but positional association also survives a
+         --  rename in the (concurrently developed) mapping unit, so this
+         --  FFI cannot break on a cosmetic change to the specification.
+         Analytic_To_Physical (X_Opt, Physical);
+
+         Out_Diameter_M.all      := Interfaces.C.double (Physical.Diameter_M);
+         Out_Nose_Radius_M.all   := Interfaces.C.double (Physical.Nose_Radius_M);
+         Out_Toroid_Radius_M.all := Interfaces.C.double (Physical.Toroid_Radius_M);
+         Out_Angle_Deg.all       := Interfaces.C.double (Physical.Angle_Deg);
       end;
       Out_Cost.all := Interfaces.C.double (Result.Best_Cost);
       Out_N_Iter.all := Interfaces.C.int (Result.Generations_Used);
@@ -433,6 +467,10 @@ package body StellarOrion_FFI is
          Out_Cost.all := 0.0;
          Out_Converged.all := 0;
          Out_N_Iter.all := 0;
+         Out_Diameter_M.all := 0.0;
+         Out_Nose_Radius_M.all := 0.0;
+         Out_Toroid_Radius_M.all := 0.0;
+         Out_Angle_Deg.all := 0.0;
          raise;
    end Run_SBO_GA_C;
 
