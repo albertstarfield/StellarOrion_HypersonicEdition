@@ -20,6 +20,7 @@ with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;       use Ada.Directories;
 with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Environment_Variables;
 with StellarOrion_Geometry; use StellarOrion_Geometry;
 --  AUDIT FIX: removed redundant "with StellarOrion_Types" (warning: redundant
 --  with clause).  Already imported via the spec (stellarorion_sparta.ads:14).
@@ -38,6 +39,30 @@ package body StellarOrion_Sparta is
    -- ==================================================================
    --  Internal Helpers
    -- ==================================================================
+
+   --  The Python interpreter used for the validation figure renderer.
+   --
+   --  AXIOM: the figure renderer needs an interpreter that actually HAS
+   --    matplotlib.  The bare `python3` on the PATH is not necessarily the
+   --    project virtual environment: on the validation host `python3` is
+   --    3.15 with NO matplotlib, so the renderer dies on import and the
+   --    results tree keeps ZERO figures (measured: the gate's own runs
+   --    logged "ModuleNotFoundError: No module named 'matplotlib'" and
+   --    "[VTK] Python plot renderer exited with code 256").
+   --  THEORY: the host that drives the run knows which interpreter it
+   --    runs under, so it can pass it in STELLARORION_PYTHON; without that
+   --    variable we fall back to the bare `python3`, and the existing
+   --    exit-code report tells the operator what happened (never silent).
+   --  CITATIONS: Ada RM 3.15.4 (environment variables), Hunter 2007
+   --    (Matplotlib: A 2D Graphics Environment).
+   function Python_Interpreter return String with Pre => True, Post => True is -- nosec
+   begin
+      if Ada.Environment_Variables.Exists ("STELLARORION_PYTHON") then
+         return Ada.Environment_Variables.Value ("STELLARORION_PYTHON");
+      else
+         return "python3";
+      end if;
+   end Python_Interpreter;
 
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Chem_To_String")
@@ -4124,7 +4149,7 @@ package body StellarOrion_Sparta is
          --  Emit CSV + render PNG plots (best-effort; exit code now logged).
         if N_Rows > 0 then
            Write_CSV;
-           Put_Line ("[VTK] Invoking Python plot renderer: python3 scripts/make_validation_plots.py "
+           Put_Line ("[VTK] Invoking Python plot renderer: " & Python_Interpreter & " scripts/make_validation_plots.py "
                      & Results_Dir);
            --  AUDIT FIX (M1): use System_Return to capture the Python script's
            --  exit status.  A nonzero code indicates matplotlib import failure,
@@ -4132,7 +4157,7 @@ package body StellarOrion_Sparta is
            --  visible in the log rather than silently swallowed.
            declare
               Plot_Rc : constant Integer :=
-                System_Return ("python3 scripts/make_validation_plots.py " & Results_Dir);
+                System_Return (Python_Interpreter & " scripts/make_validation_plots.py " & Results_Dir);
            begin
               if Plot_Rc /= 0 then
                  Put_Line (Standard_Error,

@@ -262,6 +262,10 @@ def _load_validation_refs() -> dict[str, float]:
 # Gate tuning constants (see AXIOMS A4/A5 above).
 _GATE_DSMC_TIMEOUT_S = 4 * 3600     # docs: 2-3 h at 2200 steps + margin
 _GATE_PIPE_TIMEOUT_S = 90 * 60      # 4000 PINN iterations, CPU/GPU
+#  Wall-clock budget for the validation FIGURE renderer (the plotter is
+#  ~1 s, but the full-span set re-reads the 0-300 M trajectory CSV, which
+#  is tens of MB).
+_GATE_PLOT_TIMEOUT_S = 15 * 60
 _GATE_QA_TIMEOUT_S = 300            # geometry QA, seconds in practice
 _GATE_STEPS_DEFAULT = 2200          # matches the reference validation run
 _GATE_SKIN = "scalloped"            # skin of the reference validation data
@@ -498,6 +502,7 @@ def _gate_preconditions(root: "str") -> "tuple[bool, dict[str, str]]":
         "binary": os.path.join(root, "bin", "main"),
         "venv_py": os.path.join(root, "venv_validation", "bin", "python3"),
         "pipeline": os.path.join(root, "src", "python", "validation_pipeline.py"),
+        "plot_script": os.path.join(root, "scripts", "make_validation_plots.py"),
         "out_dir_rel": os.path.join("results", "validation_optimized"),
         "out_dir": os.path.join(root, "results", "validation_optimized"),
         "ref_csv": os.path.join(
@@ -531,6 +536,12 @@ def _gate_preconditions(root: "str") -> "tuple[bool, dict[str, str]]":
     # 2) validation pipeline script
     if not os.path.isfile(paths["pipeline"]):
         _missing("validation_pipeline.py", paths["pipeline"],
+                 "restore the file from version control")
+    # 2b) the validation figure renderer -- the gate renders the
+    #     per-column and full-span figures itself (after the PINN_AUX
+    #     leg), so the script MUST exist.
+    if not os.path.isfile(paths["plot_script"]):
+        _missing("make_validation_plots.py", paths["plot_script"],
                  "restore the file from version control")
     # 3) hash-gated validation venv (Python 3.12, DeepXDE) [Citation 8]
     if not os.path.isfile(paths["venv_py"]):
@@ -610,6 +621,7 @@ def _run_logged(
     timeout_s: int,
     cwd: "str",
     label: "str",
+    env: "dict[str, str] | None" = None,
 ) -> "tuple[int, float]":
     """Run one gate leg, streaming its output to a log file.
 
@@ -628,6 +640,12 @@ def _run_logged(
         timeout_s: wall-clock budget in seconds.
         cwd: working directory for the child (repo root).
         label: short tag used in all printed messages.
+        env: optional environment for the child (a COPY of the parent's
+            environment with extra entries).  It is passed verbatim to
+            subprocess.run, so a caller can tell the child which
+            interpreter to use (the Ada leg renders the validation
+            figures and inherits the SHELL's PATH, whose bare `python3`
+            may have no matplotlib).
 
     Returns:
         (rc, seconds): rc == 0 success; 124 timeout; 125 launch failure;
@@ -645,6 +663,7 @@ def _run_logged(
             proc = subprocess.run(
                 cmd, stdout=logfh, stderr=subprocess.STDOUT,
                 timeout=timeout_s, cwd=cwd, check=False,
+                env=env,
             )
         rc = proc.returncode
     except subprocess.TimeoutExpired:
@@ -1072,6 +1091,56 @@ def _write_gate_block(
     return True
 
 
+def _render_validation_figures(
+    paths: "dict[str, str]",
+    out_dir: "str",
+    tag: "str",
+) -> "tuple[int, float]":
+    """Render the validation figures of ONE gate leg (per-column + full span).
+
+    AXIOM A1: the renderer is the SAME interpreter the gate runs under
+      (sys.executable == the project venv, which HAS matplotlib).  The Ada
+      DSMC leg also tries to draw the per-column figures, but it inherits
+      the SHELL's PATH, whose bare `python3` may have no matplotlib at all
+      (measured: the gate's own runs lost every figure to "ModuleNotFound
+      Error: No module named 'matplotlib'"), and it runs BEFORE the
+      PINN_AUX leg, so the full-span figures -- which need the PINN leg's
+      pinn_trajectory_per_step.csv -- cannot exist yet.  Hence the
+      authoritative render happens here, after the PINN leg.
+    AXIOM A2: a figure failure must NOT fail the gate (the gate decides the
+      PHYSICS verdict), but it is reported loudly and recorded in the info
+      dict by the caller.
+
+    Args:
+        paths: the gate's path map (needs "plot_script" and "root").
+        out_dir: absolute results dir of the leg.
+        tag: 'r1' or 'r2' (used in the log file name and the messages).
+
+    Returns:
+        (rc, seconds): rc == 0 on success; 124 timeout; 125 launch failure;
+        otherwise the renderer's own exit code.
+
+    References:
+        - https://docs.python.org/3/library/subprocess.html
+    """
+    plot_cmd = [sys.executable, paths["plot_script"], out_dir]
+    plot_log = os.path.join(out_dir, f"gate_{tag}_plots.log")
+    rc, secs = _run_logged(
+        plot_cmd, plot_log, _GATE_PLOT_TIMEOUT_S, paths["root"],
+        f"{tag}-plots")
+    if rc != 0:
+        print(
+            f"WARNING: [{tag}-plots] the validation figure renderer exited "
+            f"with code {rc}\n"
+            f"  Log:    {plot_log}\n"
+            f"  Effect: this run's figures are missing; the physics verdict "
+            f"is unaffected.  Fix: run "
+            f"'{sys.executable} {paths['plot_script']} {out_dir}' by hand.",
+            file=sys.stderr,
+        )
+    return rc, secs
+
+
 def _gate_dsmc_pipeline(
     paths: "dict[str, str]",
     geo_flags: "list[str]",
@@ -1120,8 +1189,16 @@ def _gate_dsmc_pipeline(
     dsmc_log = os.path.join(out_dir, f"gate_{tag}_dsmc.log")
     info["commands"]["dsmc"] = dsmc_cmd
     info["logs"]["dsmc"] = dsmc_log
+    #  The Ada DSMC leg renders the per-column validation figures itself,
+    #  but it inherits the SHELL's PATH, whose bare `python3` may have NO
+    #  matplotlib (measured: the gate's runs lost every figure to
+    #  "ModuleNotFoundError: No module named 'matplotlib'").  Tell the
+    #  child which interpreter to use -- the gate knows: it IS running
+    #  under it.
+    child_env = dict(os.environ)
+    child_env["STELLARORION_PYTHON"] = sys.executable
     rc, secs = _run_logged(dsmc_cmd, dsmc_log, _GATE_DSMC_TIMEOUT_S,
-                           paths["root"], f"{tag}-dsmc")
+                           paths["root"], f"{tag}-dsmc", env=child_env)
     info["seconds"]["dsmc"] = secs
     if rc != 0:
         return 1, info
@@ -1177,6 +1254,25 @@ def _gate_dsmc_pipeline(
         return 1, info
     info["unified_json"] = unified_json
     info["pipe_out"] = pipe_out
+
+    # Stage 4: render the validation figures -- the per-column PNGs and
+    #  the 18 full-span DSMC+PINN_AUX panels -- with the SAME interpreter
+    #  the gate runs under (sys.executable == the project venv, which HAS
+    #  matplotlib).
+    #  WHY HERE: the Ada DSMC leg also tries to draw them, but (i) it
+    #  inherits the SHELL's PATH, whose bare `python3` may have no
+    #  matplotlib at all, and (ii) it runs BEFORE this PINN_AUX leg, so
+    #  the full-span figures -- which need the PINN leg's
+    #  pinn_trajectory_per_step.csv -- cannot exist yet.  Hence the
+    #  authoritative render happens here, after the PINN leg.
+    #  A figure failure must NOT fail the gate (the gate decides the
+    #  PHYSICS verdict), but it is reported loudly and recorded.
+    rc_plots, secs_plots = _render_validation_figures(paths, out_dir, tag)
+    info["seconds"]["plots"] = secs_plots
+    if rc_plots != 0:
+        info["plots_failed"] = rc_plots
+    else:
+        info["plots_ok"] = True
     return 0, info
 
 
