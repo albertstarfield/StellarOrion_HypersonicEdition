@@ -1499,6 +1499,13 @@ def run_sbo_ga(
         "n_evals": int(population_size) * (int(data.get("n_generations", 0)) + 1),
         "n_generations": int(data.get("n_generations", len(history))),
         "converged": bool(data.get("converged", False)),
+        #  The effective heat-load weight the GA minimised with.  The runner
+        #  echoes the value it actually applied (the authoritative one, set
+        #  inside the Ada process); the argument is the fallback when the
+        #  runner predates the echo.  This is the round-2 injection point of
+        #  the double pass GA: J_round2(x) = J(x) + (c-1)*heat_load_ratio(x)
+        #  is realised as the heat-load weight W_Heat_Load + c - 1.
+        "heat_load_weight": float(data.get("heat_load_weight", heat_load_weight)),
         "history": history,
     }
 
