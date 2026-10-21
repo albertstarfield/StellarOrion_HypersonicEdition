@@ -2,18 +2,15 @@
 
 PURPOSE
     The thesis reports a simple genetic algorithm as the optimizer: a
-    15-point central composite screen followed by a population of 50
-    individuals evolved for at most 200 generations. This script draws the
-    three panels that carry that campaign:
+    Latin-hypercube initial population of 50 individuals evolved for at
+    most 200 generations. This script draws the two panels that carry that
+    campaign:
 
       1. ga_convergence.png      recorded generation-best cost against
                                  generation, with the baseline and the
                                  re-evaluated optimum marked.
-      2. ga_ccd_screen.png       the 15 central composite screen points in
-                                 the three-factor design space, coloured by
-                                 their evaluated cost.
-      3. ga_design_trajectory.png  the generation-best design path through
-                                 the (nose radius, torus radius, half-cone
+      2. ga_design_trajectory.png  the generation-best design path through
+                                 the (body radius, torus radius, half-cone
                                  angle) space, coloured by generation.
 
     Every number is read from the official optimizer artifact written by
@@ -48,10 +45,10 @@ AXIOMS
         sentence is a defect even when it is faithful to the file.
     A2. The artifact on disk is the newest recorded run and is the single
         source of truth for the campaign reported in Chapter 4.
-    A3. The recorded history is the generation-best SEARCH score, which
-        includes the model-fidelity penalty. The re-evaluated optimum cost is
-        a separate quantity and is drawn as its own reference line; the two
-        must never be presented as the same number.
+    A3. The recorded history is the generation-best cost reported by the
+        single-precision Ada runner. The re-evaluated optimum is a separate,
+        double-precision evaluation and is drawn as its own reference line;
+        the two must never be presented as the same number.
 
 THEORIES
     T1. Because A3 separates the search score from the re-evaluated cost, the
@@ -61,8 +58,9 @@ THEORIES
         failure, so the figure cannot quietly contradict the text.
 
 APPLICATIONS
-    A1. Chapter 4, Figure 4.8 (convergence), Figure 4.9 (screen) and
-        Figure 4.10 (design trajectory).
+    A1. Chapter 4, Figure 4.8 (convergence) and Figure 4.9 (design
+        trajectory). The central-composite screen was removed from the
+        methodology; there is no screen figure.
 """
 
 from __future__ import annotations
@@ -102,16 +100,14 @@ CB = ["#004488", "#DDAA33", "#BB5566", "#228833", "#AA4499", "#66CCEE"]
 # significant figures, so anything beyond the last quoted digit is a change of
 # result rather than of rounding.
 CLAIMS = {
-    "history_len": 72,
+    "history_len": 96,
     "population_size": 50,
     "max_generations": 200,
-    "baseline_cost": 3.4338,
-    "optimum_cost": 2.7375,
-    "optimum_R_N": 1.0397,
-    "optimum_r_tor": 0.2197,
-    "optimum_half_cone": 53.7247,
-    "ccd_len": 15,
-    "ccd_min": 3.0612,
+    "baseline_cost": 4.6017,
+    "optimum_cost": 4.1408,
+    "optimum_R_N": 1.9967,
+    "optimum_r_tor": 0.1450,
+    "optimum_half_cone": 52.8151,
 }
 
 
@@ -144,9 +140,6 @@ def load_campaign() -> dict:
         "optimum_r_tor": (data["optimized"]["r_tor"], CLAIMS["optimum_r_tor"]),
         "optimum_half_cone": (data["optimized"]["half_cone_deg"],
                               CLAIMS["optimum_half_cone"]),
-        "ccd_len": (len(data["ccd_samples"]), CLAIMS["ccd_len"]),
-        "ccd_min": (min(float(s["cost"]) for s in data["ccd_samples"]),
-                    CLAIMS["ccd_min"]),
     }
     for name, (actual, expected) in checks.items():
         if actual is None or abs(float(actual) - float(expected)) > 5e-4:
@@ -209,8 +202,11 @@ def build_convergence(data: dict):
     low = min(min(recorded), optimum)
     high = max(max(recorded), baseline)
     pad = 0.04 * (high - low)
-    ax.set_ylim(low - pad, high + pad)
-    ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70])
+    ax.set_ylim(low - pad, high + 2.0 * pad)
+    ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
+    step = 0.1
+    first = round(low / step + 0.4999) * step
+    ax.set_yticks([first + step * i for i in range(int((high - first) / step) + 1)])
     ax.set_xlabel("Generation", fontsize=LABEL_PT, labelpad=2)
     ax.set_ylabel("Cost $J$", fontsize=LABEL_PT, labelpad=2)
     style_axes(ax)
@@ -223,63 +219,6 @@ def build_convergence(data: dict):
     labels = ["recorded generation best", "baseline cost", "re-evaluated optimum"]
     ax.legend(handles, labels, loc="upper right", frameon=False,
               fontsize=LEGEND_PT, handlelength=1.8, borderaxespad=0.4)
-    return fig
-
-
-def build_screen(data: dict):
-    """Draw the central composite screen in the three-factor design space.
-
-    Parameters:
-        data: verified campaign dictionary.
-
-    Returns:
-        The matplotlib Figure.
-    """
-    samples = data["ccd_samples"]
-    rn = [float(s["R_N"]) for s in samples]
-    rt = [float(s["r_tor"]) for s in samples]
-    cone = [float(s["half_cone_deg"]) for s in samples]
-    cost = [float(s["cost"]) for s in samples]
-    norm = mcolors.LogNorm(vmin=min(cost), vmax=max(cost))
-
-    fig = plt.figure(figsize=(PRINT_W_IN, 3.90))
-    ax = fig.add_subplot(111, projection="3d")
-    ax.set_position([0.02, 0.02, 0.80, 0.94])
-    points = ax.scatter(rn, rt, cone, c=cost, cmap="viridis", norm=norm,
-                        s=34, edgecolor="white", linewidth=0.5, depthshade=False)
-    best_i = cost.index(min(cost))
-    ax.scatter([rn[best_i]], [rt[best_i]], [cone[best_i]], marker="*", s=150,
-               facecolor=CB[1], edgecolor=INK, linewidth=0.6, depthshade=False)
-    base = data["default"]
-    ax.scatter([float(base["R_N"])], [float(base["r_tor"])],
-               [float(base["half_cone_deg"])], marker="s", s=42,
-               facecolor=CB[2], edgecolor="white", linewidth=0.6, depthshade=False)
-    ax.set_xlabel("$R_N$ (m)", fontsize=LABEL_PT_3D, labelpad=8)
-    ax.set_ylabel("$r_{tor}$ (m)", fontsize=LABEL_PT_3D, labelpad=8)
-    ax.set_zlabel("$\\theta_c$ (deg)", fontsize=LABEL_PT_3D, labelpad=8)
-    ax.tick_params(labelsize=TICK_PT, pad=1)
-    ax.view_init(elev=22, azim=-58)
-
-    cax = fig.add_axes([0.845, 0.22, 0.018, 0.56])
-    bar = fig.colorbar(points, cax=cax)
-    ticks = [t for t in (3.0, 4.0, 6.0, 8.0, 10.0, 20.0, 40.0)
-             if min(cost) <= t <= max(cost)]
-    bar.set_ticks(ticks)
-    bar.set_ticklabels([f"{t:g}" for t in ticks])
-    bar.minorticks_off()
-    bar.ax.tick_params(labelsize=TICK_PT, pad=1)
-    bar.set_label("Cost $J$", fontsize=LABEL_PT_3D, labelpad=2)
-
-    handles = [
-        plt.Line2D([], [], ls="none", marker="*", markersize=11,
-                   markerfacecolor=CB[1], markeredgecolor=INK),
-        plt.Line2D([], [], ls="none", marker="s", markersize=6,
-                   markerfacecolor=CB[2], markeredgecolor="white"),
-    ]
-    labels = ["best screen point", "IRVE-3 baseline"]
-    ax.legend(handles, labels, loc="upper left", bbox_to_anchor=(0.0, 1.02),
-              frameon=False, fontsize=LEGEND_PT, handletextpad=0.2,
-              borderaxespad=0.0)
     return fig
 
 
@@ -327,7 +266,7 @@ def build_trajectory(data: dict):
                [float(base["half_cone_deg"])], marker="s", s=42,
                facecolor=CB[2], edgecolor="white", linewidth=0.6, depthshade=False,
                zorder=3)
-    ax.set_xlabel("$R_N$ (m)", fontsize=LABEL_PT_3D, labelpad=8)
+    ax.set_xlabel("$X_1$ (m)", fontsize=LABEL_PT_3D, labelpad=8)
     ax.set_ylabel("$r_{tor}$ (m)", fontsize=LABEL_PT_3D, labelpad=8)
     ax.set_zlabel("$\\theta_c$ (deg)", fontsize=LABEL_PT_3D, labelpad=8)
     ax.tick_params(labelsize=TICK_PT, pad=1)
@@ -397,11 +336,9 @@ def main() -> int:
     print(f"    campaign: {len(data['history'])} generations, "
           f"population {data['config']['population_size']}, "
           f"baseline {data['default']['cost']:.4f}, "
-          f"optimum {data['optimized']['cost']:.4f}, "
-          f"screen points {len(data['ccd_samples'])}")
+          f"optimum {data['optimized']['cost']:.4f}")
     status = 0
     status |= save(build_convergence(data), "ga_convergence.png", 3.60)
-    status |= save(build_screen(data), "ga_ccd_screen.png", 3.90, is_3d=True)
     status |= save(build_trajectory(data), "ga_design_trajectory.png", 3.90, is_3d=True)
     return status
 

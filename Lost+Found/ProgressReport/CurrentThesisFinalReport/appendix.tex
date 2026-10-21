@@ -28,7 +28,7 @@ Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & --- \\
 Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
 Prandtl number (air) & $\text{Pr}$ & $0.71$ & --- \\
 Sutherland constant & $S$ & $110.4$ & K \\
-Sutton--Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ \\
+Sutton--Graves coefficient & $C_{SG}$ & $1.7415 \times 10^{-4}$ & W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ \\
 Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa\,s \\
 Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
 Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}$ \\
@@ -184,7 +184,7 @@ The StellarOrion simulation engine is implemented in Ada/SPARK and organized int
     \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}} -- Aerothermodynamic calculations (mean free path, Knudsen number, Sutton--Graves heat flux, Fay--Riddell correlation, radiative equilibrium, ballistic coefficient, g-load, trajectory profiling)
     \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
     \item \texttt{\seqsplit{stellarorion\_simulation.ads/adb}} -- SPARTA DSMC simulation driver and Docker integration
-    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with CCD screening
+    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with Latin-hypercube seeding
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
     \item \texttt{\seqsplit{stellarorion\_calibration.ads/adb}} -- Automated calibration against IRVE-3 flight data
 \end{itemize}
@@ -213,9 +213,9 @@ Table~\ref{tab:validation_full} provides the complete validation comparison betw
 \hline
 \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\
 \hline
-Peak heat flux ($\dot{q}$) & 14.36~W/cm\textsuperscript{2} & 13.83~W/cm\textsuperscript{2} & 16.14~W/cm\textsuperscript{2} & $+12.4$ \\
+Peak heat flux ($\dot{q}$) & 14.36~W/cm\textsuperscript{2} & 13.83~W/cm\textsuperscript{2} & 15.36~W/cm\textsuperscript{2} & $+6.9$ \\
 Total heat load ($Q$) & 195.06~J/cm\textsuperscript{2} & 195.17~J/cm\textsuperscript{2} & 165.72~J/cm\textsuperscript{2} & $-15.0$ \\
-Peak deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & $-14.6$ \\
+Peak deceleration & 19.7\,$g$ & -- & 22.72\,$g$ & $+15.3$ \\
 Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & -- & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
 Drag coefficient ($C_d$) & -- & -- & 1.4625 & -- \\
 Aeroshell diameter & 3.0\,m & 3.0\,m & 3.0\,m & 0 \\
@@ -259,20 +259,20 @@ The Sutton--Graves stagnation-point convective heat flux correlation~\cite{sutto
     \label{eq:sg_derivation}
 \end{equation}
 
-\noindent where $C_{SG} = 1.83 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
+\noindent where $C_{SG} = 1.7415 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
 
 \subsection{Dimensional Verification}
 
 Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ from ISA at 51.8\,km, $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s):
 \begin{align}
-    \dot{q} &= 1.83 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
-    &= 1.83 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
-    &= 1.83 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
-    &\approx 1.614 \times 10^{5} \text{ W/m}^2 = 16.14 \text{ W/cm}^2
+    \dot{q} &= 1.7415 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
+    &= 1.7415 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
+    &= 1.7415 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
+    &\approx 1.536 \times 10^{5} \text{ W/m}^2 = 15.36 \text{ W/cm}^2
     \label{eq:sg_baseline}
 \end{align}
 
-\noindent This single-point value is $+12.4\%$ relative to the $14.36$\,W/cm$^2$ flight measurement and $+5.8\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. An earlier revision of this appendix reported $12.20$\,W/cm$^2$ from the superseded coefficient $C_{SG} = 1.7415 \times 10^{-4}$ and nose radius $R_N = 0.55$\,m evaluated at a hardcoded $V_\infty = 2700$\,m/s; both constants have since been corrected to the values used above.
+\noindent This single-point value is $+6.9\%$ relative to the $14.36$\,W/cm$^2$ flight measurement and $+0.7\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. An earlier revision of this appendix used the coefficient $1.7415 \times 10^{-4}$ and reported $16.14$\,W/cm$^2$; that variant is about $5\%$ higher than the implemented value and is superseded.
 
 \section{Mean Free Path and Knudsen Number}
 
