@@ -125,7 +125,7 @@ This distribution validates the use of DSMC for the majority of the flow field, 
 \begin{figure}[H]
     \centering
     \BeginAccSupp{method=escape,ActualText={SPARTA rarefaction map in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by the local Knudsen number on a logarithmic scale running from 10 to the minus 5 up to about 1.15 times 10 to the minus 2. The body surface and the forward stagnation region are blue, denoting continuum flow, while the wake behind the body is red, denoting kinetic dominance. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40401 cells, a grid factor of 0.7 and build b683070.}}%
-\includegraphics[width=0.75\textwidth]{figures/knudsen_map_smooth_M0_A0.png}%
+\includegraphics[width=0.95\textwidth]{figures/knudsen_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
     \caption{Knudsen number distribution on the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7 (build b683070), shown as a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map}. The visible range runs from $10^{-5}$ to about $1.15\times10^{-2}$, so the field spans the continuum and near-continuum regimes and does \emph{not} reach the free-molecular regime at any point in the panel. The panel's own key labels the red wake as kinetic dominance above $Kn = 0.1$, a threshold the plotted range never attains; the key and the colour scale are therefore not mutually consistent, and the red wake should be read as the highest-$Kn$ region present rather than as proof of $Kn > 0.1$. As with Figure~\ref{fig:mach_map}, this is a legacy-condition reference render and is not part of the $V_{\infty} = 3378$\,m/s validation dataset.}
     \label{fig:knudsen_map}
@@ -316,46 +316,6 @@ The first pass is nevertheless not a thermally admissible design, and the gate o
 
 \input{chapter_04_gate}
 
-\section{Formal Verification of the Computational Core}
-\label{sec:formal_verification}
-
-\subsection{Methodology}
-The analytical correlations, geometry construction, flight-metric computation, and optimization objective functions of Chapters 2 and 3 are implemented in Ada/SPARK~\cite{spark2014language} and discharged with GNATprove~\cite{sparktools2024gnatprove} at proof level~4.\allowbreak{} The proof gate is a single reproducible command:
-\begin{verbatim}
-cd stellarorion_program_proc && ./scripts/prove.sh 4 --report=all
-\end{verbatim}
-which regenerates the data-representation information, deduplicates the representation JSON artifacts, and then runs \texttt{gnatprove -{}-level=4 -j0}. Running the gate requires no manual intervention and produces a machine-readable summary at \texttt{obj/gnatprove/gnatprove.out}.
-
-\subsection{Results}
-The verified run analyzes 747 checks: 687 are discharged by the prover (92\,\% of all analyzed checks) and the remaining 60 by flow analysis, with no unproved check. The flow-analysis total comprises 12 data-dependency, 15 initialization and 33 termination checks. The per-category breakdown is given in Table~\ref{tab:proof_summary}.
-
-\begin{table}[H]
-    \centering
-    \caption{GNATprove level-4 discharge summary for the official run of 2026-10-21.}
-    \label{tab:proof_summary}
-    \begin{tabularx}{\textwidth}{l r r r r X}
-        \toprule
-        \textbf{Check category} & \textbf{Total} & \textbf{Proved by prover} & \textbf{Proved by flow} & \textbf{Unproved} \\
-        \midrule
-        Run-time checks & 357 & 357 & 0 & 0 \\
-        Assertions & 224 & 224 & 0 & 0 \\
-        Functional contracts & 106 & 106 & 0 & 0 \\
-        Data dependencies & 12 & 0 & 12 & 0 \\
-        Initialization & 15 & 0 & 15 & 0 \\
-        Termination & 33 & 0 & 33 & 0 \\
-        \midrule
-        \textbf{Total} & \textbf{747} & \textbf{687} & \textbf{60} & \textbf{0} \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-\subsection{Interpretation and Limitations}
-No check is left unproved in this run. The residual post-processing obligations that the earlier 2026-09-27 run left open --- floating-point overflow and array-index checks in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} --- are now discharged as well, so the gate reports no proof failure anywhere in the analysed units.
-
-It is equally important to state what the gate does \emph{not} cover. GNATprove analyses the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 4800 evaluations reported in Figure~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions are formally proven.
-
-This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. The defensible statement is the one in Table~\ref{tab:proof_summary}: every check in the analysed Ada/SPARK units is discharged, and the residual risk is not a proof failure but the scope boundary --- the Python optimization driver remains outside GNATprove.
-
 \section{Comparative Analysis with Prior Work}
 \label{sec:comparison_rapisarda}
 A direct comparison between the present framework and the prior MDAO framework of Rapisarda (2023)~\cite{rapisarda2023mdao} highlights the methodological advances introduced in this research. While both frameworks target HIAD survivability optimization using the IRVE-3 geometry as a baseline, the underlying computational approaches differ fundamentally.
@@ -396,10 +356,10 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
         Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$) \\
         Gas Model & Calorically perfect ($\gamma = 1.4$) & 5-species air with VSS collisions \\
         Thermal Analysis & 1D F-TPS with contact conductance & Sutton--Graves + Fay--Riddell correlations + DSMC surface computes \\
-        Optimization & Sequential parametric sweeps & Simple GA (population 50, up to 200 generations), 3,600 evaluations \\
+        Optimization & Sequential parametric sweeps & Double pass GA (population 50; pass 1: 38 generations, 1,900 evaluations; pass 2: 201 generations, 10,050 evaluations) \\
         Design Space & 3--4 parameters & 5 effective coordinates, LHS-seeded GA \\
         Optimum Verification & Not reported & Enforced DSMC re-simulation gate; double pass GA with a bounded heat-load correction \\
-        Formal Verification & Not reported & GNATprove level 4; 747 checks, all proved \\
+
         Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
         Grid Independence & Not reported & Automated grid-factor optimization \\

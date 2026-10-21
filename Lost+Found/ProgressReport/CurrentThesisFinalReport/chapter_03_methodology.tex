@@ -166,7 +166,7 @@ The process is divided into five primary stages:
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation within a Docker-containerized Linux environment, tracking millions of simulated particles through advection, molecular collisions, and surface interactions.
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
     \item \textbf{Survivability Optimization:} Simple Genetic Algorithm (GA) with tournament selection, uniform crossover, Gaussian mutation and elitism for automated multi-objective optimization of HIAD geometry.
-    \item \textbf{Validation and Analysis:} Verification of the solution through grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
+    \item \textbf{Validation and Analysis:} Validation of the solution through grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
 \section{Geometric Modeling and Computational Domain}
@@ -770,7 +770,7 @@ The LHS stratum permutation and the GA operators draw from the Ada random genera
         \textbf{Component} & \textbf{Version} \\ \hline
         Python & 3.10+ \\ \hline
         NumPy & 1.24+ \\ \hline
-        Ada/SPARK toolchain & GNAT 16.1, GNATprove \\ \hline
+        Ada/SPARK toolchain & GNAT 16.1 \\ \hline
         DSMC solver & SPARTA (Docker) \\ \hline
     \end{tabular}
 \end{table}

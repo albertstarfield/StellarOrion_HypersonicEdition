@@ -193,9 +193,45 @@ The StellarOrion simulation engine is implemented in Ada/SPARK and organized int
 
 The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{\seqsplit{--compareCalibrate}}, \texttt{--optimize}, \texttt{--trajectory}, and others. Refer to the StellarOrion README for complete CLI documentation.
 
-\section{GNATprove Verification Status}
+\section{Formal Verification Status}
+\label{app:formal_verification}
 
-All core physics packages (\texttt{\seqsplit{stellarorion\_types}}, \texttt{\seqsplit{stellarorion\_physics}}) have been formally verified using GNATprove at proof level 4, ensuring runtime error freedom (overflow, division by zero, index out of bounds) and contract correctness (pre/post-conditions, type invariants).
+\subsection{Methodology}
+The analytical correlations, geometry construction, flight-metric computation, and optimization objective functions of Chapters 2 and 3 are implemented in Ada/SPARK~\cite{spark2014language} and discharged with GNATprove~\cite{sparktools2024gnatprove} at proof level~4.\allowbreak{} The proof gate is a single reproducible command:
+\begin{verbatim}
+cd stellarorion_program_proc && ./scripts/prove.sh 4 --report=all
+\end{verbatim}
+which regenerates the data-representation information, deduplicates the representation JSON artifacts, and then runs \texttt{gnatprove -{}-level=4 -j0}. Running the gate requires no manual intervention and produces a machine-readable summary at \texttt{obj/gnatprove/gnatprove.out}.
+
+\subsection{Results}
+The verified run analyzes 747 checks: 687 are discharged by the prover (92\,\% of all analyzed checks) and the remaining 60 by flow analysis, with no unproved check. The flow-analysis total comprises 12 data-dependency, 15 initialization and 33 termination checks. The per-category breakdown is given in Table~\ref{tab:proof_summary}.
+
+\begin{table}[H]
+    \centering
+    \caption{GNATprove level-4 discharge summary for the official run of 2026-10-21.}
+    \label{tab:proof_summary}
+    \begin{tabularx}{\textwidth}{l r r r r X}
+        \toprule
+        \textbf{Check category} & \textbf{Total} & \textbf{Proved by prover} & \textbf{Proved by flow} & \textbf{Unproved} \\
+        \midrule
+        Run-time checks & 357 & 357 & 0 & 0 \\
+        Assertions & 224 & 224 & 0 & 0 \\
+        Functional contracts & 106 & 106 & 0 & 0 \\
+        Data dependencies & 12 & 0 & 12 & 0 \\
+        Initialization & 15 & 0 & 15 & 0 \\
+        Termination & 33 & 0 & 33 & 0 \\
+        \midrule
+        \textbf{Total} & \textbf{747} & \textbf{687} & \textbf{60} & \textbf{0} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Interpretation and Limitations}
+No check is left unproved in this run. The residual post-processing obligations that the earlier 2026-09-27 run left open --- floating-point overflow and array-index checks in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} --- are now discharged as well, so the gate reports no proof failure anywhere in the analysed units.
+
+It is equally important to state what the gate does \emph{not} cover. GNATprove analyses the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 1,900 evaluations of the first optimization pass reported in Figure~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions are formally proven.
+
+This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. The defensible statement is the one in Table~\ref{tab:proof_summary}: every check in the analysed Ada/SPARK units is discharged, and the residual risk is not a proof failure but the scope boundary --- the Python optimization driver remains outside GNATprove.
 
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}
