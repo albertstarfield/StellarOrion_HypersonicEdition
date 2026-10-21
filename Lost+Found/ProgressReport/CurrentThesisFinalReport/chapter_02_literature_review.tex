@@ -32,12 +32,12 @@ To establish a baseline for the expected aerothermal outcomes, a review of key f
 
 \textbf{HEART Project} (Cassell et al., 2014) & Optimized Nose-IAD Junction Geometry. & Found that the juncture between the nose and the IAD creates a secondary heat flux peak. & Predicts the location of local hot spots. \\ \hline
 
-\textbf{Menter (1994)} & $k$-$\omega$ SST Turbulence Model. & Superior performance in predicting separation in adverse pressure gradients. & Supports model for valley recirculation. \\ \hline
+\textbf{Menter (1994)} & $k$-$\omega$ SST Turbulence Model. & Superior performance in predicting separation in adverse pressure gradients. & Continuum reference for recirculation; not used here (DSMC resolves it directly). \\ \hline
 \end{longtable}
 \subsection{Triangulation of Expected Outcomes}
 By synthesizing the findings of \textit{Lau et al. (2013)} and \textit{Lichodziejewski et al. (2012)}, it is hypothesized that the scalloped geometry in this study will generate localized heat flux peaks on the toroidal crests. 
 
-Furthermore, the implementation of the \textit{SST $k-\omega$} turbulence model, as validated by \textit{Menter (1994)}, is expected to resolve the stable recirculation cells within the toroidal valleys. Finally, the use of a \textit{Thermally Perfect Gas} model reflects the high-enthalpy conditions observed in the \textit{LOFTID} mission, ensuring that the predicted shock physics align with real-gas observations rather than simplified ideal-gas assumptions.
+The continuum literature resolves the stable recirculation cells within the toroidal valleys with the \textit{SST $k-\omega$} model of \textit{Menter (1994)}; this work does not implement that model, because the DSMC solver resolves the same cells directly from molecular collisions and therefore needs no turbulence closure. Finally, the use of a \textit{Thermally Perfect Gas} model reflects the high-enthalpy conditions observed in the \textit{LOFTID} mission, ensuring that the predicted shock physics align with real-gas observations rather than simplified ideal-gas assumptions.
 
 This synthesis establishes the theoretical foundation for the numerical methodology described in \textbf{Chapter 3}. Figure~\ref{fig:literature_review_map} provides a visual mapping of each study's coverage of the physical phenomena and methodology adopted in this work.
 
@@ -776,14 +776,7 @@ Resolving these fluctuations directly via Direct Numerical Simulation (DNS) requ
 \par
 The standard approach is to solve the Reynolds-Averaged Navier-Stokes (RANS) equations, which decompose the instantaneous flow variables into a time-averaged mean component and a fluctuating turbulent component using the Reynolds Decomposition \cite{versteeg2007cfd}. This introduces the Reynolds Stress Tensor ($-\rho \overline{u'_i u'_j}$), which must be modeled to close the system of equations. The two dominant closures are the $k-\epsilon$ model (robust for free-shear flows but inaccurate near walls) and the $k-\omega$ model (accurate near walls but sensitive to freestream conditions). Menter's Shear Stress Transport (SST) $k-\omega$ model \cite{menter1994SST} blends these formulations using a zonal blending function $F_1$ and a shear stress limiter, making it the industry standard for aerodynamic heating predictions. While the SST $k-\omega$ model is widely used for continuum CFD solvers such as ANSYS Fluent and OpenFOAM \cite{versteeg2007cfd}, it is important to note that this study employs the Direct Simulation Monte Carlo (DSMC) method, which resolves turbulence at the molecular level without requiring a turbulence model.
 
-\begin{figure}[H]
-    \centering
-    \BeginAccSupp{method=escape,ActualText={Velocity contours computed with the SST k-omega turbulence model for several freestream velocity values, showing boundary-layer development over the body surface.}}%
-\includegraphics[width=0.8\textwidth]{figures/elocity-contour-for-different-values-of-velocity-for-SST-K-o-model.jpg.png}%
-\EndAccSupp{}%
-    \caption{Comparison of $k-\epsilon$ vs. $k-\omega$ turbulence model predictions for velocity contours.}
-    \label{fig:k_epsilon_omega}
-\end{figure}
+No turbulence model is used anywhere in this work: the RANS closures above are reviewed as the continuum reference against which the kinetic solution is judged, not as components of the present pipeline.
 
 \section{Thermodynamic Gas Models}
 
@@ -1124,11 +1117,11 @@ Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (R
     \end{tabularx}
 \end{table}
 
-\noindent This study employs \textit{both} paradigms: continuum CFD (SST $k$--$\omega$) is used in the literature review and methodology chapters to establish theoretical foundations, while DSMC (SPARTA) is used for the actual high-fidelity simulation of the HIAD re-entry flow field, as the IRVE-3 flight conditions fall in the transitional regime ($Kn \approx 0.03$).
+\noindent The two paradigms are not both used here. The continuum formulation is reviewed to establish the theoretical foundation, but this study itself employs only the kinetic paradigm: DSMC (SPARTA) performs every simulation of the HIAD flow field, because the IRVE-3 flight conditions fall in the transitional regime ($Kn \approx 0.03$).
 
 \section{Machine Learning in Computational Fluid Dynamics}
 
-The integration of machine learning (ML) with computational fluid dynamics has emerged as a powerful paradigm for accelerating simulations, reducing computational cost, and discovering closure models. This section reviews the machine-learning foundations relevant to the surrogate modelling used in this study.
+The integration of machine learning (ML) with computational fluid dynamics has emerged as a powerful paradigm for accelerating simulations, reducing computational cost, and discovering closure models. This section reviews the machine-learning foundations that are \emph{contrasted} with the present optimizer; no surrogate, Gaussian process or trained model is used in the workflow reported in this thesis.
 
 \subsection{Neural Network Approximation Theory}
 

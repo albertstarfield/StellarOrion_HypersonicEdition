@@ -50,18 +50,18 @@
 \backcite {menter1994SST}{{45}{2.7}{section.2.7}}
 \backcite {versteeg2007cfd}{{46}{2.7}{section.2.7}}
 \backcite {AndersonHypersonic}{{46}{2.8}{section.2.8}}
-\backcite {AndersonHypersonic}{{47}{2.17}{figure.caption.28}}
-\backcite {AndersonHypersonic}{{48}{2.8.1}{equation.2.34}}
-\backcite {AndersonHypersonic}{{50}{2.8.2}{equation.2.37}}
+\backcite {AndersonHypersonic}{{47}{2.16}{figure.caption.27}}
+\backcite {AndersonHypersonic}{{47}{2.8.1}{equation.2.34}}
+\backcite {AndersonHypersonic}{{49}{2.8.2}{equation.2.37}}
 \backcite {AndersonHypersonic}{{50}{2.8.3}{subsection.2.8.3}}
 \backcite {bird1994molecular}{{52}{2.9}{section.2.9}}
-\backcite {bird1994molecular}{{53}{2.9.2}{subsection.2.9.2}}
-\backcite {bird1994molecular}{{54}{2.9.4}{subsection.2.9.4}}
-\backcite {bird1994molecular}{{55}{2.10}{section.2.10}}
-\backcite {bird1994molecular}{{57}{2.10.4}{subsection.2.10.4}}
+\backcite {bird1994molecular}{{52}{2.9.2}{subsection.2.9.2}}
+\backcite {bird1994molecular}{{53}{2.9.4}{subsection.2.9.4}}
+\backcite {bird1994molecular}{{54}{2.10}{section.2.10}}
+\backcite {bird1994molecular}{{55}{2.10.4}{subsection.2.10.4}}
 \backcite {bird1994molecular}{{57}{2.10.4}{equation.2.51}}
-\backcite {bird1994molecular}{{58}{2.10.5}{equation.2.52}}
-\backcite {bird1994molecular}{{58}{2.11}{table.caption.33}}
+\backcite {bird1994molecular}{{57}{2.10.5}{equation.2.52}}
+\backcite {bird1994molecular}{{58}{2.11}{table.caption.32}}
 \backcite {rapisarda2023mdao}{{60}{2.14}{section.2.14}}
 \backcite {dillman2015irve3, NASA2013TP4012}{{60}{2.14}{section.2.14}}
 \backcite {rapisarda2023mdao}{{61}{2.14.2}{subsection.2.14.2}}
@@ -123,7 +123,7 @@
 \backcite {bird1994molecular, plimpton2014sparta}{{132}{5.2.3}{subsection.5.2.3}}
 \backcite {anderson2006hypersonic}{{133}{5.2.6}{subsection.5.2.6}}
 \backcite {guidotti2023efesto2materials}{{134}{5.4.4}{subsection.5.4.4}}
-\backcite {*}{{136}{5.4.5}{section*.77}}
+\backcite {*}{{136}{5.4.5}{section*.76}}
 \backcite {spark2014language}{{151}{B.3.1}{subsection.B.3.1}}
 \backcite {sparktools2024gnatprove}{{151}{B.3.1}{subsection.B.3.1}}
 \backcite {sutton1971gravesh}{{155}{D.1}{section.D.1}}

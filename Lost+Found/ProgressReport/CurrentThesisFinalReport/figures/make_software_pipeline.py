@@ -196,7 +196,7 @@ LEGEND_Y2 = 0.25
 LEGEND_Y3 = 0.05
 
 TITLE_TEXT = "StellarOrion Engine, Software Pipeline Architecture"
-HEADERS = ("INPUT", "CORE ENGINE", "SOLVERS", "ML MODELS", "OUTPUT")
+HEADERS = ("INPUT", "CORE ENGINE", "SOLVERS", "MODELS", "OUTPUT")
 HEADER_CENTERS = [
     (INPUT_X0 + INPUT_X1) / 2,
     (ENGINE_X0 + ENGINE_X1) / 2,
@@ -208,7 +208,7 @@ HEADER_CENTERS = [
 INPUT_TEXTS = (
     "CadQuery Geometry\n/ STL export",
     "Flight Conditions\n/ V, T∞, ρ∞",
-    "Design Variables\n/ R_N, r_tor, θ_c",
+    "Design Variables\n/ X1,X2,X3,Nt,m",
 )
 # WHY no "/ " prefixes (audit 2026-10-08): "/ StellarOrion_Orion" measured
 # 1.40 in of glyph ink against a 1.40 in box, so at the fit squeeze (text
@@ -222,12 +222,19 @@ INPUT_TEXTS = (
 ENGINE_TEXT = "Ada Engine\nStellarOrion_Orion\ndriven by run.py\nphases 0 to 4"
 SOLVER_TEXTS = (
     "SPARTA\n/ DSMC Solver\n/ Docker",
-    "OpenFOAM\n/ laplacianFoam\n/ (solid thermal)",
+    # WHY (2026-10-21): the 1-D thermal chain is NOT OpenFOAM.  It is the
+    # Ada/SPARK physics package (stellarorion_physics): the per-element
+    # layered 1-D conduction solver with the radiative hot-face balance
+    # and the post-1-D lateral coupling.  OpenFOAM exists in the
+    # repository only as a Solver_Kind enum member and an integration
+    # check; it never runs, so naming it here would misdescribe the
+    # pipeline.
+    "Ada/SPARK\n/ 1-D thermal\n/ layered solver",
 )
 ML_TEXTS = (
-    # PINN removed 2026-10: the thesis no longer presents PINN; the model
-    # column shows only the Gauss-process surrogate actually used to
-    # produce the optimised body.
+    # PINN removed 2026-10 and the Gaussian-process surrogate removed
+    # 2026-10-21: the optimiser is a population GA over the analytic
+    # cost, so that is what the model column names.
     "Genetic\n/ Algorithm\n/ population 50",
 )
 OUTPUT_TEXT = "ParaView\n/ VTK\n/ STL\n/ Rendering"
@@ -242,7 +249,7 @@ LEGEND_ROW1 = (
     ("Core Engine (Ada, run.py)", ENGINE_FILL, ENGINE_EDGE),
 )
 LEGEND_ROW2 = (
-    ("Physics Solvers (SPARTA, OpenFOAM)", SOLVER_FILL, SOLVER_EDGE),
+    ("Physics Solvers (SPARTA, Ada/SPARK)", SOLVER_FILL, SOLVER_EDGE),
     ("Models (GA)", ML_FILL, ML_EDGE),
 )
 LEGEND_ROW3 = (
@@ -342,7 +349,8 @@ def draw_legend_row(ax: object, items: tuple, y: float,
     estimate. save_to_print_width shrinks the figure with set_size_inches
     while matplotlib text keeps its absolute point size, so a 0.55 em
     character estimate under-measured caps-heavy labels such as
-    "Physics Solvers (SPARTA, OpenFOAM)" and the next colour patch landed
+    "Physics Solvers (SPARTA DSMC, Ada/SPARK thermal)" and the next colour
+    patch landed
     on the previous label's tail (image audit of 2026-10-08).
     """
     fig = ax.figure
@@ -529,7 +537,8 @@ def build() -> object:
 
     draw_legend_row(ax, LEGEND_ROW1, LEGEND_Y1)
     # WHY gap 0.22: the measured advance left the orange patch touching the
-    # tail of "OpenFOAM)" in the rendered PNG (image audit 2026-10-21); the
+    # tail of the solver legend label in the rendered PNG (image audit
+    # 2026-10-21); the
     # default 0.10 in is not enough clearance for this row.
     draw_legend_row(ax, LEGEND_ROW2, LEGEND_Y2, gap=0.22)
     draw_legend_row(ax, LEGEND_ROW3, LEGEND_Y3)

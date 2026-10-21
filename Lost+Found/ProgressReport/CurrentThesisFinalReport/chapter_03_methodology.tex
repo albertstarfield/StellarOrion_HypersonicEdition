@@ -91,14 +91,14 @@ Figure~\ref{fig:governing_equations} summarizes the full derivation chain from k
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, then routes through the DSMC solver (SPARTA in Docker) and the genetic-algorithm optimiser, before producing ParaView-ready VTK and STL files for visualization.
+The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, routes through the DSMC solver (SPARTA in Docker) and through the Ada/SPARK per-element 1-D layered thermal solver that turns the resolved surface heat flux into a backface temperature, then through the genetic-algorithm optimiser, before producing ParaView-ready VTK and STL files for visualization. The continuum solvers named in the tool inventory of the appendix (OpenFOAM, Fluent) are not part of the thermal chain: the 1-D conduction, the radiative hot-face balance and the lateral coupling are all solved in Ada/SPARK, as set out in Sec.~\ref{sec:thermal_chain}.
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline, showing the Ada and SPARK simulation engine, the DSMC solver stage, and the result post-processing stages exchanging data.}}%
+    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline in five columns: input, core engine, solvers, models and output. The input column holds CadQuery geometry export, flight conditions and the design variables. The core engine is the Ada Engine. The solvers column holds SPARTA as the DSMC solver in Docker and Ada/SPARK as the one-dimensional layered thermal solver. The models column holds the Genetic Algorithm with a population of fifty. The output column holds ParaView VTK and STL rendering. An orange feedback arrow labelled GA optimization returns from the genetic algorithm to the core engine.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ Genetic Algorithm optimiser $\rightarrow$ ParaView visualization. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.}
+    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver and Ada/SPARK 1-D layered thermal solver $\rightarrow$ Genetic Algorithm optimiser $\rightarrow$ ParaView visualization. The thermal chain is solved in Ada/SPARK, not in a continuum CFD package. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.}
     \label{fig:software_pipeline}
 \end{figure}
 
