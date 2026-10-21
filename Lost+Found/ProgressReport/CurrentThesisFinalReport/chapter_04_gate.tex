@@ -1,4 +1,4 @@
-\section{Surrogate Fidelity and the Validation Gate}
+\section{Analytic-Model Fidelity and the Validation Gate}
 \label{sec:hybrid_gate}
 
 \subsection{Motivation}
@@ -44,6 +44,40 @@ so the pass-2 heat-load verdict is a \emph{pass}, with the heat load $29.08\,\%$
 drag coefficient (unclamped) is $2.7813$ against the reference's $1.76551$, and its peak
 deceleration is $8.357$ g against the reference's $22.720$ g.
 
+\begin{table}[htbp]
+    \centering
+    \caption{Two-pass outcome of the recorded GA campaign (2026-10-21): the pass-1 candidate and its
+    DSMC verdict, the bounded correction factor, and the pass-2 candidate and its DSMC verdict.}
+    \label{tab:ga_two_pass}
+    \begin{tabularx}{\textwidth}{Xrr}
+        \toprule
+        \textbf{Quantity} & \textbf{Value} & \textbf{Reference} \\
+        \midrule
+        Pass-1 body radius $X_1$ (m) & 1.3359 & 1.5000 \\
+        Pass-1 DSMC heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 175.580 & 165.716 \\
+        Pass-1 gate verdict & \emph{fail} & $q_{hybrid} \leq Q_{target}$ \\
+        Correction factor $c$ (clamped from the raw flux ratio 13.0629) & 2.0 & $[0.5, 2.0]$ \\
+        Pass-2 body radius $X_1$ (m) & 3.0000 & 1.5000 \\
+        Pass-2 body diameter $D$ (m) & 6.0000 & 3.0000 \\
+        Pass-2 physical nose radius $R_n$ (m) & 1.1000 & 0.5500 \\
+        Pass-2 torus radius $X_2$ (m) & 0.0500 & 0.1350 \\
+        Pass-2 half-cone angle $X_3$ (deg) & 45.9656 & 60.00 \\
+        Pass-2 DSMC heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 117.526 & 165.716 \\
+        Pass-2 gate verdict & \emph{pass} & $q_{hybrid} \leq Q_{target}$ \\
+        Pass-2 recorded drag coefficient $C_d$ & 2.7813 & 1.76551 \\
+        Pass-2 peak deceleration (g) & 8.357 & 22.720 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Against the IRVE-3 reference the pass-2 design lowers the total heat load by $29.08\,\%$, the
+peak surface heat flux from 192.017 to 155.785 W/cm\textsuperscript{2} and the area-averaged
+surface flux from 55.200 to 43.394 W/cm\textsuperscript{2}, raises the drag coefficient by
++57.53\,\% and lowers the peak deceleration from 22.720 to 8.357 g and the final
+deceleration from 16.553 to 5.212 g. The DSMC surface heat load, the quantity the writer
+integrates from the solver's own surface flux, is 1829.38 J/cm\textsuperscript{2} against
+1978.77 for the pass-1 candidate.
+
 Two properties of these runs matter for how their numbers are read. First, the drag coefficient in the
 run's \texttt{cd} column is clamped to $[0,3]$ by the SPARTA writer: the pass-1 run saturates that
 clamp on one of its twenty-two recorded steps and the pass-2 run on twelve, so the column is not flat in
@@ -62,5 +96,5 @@ Its DSMC surface heat load is $\max(\texttt{heatflux\_avg})\times 13.58$\,s $= 1
 Its flown geometry is the command-line default: diameter $3.0$\,m, nose $0.55$\,m, torus $0.135$\,m,
 half-cone $60^\circ$, six toroids.
 
-\subsection{Relation to the Current Optimum}
-The gate was executed on the geometry of Table~\ref{tab:ga_before_after}, and its verdict on that geometry is a fail: the pass-1 candidate carries $175.580$\,J/cm\textsuperscript{{2}} against the $165.716$\,J/cm\textsuperscript{{2}} target. The design that the gate does admit is the pass-2 geometry of Table~\ref{tab:ga_two_pass}, a $6.0000$\,m diameter body, which passes the same gate at $117.526$\,J/cm\textsuperscript{{2}}. The pipeline therefore does what it is meant to do: the first analytic pass proposes a design the solver rejects, the solver's own flux ratio sets the correction, and the second analytic pass proposes a design the solver accepts. What the gate does not establish is a flight-qualified vehicle: every candidate is flown on the reference's matched trajectory, so the trajectory-geometry self-consistency of a $6.0000$\,m body on a $3.0$\,m body's flight path remains open, and it is stated as such rather than absorbed into the result.
+\subsection{Interpretation and Limitations}
+The gate was executed on the geometry of Table~\ref{tab:ga_before_after}, and its verdict on that geometry is a fail: the pass-1 candidate carries $175.580$\,J/cm\textsuperscript{{2}} against the $165.716$\,J/cm\textsuperscript{{2}} target. The design that the gate does admit is the pass-2 geometry of Table~\ref{tab:ga_two_pass}, a $6.0000$\,m diameter body, which passes the same gate at $117.526$\,J/cm\textsuperscript{{2}}. The pipeline therefore does what it is meant to do: the first analytic pass proposes a design the solver rejects, the solver's own flux ratio sets the correction, and the second analytic pass proposes a design the solver accepts. What the gate does not establish is a flight-qualified vehicle: every candidate is flown on the reference's matched trajectory, so the trajectory-geometry self-consistency of a $6.0000$\,m body on a $3.0$\,m body's flight path remains open, and it is stated as such rather than absorbed into the result. The pass-2 geometry is also boundary-limited: the body radius sits at the analytic box ceiling and the torus radius at its floor, so it is the best design the stated search box admits rather than an interior optimum.

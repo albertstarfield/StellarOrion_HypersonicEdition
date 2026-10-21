@@ -594,9 +594,9 @@ The computational framework supports multiple solver backends to address differe
     \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Stage} & \textbf{Solver} & \textbf{Rationale} \\ \hline
-        Exploration & SBO & Ultra-fast estimation of 1000s of design candidates \\ \hline
+        Exploration & Analytic GA & Closed-form evaluation of 1000s of candidates \\ \hline
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
-        Validation & DSMC Only & Eliminates neural network bias; pure kinetic ground truth \\ \hline
+        Validation & DSMC only & Independent kinetic check of the analytic ranking \\ \hline
         High-Density (Future) & Fluent & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
     \end{tabularx}
 \end{table}

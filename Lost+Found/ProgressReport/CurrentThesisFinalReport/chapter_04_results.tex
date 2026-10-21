@@ -210,7 +210,7 @@ The quantitative evidence for the chosen grid is the grid-independence study of 
     \label{fig:mesh_stats}
 \end{figure}
 
-\section{Discussion}
+\section{Discussion of the DSMC Results}
 
 \subsection{Heating Augmentation and TPS Implications}
 The simulation confirms that the scalloped toroidal geometry creates localized hot spots at the toroid crests. Comparing the scalloped and smooth runs at the same trajectory condition, the scalloped configuration raises the peak heat flux by 15.2\% and the per-element average by only 4.0\%, while the drag coefficient increases by 9.5\%; the total heat load and peak deceleration are unchanged. This distribution of the augmentation over a small crest area, rather than over the whole surface, is the physical signature expected from the inverse-square-root radius scaling ($\dot{q} \propto 1/\sqrt{R}$) of the Sutton-Graves correlation~\cite{sutton1971gravesh}. The recirculation zones in the valleys provide partial thermal shielding, reducing the time-averaged heat load on the Flexible Thermal Protection System (FTPS)~\cite{hollis2018surface}.
@@ -227,7 +227,7 @@ The 5-species air model captures vibrational excitation and dissociation reactio
 \section{Optimization Results}
 \label{sec:optimization_results}
 
-The survivability optimizer of Sec.~\ref{sec:ga_opt} was executed on the validated flight condition with the configuration of Table~\ref{tab:ga_hparams}. The recorded campaign is the newest artifact written by the optimizer (2026-10-21): a Latin-hypercube-seeded simple genetic algorithm with a population of fifty individuals, stopped by the stagnation criterion after 38 recorded generations and 1900 individual evaluations. This section reports that campaign and nothing older. The analytic cost is evaluated in closed form, so every individual, including the fifty initial LHS individuals, is a genuine evaluation of Eq.~\eqref{eq:ga_cost} rather than a surrogate prediction.
+The survivability optimizer of Sec.~\ref{sec:ga_opt} was executed on the validated flight condition with the configuration of Table~\ref{tab:ga_hparams}. The recorded campaign is the newest artifact written by the optimizer (2026-10-21): a Latin-hypercube-seeded simple genetic algorithm with a population of fifty individuals, stopped by the stagnation criterion after 38 recorded generations and 1900 individual evaluations. This section reports that first pass; the DSMC verdict on its winner, the correction factor and the second pass are reported in Sec.~\ref{sec:hybrid_gate}. The analytic cost is evaluated in closed form, so every individual, including the fifty initial LHS individuals, is a genuine evaluation of Eq.~\eqref{eq:ga_cost} rather than a surrogate prediction.
 
 \subsection{Campaign Summary}
 Table~\ref{tab:ga_reference} lists the reference set that scales the cost. These values are the package defaults used by the runner, so the campaign is reproducible from the artifact without a recompile.
@@ -250,7 +250,7 @@ Table~\ref{tab:ga_reference} lists the reference set that scales the cost. These
     \end{tabular}
 \end{table}
 
-Table~\ref{tab:ga_before_after} compares the baseline geometry with the optimized one. The baseline is the validated IRVE-3-adapted stack at $X_1 = 1.5$\,m (body diameter $3.0$\,m, physical nose radius $0.55$\,m), $X_2 = 0.135$\,m and $X_3 = 60^\circ$. The optimizer lowers the composite cost by \-9.19\,\%, raises the drag coefficient by +2.14\,\% and raises the screening heat load by +5.96\,\%: the drag-reward term of $J(\mathbf{x})$ dominates the heat-load term, so the first pass buys drag with heat. The optimum is therefore a drag-gain vertex, and the two-pass gate of Sec.~\ref{sec:hybrid_gate} is what tests whether that trade survives the high-fidelity solver.
+Table~\ref{tab:ga_before_after} compares the baseline geometry with the optimized one. The baseline is the validated IRVE-3-adapted stack at $X_1 = 1.5$\,m (body diameter $3.0$\,m, physical nose radius $0.55$\,m), $X_2 = 0.135$\,m and $X_3 = 60^\circ$. The optimizer lowers the composite cost by $-9.19\,\%$, raises the drag coefficient by $+2.14\,\%$ and raises the screening heat load by $+5.96\,\%$: the drag-reward term of $J(\mathbf{x})$ dominates the heat-load term, so the first pass buys drag with heat. The pass-1 optimum is therefore a drag-gain vertex; the gate of Sec.~\ref{sec:hybrid_gate} tests that winner and, when it fails, triggers the second pass.
 
 \begin{table}[H]
     \centering
@@ -288,12 +288,12 @@ Figure~\ref{fig:ga_convergence} reports the recorded generation-best cost over t
     \label{fig:ga_convergence}
 \end{figure}
 
-The search improves in discrete steps: the recorded best falls from $4.2142$ in generation 0 to $4.2089$ by generation 37, with 8 strict improvements, the first at generation 4. The final optimum, re-evaluated in double precision with Eq.~\eqref{eq:ga_cost}, is $4.1788$; the \-0.72\,\% difference from the recorded single-precision search score is a precision effect, not a fidelity penalty. The two quantities are drawn as separate reference lines in Figure~\ref{fig:ga_convergence} and are never conflated.
+The search improves in discrete steps: the recorded best falls from $4.2142$ in generation 0 to $4.2089$ by generation 37, with 8 strict improvements, the first at generation 4. The final optimum, re-evaluated in double precision with Eq.~\eqref{eq:ga_cost}, is $4.1788$; the $-0.72\,\%$ difference from the recorded single-precision search score is a precision effect, not a fidelity penalty. The two quantities are drawn as separate reference lines in Figure~\ref{fig:ga_convergence} and are never conflated.
 
 The plateau is a property of the elitist record, not evidence that the population stopped moving: mutation and crossover continue to generate new individuals, but none of them beats the elite. With a population of fifty the search reaches the neighbourhood of the optimum quickly and then spends its remaining budget confirming it, which is the expected behaviour of a simple GA without an acquisition function driving exploration.
 
 \subsection{Design Trajectory}
-Figure~\ref{fig:ga_trajectory} traces the generation-best design through the design space, coloured by generation. Only generations in which the best design actually changed are drawn, so the path is the sequence of accepted improvements rather than 96 repeated points.
+Figure~\ref{fig:ga_trajectory} traces the generation-best design through the design space, coloured by generation. Only generations in which the best design actually changed are drawn, so the path is the sequence of accepted improvements rather than all 38 generation records.
 
 \begin{figure}[H]
     \centering
@@ -306,61 +306,13 @@ Figure~\ref{fig:ga_trajectory} traces the generation-best design through the des
 
 The path has a clear physical reading. The optimizer reduces the body radius from $1.5$ to $1.3359$\,m, increases the torus radius from $0.135$ to $0.1796$\,m, and reduces the half-cone angle from $60^\circ$ to $58.61^\circ$. The smaller body radius shrinks the physical nose radius from $0.55$ to $0.4898$\,m, and because Sutton--Graves scales as $1/\sqrt{R_n}$ the stagnation flux rises by $+5.96\,\%$; the drag coefficient rises by $+2.14\,\%$, which is the reward the objective pays for.
 
-\subsection{The Two-Pass Validation Outcome}
-Table~\ref{tab:ga_two_pass} records the outcome of the two-pass pipeline of Sec.~\ref{sec:hybrid_gate}
-for this campaign. The pass-1 candidate fails the heat gate; the correction factor is clamped at its
-upper bound; the pass-2 candidate passes it with a wide margin.
-
-\begin{table}[H]
-    \centering
-    \caption{Two-pass outcome of the recorded GA campaign (2026-10-21): the pass-1 candidate and its
-    DSMC verdict, the bounded correction factor, and the pass-2 candidate and its DSMC verdict.}
-    \label{tab:ga_two_pass}
-    \begin{tabularx}{\textwidth}{Xrr}
-        \toprule
-        \textbf{Quantity} & \textbf{Value} & \textbf{Reference} \\
-        \midrule
-        Pass-1 body radius $X_1$ (m) & 1.3359 & 1.5000 \\
-        Pass-1 DSMC heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 175.580 & 165.716 \\
-        Pass-1 gate verdict & \emph{fail} & $q_{hybrid} \leq Q_{target}$ \\
-        Correction factor $c$ (clamped from the raw flux ratio 13.0629) & 2.0 & $[0.5, 2.0]$ \\
-        Pass-2 body radius $X_1$ (m) & 3.0000 & 1.5000 \\
-        Pass-2 body diameter $D$ (m) & 6.0000 & 3.0000 \\
-        Pass-2 physical nose radius $R_n$ (m) & 1.1000 & 0.5500 \\
-        Pass-2 torus radius $X_2$ (m) & 0.0500 & 0.1350 \\
-        Pass-2 half-cone angle $X_3$ (deg) & 45.9656 & 60.00 \\
-        Pass-2 DSMC heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 117.526 & 165.716 \\
-        Pass-2 gate verdict & \emph{pass} & $q_{hybrid} \leq Q_{target}$ \\
-        Pass-2 recorded drag coefficient $C_d$ & 2.7813 & 1.76551 \\
-        Pass-2 peak deceleration (g) & 8.357 & 22.720 \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-Against the IRVE-3 reference the pass-2 design lowers the total heat load by $29.08\,\%$, the
-peak surface heat flux from 192.017 to 155.785 W/cm\textsuperscript{2} and the area-averaged
-surface flux from 55.200 to 43.394 W/cm\textsuperscript{2}, raises the drag coefficient by
-+57.53\,\% and lowers the peak deceleration from 22.720 to 8.357 g and the final
-deceleration from 16.553 to 5.212 g. The DSMC surface heat load, the quantity the writer
-integrates from the solver's own surface flux, is 1829.38 J/cm\textsuperscript{2} against
-1978.77 for the pass-1 candidate.
-
-One caveat must be stated with the result. The pass-2 vehicle is a $6.0000$\,m diameter body, twice
-the $3.0$\,m diameter of the reference, so its total drag force (14361.8 N against
-45613.5 N) and its deceleration load are far lower than the reference's even though its drag
-coefficient is higher: the comparison is one of coefficients, and the vehicle that carries the
-coefficient is much larger. The DSMC flies every candidate on the reference's matched trajectory, so a
-vehicle of twice the reference diameter is flown on a flight path computed for a different vehicle; the
-self-consistency of the trajectory and the geometry is therefore a limitation of the present gate, not a
-property of the design. The pass-2 optimum also lies on the boundary of the analytic search box rather
-than in its interior: the body radius sits at the box ceiling (3.0000\,m, the clamp of the projection onto
-the analytic box) and the torus radius at its floor (0.0500\,m), so the reported design is
-boundary-limited and a wider search box is required before the optimum can be called interior.
+\subsection{Pass-1 Outcome and the Gate}
+The pass-1 candidate does not survive the high-fidelity check: its DSMC heat load is $175.580$\,J/cm\textsuperscript{2} against the $165.716$\,J/cm\textsuperscript{2} target. The correction factor, the second pass and the validated outcome are reported in Sec.~\ref{sec:hybrid_gate}; Table~\ref{tab:ga_two_pass} summarises both passes.
 
 \subsection{Interpretation of the Trade-Off}
-The campaign's headline result is a +2.14\,\% gain in drag coefficient bought with a +5.96\,\% rise in the screening heat load, for a $9.19\,\%$ reduction in composite cost. The gain is not free: it is bought by a smaller body ($D = 2.6719$\,m against the IRVE-3 $3.0$\,m) and a blunter nose ($R_n = 0.4898$\,m against $0.55$\,m), which is exactly the direction the drag-reward term of $J(\mathbf{x})$ pays for.
+The first pass's result is a $+2.14\,\%$ gain in drag coefficient bought with a +5.96\,\% rise in the screening heat load, for a $9.19\,\%$ reduction in composite cost. The gain is not free: it is bought by a smaller body ($D = 2.6719$\,m against the IRVE-3 $3.0$\,m) and a blunter nose ($R_n = 0.4898$\,m against $0.55$\,m), which is exactly the direction the drag-reward term of $J(\mathbf{x})$ pays for.
 
-The first pass is nevertheless not a thermally admissible design, and the gate of Sec.~\ref{sec:hybrid_gate} says so: its DSMC re-simulation returns $q_{hybrid} = 175.580$ J/cm\textsuperscript{2} against $Q_{target} = 165.716$, so the pass-1 candidate \emph{fails} the heat gate, and the analytic screening model over-predicts the load by $2.08$ ($364.87$ against $175.580$ J/cm\textsuperscript{2}, a $51.88\,\%$ prediction error). That failure is the purpose of the second pass: the solver's verdict sets the bounded correction factor and the GA is re-run with it, and only the pass-2 geometry is a validated design.
+The first pass is nevertheless not a thermally admissible design, and the gate of Sec.~\ref{sec:hybrid_gate} says so: its DSMC re-simulation returns $q_{hybrid} = 175.580$ J/cm\textsuperscript{2} against $Q_{target} = 165.716$, so the pass-1 candidate \emph{fails} the heat gate, and the analytic screening model over-predicts the load by $2.08$ ($364.87$ against $175.580$ J/cm\textsuperscript{2}, a $51.88\,\%$ prediction error). That failure is the purpose of the second pass: the solver's verdict sets the bounded correction factor and the GA is re-run with it, and the validated outcome is the pass-2 geometry reported in Sec.~\ref{sec:hybrid_gate}.
 
 \input{chapter_04_gate}
 
