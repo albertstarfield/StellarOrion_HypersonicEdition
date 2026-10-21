@@ -50,7 +50,9 @@ The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PIN
 - (root level): 18 artefacts (directly in results/validation_smooth/plots/)
 - Total under validation_smooth: **18**
 
-## validation_optimized: (no plots directory)
+## validation_optimized/
+- (root level): 49 artefacts (directly in results/validation_optimized/plots/)
+- Total under validation_optimized: **49**
 
 ## OptimizedTopology/
 - (root level): 1 artefacts (directly in results/OptimizedTopology/plots/)
@@ -64,7 +66,7 @@ The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PIN
 - `plots/`: 12 PNG/MP4 artefacts, 0 CSV files
 - `tps_conduction/`: 0 PNG/MP4 artefacts, 6 CSV files
 - `validation_lhs_optimum/`: 10 PNG/MP4 artefacts, 5 CSV files
-- `validation_optimized_stale_20261020/`: 49 PNG/MP4 artefacts, 6 CSV files
+- `validation_optimized_round2/`: 59 PNG/MP4 artefacts, 6 CSV files
 
 The Stage-1 calibration campaign (`calibration/`) writes one `validation_timeseries.csv` per CCD point -- the 22 legacy columns plus the calibration columns (unclamped drag, the raw drag per reference area, the DSMC surface heat load and the flown geometry) -- and the campaign index in `calibration/manifest.csv`.
 
