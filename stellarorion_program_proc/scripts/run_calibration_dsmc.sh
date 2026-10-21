@@ -31,7 +31,9 @@
 #     A2  The coded coordinates are mapped to MODEL space as
 #         X_k = centre_k + code_k * half_k with the centre and half-widths
 #         of Sec 2.7 (X* = (1.03967, 0.219741, 53.7247),
-#         half = (0.25, 0.06, 8.0)).
+#         half = (0.25, 0.06, 8.0)).  The Sec 2.7 centre is the BINDING
+#         default; --centre overrides it, and the live GA optimum is
+#         cross-checked against it (a WARNING, never a silent move).
 #     A3  MODEL space is mapped to PHYSICAL space by the Sec 2.1 convention
 #         above and by nothing else.
 #     A4  Every point is flown with the SAME protocol as the reference run
@@ -74,6 +76,7 @@
 #     scripts/run_calibration_dsmc.sh --only 1,2,5       # a subset
 #     scripts/run_calibration_dsmc.sh --force             # re-fly everything
 #     scripts/run_calibration_dsmc.sh --rebuild           # rebuild bin/main first
+#     scripts/run_calibration_dsmc.sh --centre R_N,r_tor,cone   # recentre
 #
 #     The manifest (results/calibration/manifest.csv) is the campaign's
 #     index; the per-point time series land in
@@ -104,20 +107,24 @@ cd "${ROOT}"
 BIN_REL="bin/main"
 BIN="${ROOT}/${BIN_REL}"
 
-# Sec 2.7: the local CCD around the CURRENT optimiser optimum (model space).
-# The centre is READ from the results artifact by default: the optimum moves
-# whenever the screening model changes (the corrected Sutton-Graves heat term
-# moved it from (1.03967, 0.219741, 53.7247) to (1.11796, 0.18089, 65.4023)),
-# so a hard-coded centre would silently calibrate around a STALE point.  An
-# explicit --centre overrides the artifact.
-RESULTS_JSON_REL="src/python/hiad_optimization_results.json"
-CENTRE_X1=""           # X(1): body / cone-junction radius [m]  (from the artifact)
-CENTRE_X2=""           # X(2): toroid radius [m]
-CENTRE_X3=""           # X(3): half-cone angle [deg]
+# Sec 2.7: the local CCD around the GA optimum (model space).  These are the
+# BINDING values of CALIBRATION_DESIGN.md Sec 2.7 (and Sec 2.1), so the plan
+# is reproducible from this script alone and cannot silently drift.  An
+# explicit --centre overrides them; the live optimiser artefact is then
+# cross-checked against the contract centre, and a WARNING is printed when
+# the current optimum has left the Sec 2.7 screen (Sec 2.7's own rationale:
+# "the CCD must cover the region the GA actually explored").  The script
+# NEVER recentres on its own -- the contract centre is the default.
+CENTRE_X1=1.03967      # X(1): body / cone-junction radius [m]
+CENTRE_X2=0.219741     # X(2): toroid radius [m]
+CENTRE_X3=53.7247      # X(3): half-cone angle [deg]
 CENTRE_OVERRIDE=0      # 1 when --centre was given on the command line
 HALF_X1=0.25           # dR_N
 HALF_X2=0.06           # dR_tor
 HALF_X3=8.0            # dCone
+# The live optimiser artefact: used ONLY as a cross-check, never as the
+# default (the contract centre is the default and the artefact is optional).
+RESULTS_JSON_REL="src/python/hiad_optimization_results.json"
 
 # Sec 2.1: Nose_Radius_Ratio := 0.55 / 1.5 -- kept as the RATIO, never as a
 # rounded literal, so the script implements the specification literally.
@@ -155,8 +162,8 @@ Options:
                      (default results/calibration)
   --only "1,2,5"     fly only the listed point ids (1..9)
   --centre R_N,r_tor,cone
-                     override the CCD centre (default: the current optimiser
-                     optimum read from src/python/hiad_optimization_results.json)
+                     override the CCD centre (default: the Sec 2.7 binding
+                     centre 1.03967,0.219741,53.7247)
   -h, --help         this text
 EOF
 }
@@ -170,7 +177,8 @@ while [ "$#" -gt 0 ]; do
     --outdir)  OUT_REL="$2"; shift 2 ;;
     --only)    ONLY="$2"; shift 2 ;;
     --centre)  CENTRE_OVERRIDE=1
-               IFS=',' read -r CENTRE_X1 CENTRE_X2 CENTRE_X3 <<< "$2"
+               CENTRE_RAW="$(printf '%s' "$2" | tr -d '[:space:]')"
+               IFS=',' read -r CENTRE_X1 CENTRE_X2 CENTRE_X3 <<< "${CENTRE_RAW}"
                shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "run_calibration_dsmc.sh: unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -183,24 +191,22 @@ esac
 [ "${STEPS}" -ge 1 ] || { echo "FATAL: --steps must be >= 1 (got '${STEPS}')." >&2; exit 2; }
 
 # ---------------------------------------------------------------------
-# 0.  Resolve the CCD centre (A1: the screen is centred on the CURRENT
-#     optimiser optimum, in MODEL space).
+# 0b. The CCD centre: the Sec 2.7 binding value, cross-checked against
+#     the live GA optimum.
 # ---------------------------------------------------------------------
-if [ "${CENTRE_OVERRIDE}" -eq 0 ]; then
-  if [ ! -f "${RESULTS_JSON_REL}" ]; then
-    echo "FATAL: cannot resolve the CCD centre: '${RESULTS_JSON_REL}' not found." >&2
-    echo "  Fix: run the optimiser first, or pass --centre R_N,r_tor,cone." >&2
-    exit 2
-  fi
-  PY=""
-  for c in /opt/homebrew/bin/python3.14 python3 python; do
-    if command -v "$c" >/dev/null 2>&1; then PY="$c"; break; fi
+# Compare the contract centre with the live GA optimum and WARN (never
+# fail) when the optimum has left the Sec 2.7 screen.  The optimiser
+# artefact is OPTIONAL: a missing or unreadable artefact only silences
+# this cross-check, it never blocks the campaign.
+check_centre_against_optimum() {
+  local opt_py opt_vals ox1 ox2 ox3 warn c
+  [ -f "${RESULTS_JSON_REL}" ] || return 0
+  opt_py=""
+  for c in python3 python3.14 python; do
+    if command -v "${c}" >/dev/null 2>&1; then opt_py="${c}"; break; fi
   done
-  if [ -z "${PY}" ]; then
-    echo "FATAL: no python3 interpreter found to read the results artifact." >&2
-    exit 2
-  fi
-  CENTRE_VALUES="$("${PY}" - "${RESULTS_JSON_REL}" <<'PYEOF_READ'
+  [ -n "${opt_py}" ] || return 0
+  opt_vals="$("${opt_py}" - "${RESULTS_JSON_REL}" <<'PYEOF_READ' 2>/dev/null
 import json
 import sys
 
@@ -208,17 +214,43 @@ with open(sys.argv[1], encoding="utf-8") as fh:
     opt = json.load(fh)["optimized"]
 print(opt["R_N"], opt["r_tor"], opt["half_cone_deg"])
 PYEOF_READ
-)" || {
-    echo "FATAL: cannot read the optimiser optimum from '${RESULTS_JSON_REL}'." >&2
-    exit 2
-  }
-  read -r CENTRE_X1 CENTRE_X2 CENTRE_X3 <<< "${CENTRE_VALUES}"
-fi
-for v in "${CENTRE_X1}" "${CENTRE_X2}" "${CENTRE_X3}"; do
-  case "${v}" in
-    ''|*[!0-9.]*) echo "FATAL: the CCD centre must be three positive numbers." >&2; exit 2 ;;
+  )" || return 0
+  read -r ox1 ox2 ox3 <<< "${opt_vals}"
+  case "${ox1}${ox2}${ox3}" in
+    ''|*[!0-9.]*) return 0 ;;
   esac
-done
+  warn="$(awk -v cx1="${CENTRE_X1}" -v cx2="${CENTRE_X2}" -v cx3="${CENTRE_X3}" \
+              -v ox1="${ox1}" -v ox2="${ox2}" -v ox3="${ox3}" \
+              -v h1="${HALF_X1}" -v h2="${HALF_X2}" -v h3="${HALF_X3}" \
+        'BEGIN {
+           d1 = cx1 - ox1; if (d1 < 0) d1 = -d1
+           d2 = cx2 - ox2; if (d2 < 0) d2 = -d2
+           d3 = cx3 - ox3; if (d3 < 0) d3 = -d3
+           out = ""
+           if (d1 > h1) out = out sprintf("X1 off by %.6f m (half-width %.6f m); ", d1, h1)
+           if (d2 > h2) out = out sprintf("X2 off by %.6f m (half-width %.6f m); ", d2, h2)
+           if (d3 > h3) out = out sprintf("X3 off by %.6f deg (half-width %.6f deg); ", d3, h3)
+           printf "%s", out
+         }')"
+  if [ -n "${warn}" ]; then
+    echo "WARNING: the current GA optimum (${ox1}, ${ox2}, ${ox3}) lies OUTSIDE" >&2
+    echo "         the CALIBRATION_DESIGN.md Sec 2.7 CCD screen centred on" >&2
+    echo "         (${CENTRE_X1}, ${CENTRE_X2}, ${CENTRE_X3}): ${warn}" >&2
+    echo "         The Sec 2.7 centre is used (it is the binding contract)." >&2
+    echo "         Re-run with --centre ${ox1},${ox2},${ox3} to recentre the DoE." >&2
+  fi
+  return 0
+}
+
+if [ "${CENTRE_OVERRIDE}" -eq 1 ]; then
+  for v in "${CENTRE_X1}" "${CENTRE_X2}" "${CENTRE_X3}"; do
+    case "${v}" in
+      ''|*[!0-9.]*) echo "FATAL: --centre needs three positive numbers (R_N,r_tor,cone)." >&2; exit 2 ;;
+    esac
+  done
+else
+  check_centre_against_optimum
+fi
 
 MANIFEST_REL="${OUT_REL}/manifest.csv"
 STATE_REL="${OUT_REL}/.state"
