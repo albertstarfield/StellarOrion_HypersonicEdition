@@ -23,7 +23,7 @@ $\theta_c = 58.61^\circ$, physical nose radius $0.4898$\,m, six toroids, scallop
     q_{hybrid} = 175.580\ \text{J/cm}^2 \;>\; Q_{target} = 165.716\ \text{J/cm}^2,
     \label{eq:gate_fail}
 \end{equation}
-so the pass-1 heat-load verdict is a \emph{fail}, by $51.88\,\% of the target. The analytic
+so the pass-1 heat-load verdict is a \emph{fail}, by $51.88\,\%$ of the target. The analytic
 screening model had predicted $364.87$\,J/cm\textsuperscript{2} for the same geometry, so the model
 over-predicts the solver's heat load by $2.08$; the discrepancy is the quantity the correction
 factor is built from.
@@ -40,7 +40,7 @@ $0.0500$\,m, half-cone $45.9656^\circ$) is re-simulated in
     q_{hybrid} = 117.526\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.716\ \text{J/cm}^2,
     \label{eq:gate_pass}
 \end{equation}
-so the pass-2 heat-load verdict is a \emph{pass}, with a margin of $\-29.08\,\%$. Its recorded
+so the pass-2 heat-load verdict is a \emph{pass}, with the heat load $29.08\,\%$ below the target. Its recorded
 drag coefficient (unclamped) is $2.7813$ against the reference's $1.76551$, and its peak
 deceleration is $8.357$ g against the reference's $22.720$ g.
 
@@ -54,7 +54,7 @@ single-point ratio without bound.
 
 The reference dataset used for that comparison predates the extended CSV schema, so three of its
 quantities are derived here rather than recorded. Its body-area drag coefficient follows from
-\texttt{drag\_sum\_N}/(q\,A_{\mathrm{body}}) with $A_{\mathrm{body}} = \pi(3.0/2)^2 =
+\texttt{drag\_sum\_N}/($q\,A_{\mathrm{body}}$) with $A_{\mathrm{body}} = \pi(3.0/2)^2 =
 7.0686$\,m$^2$, and the derivation reproduces the recorded \texttt{cd} column to $10^{-6}$ at
 both ends of the trajectory ($2.423278$ against $2.423279$ at step 100, and $1.765511$ against
 $1.765511$ at step 2200), which also establishes that the reference never saturated the $[0,3]$ clamp.
