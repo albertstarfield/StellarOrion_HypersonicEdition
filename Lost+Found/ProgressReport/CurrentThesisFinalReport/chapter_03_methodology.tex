@@ -483,7 +483,7 @@ A design is admissible only inside the structural envelope. The maximum body rad
 \subsection{Latin Hypercube Initialisation}
 The initial population is a Latin hypercube (LHS) over the five effective coordinates~\cite{mckay1979lhs}. Each coordinate is divided into $P=50$ equal strata, the stratum assignment is a fresh random permutation for every coordinate, and one individual is placed inside each stratum of each coordinate. The design is therefore stratified in every one-dimensional marginal: no stratum is empty and no stratum receives two individuals, which is the property that a uniform random draw does not have. The stratified start covers the box before the first fitness evaluation and avoids the clustering that otherwise leaves whole regions of the search space unvisited.
 
-The LHS is the only seeding the GA uses. There are no factorial points, no axial points and no Bayesian seed: the same fifty individuals are both the initial sample and the first generation, and each of them is evaluated with the analytic cost. A Latin hypercube is also the natural choice here because the objective is cheap: the reason to use a space-filling design is coverage, not the construction of a surrogate.
+The LHS is the only seeding the GA uses. There are no factorial points, no axial points and no Bayesian seed: the same fifty individuals are both the initial sample and the first generation, and each of them is evaluated with the analytic cost. The generator that draws the stratum permutations and the mutation offsets is seeded with the fixed value $42$, so the campaign is reproducible: two runs of the same binary on the same inputs return the same generation history and the same optimum. A Latin hypercube is also the natural choice here because the objective is cheap: the reason to use a space-filling design is coverage, not the construction of a surrogate.
 
 \subsection{Cost Function}
 The cost is a weighted sum of four normalized physical terms plus a constraint penalty, all evaluated in closed form from the geometry and the validated flight condition. The frontal geometry is the outermost edge of the toroid stack,
@@ -565,19 +565,21 @@ The optimisation is organised as two passes of the same genetic algorithm, separ
 
 \textbf{Validation of the pass-1 winner (physical space).} $\mathbf{x}^{(1)}$ is converted to a vehicle with Eq.~\eqref{eq:nose_ratio} and re-simulated with the full DSMC chain at 2200 steps; the refined pipeline returns the measured heat load $q_{hybrid}$ of that geometry. This is the only high-fidelity run of pass 1: the solver measures one design, it does not search.
 
-\textbf{The correction factor.} The ratio of the measured to the predicted heat load is a scalar, and it is bounded before use,
+\textbf{The correction factor.} The factor is a fidelity ratio between the high-fidelity solver and the correlation it is supposed to reproduce, and it is bounded before use,
 \begin{equation}
-    c = \operatorname{clamp}\Bigl(\frac{q_{hybrid}}{\allowbreak q_{analytic}},\;\allowbreak 0.5,\;\allowbreak 2.0\Bigr),
+    c = \operatorname{clamp}\Bigl(\frac{q^{\mathrm{DSMC}}_{\mathrm{flux}}}{q^{\mathrm{SG}}_{\mathrm{flux}}},\;\allowbreak 0.5,\;\allowbreak 2.0\Bigr),
     \label{eq:correction_factor}
 \end{equation}
-so that a single pathological simulation can neither collapse nor invert the objective. The factor is applied to the heat-load term alone. The drag and ballistic-coefficient terms of Eq.~\eqref{eq:ga_cost} are geometric integrals rather than thermal correlations, so they carry no thermal-model bias and are left untouched; correcting them would amount to fitting the geometry instead of the physics.
+where the numerator is the peak surface convection flux measured by the DSMC run and the denominator is the Sutton--Graves prediction for the \emph{same} flown nose radius at the \emph{same} flight state, both read from the same row of the same run. The factor is therefore dimensionless, and it is bounded so that a single pathological simulation can neither collapse nor invert the objective.
+
+Two properties of this construction are deliberate. First, the ratio is taken \emph{within} one run, not between the run and the screening model: the screening model evaluates its heat flux at the peak-heating snapshot of the trajectory ($51.8$\,km, $3379$\,m/s) while the run records its own correlation column at the baseline flight state ($2700$\,m/s), so a ratio taken across the two would measure the difference between two flight states rather than the fidelity of the correlation, and it would be pinned at the lower clamp for every geometry. Second, the factor is applied to the heat-load term alone: the drag and ballistic-coefficient terms of Eq.~\eqref{eq:ga_cost} are geometric integrals rather than thermal correlations, so they carry no thermal-model bias and are left untouched; correcting them would amount to fitting the geometry instead of the physics.
 
 \textbf{Pass 2 (model space).} The corrected objective is
 \begin{equation}
     J^{(2)}(\mathbf{x}) = J(\mathbf{x}) + (c-1)\,\frac{Q(\mathbf{x})}{Q_{target}},
     \label{eq:corrected_cost}
 \end{equation}
-which, with the unit weight of the heat-load term in Eq.~\eqref{eq:ga_cost}, is algebraically identical to re-weighting that term by $c$. The implementation therefore injects the correction as an effective heat-load weight and re-runs the \emph{same} genetic algorithm, with the same population, operators and bounds: there is no second cost function and no surrogate of the corrected objective. Pass 2 is again a purely analytic pass, and its winner $\mathbf{x}^{(2)}$ is the corrected design.
+which, with the unit weight of the heat-load term in Eq.~\eqref{eq:ga_cost}, is algebraically identical to re-weighting that term by $c$: the second pass therefore penalises the heat load of a design by the factor by which the solver has shown that the correlation under-states it. The implementation therefore injects the correction as an effective heat-load weight and re-runs the \emph{same} genetic algorithm, with the same population, operators and bounds: there is no second cost function and no surrogate of the corrected objective. Pass 2 is again a purely analytic pass, and its winner $\mathbf{x}^{(2)}$ is the corrected design.
 
 \textbf{Validation of the pass-2 winner (physical space).} $\mathbf{x}^{(2)}$ is re-simulated with the same 2200-step DSMC protocol. The two validations --- one per pass --- are the only high-fidelity runs of the pipeline. The bounded factor makes the correction conservative: because $|c-1| \leq 1$, the corrected cost can at most halve or double the weight of the heat-load term, so the second pass refines the design against the measured bias of the model without being able to run away from it.
 
