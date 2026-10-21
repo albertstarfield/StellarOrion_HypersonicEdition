@@ -589,7 +589,7 @@ The Fay--Riddell equation, while physically complete, requires detailed knowledg
 
 \begin{equation}
     \dot{q}_s = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_n}} \, V_{\infty}^{3}
-    \label{eq:sutton_graves}
+    \label{eq:sutton_graves_lit}
 \end{equation}
 
 \noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ is the freestream density, $R_n$ is the nose radius, and $V_{\infty}$ is the freestream velocity. For a 5-species chemically reacting air model at hypersonic velocities, $C_{SG} = 1.83 \times 10^{-4}$ in SI units, the value adopted throughout this study \cite{sutton1971gravesh}. This correlation captures the $V^{3}$ velocity dependence that arises from the combined effects of shock compression and boundary-layer energy transport, and is used throughout this study for baseline thermal assessment.
@@ -599,7 +599,7 @@ The Fay--Riddell equation, while physically complete, requires detailed knowledg
     \BeginAccSupp{method=escape,ActualText={Two-panel Sutton-Graves parametric plot. Panel (a) shows stagnation heat flux against freestream velocity for nose radii from 0.1 to 3 metres, with the run point marked at 3378 metres per second and 16.14 watts per square centimetre for the 1.5 metre baseline nose. Panel (b) shows heat flux against nose radius at three fixed velocities, illustrating the inverse square-root dependence on nose radius.}}%
 \includegraphics[width=0.9\textwidth]{figures/sutton_graves_parametric.png}%
 \EndAccSupp{}%
-    \caption{Parametric evaluation of the Sutton--Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}) at $C_{SG} = 1.83 \times 10^{-4}$ and $h = 51.8$~km. (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$--$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 run condition ($R_n = 1.5$~m, $V_{\infty} = 3.378$~km/s) is marked, giving $\dot{q}_s = 16.14$~W/cm$^2$. (Right) Variation of $\dot{q}_s$ with nose radius at three fixed velocities, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
+    \caption{Parametric evaluation of the Sutton--Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves_lit}) at $C_{SG} = 1.83 \times 10^{-4}$ and $h = 51.8$~km. (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$--$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 run condition ($R_n = 1.5$~m, $V_{\infty} = 3.378$~km/s) is marked, giving $\dot{q}_s = 16.14$~W/cm$^2$. (Right) Variation of $\dot{q}_s$ with nose radius at three fixed velocities, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
     \label{fig:sutton_graves_parametric}
 \end{figure}
 
@@ -1318,13 +1318,13 @@ Gaussian mutation perturbs a gene with probability $p_m$:
 The best individuals are copied unchanged into the next generation, so the recorded best cost is non-increasing. Constraints are handled with an exterior quadratic penalty,
 \begin{equation}
     J_{\text{constrained}}(\mathbf{x}) = J(\mathbf{x}) + \sum_{j=1}^{n_g} \lambda_j \cdot \phi_j\!\left(g_j(\mathbf{x})\right),
-    \label{eq:penalty}
+    \label{eq:penalty_lit}
 \end{equation}
 \noindent where $\phi_j(g_j) = 0$ if $g_j \leq 0$ (feasible) and $\phi_j(g_j) = g_j^2$ otherwise (infeasible). A penalty rather than a hard filter lets the population pass through an infeasible region on its way to a feasible one, which matters when the feasible set is narrow.
 
 \subsection{Cost Function and Optimization Objective}
 
-The optimization objective is a scalar cost that folds the competing physical requirements into one number. Each requirement is normalized by a reference value, weighted, and summed, and the constraint penalties of Eq.~\eqref{eq:penalty} are added:
+The optimization objective is a scalar cost that folds the competing physical requirements into one number. Each requirement is normalized by a reference value, weighted, and summed, and the constraint penalties of Eq.~\eqref{eq:penalty_lit} are added:
 \begin{equation}
     J(\mathbf{x}) = \sum_{m} W_m \, \frac{f_m(\mathbf{x})}{f_{m,ref}} + \sum_{j} \Lambda_j \, \phi_j\!\left(g_j(\mathbf{x})\right),
     \label{eq:cost_function}

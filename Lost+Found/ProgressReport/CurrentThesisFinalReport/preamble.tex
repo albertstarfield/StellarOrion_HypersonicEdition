@@ -4,7 +4,7 @@
 % remain exposed to assistive technology) while suppressing the red border box
 % that pdfborder otherwise paints around every \ref, which is a print and
 % screen-reader visual defect in a submitted thesis.
-\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=true,colorlinks=false]{hyperref}
+\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=page,colorlinks=false]{hyperref}
 
 \usepackage[htt]{hyphenat}
 \usepackage{listing}
@@ -36,6 +36,7 @@
 \usepackage{indentfirst}
 %\setlength{\parindent}{0.6cm}
 \usepackage{parskip}
+\usepackage{tocloft}
 \usepackage[titletoc]{appendix}
 \usepackage{cite}          % buat cite pake BibTex
 % Citation format switched from APA (apacite) to IEEE: apacite is no
@@ -53,6 +54,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}   % biar bisa kombinasi font
+\usepackage{lmodern}        % T1 Latin Modern: complete cmtt shapes
 \usepackage{mathptmx}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -93,7 +95,6 @@
 \titlespacing*{\chapter}{0pt}{-1.5\baselineskip}{1em}
 
 %menambahkan titik titik di daftar isi, gambar, tabel
-\usepackage{tocloft}
 \renewcommand{\cftpartleader}{\dotfill}
 \renewcommand{\cftpartafterpnum}{\cftparfillskip}
 \renewcommand{\cftchapleader}{\dotfill} 

@@ -316,7 +316,7 @@ upper bound; the pass-2 candidate passes it with a wide margin.
     \caption{Two-pass outcome of the recorded GA campaign (2026-10-21): the pass-1 candidate and its
     DSMC verdict, the bounded correction factor, and the pass-2 candidate and its DSMC verdict.}
     \label{tab:ga_two_pass}
-    \begin{tabular}{lrr}
+    \begin{tabularx}{\textwidth}{Xrr}
         \toprule
         \textbf{Quantity} & \textbf{Value} & \textbf{Reference} \\
         \midrule
@@ -334,7 +334,7 @@ upper bound; the pass-2 candidate passes it with a wide margin.
         Pass-2 recorded drag coefficient $C_d$ & 2.7813 & 1.76551 \\
         Pass-2 peak deceleration (g) & 8.357 & 22.720 \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 Against the IRVE-3 reference the pass-2 design lowers the total heat load by $29.08\,\%$, the
@@ -352,7 +352,10 @@ coefficient is higher: the comparison is one of coefficients, and the vehicle th
 coefficient is much larger. The DSMC flies every candidate on the reference's matched trajectory, so a
 vehicle of twice the reference diameter is flown on a flight path computed for a different vehicle; the
 self-consistency of the trajectory and the geometry is therefore a limitation of the present gate, not a
-property of the design.
+property of the design. The pass-2 optimum also lies on the boundary of the analytic search box rather
+than in its interior: the body radius sits at the box ceiling (3.0000\,m, the clamp of the projection onto
+the analytic box) and the torus radius at its floor (0.0500\,m), so the reported design is
+boundary-limited and a wider search box is required before the optimum can be called interior.
 
 \subsection{Interpretation of the Trade-Off}
 The campaign's headline result is a +2.14\,\% gain in drag coefficient bought with a +5.96\,\% rise in the screening heat load, for a $9.19\,\%$ reduction in composite cost. The gain is not free: it is bought by a smaller body ($D = 2.6719$\,m against the IRVE-3 $3.0$\,m) and a blunter nose ($R_n = 0.4898$\,m against $0.55$\,m), which is exactly the direction the drag-reward term of $J(\mathbf{x})$ pays for.
