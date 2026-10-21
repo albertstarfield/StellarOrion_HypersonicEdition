@@ -1884,8 +1884,15 @@ package body StellarOrion_Optimization is
     --   [3] Eshelman, L.J. & Schaffer, J.D. 1993 (BLX-alpha crossover).
     -- ============================================================================
     begin
-      --  Seed the RNG with a time-based seed
-      Reset (Gen);
+      --  Seed the RNG deterministically with the configured seed.
+      --
+      --  WHY: a CLOCK seed made every campaign irreproducible (the gate's
+      --  re-run drew a different winner, which invalidated the first DSMC
+      --  validation).  With a fixed seed the campaign, its winner and its
+      --  validation are reproducible.
+      --  [Citation: Ada 2022 RM A.4.3 - Reset (Gen, Initiator) seeds the
+      --  generator from an integer initiator.]
+      Reset (Gen, Integer (Config.Seed));
       --  The count is published as soon as the trace starts so that an
       --  exception on the error path still leaves the caller with a
       --  defined (empty) history.
@@ -4437,6 +4444,7 @@ package body StellarOrion_Optimization is
       Config : constant GA_Config :=
         (Population_Size  => 50,
          Max_Generations  => 200,
+         Seed             => 42,
          Mutation_Rate    => 0.1,
          Crossover_Rate   => 0.7,
          Elite_Count      => 2,
@@ -5208,7 +5216,8 @@ package body StellarOrion_Optimization is
       Distinct : Natural;
       Stratum  : Natural;
    begin
-      Float_Random.Reset (Gen);
+      --  A fixed seed keeps the LHS seeding test deterministic.
+      Float_Random.Reset (Gen, 42);
       Seed_LHS_Population (Pop, N, Gen);
 
       --  The Latin property: every CONTINUOUS gene must occupy N DISTINCT

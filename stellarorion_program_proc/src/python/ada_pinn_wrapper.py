@@ -1335,6 +1335,7 @@ def run_sbo_ga(
     cd_ref: float | None = None,
     calibration_path: str | None = None,
     heat_load_weight: float = 1.0,
+    seed: int = 42,
 ) -> dict[str, Any]:
     """Run the Ada SBO genetic algorithm through the stand-alone runner.
 
@@ -1405,7 +1406,7 @@ def run_sbo_ga(
     ):
         if value is not None:
             cmd += [flag, repr(float(value))]
-    cmd += ["--heat-load-weight", repr(float(heat_load_weight))]
+    cmd += ["--heat-load-weight", repr(float(heat_load_weight)), "--seed", str(seed)]
     if calibration_path is not None:
         # The runner loads the calibration itself (CALIBRATION DESIGN 2.5
         # decided against the FFI route: the Ada <-> C string conversion).
@@ -1506,6 +1507,7 @@ def run_sbo_ga(
         #  the double pass GA: J_round2(x) = J(x) + (c-1)*heat_load_ratio(x)
         #  is realised as the heat-load weight W_Heat_Load + c - 1.
         "heat_load_weight": float(data.get("heat_load_weight", heat_load_weight)),
+        "seed": int(seed),
         "history": history,
     }
 

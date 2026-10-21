@@ -45,7 +45,9 @@ USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import argparse
+import csv
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -214,7 +216,7 @@ def _load_validation_refs() -> dict[str, float]:
 #        there is never a fabricated verdict (no silent failure).
 #    A4: PASS  <=>  q_hybrid <= q_target  (the DSMC+PINN_AUX heat load of
 #        the optimized geometry must not exceed the validated target).
-#    A5: Correction factor c = clamp(q_hybrid / q_analytic, 0.5, 2.0):
+#    A5: Correction factor c = clamp(q_hybrid / q_analytic, 0.5, 2.0):#    A5: Correction factor c = clamp(dsmc_peak_flux / sg_flux, 0.5, 2.0):
 #        a bounded multiplicative bias term, so one bad simulation
 #        cannot collapse or explode the round-2 objective.
 #
@@ -320,6 +322,7 @@ class _GateBOKwargs(TypedDict):
 _HEAT_LOAD_WEIGHT_BASE = 1.0
 
 _GA_POPULATION_SIZE = 50
+_GA_SEED = 42  # the GA's fixed RNG seed (reproducible campaigns)
 _GA_MAX_GENERATIONS = 200
 
 _GATE_BO_KWARGS: _GateBOKwargs = {
@@ -814,7 +817,58 @@ def _gate_verdict(
     }
 
 
-def _correction_factor(q_hybrid: "float", q_analytic: "float") -> float:
+def _load_hybrid_flux(csv_path: "str") -> "tuple[float, float]":
+    """Return (DSMC peak surface flux, Sutton-Graves prediction) [W/m^2].
+
+    Both values come from the SAME row of the SAME CSV, so they describe
+    the SAME flight state and the SAME geometry:
+
+      * ``heatflux_max_Wm2``   - the peak surface heat flux the DSMC
+        measured on the flown vehicle (the convective load the correlation
+        is supposed to predict);
+      * ``heat_flux_sg_Wm2``   - the Sutton-Graves prediction for the flown
+        nose radius at the run state (the analytic side).
+
+    AXIOM A1: the ratio of the two is the heat-flux FIDELITY ratio - it is
+      dimensionless, it is evaluated on one state, and it is non-zero
+      whenever the DSMC measured a non-zero peak flux.
+    AXIOM A2: the two quantities come from one row of one file, so they
+      cannot describe different flights or different geometries.
+
+    Parameters:
+        csv_path: path of the run's validation_timeseries.csv.
+
+    Returns:
+        (dsmc_peak_flux_Wm2, sutton_graves_flux_Wm2).
+
+    Raises:
+        FileNotFoundError: the CSV does not exist.
+        RuntimeError: the file has no rows, the columns are missing, or a
+          value is non-positive (a silent fallback would hide a broken run).
+    """
+    if not os.path.isfile(csv_path):
+        raise FileNotFoundError(f"validation CSV not found: {csv_path}")
+    with open(csv_path, newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    if not rows:
+        raise RuntimeError(f"validation CSV has no data rows: {csv_path}")
+    last = rows[-1]
+    for col in ("heatflux_max_Wm2", "heat_flux_sg_Wm2"):
+        if col not in last:
+            raise RuntimeError(f"validation CSV lacks the column {col}: {csv_path}")
+    peak = float(last["heatflux_max_Wm2"])
+    sg = float(last["heat_flux_sg_Wm2"])
+    if not (math.isfinite(peak) and math.isfinite(sg)) or peak <= 0.0 or sg <= 0.0:
+        raise RuntimeError(
+            f"non-positive or non-finite heat flux in {csv_path}: "
+            f"heatflux_max_Wm2={peak}, heat_flux_sg_Wm2={sg}"
+        )
+    return peak, sg
+
+
+
+def _correction_factor(
+    q_hybrid: "float", q_analytic: "float") -> float:
     """Bounded multiplicative correction c = clamp(q_h/q_a, 0.5, 2.0).
 
     AXIOM A5 / THEORY T3 (Kennedy & O'Hagan 2000, Biometrika 87(1)):
@@ -824,6 +878,9 @@ def _correction_factor(q_hybrid: "float", q_analytic: "float") -> float:
 
     Args:
         q_hybrid: fresh high-fidelity heat load [J/cm^2].
+        q_hybrid: the DSMC's own peak surface convection flux [W/m^2].
+        q_analytic: the Sutton-Graves prediction for the same geometry and
+          state [W/m^2].  The ratio is the heat-flux FIDELITY ratio.
         q_analytic: analytic prediction [J/cm^2].
 
     Returns:
@@ -1249,14 +1306,21 @@ def _hybrid_gate(
         hybrid = _load_hybrid_q(str(info["unified_json"]))
         verdict = _gate_verdict(
             float(hybrid["q_hybrid_Jcm2"]), q_analytic, q_target)
-        correction = _correction_factor(
-            float(hybrid["q_hybrid_Jcm2"]), q_analytic)
+        #  The correction factor is the heat-flux FIDELITY ratio at ONE state:
+        #  the DSMC's own peak surface convection flux over the Sutton-Graves
+        #  prediction for the flown nose radius (both from the same CSV row).
+        flux_dsmc_Wm2, flux_sg_Wm2 = _load_hybrid_flux(
+            os.path.join(paths["root"], paths["out_dir_rel"],
+                         "validation_timeseries.csv"))
+        correction = _correction_factor(flux_dsmc_Wm2, flux_sg_Wm2)
     except (RuntimeError, ValueError) as exc:
         return _abort(1, f"verdict computation failed: {exc}")
     verdict["cd_hybrid"] = hybrid["cd_hybrid"]
     verdict["source_json"] = hybrid["source_json"]
     block["verdict"] = verdict
     block["correction_factor"] = correction
+    block["correction_flux_dsmc_Wm2"] = flux_dsmc_Wm2
+    block["correction_flux_sg_Wm2"] = flux_sg_Wm2
     passed = bool(verdict["passed"])
     print(f"  q_hybrid   = {verdict['q_hybrid_Jcm2']:.4f} J/cm^2 "
           f"(DSMC+PINN_AUX validation run; the heat-load column is the "
@@ -1303,6 +1367,8 @@ def _hybrid_gate(
               f"{float(correction):.6f})")
         try:
             result2 = run_sbo_ga(
+                seed=_GA_SEED,
+
                 population_size=_GA_POPULATION_SIZE,
                 max_generations=_GA_MAX_GENERATIONS,
                 calibration_path=args.calibration,
@@ -1617,6 +1683,8 @@ def main(argv: "list[str] | None" = None) -> int:
         if args.calibration:
             print(f"  Calibration file: {args.calibration}")
         result = run_sbo_ga(
+            seed=_GA_SEED,
+
             population_size=_GA_POPULATION_SIZE,
             max_generations=_GA_MAX_GENERATIONS,
             calibration_path=args.calibration,
@@ -1799,6 +1867,7 @@ def main(argv: "list[str] | None" = None) -> int:
                 "acquisition": "none (population GA with elitism)",
                 "initial_sampling": "Latin Hypercube (LHS-only seeding)",
                 "population_size": _GA_POPULATION_SIZE,
+                    "seed": _GA_SEED,
                 "max_generations": _GA_MAX_GENERATIONS,
                 "optimizer": args.optimizer,
             }

@@ -235,6 +235,9 @@ procedure StellarOrion_GA_Runner is
    Heat_Load_Weight_Value : Float := 1.0;
    Heat_Load_Weight_Seen  : Boolean := False;
 
+   --  RNG seed of the GA (AXIOM A7: the campaign is reproducible).
+   Seed_Value : Positive := 42;
+
 begin
    --  ---- command line -------------------------------------------------
    for I in 1 .. Argument_Count loop
@@ -244,6 +247,8 @@ begin
          Generations := Positive'Value (Argument (I + 1));
       elsif Argument (I) = "--target-beta" and then I < Argument_Count then
          Target_Beta := Float'Value (Argument (I + 1));
+      elsif Argument (I) = "--seed" and then I < Argument_Count then
+         Seed_Value := Positive'Value (Argument (I + 1));
       elsif Argument (I) = "--q-target" and then I < Argument_Count then
          Q_Target := Float'Value (Argument (I + 1));
          Have_Refs := True;
@@ -335,6 +340,7 @@ begin
    end if;
 
    Config.Population_Size := Population;
+      Config.Seed := Seed_Value;
    Config.Max_Generations := Generations;
    Config.Mutation_Rate := 0.1;
    Config.Crossover_Rate := 0.7;
@@ -406,6 +412,7 @@ begin
              & ", ""heat_load_weight"": " & J (Heat_Load_Weight_Value)
              & ", ""calibration_active"": "
              & (if Calibration_Is_Active then "true" else "false")
+             & ", ""seed"": " & Integer'Image (Integer (Seed_Value))
              & ", ""pipeline"": ""double pass GA"""
              & ", ""history"": [");
    if Count > 0 then

@@ -216,6 +216,17 @@ package StellarOrion_Optimization is
       Tournament_Size : Positive := 3;
       Convergence_Gens: Natural  := 20;
       Convergence_Tol : Float    := 1.0e-6;
+      --  RNG seed of the genetic algebra.
+      --
+      --  WHY: the GA used to be seeded from the CLOCK, so every campaign
+      --  drew a different search path and NO run could be reproduced: the
+      --  gate's re-run moved the winner and invalidated the first DSMC
+      --  validation of the previous winner.  A fixed seed makes the whole
+      --  double pass GA reproducible - the same seed yields the same
+      --  campaign, the same winner and the same validation.  The default is
+      --  42 (the answer to the Ultimate Question, and the seed the Bayesian
+      --  path already used).
+      Seed           : Positive := 42;
       --  Verbose progress reporting.
       --
       --  WHY: the GA's progress lines are written with Ada.Text_IO, and
