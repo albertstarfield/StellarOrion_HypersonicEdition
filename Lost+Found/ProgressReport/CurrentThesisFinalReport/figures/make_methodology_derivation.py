@@ -86,7 +86,7 @@ DEVIATIONS FROM THE ORIGINAL ARTWORK
        Python-engine labels with the current pipeline terms (Gaussian
        Cost Function, Genetic Algorithm, Ada GA runner, Ada core
        driven by run.py), matching chapter_03_methodology.tex sections
-       sec:axioms and sec:software_pipeline.
+       sec:theory_anchors and sec:software_pipeline.
 """
 
 from __future__ import annotations
@@ -205,13 +205,13 @@ TITLE = "Methodology Derivation from First Principles"
 # than its box (AXIOM A4). The wrapper below is the safety net.
 ROWS = (
     {
-        "label": ("LAYER 1 /", "AXIOMS"),
+        "label": ("LAYER 1 /", "THEORY ANCHORS"),
         "color": ROW_COLORS[0],
         "boxes": (
-            ("A1: Conservation", "(Mass,", "Momentum,", "Energy)"),
-            ("A2: Molecular", "Chaos", "(Stosszahlansatz)"),
-            ("A3: Continuum", "Hypothesis", "(valid for", "Kn<0.01)"),
-            ("A4: Equilibrium", "Distribution", "(MB", "statistics)"),
+            ("TA1: Conservation", "(Mass,", "Momentum,", "Energy)"),
+            ("TA2: Molecular", "Chaos", "(Stosszahlansatz)"),
+            ("TA3: Continuum", "Hypothesis", "(valid for", "Kn<0.01)"),
+            ("TA4: Equilibrium", "Distribution", "(MB", "statistics)"),
         ),
     },
     {
@@ -254,7 +254,7 @@ RED_ARROWS = ((0, 2, "data"), (2, 3, "$J$"))
 
 # Bottom legend: (label, patch colour).
 LEGEND = (
-    ("Axioms (First Principles)", LEGEND_PATCH[0]),
+    ("Theory Anchors (First Principles)", LEGEND_PATCH[0]),
     ("Governing Equations", LEGEND_PATCH[1]),
     ("Numerical Methods", LEGEND_PATCH[2]),
     ("Software Implementation", LEGEND_PATCH[3]),

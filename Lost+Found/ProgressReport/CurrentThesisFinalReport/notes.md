@@ -341,6 +341,13 @@ methodology-derivation diagram were regenerated without the PINN column,
 box, node or stage. Removal sites carry a `PINN-HIDDEN` comment. The page
 count dropped from 194 to 179 and the printed-to-PDF offset is now +25.
 
+Terminology (2026-10-21). The first-principles premises are called
+"theory anchors", not "axioms", throughout the thesis. Section 3.1, its
+subsection, Table 3.1, the derivation-chain steps, the methodology-derivation
+diagram (LAYER 1 / THEORY ANCHORS, TA1 to TA4, legend) and the
+governing-equation chips and footer (TA1 to TA6, "Theory-anchor references")
+all use the new name. Labels are sec:theory_anchors and tab:theory_anchors.
+
 Optimizer conversion (2026-10-21). The main pipeline is analytical: the
 headline heat flux is the closed-form Sutton-Graves correlation, not a
 solver-resolved field. The default optimiser is now a simple genetic

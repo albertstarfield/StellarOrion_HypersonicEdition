@@ -1,54 +1,54 @@
 \clearpage
 \chapter{METHODOLOGY}
 
-\section{Research Axioms and First Principles}
-\label{sec:axioms}
+\section{Theory Anchors and First Principles}
+\label{sec:theory_anchors}
 
-Before detailing the computational framework, this section establishes the foundational axioms from which the entire methodology is derived. Each axiom is grounded in established physical theory and validated against the literature reviewed in Chapter~\ref{chap:literature}. The derivation chain---from fundamental kinetic theory to the implemented software pipeline---is summarized in Figure~\ref{fig:methodology_derivation}.
+Before detailing the computational framework, this section establishes the foundational theory anchors from which the entire methodology is derived. Each anchor is grounded in established physical theory and validated against the literature reviewed in Chapter~\ref{chap:literature}. The derivation chain---from fundamental kinetic theory to the implemented software pipeline---is summarized in Figure~\ref{fig:methodology_derivation}.
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each research axiom to the equation or solver step that implements it.}}%
+    \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each theory anchor to the equation or solver step that implements it.}}%
 \includegraphics[width=\textwidth]{figures/methodology_derivation.png}%
 \EndAccSupp{}%
-    \caption{Methodology derivation from first principles: axioms $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
+    \caption{Methodology derivation from first principles: theory anchors $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
     \label{fig:methodology_derivation}
 \end{figure}
 
-\subsection{Axiom Set}
-The following axioms form the logical foundation of this research. Each is stated as a proposition, derived from physical theory, and traced to its literature basis.
+\subsection{Theory Anchors}
+The following theory anchors form the logical foundation of this research. Each is stated as a proposition, derived from physical theory, and traced to its literature basis.
 
 \begin{table}[H]
 \centering
-\caption{Research axioms derived from first principles and their literature basis.}
-\label{tab:research_axioms}
+\caption{Theory anchors derived from first principles and their literature basis.}
+\label{tab:theory_anchors}
 \begin{tabularx}{\textwidth}{@{}c >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}p{0.24\textwidth}@{}}
 \toprule
-\textbf{ID} & \textbf{Axiom} & \textbf{Physical Basis} & \textbf{Literature Basis} \\ \midrule
-A1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelor (1967), Anderson (1995) \\
-A2 & Molecular chaos (Stosszahlansatz) & Statistical mechanics & Boltzmann (1872), Bird (1994) \\
-A3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (1988), Bird (1994) \\
-A4 & Equilibrium distribution follows Maxwell--Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
-A5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
-A6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
+\textbf{ID} & \textbf{Theory Anchor} & \textbf{Physical Basis} & \textbf{Literature Basis} \\ \midrule
+TA1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelor (1967), Anderson (1995) \\
+TA2 & Molecular chaos (Stosszahlansatz) & Statistical mechanics & Boltzmann (1872), Bird (1994) \\
+TA3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (1988), Bird (1994) \\
+TA4 & Equilibrium distribution follows Maxwell--Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
+TA5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
+TA6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \subsection{Derivation Chain}
-The methodology is constructed by chaining the axioms through a sequence of mathematical derivations. Each step introduces a specific equation or method that is implemented in the software pipeline.
+The methodology is constructed by chaining the theory anchors through a sequence of mathematical derivations. Each step introduces a specific equation or method that is implemented in the software pipeline.
 
-\paragraph{Step 1: Boltzmann Equation (A1, A2, A4).}
+\paragraph{Step 1: Boltzmann Equation (TA1, TA2, TA4).}
 The Boltzmann transport equation governs the evolution of the molecular velocity distribution function $f(\mathbf{x}, \mathbf{v}, t)$:
 \begin{equation}
 \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{x}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\delta f}{\delta t}\right)_{\text{coll}}
 \label{eq:boltzmann_dsmc}
 \end{equation}
-where the right-hand side is the collision integral, evaluated under the assumption of molecular chaos (Axiom~A2). The equilibrium solution is the Maxwell--Boltzmann distribution (Axiom~A4).
+where the right-hand side is the collision integral, evaluated under the assumption of molecular chaos (anchor TA2). The equilibrium solution is the Maxwell--Boltzmann distribution (anchor TA4).
 
-\paragraph{Step 2: DSMC Method (A6).}
-Bird's Direct Simulation Monte Carlo method~\cite{bird1994molecular} provides a stochastic solution to Equation~\eqref{eq:boltzmann_dsmc}. As the number of simulated particles $N \to \infty$, the DSMC solution converges to the exact Boltzmann solution (Axiom~A6). The DSMC algorithm proceeds in three steps per time step:
+\paragraph{Step 2: DSMC Method (TA6).}
+Bird's Direct Simulation Monte Carlo method~\cite{bird1994molecular} provides a stochastic solution to Equation~\eqref{eq:boltzmann_dsmc}. As the number of simulated particles $N \to \infty$, the DSMC solution converges to the exact Boltzmann solution (anchor TA6). The DSMC algorithm proceeds in three steps per time step:
 \begin{enumerate}
     \item \textbf{Advection:} Particles are moved ballistically for $\Delta t$.
     \item \textbf{Collisions:} Pairs are selected within each cell using the VSS collision model.
@@ -78,14 +78,14 @@ where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $
 The closed-form cost of Eq.~\eqref{eq:ga_cost} is minimized by a simple genetic algorithm: a population of fifty designs is evolved with tournament selection, uniform crossover, Gaussian mutation and elitism until the best cost stagnates. Because the cost is analytic, an individual is evaluated without a solver call, and the search therefore explores thousands of candidate geometries rather than a handful of DSMC cases. A fifteen-point central composite screen is evaluated first to rank the factors and to fit the linear response surface used for pre-screening.
 
 
-Figure~\ref{fig:governing_equations} summarizes the full derivation chain from kinetic theory to optimization, showing the governing equation at each step and the axiom that anchors it.
+Figure~\ref{fig:governing_equations} summarizes the full derivation chain from kinetic theory to optimization, showing the governing equation at each step and the theory anchor behind it.
 
 \begin{figure}[H]
     \centering
     \BeginAccSupp{method=escape,ActualText={Panel of the governing equations used in the study, listing the continuity, momentum and energy equations together with the state and transport relations.}}%
 \includegraphics[width=\textwidth]{figures/governing_equations.png}%
 \EndAccSupp{}%
-    \caption{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier--Stokes continuum limit, Sutton--Graves engineering correlation to GA-based survivability optimization. Each layer is anchored by the research axioms defined in Table~\ref{tab:research_axioms}.}
+    \caption{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier--Stokes continuum limit, Sutton--Graves engineering correlation to GA-based survivability optimization. Each layer is anchored by the theory anchors defined in Table~\ref{tab:theory_anchors}.}
     \label{fig:governing_equations}
 \end{figure}
 

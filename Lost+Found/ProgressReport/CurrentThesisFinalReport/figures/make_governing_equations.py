@@ -116,7 +116,7 @@ TITLE_PT = 13.0
 BOX_TITLE_PT = 9.0
 CHIP_PT = 9.0
 EQ_PT = 11.5
-AXIOM_PT = 9.0
+AXIOM_PT = 8.5
 FOOTER_PT = 9.0
 MIN_PRINTED_PT = 8.0
 
@@ -179,15 +179,15 @@ EQUATIONS = (
 Q_DEF = r"$Q(f,f) = \int (f' f_1' - f f_1)\, g\, \sigma\, d\Omega\, d\mathbf{v}_1$"
 
 AXIOMS = (
-    ("A1:", "Conservation"),
-    ("A2:", "Molecular Chaos"),
-    ("A3:", "Continuum Assumption"),
-    ("A4:", "M-B Distribution"),
-    ("A5:", "Empirical Heating"),
-    ("A6:", "Convergence Guarantee"),
+    ("TA1:", "Conservation"),
+    ("TA2:", "Molecular Chaos"),
+    ("TA3:", "Continuum Assumption"),
+    ("TA4:", "M-B Distribution"),
+    ("TA5:", "Empirical Heating"),
+    ("TA6:", "Convergence Guarantee"),
 )
 
-FOOTER = "Bottom: Axiom references (Table 3.1)    Top: Transition methodology"
+FOOTER = "Bottom: Theory-anchor references (Table 3.1)    Top: Transition methodology"
 
 TMP_NAME = "governing_equations_tmp.png"
 FINAL_NAME = "governing_equations.png"
