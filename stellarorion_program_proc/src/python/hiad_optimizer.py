@@ -216,9 +216,13 @@ def _load_validation_refs() -> dict[str, float]:
 #        there is never a fabricated verdict (no silent failure).
 #    A4: PASS  <=>  q_hybrid <= q_target  (the DSMC+PINN_AUX heat load of
 #        the optimized geometry must not exceed the validated target).
-#    A5: Correction factor c = clamp(q_hybrid / q_analytic, 0.5, 2.0):#    A5: Correction factor c = clamp(dsmc_peak_flux / sg_flux, 0.5, 2.0):
+#    A5: Correction factor c = clamp(dsmc_peak_flux / sg_flux, 0.5, 2.0):
 #        a bounded multiplicative bias term, so one bad simulation
-#        cannot collapse or explode the round-2 objective.
+#        cannot collapse or explode the round-2 objective.  BOTH terms
+#        are read from the SAME validation run (the solver's own peak
+#        surface convection flux and the Sutton-Graves prediction for the
+#        flown nose radius at the run state), so the ratio prices the
+#        heat-flux MODEL and not the flight-state difference.
 #
 #  THEORIES:
 #    T1: By A4 the verdict is a pure function of two positive floats
@@ -910,20 +914,26 @@ def _load_hybrid_flux(csv_path: "str") -> "tuple[float, float]":
 
 
 def _correction_factor(
-    q_hybrid: "float", q_analytic: "float") -> float:
-    """Bounded multiplicative correction c = clamp(q_h/q_a, 0.5, 2.0).
+    flux_dsmc_Wm2: "float", flux_sg_Wm2: "float") -> float:
+    """Bounded multiplicative correction c = clamp(q_dsmc/q_sg, 0.5, 2.0).
 
     AXIOM A5 / THEORY T3 (Kennedy & O'Hagan 2000, Biometrika 87(1)):
     the ratio of fidelities is the first-order discrepancy term; the
     clamps guarantee one pathological simulation cannot make round 2
     minimize nonsense (safety fallback, even though it 'seems ignorable').
 
+    Both inputs are read from the SAME row of the SAME validation run:
+    the solver's own peak surface convection flux and the Sutton-Graves
+    prediction for the flown nose radius at the run state.  The ratio is
+    therefore a heat-flux FIDELITY ratio.  A cross-state ratio (for
+    example the analytic heat load against the validation heat load)
+    would measure the flight-state difference instead, and was pinned at
+    the lower clamp for every geometry.
+
     Args:
-        q_hybrid: fresh high-fidelity heat load [J/cm^2].
-        q_hybrid: the DSMC's own peak surface convection flux [W/m^2].
-        q_analytic: the Sutton-Graves prediction for the same geometry and
-          state [W/m^2].  The ratio is the heat-flux FIDELITY ratio.
-        q_analytic: analytic prediction [J/cm^2].
+        flux_dsmc_Wm2: the DSMC's own peak surface convection flux [W/m^2].
+        flux_sg_Wm2: the Sutton-Graves prediction for the same geometry and
+          state [W/m^2].
 
     Returns:
         float in [0.5, 2.0].
@@ -934,7 +944,8 @@ def _correction_factor(
     References:
         - https://docs.python.org/3/library/functions.html#min
     """
-    for name, val in (("q_hybrid", q_hybrid), ("q_analytic", q_analytic)):
+    for name, val in (("flux_dsmc_Wm2", flux_dsmc_Wm2),
+                      ("flux_sg_Wm2", flux_sg_Wm2)):
         if not isinstance(val, (int, float)) or not (
             0.0 < float(val) < float("inf")
         ):
@@ -942,10 +953,35 @@ def _correction_factor(
                 f"correction factor input invalid: {name}={val!r} must be "
                 f"a positive finite number"
             )
-    if q_analytic == 0:
-        raise ValueError("correction factor: q_analytic must be non-zero")
-    raw = q_hybrid / q_analytic
+    if flux_sg_Wm2 == 0:
+        raise ValueError(
+            "correction factor: flux_sg_Wm2 must be non-zero")
+    raw = flux_dsmc_Wm2 / flux_sg_Wm2
     return min(max(raw, _GATE_CORR_MIN), _GATE_CORR_MAX)
+
+
+def _deciding_verdict(
+    block: "dict[str, object]", passed_pass1: bool,
+) -> tuple[bool, str]:
+    """Return (passed, pass_label) for the verdict that decides the exit.
+
+    AXIOM (double pass GA): the pipeline's verdict is the FINAL pass's
+    verdict when the round-2 validation ran.  The pass-1 verdict is a
+    DIAGNOSTIC: failing it is the EXPECTED trigger of the correction
+    factor, not a pipeline failure.  Without this rule a successful
+    two-pass run reports "failed" because its first pass did its job.
+
+    Args:
+        block: the gate block (it may carry "verdict_round2").
+        passed_pass1: the pass-1 verdict.
+
+    Returns:
+        (passed, "round2" | "pass1").
+    """
+    r2 = block.get("verdict_round2")
+    if isinstance(r2, dict) and "passed" in r2:
+        return bool(r2["passed"]), "round2"
+    return bool(passed_pass1), "pass1"
 
 
 def _make_corrected_cost(correction: "float"):
@@ -1576,7 +1612,14 @@ def _hybrid_gate(
               f"(q_hybrid={v2['q_hybrid_Jcm2']:.4f})")
 
     # ---------- PERSIST --------------------------------------------------
-    block["exit_code"] = 0 if (passed or args.allow_fail) else 3
+    #  AXIOM (double pass GA): the exit code follows the DECIDING verdict.
+    #  When the round-2 validation ran, that is the round-2 verdict: the
+    #  pass-1 verdict is a diagnostic whose failure is the expected trigger
+    #  of the correction factor.  Without this rule the operator sees exit 3
+    #  ("the run failed") for a two-pass pipeline that actually succeeded.
+    deciding_passed, deciding_pass = _deciding_verdict(block, passed)
+    block["deciding_pass"] = deciding_pass
+    block["exit_code"] = 0 if (deciding_passed or args.allow_fail) else 3
     block["allow_fail"] = bool(args.allow_fail)
     block["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     if not _write_gate_block(output_path, block,
@@ -1584,14 +1627,17 @@ def _hybrid_gate(
         return 1
     print(f"\n  Gate verdict stored in: {output_path}")
     print("=" * 72)
-    if passed:
+    if deciding_pass == "round2" and not passed:
+        print("  PASS-1 verdict FAIL (expected: it triggered the "
+              "correction factor) and the ROUND-2 verdict PASSED.")
+    if deciding_passed:
         return 0
     if args.allow_fail:
-        print("  Verdict FAIL but --allow-fail given -> exit 0.",
-              file=sys.stderr)
+        print(f"  Verdict FAIL ({deciding_pass}) but --allow-fail given "
+              "-> exit 0.", file=sys.stderr)
         return 0
-    print("  VERDICT FAIL -> exit 3 (use --allow-fail to soften).",
-          file=sys.stderr)
+    print(f"  VERDICT FAIL ({deciding_pass}) -> exit 3 (use --allow-fail "
+          "to soften).", file=sys.stderr)
     return 3
 
 
@@ -2233,6 +2279,14 @@ if __name__ == "__main__":
     assert _correction_factor(0.4, 1.0) == _GATE_CORR_MIN, "low clamp"
     assert _correction_factor(2.5, 1.0) == _GATE_CORR_MAX, "high clamp"
     assert abs(_correction_factor(1.2, 1.0) - 1.2) < 1e-12, "identity in-range"
+    # Exit-code semantics: the DECIDING verdict decides (the round-2
+    # verdict when the round-2 validation ran, else the pass-1 verdict).
+    assert _deciding_verdict({}, True) == (True, "pass1")
+    assert _deciding_verdict({}, False) == (False, "pass1")
+    assert _deciding_verdict(
+        {"verdict_round2": {"passed": True}}, False) == (True, "round2")
+    assert _deciding_verdict(
+        {"verdict_round2": {"passed": False}}, True) == (False, "round2")
     # Corrected cost at c == 1.0 is exactly J(x) (THEORY T2)
     cost_c1 = _make_corrected_cost(1.0)
     assert abs(cost_c1(_DEFAULT_R_N, _DEFAULT_R_TOR,
@@ -2262,7 +2316,8 @@ if __name__ == "__main__":
     assert not a_plain.allow_fail and not a_plain.validate_round2
     assert not a_plain.force and a_plain.steps == _GATE_STEPS_DEFAULT, a_plain
     print("  Gate self-tests: verdict PASS/edge/FAIL + error path, "
-          "clamp bounds, c=1 identity, JSON round-trip, CLI defaults -- OK")
+          "clamp bounds, c=1 identity, JSON round-trip, CLI defaults, "
+          "deciding-verdict exit semantics -- OK")
 
     print("\nAll self-tests passed.\n")
 

@@ -1410,7 +1410,8 @@ def _write_results_readme() -> None:
                   "optimization**: pass 1 is an LHS-seeded genetic algorithm "
                   "over the ANALYTIC screening model (MODEL SPACE); the DSMC "
                   "residual of pass 1 becomes the bounded correction factor "
-                  "c = clamp(q_hybrid/q_analytic, 0.5, 2.0); pass 2 re-runs "
+                  "c = clamp(q_flux,DSMC/q_flux,SG, 0.5, 2.0) (both terms "
+                  "from the same validation run); pass 2 re-runs "
                   "the GA analytically with that factor; DSMC validates pass 1 "
                   "and pass 2 (PHYSICAL SPACE).")
     lines.append("")

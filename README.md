@@ -226,8 +226,12 @@ post-optimization gate (plan Parts B/C):
    prediction error `(q_hybrid − q_analytic)/q_analytic`; stored as
    `hybrid_validation.verdict` in `hiad_optimization_results.json`.
 5. **Multi-fidelity correction** (Kennedy & O'Hagan 2000): bounded factor
-   `c = clamp(q_hybrid/q_analytic, 0.5, 2.0)` is applied to J(x)'s heat-load
+   `c = clamp(q_flux,DSMC/q_flux,SG, 0.5, 2.0)` is applied to J(x)'s heat-load
    term and the optimizer re-runs (**round 2**, stored as `optimized_round2`).
+   Both terms are read from the SAME validation run (the solver's own peak
+   surface convection flux and the Sutton-Graves prediction for the flown
+   nose radius at the run state), so the ratio prices the heat-flux model
+   and not the flight-state difference.
 
 **Official gate result (2026-09-26): PASS** — validated geometry
 R_N = 2.971 m, r_tor = 0.088 m, half_cone = 40.15°: hybrid Q = **77.93 J/cm²**

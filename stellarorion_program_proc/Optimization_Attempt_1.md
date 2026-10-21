@@ -269,8 +269,10 @@ a bounded multi-fidelity correction and re-optimizes (round 2).
    plus `prediction_error_pct = 100·(q_hybrid − q_analytic)/q_analytic`.
    Stored under `hybrid_validation.verdict` in the results JSON.
 6. **Correction + round 2 (Kennedy & O'Hagan 2000)** —
-   `c = clamp(q_hybrid/q_analytic, 0.5, 2.0)`; `J_round2(x) = J(x) +
-   (c−1)·heat_load_ratio(x)` re-optimized with the same 70-evaluation BO;
+   `c = clamp(q_flux,DSMC/q_flux,SG, 0.5, 2.0)` (both terms read from the same
+   validation run); `J_round2(x) = J(x) +
+   (c−1)·heat_load_ratio(x)` re-optimized with the same genetic-algebra engine
+   (the double pass GA);
    stored as top-level `optimized_round2` with both corrected and
    uncorrected costs.
 7. **Optional** `--validate-round2` repeats legs 2–4 on the round-2 geometry
@@ -280,9 +282,9 @@ a bounded multi-fidelity correction and re-optimizes (round 2).
 
 | Code | Meaning |
 |------|---------|
-| 0 | success / verdict PASS / `--dry-run` OK / FAIL suppressed by `--allow-fail` |
+| 0 | success / the DECIDING verdict PASS / `--dry-run` OK / FAIL suppressed by `--allow-fail` |
 | 1 | infrastructure or child-process failure (never a fabricated verdict) |
-| 3 | verdict FAIL (`q_hybrid > q_target`) without `--allow-fail` |
+| 3 | the DECIDING verdict FAIL without `--allow-fail` — the round-2 verdict when the round-2 validation ran, else the pass-1 verdict |
 
 ### Reproduce the gate
 

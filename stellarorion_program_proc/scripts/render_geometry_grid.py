@@ -17,7 +17,7 @@ Panel composition (88 = 1 + 15 + 70 + 1 + 1):
   [1]     Round-1 optimum                   (optimized, highlighted)
   [1]     Round-2 optimum                   (optimized_round2, highlighted)
           = the post-hybrid-gate re-optimization winner. Kennedy & O'Hagan
-            (2000) multi-fidelity correction c = clamp(q_hybrid/q_analytic)
+            (2000) multi-fidelity correction c = clamp(q_flux,DSMC/q_flux,SG)
             was applied to J(x)'s heat-load term and the optimizer re-ran;
             this is the design the gate actually converged on, so omitting it
             would misrepresent the current state of the search.

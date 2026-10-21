@@ -160,12 +160,12 @@ pipeline is defined in the source.
           ▼  q_hybrid   (fresh DSMC+PINN_AUX heat load)
    ┌────────────────────────────────────────────────────────────┐
    │ Stage 2/3  VERDICT:  PASS  ⟺  q_hybrid ≤ q_target           │
-   │ correction c = clamp(q_hybrid / q_analytic, 0.5, 2.0)      │
+   │ correction c = clamp(q_flux,DSMC / q_flux,SG, 0.5, 2.0)    │
    │           (multi-fidelity bias, Kennedy & O'Hagan 2000)    │
    └────────────────────────┬───────────────────────────────────┘
                             ▼
-   Stage 3/3  ROUND-2 BO with corrected J
-              same budget: 20 LHS + 50 EI, xi=0.01, seed 42
+   Stage 3/3  ROUND-2 GA with corrected J
+              the same genetic-algebra engine, seed 42
                             │
                             ▼
               hiad_optimization_results.json gains:
@@ -369,12 +369,14 @@ Constants: `_GATE_STEPS_DEFAULT = 2200` (line 255), `_GATE_SKIN = "scalloped"` (
 **Verdict predicate** (`_gate_verdict`, line 705): `PASS ⟺ q_hybrid ≤ q_target`, with the
 boundary counting as PASS (line 740).
 
-**Correction factor:** `c = clamp(q_hybrid / q_analytic, 0.5, 2.0)` — a bounded
+**Correction factor:** `c = clamp(q_flux,DSMC / q_flux,SG, 0.5, 2.0)` — a bounded
 multiplicative fidelity correction. This is Kennedy & O'Hagan (2000), *Biometrika* 87(1)
 1–13; the clamp stops one bad simulation leg from dragging the surrogate somewhere absurd.
-Note that `c` is currently computed from DSMC-only quantities, so it is not yet a
-multi-fidelity correction in the sense Kennedy & O'Hagan intend — the low-fidelity term it
-is meant to reconcile against a PINN surrogate does not exist (**F24–F25**).
+Both terms are read from the SAME row of the SAME validation run — the solver's own peak
+surface convection flux and the Sutton–Graves prediction for the flown nose radius at the
+run state — so the ratio prices the heat-flux model itself and not the flight-state
+difference. The earlier heat-load-ratio form recorded in **F24–F25** measured the state
+mismatch and was therefore pinned at the lower clamp for every geometry.
 
 Round 2 reruns the identical budget — 20 LHS + 50 EI at `xi = 0.01`, seed 42 — against
 `corrected_cost`, and its result is stored under `"optimized_round2"` in the results JSON.
