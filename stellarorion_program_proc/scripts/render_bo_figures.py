@@ -400,7 +400,7 @@ def _source_caption(data: dict) -> str:
     optimizer = str(config.get("optimizer", "bo"))
     label = (
         "Bayesian Optimization" if optimizer == "bo"
-        else "SBO Genetic Algorithm"
+        else "Double Pass GA"
     )
     try:
         stamp = time.strftime(
@@ -669,7 +669,7 @@ def render_convergence(data: dict, out_path: Path) -> None:
         )
     else:
         ax.set_title(
-            f"SBO Genetic Algorithm Convergence — {len(costs)} Generations\n"
+            f"Double Pass GA Convergence — {len(costs)} Generations\n"
             f"population {config.get('population_size', '?')}, "
             f"generation budget {config.get('max_generations', '?')} "
             "(parallel population, model-fidelity penalty)",

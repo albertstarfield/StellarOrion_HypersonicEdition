@@ -1408,8 +1408,14 @@ def main(argv: "list[str] | None" = None) -> int:
     """
     args = _parse_args(argv)
     print("=" * 72)
-    print("  HIAD Geometry Optimizer (Bayesian Optimization)")
-    print("  CCD Sampling + Multi-Objective Cost (J) + GP Surrogate + EI")
+    if args.optimizer == "bo":
+        print("  HIAD Geometry Optimizer (Bayesian Optimization)")
+        print("  CCD Sampling + Multi-Objective Cost (J) + GP Surrogate + EI")
+    else:
+        print("  HIAD Geometry Optimizer (double pass GA)")
+        print("  Pass 1: LHS-seeded GA over the analytic screening model")
+        print("  Pass 2: GA re-run with the DSMC-residual correction factor")
+        print("  DSMC validates pass 1 and pass 2 (one DSMC run each)")
     print("  MODEL SPACE: the CCD/GA/BO describe the ANALYTIC SCREENING "
           "MODEL.")
     print("  PHYSICAL SPACE: the vehicle is the 'DSMC+PINN_AUX validation' "
@@ -1554,9 +1560,9 @@ def main(argv: "list[str] | None" = None) -> int:
         opt_cost = float(result["cost"])
     else:
         print(
-            f"\n[5/7] Running {args.optimizer.upper()} genetic algorithm "
-            "(Ada/SPARK, parallel population evaluation) -- MODEL SPACE "
-            "(analytic screening model) ..."
+            "\n[5/7] Running double pass GA -- pass 1: the "
+            "LHS-seeded genetic algorithm (Ada/SPARK, parallel population "
+            "evaluation) -- MODEL SPACE (analytic screening model) ..."
         )
         if args.calibration:
             print(f"  Calibration file: {args.calibration}")
@@ -1731,14 +1737,17 @@ def main(argv: "list[str] | None" = None) -> int:
             }
             if args.optimizer == "bo"
             else {
+                "pipeline": "double pass GA",
                 "source": (
-                    "SBO Genetic Algorithm (Ada/SPARK, Ravenscar-parallel "
-                    "population evaluation, model-fidelity penalty)"
+                    "double pass GA (pass 1: LHS-seeded GA over "
+                    "the analytic screening model; pass 2: GA re-run with the "
+                    "DSMC-residual correction factor; DSMC validates pass 1 "
+                    "and pass 2)"
                 ),
                 "algorithm": "Genetic Algorithm (SBO)",
                 "surrogate": "Linear RSM (2^3 factorial contrast fit)",
                 "acquisition": "none (population GA with elitism)",
-                "initial_sampling": "random geometry",
+                "initial_sampling": "Latin Hypercube (LHS-only seeding)",
                 "population_size": _GA_POPULATION_SIZE,
                 "max_generations": _GA_MAX_GENERATIONS,
                 "optimizer": args.optimizer,

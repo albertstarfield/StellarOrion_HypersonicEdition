@@ -946,11 +946,12 @@
     }
   ],
   "config": {
-    "source": "SBO Genetic Algorithm (Ada/SPARK, Ravenscar-parallel population evaluation, model-fidelity penalty)",
+    "pipeline": "double pass GA",
+    "source": "double pass GA (pass 1: LHS-seeded GA over the analytic screening model; pass 2: GA re-run with the DSMC-residual correction factor; DSMC validates pass 1 and pass 2)",
     "algorithm": "Genetic Algorithm (SBO)",
     "surrogate": "Linear RSM (2^3 factorial contrast fit)",
     "acquisition": "none (population GA with elitism)",
-    "initial_sampling": "random geometry",
+    "initial_sampling": "Latin Hypercube (LHS-only seeding)",
     "population_size": 50,
     "max_generations": 200,
     "optimizer": "sbo",

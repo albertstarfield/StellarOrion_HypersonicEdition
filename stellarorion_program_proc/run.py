@@ -1406,6 +1406,14 @@ def _write_results_readme() -> None:
                   "quote in a report).  The shared, campaign and field-map "
                   "trees are listed in their own section below.")
     lines.append("")
+    lines.append("The topology optimiser is the **double pass GA "
+                  "optimization**: pass 1 is an LHS-seeded genetic algorithm "
+                  "over the ANALYTIC screening model (MODEL SPACE); the DSMC "
+                  "residual of pass 1 becomes the bounded correction factor "
+                  "c = clamp(q_hybrid/q_analytic, 0.5, 2.0); pass 2 re-runs "
+                  "the GA analytically with that factor; DSMC validates pass 1 "
+                  "and pass 2 (PHYSICAL SPACE).")
+    lines.append("")
     for run in run_names:
         plots = results_dir / run / "plots"
         if not plots.is_dir():
@@ -2114,7 +2122,9 @@ def _post_optimization_outputs(stdout_text: str) -> None:
     interactive = {
         "metadata": {
             "generated_by": "StellarOrion Optimization Pipeline",
-            "mode": "SBO Genetic Algorithm (Ada/SPARK GA, model-fidelity penalty)",
+            "mode": ("double pass GA (Ada/SPARK GA, "
+                      "model-fidelity penalty; DSMC validates pass 1 and "
+                      "pass 2)"),
             "references": {
                 "IRVE-3": "NASA TP-2013-4012",
                 "LOFTID": "Deshmukh et al. AIAA 2024-1501",

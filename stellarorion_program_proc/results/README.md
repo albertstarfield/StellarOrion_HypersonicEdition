@@ -5,6 +5,8 @@ Regenerate with: ./venv_validation/bin/python3 run.py
 
 Each RUN OWNS its plots (the guide lists each run's own tree; per RUNS.md, `00_reference` is the only number to quote in a report).  The shared, campaign and field-map trees are listed in their own section below.
 
+The topology optimiser is the **double pass GA optimization**: pass 1 is an LHS-seeded genetic algorithm over the ANALYTIC screening model (MODEL SPACE); the DSMC residual of pass 1 becomes the bounded correction factor c = clamp(q_hybrid/q_analytic, 0.5, 2.0); pass 2 re-runs the GA analytically with that factor; DSMC validates pass 1 and pass 2 (PHYSICAL SPACE).
+
 ## 00_reference/
 - (root level): 70 artefacts (directly in results/00_reference/plots/)
 - `derived/`: 6 artefacts (under results/00_reference/plots/derived/)
