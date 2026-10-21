@@ -34,39 +34,39 @@
     "sutton_graves_heat_flux_Wm2": 153574.96875
   },
   "optimized": {
-    "R_N": 1.99671268463135,
-    "r_tor": 0.144994810223579,
-    "half_cone_deg": 52.8151359558105,
+    "R_N": 1.33594405651093,
+    "r_tor": 0.179609149694443,
+    "half_cone_deg": 58.6070518493652,
     "physical_geometry": {
-      "diameter_m": 3.9934253692627,
-      "nose_radius_m": 0.732128024101257,
-      "toroid_radius_m": 0.144994810223579,
-      "angle_deg": 52.8151359558105,
+      "diameter_m": 2.67188811302185,
+      "nose_radius_m": 0.489846169948578,
+      "toroid_radius_m": 0.179609149694443,
+      "angle_deg": 58.6070518493652,
       "toroid_count": 6.0
     },
-    "Cd": 1.6112970113754272,
-    "cost": 4.1408162117004395,
-    "total_heat_load_Jcm2": 298.45233154296875,
+    "Cd": 1.6416133642196655,
+    "cost": 4.1787800788879395,
+    "total_heat_load_Jcm2": 364.87042236328125,
     "cost_components": {
-      "heat_load_ratio": 1.8009871244430542,
-      "flux_ratio": 1.5300719738006592,
-      "beta_dev": 0.010623662732541561,
-      "cd_ratio": 0.9126518964767456,
-      "penalty": 0.004133761860430241,
-      "total": 4.1408162117004395,
-      "heat_load_jcm2": 298.45233154296875,
-      "cd_deficit": 0.05217825621366501
+      "heat_load_ratio": 2.201781749725342,
+      "flux_ratio": 1.8705768585205078,
+      "beta_dev": 0.014319447800517082,
+      "cd_ratio": 0.9298233389854431,
+      "penalty": 0.004197158385068178,
+      "total": 4.1787800788879395,
+      "heat_load_jcm2": 364.87042236328125,
+      "cd_deficit": 0.0343451052904129
     },
-    "sutton_graves_heat_flux_Wcm2": 13.310925,
-    "sutton_graves_heat_flux_Wm2": 133109.25,
-    "n_evaluations": 4800
+    "sutton_graves_heat_flux_Wcm2": 16.2731609375,
+    "sutton_graves_heat_flux_Wm2": 162731.609375,
+    "n_evaluations": 1900
   },
   "improvement": {
-    "cost_pct": 10.01483670300647,
-    "cd_pct": 0.2500365835740531,
-    "cd_delta": 0.0040187835693359375,
+    "cost_pct": 9.189833946641752,
+    "cd_pct": 2.136228552068494,
+    "cd_delta": 0.03433513641357422,
     "cd_direction": "increased",
-    "total_heat_load_pct": 13.326197138361001
+    "total_heat_load_pct": -5.962338757621424
   },
   "ccd_samples": [
     {
@@ -178,770 +178,306 @@
   "history": [
     {
       "iteration": 0,
-      "R_N": 1.56810259819031,
-      "r_tor": 0.148626551032066,
-      "half_cone_deg": 62.2160186767578,
-      "cost": 4.23248767852783,
+      "R_N": 1.33865749835968,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.2918434143066,
+      "cost": 4.21415042877197,
       "type": "sbo"
     },
     {
       "iteration": 1,
-      "R_N": 1.56810259819031,
-      "r_tor": 0.148626551032066,
-      "half_cone_deg": 62.2160186767578,
-      "cost": 4.23248767852783,
+      "R_N": 1.33865749835968,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.2918434143066,
+      "cost": 4.21415042877197,
       "type": "sbo"
     },
     {
       "iteration": 2,
-      "R_N": 1.56810259819031,
-      "r_tor": 0.148626551032066,
-      "half_cone_deg": 62.4808197021484,
-      "cost": 4.22351741790771,
+      "R_N": 1.33865749835968,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.2918434143066,
+      "cost": 4.21415042877197,
       "type": "sbo"
     },
     {
       "iteration": 3,
-      "R_N": 1.61756992340088,
-      "r_tor": 0.146562099456787,
-      "half_cone_deg": 62.6343955993652,
-      "cost": 4.20940399169922,
+      "R_N": 1.33865749835968,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.2918434143066,
+      "cost": 4.21415042877197,
       "type": "sbo"
     },
     {
       "iteration": 4,
-      "R_N": 1.61756992340088,
-      "r_tor": 0.146562099456787,
-      "half_cone_deg": 62.6343955993652,
-      "cost": 4.20940399169922,
+      "R_N": 1.33865749835968,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.5205192565918,
+      "cost": 4.20898580551147,
       "type": "sbo"
     },
     {
       "iteration": 5,
-      "R_N": 1.6100959777832,
-      "r_tor": 0.146321579813957,
-      "half_cone_deg": 62.5065498352051,
-      "cost": 4.20449304580688,
+      "R_N": 1.33865749835968,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.5205192565918,
+      "cost": 4.20898580551147,
       "type": "sbo"
     },
     {
       "iteration": 6,
-      "R_N": 1.61351811885834,
-      "r_tor": 0.146475479006767,
-      "half_cone_deg": 62.4978637695313,
-      "cost": 4.20258283615112,
+      "R_N": 1.33865749835968,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.532283782959,
+      "cost": 4.20897579193115,
       "type": "sbo"
     },
     {
       "iteration": 7,
-      "R_N": 1.61351811885834,
-      "r_tor": 0.146475479006767,
-      "half_cone_deg": 62.4978637695313,
-      "cost": 4.20258283615112,
+      "R_N": 1.3365250825882,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.5843811035156,
+      "cost": 4.20890760421753,
       "type": "sbo"
     },
     {
       "iteration": 8,
-      "R_N": 1.68118166923523,
-      "r_tor": 0.146582454442978,
-      "half_cone_deg": 60.1631355285645,
-      "cost": 4.19853067398071,
+      "R_N": 1.33611726760864,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.59814453125,
+      "cost": 4.20889282226563,
       "type": "sbo"
     },
     {
       "iteration": 9,
-      "R_N": 1.68118166923523,
-      "r_tor": 0.146582454442978,
-      "half_cone_deg": 60.1631355285645,
-      "cost": 4.19853067398071,
+      "R_N": 1.33611726760864,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.59814453125,
+      "cost": 4.20889282226563,
       "type": "sbo"
     },
     {
       "iteration": 10,
-      "R_N": 1.70084977149963,
-      "r_tor": 0.146627023816109,
-      "half_cone_deg": 59.5818138122559,
-      "cost": 4.19664335250854,
+      "R_N": 1.33611726760864,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.59814453125,
+      "cost": 4.20889282226563,
       "type": "sbo"
     },
     {
       "iteration": 11,
-      "R_N": 1.70084977149963,
-      "r_tor": 0.146627023816109,
-      "half_cone_deg": 59.5818138122559,
-      "cost": 4.19664335250854,
+      "R_N": 1.33611726760864,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.59814453125,
+      "cost": 4.20889282226563,
       "type": "sbo"
     },
     {
       "iteration": 12,
-      "R_N": 1.70592868328094,
-      "r_tor": 0.146620735526085,
-      "half_cone_deg": 59.5516548156738,
-      "cost": 4.19589853286743,
+      "R_N": 1.33611726760864,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.59814453125,
+      "cost": 4.20889282226563,
       "type": "sbo"
     },
     {
       "iteration": 13,
-      "R_N": 1.70449686050415,
-      "r_tor": 0.146620273590088,
-      "half_cone_deg": 59.5598335266113,
-      "cost": 4.19586753845215,
+      "R_N": 1.33611726760864,
+      "r_tor": 0.179613962769508,
+      "half_cone_deg": 58.59814453125,
+      "cost": 4.20889282226563,
       "type": "sbo"
     },
     {
       "iteration": 14,
-      "R_N": 1.70449686050415,
-      "r_tor": 0.146620273590088,
-      "half_cone_deg": 59.5598335266113,
-      "cost": 4.19586753845215,
+      "R_N": 1.33611726760864,
+      "r_tor": 0.179633572697639,
+      "half_cone_deg": 58.59814453125,
+      "cost": 4.20888996124268,
       "type": "sbo"
     },
     {
       "iteration": 15,
-      "R_N": 1.70535671710968,
-      "r_tor": 0.146620139479637,
-      "half_cone_deg": 59.548583984375,
-      "cost": 4.19583415985107,
+      "R_N": 1.33591663837433,
+      "r_tor": 0.179622337222099,
+      "half_cone_deg": 58.6004371643066,
+      "cost": 4.2088885307312,
       "type": "sbo"
     },
     {
       "iteration": 16,
-      "R_N": 1.70552706718445,
-      "r_tor": 0.146620288491249,
-      "half_cone_deg": 59.5444526672363,
-      "cost": 4.19582557678223,
+      "R_N": 1.33598124980927,
+      "r_tor": 0.17963832616806,
+      "half_cone_deg": 58.5997467041016,
+      "cost": 4.20888757705688,
       "type": "sbo"
     },
     {
       "iteration": 17,
-      "R_N": 1.70885348320007,
-      "r_tor": 0.146620377898216,
-      "half_cone_deg": 59.468017578125,
-      "cost": 4.19567823410034,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 18,
-      "R_N": 1.70975887775421,
-      "r_tor": 0.146620497107506,
-      "half_cone_deg": 59.4334831237793,
-      "cost": 4.19554996490479,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 19,
-      "R_N": 1.70975887775421,
-      "r_tor": 0.146620497107506,
-      "half_cone_deg": 59.4334831237793,
-      "cost": 4.19554996490479,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 20,
-      "R_N": 1.70975887775421,
-      "r_tor": 0.146620497107506,
-      "half_cone_deg": 59.4334831237793,
-      "cost": 4.19554996490479,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 21,
-      "R_N": 1.70975887775421,
-      "r_tor": 0.146620497107506,
-      "half_cone_deg": 59.4334831237793,
-      "cost": 4.19554996490479,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 22,
-      "R_N": 1.70975887775421,
-      "r_tor": 0.146620497107506,
-      "half_cone_deg": 59.4334831237793,
-      "cost": 4.19554996490479,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 23,
-      "R_N": 1.71041476726532,
-      "r_tor": 0.146620467305183,
-      "half_cone_deg": 59.3954391479492,
-      "cost": 4.1954083442688,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 24,
-      "R_N": 1.71056973934174,
-      "r_tor": 0.146620452404022,
-      "half_cone_deg": 59.3814811706543,
-      "cost": 4.19537448883057,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 25,
-      "R_N": 1.71056973934174,
-      "r_tor": 0.146620452404022,
-      "half_cone_deg": 59.3814811706543,
-      "cost": 4.19537448883057,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 26,
-      "R_N": 1.71056973934174,
-      "r_tor": 0.146620452404022,
-      "half_cone_deg": 59.3814811706543,
-      "cost": 4.19537448883057,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 27,
-      "R_N": 1.77998065948486,
-      "r_tor": 0.145348876714706,
-      "half_cone_deg": 57.9020347595215,
-      "cost": 4.1896333694458,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 28,
-      "R_N": 1.77998065948486,
-      "r_tor": 0.145348876714706,
-      "half_cone_deg": 57.9020347595215,
-      "cost": 4.1896333694458,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 29,
-      "R_N": 1.93840253353119,
-      "r_tor": 0.14491993188858,
-      "half_cone_deg": 54.0369606018066,
-      "cost": 4.17980527877808,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 30,
-      "R_N": 1.93840253353119,
-      "r_tor": 0.14491993188858,
-      "half_cone_deg": 54.0369606018066,
-      "cost": 4.17980527877808,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 31,
-      "R_N": 1.94989705085754,
-      "r_tor": 0.144865736365318,
-      "half_cone_deg": 53.8361740112305,
-      "cost": 4.17895746231079,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 32,
-      "R_N": 1.94989705085754,
-      "r_tor": 0.144865736365318,
-      "half_cone_deg": 53.8361740112305,
-      "cost": 4.17895746231079,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 33,
-      "R_N": 1.94989705085754,
-      "r_tor": 0.144865736365318,
-      "half_cone_deg": 53.8361740112305,
-      "cost": 4.17895746231079,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 34,
-      "R_N": 1.94989705085754,
-      "r_tor": 0.144865736365318,
-      "half_cone_deg": 53.8475494384766,
-      "cost": 4.17890596389771,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 35,
-      "R_N": 1.96424496173859,
-      "r_tor": 0.144867286086082,
-      "half_cone_deg": 53.5364646911621,
-      "cost": 4.17846822738647,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 36,
-      "R_N": 1.96424496173859,
-      "r_tor": 0.144867286086082,
-      "half_cone_deg": 53.5364646911621,
-      "cost": 4.17846822738647,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     },
     {
       "iteration": 37,
-      "R_N": 1.97935914993286,
-      "r_tor": 0.144813284277916,
-      "half_cone_deg": 53.253589630127,
-      "cost": 4.17814636230469,
-      "type": "sbo"
-    },
-    {
-      "iteration": 38,
-      "R_N": 1.97935914993286,
-      "r_tor": 0.144813284277916,
-      "half_cone_deg": 53.253589630127,
-      "cost": 4.17814636230469,
-      "type": "sbo"
-    },
-    {
-      "iteration": 39,
-      "R_N": 1.97935914993286,
-      "r_tor": 0.144813284277916,
-      "half_cone_deg": 53.253589630127,
-      "cost": 4.17814636230469,
-      "type": "sbo"
-    },
-    {
-      "iteration": 40,
-      "R_N": 1.97935914993286,
-      "r_tor": 0.144813284277916,
-      "half_cone_deg": 53.253589630127,
-      "cost": 4.17814636230469,
-      "type": "sbo"
-    },
-    {
-      "iteration": 41,
-      "R_N": 1.97896409034729,
-      "r_tor": 0.144807040691376,
-      "half_cone_deg": 53.2551383972168,
-      "cost": 4.17811393737793,
-      "type": "sbo"
-    },
-    {
-      "iteration": 42,
-      "R_N": 1.97896409034729,
-      "r_tor": 0.144807040691376,
-      "half_cone_deg": 53.2551383972168,
-      "cost": 4.17811393737793,
-      "type": "sbo"
-    },
-    {
-      "iteration": 43,
-      "R_N": 1.97885644435883,
-      "r_tor": 0.14481021463871,
-      "half_cone_deg": 53.2540550231934,
-      "cost": 4.17810821533203,
-      "type": "sbo"
-    },
-    {
-      "iteration": 44,
-      "R_N": 1.97880554199219,
-      "r_tor": 0.144808724522591,
-      "half_cone_deg": 53.2545356750488,
-      "cost": 4.17810678482056,
-      "type": "sbo"
-    },
-    {
-      "iteration": 45,
-      "R_N": 1.9789229631424,
-      "r_tor": 0.145106449723244,
-      "half_cone_deg": 53.1556663513184,
-      "cost": 4.17809295654297,
-      "type": "sbo"
-    },
-    {
-      "iteration": 46,
-      "R_N": 1.9789229631424,
-      "r_tor": 0.145106449723244,
-      "half_cone_deg": 53.1556663513184,
-      "cost": 4.17809295654297,
-      "type": "sbo"
-    },
-    {
-      "iteration": 47,
-      "R_N": 1.9789229631424,
-      "r_tor": 0.145106449723244,
-      "half_cone_deg": 53.1556663513184,
-      "cost": 4.17809295654297,
-      "type": "sbo"
-    },
-    {
-      "iteration": 48,
-      "R_N": 1.9789229631424,
-      "r_tor": 0.145106449723244,
-      "half_cone_deg": 53.1556663513184,
-      "cost": 4.17809295654297,
-      "type": "sbo"
-    },
-    {
-      "iteration": 49,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.7977523803711,
-      "cost": 4.17781925201416,
-      "type": "sbo"
-    },
-    {
-      "iteration": 50,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.7977523803711,
-      "cost": 4.17781925201416,
-      "type": "sbo"
-    },
-    {
-      "iteration": 51,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.7977523803711,
-      "cost": 4.17781925201416,
-      "type": "sbo"
-    },
-    {
-      "iteration": 52,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.7977523803711,
-      "cost": 4.17781925201416,
-      "type": "sbo"
-    },
-    {
-      "iteration": 53,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8029556274414,
-      "cost": 4.17778491973877,
-      "type": "sbo"
-    },
-    {
-      "iteration": 54,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8049201965332,
-      "cost": 4.17777442932129,
-      "type": "sbo"
-    },
-    {
-      "iteration": 55,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8081550598145,
-      "cost": 4.17775821685791,
-      "type": "sbo"
-    },
-    {
-      "iteration": 56,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8087425231934,
-      "cost": 4.17775583267212,
-      "type": "sbo"
-    },
-    {
-      "iteration": 57,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.811695098877,
-      "cost": 4.1777458190918,
-      "type": "sbo"
-    },
-    {
-      "iteration": 58,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.812255859375,
-      "cost": 4.17774152755737,
-      "type": "sbo"
-    },
-    {
-      "iteration": 59,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8139572143555,
-      "cost": 4.17773866653442,
-      "type": "sbo"
-    },
-    {
-      "iteration": 60,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8144569396973,
-      "cost": 4.17773628234863,
-      "type": "sbo"
-    },
-    {
-      "iteration": 61,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8154144287109,
-      "cost": 4.17773485183716,
-      "type": "sbo"
-    },
-    {
-      "iteration": 62,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151397705078,
-      "cost": 4.17773342132568,
-      "type": "sbo"
-    },
-    {
-      "iteration": 63,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151397705078,
-      "cost": 4.17773342132568,
-      "type": "sbo"
-    },
-    {
-      "iteration": 64,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151397705078,
-      "cost": 4.17773342132568,
-      "type": "sbo"
-    },
-    {
-      "iteration": 65,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 66,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 67,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 68,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 69,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 70,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 71,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 72,
-      "R_N": 1.99630212783813,
-      "r_tor": 0.144994527101517,
-      "half_cone_deg": 52.8151321411133,
-      "cost": 4.17773294448853,
-      "type": "sbo"
-    },
-    {
-      "iteration": 73,
-      "R_N": 1.99651277065277,
-      "r_tor": 0.144994720816612,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17772245407104,
-      "type": "sbo"
-    },
-    {
-      "iteration": 74,
-      "R_N": 1.99660134315491,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771863937378,
-      "type": "sbo"
-    },
-    {
-      "iteration": 75,
-      "R_N": 1.99670648574829,
-      "r_tor": 0.144994780421257,
-      "half_cone_deg": 52.8151397705078,
-      "cost": 4.17771625518799,
-      "type": "sbo"
-    },
-    {
-      "iteration": 76,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 77,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 78,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 79,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 80,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 81,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 82,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 83,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 84,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 85,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 86,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 87,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 88,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 89,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 90,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 91,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 92,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 93,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 94,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
-      "type": "sbo"
-    },
-    {
-      "iteration": 95,
-      "R_N": 1.99671268463135,
-      "r_tor": 0.144994810223579,
-      "half_cone_deg": 52.8151359558105,
-      "cost": 4.17771577835083,
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652,
+      "cost": 4.20888376235962,
       "type": "sbo"
     }
   ],
@@ -953,18 +489,1859 @@
     "acquisition": "none (population GA with elitism)",
     "initial_sampling": "Latin Hypercube (LHS-only seeding)",
     "population_size": 50,
+    "seed": 42,
     "max_generations": 200,
     "optimizer": "sbo",
     "design_space": "MODEL SPACE -- the CCD, the surrogate and the GA search describe the ANALYTIC SCREENING MODEL (screening-model CCD design), not the vehicle.",
     "validation_space": "PHYSICAL SPACE -- the DSMC runs are the 'DSMC+PINN_AUX validation' of the vehicle; they are reported by scripts/compare_dsmc_runs.py.",
     "physical_geometry": {
-      "diameter_m": 3.9934253692627,
-      "nose_radius_m": 0.732128024101257,
-      "toroid_radius_m": 0.144994810223579,
-      "angle_deg": 52.8151359558105,
+      "diameter_m": 2.67188811302185,
+      "nose_radius_m": 0.489846169948578,
+      "toroid_radius_m": 0.179609149694443,
+      "angle_deg": 58.6070518493652,
       "toroid_count": 6.0
     },
     "calibration_file": null,
     "calibration_active": false
+  },
+  "hybrid_validation": {
+    "mode": "full",
+    "geometry": {
+      "R_N": 1.33594405651093,
+      "r_tor": 0.179609149694443,
+      "half_cone_deg": 58.6070518493652
+    },
+    "physical_geometry": {
+      "diameter_m": 2.67188811302185,
+      "nose_radius_m": 0.489846169948578,
+      "toroid_radius_m": 0.179609149694443,
+      "angle_deg": 58.6070518493652,
+      "toroid_count": 6.0
+    },
+    "skin": "scalloped",
+    "steps": 2200,
+    "q_analytic_Jcm2": 364.87042236328125,
+    "q_target_Jcm2": 165.715973,
+    "started_utc": "2026-10-21T07:42:21Z",
+    "verdict": {
+      "passed": false,
+      "q_hybrid_Jcm2": 175.580307,
+      "q_analytic_Jcm2": 364.87042236328125,
+      "q_target_Jcm2": 165.715973,
+      "prediction_error_pct": -51.87872290037683,
+      "cd_hybrid": 2.195647,
+      "source_json": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/validation_pipeline_output/unified_comparison_data.json"
+    },
+    "error": null,
+    "legs_r1": {
+      "tag": "r1",
+      "commands": {
+        "qa": [
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main",
+          "--validate-only",
+          "--diameter",
+          "2.671888",
+          "--nose",
+          "0.489846",
+          "--tradius",
+          "0.179609",
+          "--angle",
+          "58.607052",
+          "--skin",
+          "scalloped"
+        ],
+        "dsmc": [
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main",
+          "--validate",
+          "--headless",
+          "--diameter",
+          "2.671888",
+          "--nose",
+          "0.489846",
+          "--tradius",
+          "0.179609",
+          "--angle",
+          "58.607052",
+          "--skin",
+          "scalloped",
+          "--steps",
+          "2200",
+          "--results-dir",
+          "results/validation_optimized"
+        ],
+        "pinn_pipeline": [
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv_validation/bin/python3",
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/python/validation_pipeline.py",
+          "--csv",
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/validation_timeseries.csv",
+          "--target-step",
+          "300000000",
+          "--iterations",
+          "4000",
+          "--device",
+          "auto",
+          "--headless",
+          "--output-dir",
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/validation_pipeline_output"
+        ]
+      },
+      "logs": {
+        "dsmc": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/gate_r1_dsmc.log",
+        "pinn_pipeline": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/gate_r1_pipeline.log"
+      },
+      "seconds": {
+        "dsmc": 3317.194342999981,
+        "pinn": 611.6500687919906
+      },
+      "csv": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/validation_timeseries.csv",
+      "unified_json": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/validation_pipeline_output/unified_comparison_data.json",
+      "pipe_out": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized/validation_pipeline_output"
+    },
+    "correction_factor": 2.0,
+    "correction_flux_dsmc_Wm2": 1688940.0,
+    "correction_flux_sg_Wm2": 129293.296875,
+    "optimized_round2": {
+      "R_N": 3.0,
+      "r_tor": 0.0500000007450581,
+      "half_cone_deg": 45.9655532836914,
+      "Cd": 1.556713581085205,
+      "cost": 5.61284399032593,
+      "cost_uncorrected": 4.650628566741943,
+      "total_heat_load_Jcm2": 243.48495483398438,
+      "cost_components": {
+        "heat_load_ratio": 1.469290852546692,
+        "flux_ratio": 1.2482714653015137,
+        "beta_dev": 0.05723454803228378,
+        "cd_ratio": 0.8817353844642639,
+        "penalty": 0.0,
+        "total": 4.650628566741943,
+        "heat_load_jcm2": 243.48495483398438,
+        "cd_deficit": 0.0842861533164978
+      },
+      "correction_factor": 2.0,
+      "n_evaluations": 10050,
+      "physical_geometry": {
+        "diameter_m": 6.0,
+        "nose_radius_m": 1.10000002384186,
+        "toroid_radius_m": 0.0500000007450581,
+        "angle_deg": 45.9655532836914,
+        "toroid_count": 6.0
+      },
+      "heat_load_weight": 2.0
+    },
+    "legs_r2": {
+      "tag": "r2",
+      "commands": {
+        "qa": [
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main",
+          "--validate-only",
+          "--diameter",
+          "6.000000",
+          "--nose",
+          "1.100000",
+          "--tradius",
+          "0.050000",
+          "--angle",
+          "45.965553",
+          "--skin",
+          "scalloped"
+        ],
+        "dsmc": [
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main",
+          "--validate",
+          "--headless",
+          "--diameter",
+          "6.000000",
+          "--nose",
+          "1.100000",
+          "--tradius",
+          "0.050000",
+          "--angle",
+          "45.965553",
+          "--skin",
+          "scalloped",
+          "--steps",
+          "2200",
+          "--results-dir",
+          "results/validation_optimized_round2"
+        ],
+        "pinn_pipeline": [
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv_validation/bin/python3",
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/python/validation_pipeline.py",
+          "--csv",
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/validation_timeseries.csv",
+          "--target-step",
+          "300000000",
+          "--iterations",
+          "4000",
+          "--device",
+          "auto",
+          "--headless",
+          "--output-dir",
+          "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/validation_pipeline_output"
+        ]
+      },
+      "logs": {
+        "dsmc": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/gate_r2_dsmc.log",
+        "pinn_pipeline": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/gate_r2_pipeline.log"
+      },
+      "seconds": {
+        "dsmc": 2299.4605047079967,
+        "pinn": 870.088745917019
+      },
+      "csv": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/validation_timeseries.csv",
+      "unified_json": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/validation_pipeline_output/unified_comparison_data.json",
+      "pipe_out": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/validation_pipeline_output"
+    },
+    "verdict_round2": {
+      "passed": true,
+      "q_hybrid_Jcm2": 117.526489,
+      "q_analytic_Jcm2": 243.48495483398438,
+      "q_target_Jcm2": 165.715973,
+      "prediction_error_pct": -51.73151906649295,
+      "source_json": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_optimized_round2/validation_pipeline_output/unified_comparison_data.json"
+    },
+    "exit_code": 3,
+    "allow_fail": false,
+    "finished_utc": "2026-10-21T10:02:29Z"
+  },
+  "optimized_round2": {
+    "R_N": 3.0,
+    "r_tor": 0.0500000007450581,
+    "half_cone_deg": 45.9655532836914,
+    "Cd": 1.556713581085205,
+    "cost": 5.61284399032593,
+    "cost_uncorrected": 4.650628566741943,
+    "total_heat_load_Jcm2": 243.48495483398438,
+    "cost_components": {
+      "heat_load_ratio": 1.469290852546692,
+      "flux_ratio": 1.2482714653015137,
+      "beta_dev": 0.05723454803228378,
+      "cd_ratio": 0.8817353844642639,
+      "penalty": 0.0,
+      "total": 4.650628566741943,
+      "heat_load_jcm2": 243.48495483398438,
+      "cd_deficit": 0.0842861533164978
+    },
+    "correction_factor": 2.0,
+    "n_evaluations": 10050,
+    "history": [
+      {
+        "iteration": 0,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 52.5243911743164,
+        "cost": 5.85870552062988,
+        "type": "sbo"
+      },
+      {
+        "iteration": 1,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.476318359375,
+        "cost": 5.63351106643677,
+        "type": "sbo"
+      },
+      {
+        "iteration": 2,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.476318359375,
+        "cost": 5.63351106643677,
+        "type": "sbo"
+      },
+      {
+        "iteration": 3,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.476318359375,
+        "cost": 5.63351106643677,
+        "type": "sbo"
+      },
+      {
+        "iteration": 4,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.25732421875,
+        "cost": 5.62842655181885,
+        "type": "sbo"
+      },
+      {
+        "iteration": 5,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.25732421875,
+        "cost": 5.62842655181885,
+        "type": "sbo"
+      },
+      {
+        "iteration": 6,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.2197914123535,
+        "cost": 5.62829208374023,
+        "type": "sbo"
+      },
+      {
+        "iteration": 7,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1983528137207,
+        "cost": 5.62825965881348,
+        "type": "sbo"
+      },
+      {
+        "iteration": 8,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1729698181152,
+        "cost": 5.62812614440918,
+        "type": "sbo"
+      },
+      {
+        "iteration": 9,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1729698181152,
+        "cost": 5.62812614440918,
+        "type": "sbo"
+      },
+      {
+        "iteration": 10,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1731109619141,
+        "cost": 5.62810659408569,
+        "type": "sbo"
+      },
+      {
+        "iteration": 11,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1730842590332,
+        "cost": 5.62809753417969,
+        "type": "sbo"
+      },
+      {
+        "iteration": 12,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1633529663086,
+        "cost": 5.62808036804199,
+        "type": "sbo"
+      },
+      {
+        "iteration": 13,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1379737854004,
+        "cost": 5.62801456451416,
+        "type": "sbo"
+      },
+      {
+        "iteration": 14,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1446495056152,
+        "cost": 5.62800407409668,
+        "type": "sbo"
+      },
+      {
+        "iteration": 15,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1446495056152,
+        "cost": 5.62800407409668,
+        "type": "sbo"
+      },
+      {
+        "iteration": 16,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1412925720215,
+        "cost": 5.62798261642456,
+        "type": "sbo"
+      },
+      {
+        "iteration": 17,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.140510559082,
+        "cost": 5.6279764175415,
+        "type": "sbo"
+      },
+      {
+        "iteration": 18,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1402969360352,
+        "cost": 5.62797498703003,
+        "type": "sbo"
+      },
+      {
+        "iteration": 19,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.140266418457,
+        "cost": 5.62797451019287,
+        "type": "sbo"
+      },
+      {
+        "iteration": 20,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1279792785645,
+        "cost": 5.6279559135437,
+        "type": "sbo"
+      },
+      {
+        "iteration": 21,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1218566894531,
+        "cost": 5.62792062759399,
+        "type": "sbo"
+      },
+      {
+        "iteration": 22,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1218566894531,
+        "cost": 5.62792062759399,
+        "type": "sbo"
+      },
+      {
+        "iteration": 23,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1171989440918,
+        "cost": 5.62790441513062,
+        "type": "sbo"
+      },
+      {
+        "iteration": 24,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1172103881836,
+        "cost": 5.62790155410767,
+        "type": "sbo"
+      },
+      {
+        "iteration": 25,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.1061325073242,
+        "cost": 5.62786340713501,
+        "type": "sbo"
+      },
+      {
+        "iteration": 26,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0971412658691,
+        "cost": 5.62781572341919,
+        "type": "sbo"
+      },
+      {
+        "iteration": 27,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0929374694824,
+        "cost": 5.62780427932739,
+        "type": "sbo"
+      },
+      {
+        "iteration": 28,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0855827331543,
+        "cost": 5.62779664993286,
+        "type": "sbo"
+      },
+      {
+        "iteration": 29,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0858879089355,
+        "cost": 5.62778091430664,
+        "type": "sbo"
+      },
+      {
+        "iteration": 30,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0858154296875,
+        "cost": 5.62777805328369,
+        "type": "sbo"
+      },
+      {
+        "iteration": 31,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0858154296875,
+        "cost": 5.62777805328369,
+        "type": "sbo"
+      },
+      {
+        "iteration": 32,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0858383178711,
+        "cost": 5.62777662277222,
+        "type": "sbo"
+      },
+      {
+        "iteration": 33,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0858383178711,
+        "cost": 5.62777662277222,
+        "type": "sbo"
+      },
+      {
+        "iteration": 34,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0858383178711,
+        "cost": 5.62777662277222,
+        "type": "sbo"
+      },
+      {
+        "iteration": 35,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0847625732422,
+        "cost": 5.62777280807495,
+        "type": "sbo"
+      },
+      {
+        "iteration": 36,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0847625732422,
+        "cost": 5.62777280807495,
+        "type": "sbo"
+      },
+      {
+        "iteration": 37,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0847625732422,
+        "cost": 5.62777280807495,
+        "type": "sbo"
+      },
+      {
+        "iteration": 38,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0846672058105,
+        "cost": 5.62777233123779,
+        "type": "sbo"
+      },
+      {
+        "iteration": 39,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0846672058105,
+        "cost": 5.62777233123779,
+        "type": "sbo"
+      },
+      {
+        "iteration": 40,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.084659576416,
+        "cost": 5.62777137756348,
+        "type": "sbo"
+      },
+      {
+        "iteration": 41,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.084659576416,
+        "cost": 5.62777137756348,
+        "type": "sbo"
+      },
+      {
+        "iteration": 42,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.084659576416,
+        "cost": 5.62777137756348,
+        "type": "sbo"
+      },
+      {
+        "iteration": 43,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.084659576416,
+        "cost": 5.62777137756348,
+        "type": "sbo"
+      },
+      {
+        "iteration": 44,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.084659576416,
+        "cost": 5.62777137756348,
+        "type": "sbo"
+      },
+      {
+        "iteration": 45,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.084659576416,
+        "cost": 5.62777137756348,
+        "type": "sbo"
+      },
+      {
+        "iteration": 46,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0812377929688,
+        "cost": 5.627769947052,
+        "type": "sbo"
+      },
+      {
+        "iteration": 47,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0802116394043,
+        "cost": 5.62776947021484,
+        "type": "sbo"
+      },
+      {
+        "iteration": 48,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 49,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 50,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 51,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 52,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 53,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 54,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 55,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 56,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 57,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 58,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0811080932617,
+        "cost": 5.62776851654053,
+        "type": "sbo"
+      },
+      {
+        "iteration": 59,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0807571411133,
+        "cost": 5.62776565551758,
+        "type": "sbo"
+      },
+      {
+        "iteration": 60,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0806274414063,
+        "cost": 5.62775850296021,
+        "type": "sbo"
+      },
+      {
+        "iteration": 61,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0805892944336,
+        "cost": 5.62775468826294,
+        "type": "sbo"
+      },
+      {
+        "iteration": 62,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0806121826172,
+        "cost": 5.62775278091431,
+        "type": "sbo"
+      },
+      {
+        "iteration": 63,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0806121826172,
+        "cost": 5.62775278091431,
+        "type": "sbo"
+      },
+      {
+        "iteration": 64,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0806121826172,
+        "cost": 5.62775278091431,
+        "type": "sbo"
+      },
+      {
+        "iteration": 65,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0806121826172,
+        "cost": 5.62775278091431,
+        "type": "sbo"
+      },
+      {
+        "iteration": 66,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0806121826172,
+        "cost": 5.62775278091431,
+        "type": "sbo"
+      },
+      {
+        "iteration": 67,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0806121826172,
+        "cost": 5.62775278091431,
+        "type": "sbo"
+      },
+      {
+        "iteration": 68,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0642700195313,
+        "cost": 5.62769746780396,
+        "type": "sbo"
+      },
+      {
+        "iteration": 69,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0642700195313,
+        "cost": 5.62769746780396,
+        "type": "sbo"
+      },
+      {
+        "iteration": 70,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0592422485352,
+        "cost": 5.62768602371216,
+        "type": "sbo"
+      },
+      {
+        "iteration": 71,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0570220947266,
+        "cost": 5.6276741027832,
+        "type": "sbo"
+      },
+      {
+        "iteration": 72,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0526237487793,
+        "cost": 5.62765789031982,
+        "type": "sbo"
+      },
+      {
+        "iteration": 73,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0496292114258,
+        "cost": 5.62763977050781,
+        "type": "sbo"
+      },
+      {
+        "iteration": 74,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0496292114258,
+        "cost": 5.62763977050781,
+        "type": "sbo"
+      },
+      {
+        "iteration": 75,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0438957214355,
+        "cost": 5.62762069702148,
+        "type": "sbo"
+      },
+      {
+        "iteration": 76,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0438957214355,
+        "cost": 5.62762069702148,
+        "type": "sbo"
+      },
+      {
+        "iteration": 77,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0430183410645,
+        "cost": 5.62761688232422,
+        "type": "sbo"
+      },
+      {
+        "iteration": 78,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0430183410645,
+        "cost": 5.62761688232422,
+        "type": "sbo"
+      },
+      {
+        "iteration": 79,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0399971008301,
+        "cost": 5.62761449813843,
+        "type": "sbo"
+      },
+      {
+        "iteration": 80,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.038501739502,
+        "cost": 5.62761259078979,
+        "type": "sbo"
+      },
+      {
+        "iteration": 81,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.038501739502,
+        "cost": 5.62761259078979,
+        "type": "sbo"
+      },
+      {
+        "iteration": 82,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.038501739502,
+        "cost": 5.62761259078979,
+        "type": "sbo"
+      },
+      {
+        "iteration": 83,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0378532409668,
+        "cost": 5.62761163711548,
+        "type": "sbo"
+      },
+      {
+        "iteration": 84,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0378532409668,
+        "cost": 5.62761163711548,
+        "type": "sbo"
+      },
+      {
+        "iteration": 85,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0381355285645,
+        "cost": 5.62760019302368,
+        "type": "sbo"
+      },
+      {
+        "iteration": 86,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0252342224121,
+        "cost": 5.62757778167725,
+        "type": "sbo"
+      },
+      {
+        "iteration": 87,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.032413482666,
+        "cost": 5.62757635116577,
+        "type": "sbo"
+      },
+      {
+        "iteration": 88,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0232009887695,
+        "cost": 5.62757349014282,
+        "type": "sbo"
+      },
+      {
+        "iteration": 89,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 50.0118637084961,
+        "cost": 5.62751579284668,
+        "type": "sbo"
+      },
+      {
+        "iteration": 90,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9860153198242,
+        "cost": 5.62745666503906,
+        "type": "sbo"
+      },
+      {
+        "iteration": 91,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9926261901855,
+        "cost": 5.62744092941284,
+        "type": "sbo"
+      },
+      {
+        "iteration": 92,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.990119934082,
+        "cost": 5.62742137908936,
+        "type": "sbo"
+      },
+      {
+        "iteration": 93,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9883766174316,
+        "cost": 5.62741374969482,
+        "type": "sbo"
+      },
+      {
+        "iteration": 94,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9867210388184,
+        "cost": 5.6274094581604,
+        "type": "sbo"
+      },
+      {
+        "iteration": 95,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9856033325195,
+        "cost": 5.62740325927734,
+        "type": "sbo"
+      },
+      {
+        "iteration": 96,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9856033325195,
+        "cost": 5.62740325927734,
+        "type": "sbo"
+      },
+      {
+        "iteration": 97,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9748420715332,
+        "cost": 5.62737464904785,
+        "type": "sbo"
+      },
+      {
+        "iteration": 98,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9698333740234,
+        "cost": 5.62736463546753,
+        "type": "sbo"
+      },
+      {
+        "iteration": 99,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9715118408203,
+        "cost": 5.62736177444458,
+        "type": "sbo"
+      },
+      {
+        "iteration": 100,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9712181091309,
+        "cost": 5.62735319137573,
+        "type": "sbo"
+      },
+      {
+        "iteration": 101,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9656829833984,
+        "cost": 5.62733745574951,
+        "type": "sbo"
+      },
+      {
+        "iteration": 102,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9656829833984,
+        "cost": 5.62733745574951,
+        "type": "sbo"
+      },
+      {
+        "iteration": 103,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9656829833984,
+        "cost": 5.62733745574951,
+        "type": "sbo"
+      },
+      {
+        "iteration": 104,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9656829833984,
+        "cost": 5.62733745574951,
+        "type": "sbo"
+      },
+      {
+        "iteration": 105,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9370422363281,
+        "cost": 5.62729501724243,
+        "type": "sbo"
+      },
+      {
+        "iteration": 106,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9365997314453,
+        "cost": 5.62726306915283,
+        "type": "sbo"
+      },
+      {
+        "iteration": 107,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9364929199219,
+        "cost": 5.62725067138672,
+        "type": "sbo"
+      },
+      {
+        "iteration": 108,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9303894042969,
+        "cost": 5.62722301483154,
+        "type": "sbo"
+      },
+      {
+        "iteration": 109,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9313087463379,
+        "cost": 5.62720203399658,
+        "type": "sbo"
+      },
+      {
+        "iteration": 110,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9288787841797,
+        "cost": 5.62719583511353,
+        "type": "sbo"
+      },
+      {
+        "iteration": 111,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9282646179199,
+        "cost": 5.62719249725342,
+        "type": "sbo"
+      },
+      {
+        "iteration": 112,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280281066895,
+        "cost": 5.62719058990479,
+        "type": "sbo"
+      },
+      {
+        "iteration": 113,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 114,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 115,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 116,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 117,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 118,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 119,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 120,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 121,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 122,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 123,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 124,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.9280700683594,
+        "cost": 5.62718915939331,
+        "type": "sbo"
+      },
+      {
+        "iteration": 125,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.0546569824219,
+        "cost": 5.62428522109985,
+        "type": "sbo"
+      },
+      {
+        "iteration": 126,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.0367851257324,
+        "cost": 5.62392902374268,
+        "type": "sbo"
+      },
+      {
+        "iteration": 127,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 49.0367851257324,
+        "cost": 5.62392902374268,
+        "type": "sbo"
+      },
+      {
+        "iteration": 128,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.7707214355469,
+        "cost": 5.62296485900879,
+        "type": "sbo"
+      },
+      {
+        "iteration": 129,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.7707214355469,
+        "cost": 5.62296485900879,
+        "type": "sbo"
+      },
+      {
+        "iteration": 130,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.7313766479492,
+        "cost": 5.62280321121216,
+        "type": "sbo"
+      },
+      {
+        "iteration": 131,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6855659484863,
+        "cost": 5.62270927429199,
+        "type": "sbo"
+      },
+      {
+        "iteration": 132,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6958427429199,
+        "cost": 5.62268400192261,
+        "type": "sbo"
+      },
+      {
+        "iteration": 133,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6965560913086,
+        "cost": 5.62266159057617,
+        "type": "sbo"
+      },
+      {
+        "iteration": 134,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6961250305176,
+        "cost": 5.62265682220459,
+        "type": "sbo"
+      },
+      {
+        "iteration": 135,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6957931518555,
+        "cost": 5.62265014648438,
+        "type": "sbo"
+      },
+      {
+        "iteration": 136,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6559295654297,
+        "cost": 5.62261009216309,
+        "type": "sbo"
+      },
+      {
+        "iteration": 137,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6551628112793,
+        "cost": 5.62250280380249,
+        "type": "sbo"
+      },
+      {
+        "iteration": 138,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6551628112793,
+        "cost": 5.62250280380249,
+        "type": "sbo"
+      },
+      {
+        "iteration": 139,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6397590637207,
+        "cost": 5.6224536895752,
+        "type": "sbo"
+      },
+      {
+        "iteration": 140,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6397590637207,
+        "cost": 5.6224536895752,
+        "type": "sbo"
+      },
+      {
+        "iteration": 141,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6399002075195,
+        "cost": 5.62244510650635,
+        "type": "sbo"
+      },
+      {
+        "iteration": 142,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6399002075195,
+        "cost": 5.62244510650635,
+        "type": "sbo"
+      },
+      {
+        "iteration": 143,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6332855224609,
+        "cost": 5.62243556976318,
+        "type": "sbo"
+      },
+      {
+        "iteration": 144,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6310920715332,
+        "cost": 5.62242031097412,
+        "type": "sbo"
+      },
+      {
+        "iteration": 145,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6285171508789,
+        "cost": 5.62241649627686,
+        "type": "sbo"
+      },
+      {
+        "iteration": 146,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.628532409668,
+        "cost": 5.62241554260254,
+        "type": "sbo"
+      },
+      {
+        "iteration": 147,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.628532409668,
+        "cost": 5.62241554260254,
+        "type": "sbo"
+      },
+      {
+        "iteration": 148,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.628532409668,
+        "cost": 5.62241506576538,
+        "type": "sbo"
+      },
+      {
+        "iteration": 149,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.628532409668,
+        "cost": 5.62241506576538,
+        "type": "sbo"
+      },
+      {
+        "iteration": 150,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6285400390625,
+        "cost": 5.62240552902222,
+        "type": "sbo"
+      },
+      {
+        "iteration": 151,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6285438537598,
+        "cost": 5.62240362167358,
+        "type": "sbo"
+      },
+      {
+        "iteration": 152,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6285438537598,
+        "cost": 5.62240314483643,
+        "type": "sbo"
+      },
+      {
+        "iteration": 153,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6285438537598,
+        "cost": 5.62240314483643,
+        "type": "sbo"
+      },
+      {
+        "iteration": 154,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6285438537598,
+        "cost": 5.62240314483643,
+        "type": "sbo"
+      },
+      {
+        "iteration": 155,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6285438537598,
+        "cost": 5.62240314483643,
+        "type": "sbo"
+      },
+      {
+        "iteration": 156,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6189346313477,
+        "cost": 5.62239074707031,
+        "type": "sbo"
+      },
+      {
+        "iteration": 157,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6189346313477,
+        "cost": 5.62239074707031,
+        "type": "sbo"
+      },
+      {
+        "iteration": 158,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.6189346313477,
+        "cost": 5.62239074707031,
+        "type": "sbo"
+      },
+      {
+        "iteration": 159,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.4634323120117,
+        "cost": 5.62181043624878,
+        "type": "sbo"
+      },
+      {
+        "iteration": 160,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.4326324462891,
+        "cost": 5.62170076370239,
+        "type": "sbo"
+      },
+      {
+        "iteration": 161,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.4326324462891,
+        "cost": 5.62170076370239,
+        "type": "sbo"
+      },
+      {
+        "iteration": 162,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.4301490783691,
+        "cost": 5.62168169021606,
+        "type": "sbo"
+      },
+      {
+        "iteration": 163,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.408374786377,
+        "cost": 5.62161636352539,
+        "type": "sbo"
+      },
+      {
+        "iteration": 164,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.4004440307617,
+        "cost": 5.6215705871582,
+        "type": "sbo"
+      },
+      {
+        "iteration": 165,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.4004440307617,
+        "cost": 5.6215705871582,
+        "type": "sbo"
+      },
+      {
+        "iteration": 166,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.3420219421387,
+        "cost": 5.62140941619873,
+        "type": "sbo"
+      },
+      {
+        "iteration": 167,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.3420219421387,
+        "cost": 5.62140941619873,
+        "type": "sbo"
+      },
+      {
+        "iteration": 168,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.3109169006348,
+        "cost": 5.62132549285889,
+        "type": "sbo"
+      },
+      {
+        "iteration": 169,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 48.300106048584,
+        "cost": 5.62121868133545,
+        "type": "sbo"
+      },
+      {
+        "iteration": 170,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.3668670654297,
+        "cost": 5.61816120147705,
+        "type": "sbo"
+      },
+      {
+        "iteration": 171,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.2310409545898,
+        "cost": 5.61747980117798,
+        "type": "sbo"
+      },
+      {
+        "iteration": 172,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.2385711669922,
+        "cost": 5.61739349365234,
+        "type": "sbo"
+      },
+      {
+        "iteration": 173,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.2232704162598,
+        "cost": 5.61732578277588,
+        "type": "sbo"
+      },
+      {
+        "iteration": 174,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.2196311950684,
+        "cost": 5.61731863021851,
+        "type": "sbo"
+      },
+      {
+        "iteration": 175,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.2196311950684,
+        "cost": 5.61731863021851,
+        "type": "sbo"
+      },
+      {
+        "iteration": 176,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.1386604309082,
+        "cost": 5.61701679229736,
+        "type": "sbo"
+      },
+      {
+        "iteration": 177,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.1194381713867,
+        "cost": 5.61693859100342,
+        "type": "sbo"
+      },
+      {
+        "iteration": 178,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.1194381713867,
+        "cost": 5.61693859100342,
+        "type": "sbo"
+      },
+      {
+        "iteration": 179,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.1121215820313,
+        "cost": 5.61691236495972,
+        "type": "sbo"
+      },
+      {
+        "iteration": 180,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.1093711853027,
+        "cost": 5.6169056892395,
+        "type": "sbo"
+      },
+      {
+        "iteration": 181,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.1081619262695,
+        "cost": 5.61690187454224,
+        "type": "sbo"
+      },
+      {
+        "iteration": 182,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 47.1081619262695,
+        "cost": 5.61690187454224,
+        "type": "sbo"
+      },
+      {
+        "iteration": 183,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.9094352722168,
+        "cost": 5.61618566513062,
+        "type": "sbo"
+      },
+      {
+        "iteration": 184,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.9094352722168,
+        "cost": 5.61618566513062,
+        "type": "sbo"
+      },
+      {
+        "iteration": 185,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.9094352722168,
+        "cost": 5.61618566513062,
+        "type": "sbo"
+      },
+      {
+        "iteration": 186,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.9094352722168,
+        "cost": 5.61618566513062,
+        "type": "sbo"
+      },
+      {
+        "iteration": 187,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.9094352722168,
+        "cost": 5.61618566513062,
+        "type": "sbo"
+      },
+      {
+        "iteration": 188,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.9094352722168,
+        "cost": 5.61618566513062,
+        "type": "sbo"
+      },
+      {
+        "iteration": 189,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.9041442871094,
+        "cost": 5.6161789894104,
+        "type": "sbo"
+      },
+      {
+        "iteration": 190,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.3339042663574,
+        "cost": 5.61413955688477,
+        "type": "sbo"
+      },
+      {
+        "iteration": 191,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.3339042663574,
+        "cost": 5.61413955688477,
+        "type": "sbo"
+      },
+      {
+        "iteration": 192,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.3339042663574,
+        "cost": 5.61413955688477,
+        "type": "sbo"
+      },
+      {
+        "iteration": 193,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 46.0169830322266,
+        "cost": 5.61330270767212,
+        "type": "sbo"
+      },
+      {
+        "iteration": 194,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 45.9796371459961,
+        "cost": 5.61322164535522,
+        "type": "sbo"
+      },
+      {
+        "iteration": 195,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 45.9465408325195,
+        "cost": 5.61307191848755,
+        "type": "sbo"
+      },
+      {
+        "iteration": 196,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 45.9690208435059,
+        "cost": 5.61286926269531,
+        "type": "sbo"
+      },
+      {
+        "iteration": 197,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 45.9690208435059,
+        "cost": 5.61286926269531,
+        "type": "sbo"
+      },
+      {
+        "iteration": 198,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 45.9658813476563,
+        "cost": 5.61284923553467,
+        "type": "sbo"
+      },
+      {
+        "iteration": 199,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 45.9677085876465,
+        "cost": 5.61284780502319,
+        "type": "sbo"
+      },
+      {
+        "iteration": 200,
+        "R_N": 3.0,
+        "r_tor": 0.0500000007450581,
+        "half_cone_deg": 45.9655532836914,
+        "cost": 5.61284399032593,
+        "type": "sbo"
+      }
+    ],
+    "physical_geometry": {
+      "diameter_m": 6.0,
+      "nose_radius_m": 1.10000002384186,
+      "toroid_radius_m": 0.0500000007450581,
+      "angle_deg": 45.9655532836914,
+      "toroid_count": 6.0
+    },
+    "heat_load_weight": 2.0
   }
 }

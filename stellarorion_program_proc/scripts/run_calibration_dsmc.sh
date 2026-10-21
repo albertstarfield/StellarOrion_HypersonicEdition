@@ -29,11 +29,16 @@
 #     A1  The design is the 8 corners of a 2^3 factorial in CODED
 #         coordinates (+-1) plus the CENTRE point: 9 DSMC runs.
 #     A2  The coded coordinates are mapped to MODEL space as
-#         X_k = centre_k + code_k * half_k with the centre and half-widths
-#         of Sec 2.7 (X* = (1.03967, 0.219741, 53.7247),
-#         half = (0.25, 0.06, 8.0)).  The Sec 2.7 centre is the BINDING
-#         default; --centre overrides it, and the live GA optimum is
-#         cross-checked against it (a WARNING, never a silent move).
+#         X_k = centre_k + code_k * half_k with the half-widths of Sec 2.7
+#         (dR_N = 0.25, dR_tor = 0.06, dCone = 8.0) and the centre being
+#         THE CURRENT GA OPTIMUM -- Sec 2.7's governing rule is "a local CCD
+#         centred on the GA optimum (the CCD must cover the region the GA
+#         actually explored)".  The numeric centre quoted in Sec 2.7
+#         (1.03967, 0.219741, 53.7247) is the SNAPSHOT taken when the
+#         document was written; Stage 0's Sec 2.2 heat fix moved the GA
+#         optimum afterwards, so the centre is RESOLVED from the live
+#         optimiser artefact and the difference from the snapshot is
+#         REPORTED (never silently applied).  --centre overrides it.
 #     A3  MODEL space is mapped to PHYSICAL space by the Sec 2.1 convention
 #         above and by nothing else.
 #     A4  Every point is flown with the SAME protocol as the reference run
@@ -60,6 +65,11 @@
 #         The manifest records the codes of every point, so the Stage-2 fit
 #         must read the codes from the manifest (or apply this same
 #         convention) -- never from the point id order alone.
+#     A10 The per-point state rows are bound to a DESIGN FINGERPRINT
+#         (centre, half-widths, steps, skin).  A fingerprint change makes
+#         the previous rows meaningless (their codes and their geometry
+#         belong to another DoE), so they are DISCARDED rather than mixed
+#         into the manifest of the new design.
 #
 # THEORIES
 #     T1  (McKay et al. 1979, Technometrics 21(2)) The 2^3 factorial layout
@@ -107,24 +117,22 @@ cd "${ROOT}"
 BIN_REL="bin/main"
 BIN="${ROOT}/${BIN_REL}"
 
-# Sec 2.7: the local CCD around the GA optimum (model space).  These are the
-# BINDING values of CALIBRATION_DESIGN.md Sec 2.7 (and Sec 2.1), so the plan
-# is reproducible from this script alone and cannot silently drift.  An
-# explicit --centre overrides them; the live optimiser artefact is then
-# cross-checked against the contract centre, and a WARNING is printed when
-# the current optimum has left the Sec 2.7 screen (Sec 2.7's own rationale:
-# "the CCD must cover the region the GA actually explored").  The script
-# NEVER recentres on its own -- the contract centre is the default.
-CENTRE_X1=1.03967      # X(1): body / cone-junction radius [m]
-CENTRE_X2=0.219741     # X(2): toroid radius [m]
-CENTRE_X3=53.7247      # X(3): half-cone angle [deg]
+# The live optimiser artefact: the single source of truth for the GA
+# optimum, i.e. for the Sec 2.7 CCD centre.  OPTIONAL only when --centre
+# is given explicitly.
+RESULTS_JSON_REL="src/python/hiad_optimization_results.json"
+# The Sec 2.7 SNAPSHOT centre, kept for the provenance record and offered
+# as the documented --centre fallback.
+CENTRE_SNAPSHOT_X1=1.03967
+CENTRE_SNAPSHOT_X2=0.219741
+CENTRE_SNAPSHOT_X3=53.7247
+CENTRE_X1=""
+CENTRE_X2=""
+CENTRE_X3=""
 CENTRE_OVERRIDE=0      # 1 when --centre was given on the command line
 HALF_X1=0.25           # dR_N
 HALF_X2=0.06           # dR_tor
 HALF_X3=8.0            # dCone
-# The live optimiser artefact: used ONLY as a cross-check, never as the
-# default (the contract centre is the default and the artefact is optional).
-RESULTS_JSON_REL="src/python/hiad_optimization_results.json"
 
 # Sec 2.1: Nose_Radius_Ratio := 0.55 / 1.5 -- kept as the RATIO, never as a
 # rounded literal, so the script implements the specification literally.
@@ -162,8 +170,8 @@ Options:
                      (default results/calibration)
   --only "1,2,5"     fly only the listed point ids (1..9)
   --centre R_N,r_tor,cone
-                     override the CCD centre (default: the Sec 2.7 binding
-                     centre 1.03967,0.219741,53.7247)
+                     override the CCD centre (default: the current GA
+                     optimum read from src/python/hiad_optimization_results.json)
   -h, --help         this text
 EOF
 }
@@ -191,22 +199,33 @@ esac
 [ "${STEPS}" -ge 1 ] || { echo "FATAL: --steps must be >= 1 (got '${STEPS}')." >&2; exit 2; }
 
 # ---------------------------------------------------------------------
-# 0b. The CCD centre: the Sec 2.7 binding value, cross-checked against
-#     the live GA optimum.
+# 0b. The CCD centre: the CURRENT GA optimum (Sec 2.7's governing rule).
 # ---------------------------------------------------------------------
-# Compare the contract centre with the live GA optimum and WARN (never
-# fail) when the optimum has left the Sec 2.7 screen.  The optimiser
-# artefact is OPTIONAL: a missing or unreadable artefact only silences
-# this cross-check, it never blocks the campaign.
-check_centre_against_optimum() {
-  local opt_py opt_vals ox1 ox2 ox3 warn c
-  [ -f "${RESULTS_JSON_REL}" ] || return 0
-  opt_py=""
+# Sec 2.7 requires the DoE to be centred on the GA optimum so that the
+# screen covers the region the GA actually explored.  The numeric centre
+# quoted in Sec 2.7 is the snapshot taken when the document was written;
+# Stage 0's Sec 2.2 heat fix moved the GA optimum afterwards, so the
+# centre is resolved from the live optimiser artefact and the difference
+# from the snapshot is REPORTED (never silently applied).
+resolve_centre_from_artifact() {
+  local py vals c
+  if [ ! -f "${RESULTS_JSON_REL}" ]; then
+    echo "FATAL: cannot resolve the CCD centre: '${RESULTS_JSON_REL}' not found." >&2
+    echo "       Sec 2.7 centres the DoE on the CURRENT GA optimum." >&2
+    echo "       Fix: run the optimiser, or pass the centre explicitly:" >&2
+    echo "         --centre ${CENTRE_SNAPSHOT_X1},${CENTRE_SNAPSHOT_X2},${CENTRE_SNAPSHOT_X3}" >&2
+    return 2
+  fi
+  py=""
   for c in python3 python3.14 python; do
-    if command -v "${c}" >/dev/null 2>&1; then opt_py="${c}"; break; fi
+    if command -v "${c}" >/dev/null 2>&1; then py="${c}"; break; fi
   done
-  [ -n "${opt_py}" ] || return 0
-  opt_vals="$("${opt_py}" - "${RESULTS_JSON_REL}" <<'PYEOF_READ' 2>/dev/null
+  if [ -z "${py}" ]; then
+    echo "FATAL: no python3 interpreter found to read '${RESULTS_JSON_REL}'." >&2
+    echo "       Fix: install python3, or pass --centre R_N,r_tor,cone." >&2
+    return 2
+  fi
+  vals="$("${py}" - "${RESULTS_JSON_REL}" <<'PYEOF_READ' 2>/dev/null
 import json
 import sys
 
@@ -214,31 +233,20 @@ with open(sys.argv[1], encoding="utf-8") as fh:
     opt = json.load(fh)["optimized"]
 print(opt["R_N"], opt["r_tor"], opt["half_cone_deg"])
 PYEOF_READ
-  )" || return 0
-  read -r ox1 ox2 ox3 <<< "${opt_vals}"
-  case "${ox1}${ox2}${ox3}" in
-    ''|*[!0-9.]*) return 0 ;;
-  esac
-  warn="$(awk -v cx1="${CENTRE_X1}" -v cx2="${CENTRE_X2}" -v cx3="${CENTRE_X3}" \
-              -v ox1="${ox1}" -v ox2="${ox2}" -v ox3="${ox3}" \
-              -v h1="${HALF_X1}" -v h2="${HALF_X2}" -v h3="${HALF_X3}" \
-        'BEGIN {
-           d1 = cx1 - ox1; if (d1 < 0) d1 = -d1
-           d2 = cx2 - ox2; if (d2 < 0) d2 = -d2
-           d3 = cx3 - ox3; if (d3 < 0) d3 = -d3
-           out = ""
-           if (d1 > h1) out = out sprintf("X1 off by %.6f m (half-width %.6f m); ", d1, h1)
-           if (d2 > h2) out = out sprintf("X2 off by %.6f m (half-width %.6f m); ", d2, h2)
-           if (d3 > h3) out = out sprintf("X3 off by %.6f deg (half-width %.6f deg); ", d3, h3)
-           printf "%s", out
-         }')"
-  if [ -n "${warn}" ]; then
-    echo "WARNING: the current GA optimum (${ox1}, ${ox2}, ${ox3}) lies OUTSIDE" >&2
-    echo "         the CALIBRATION_DESIGN.md Sec 2.7 CCD screen centred on" >&2
-    echo "         (${CENTRE_X1}, ${CENTRE_X2}, ${CENTRE_X3}): ${warn}" >&2
-    echo "         The Sec 2.7 centre is used (it is the binding contract)." >&2
-    echo "         Re-run with --centre ${ox1},${ox2},${ox3} to recentre the DoE." >&2
-  fi
+  )" || {
+    echo "FATAL: cannot read the GA optimum from '${RESULTS_JSON_REL}'." >&2
+    echo "       The file must hold a top-level 'optimized' object with" >&2
+    echo "       'R_N', 'r_tor' and 'half_cone_deg'." >&2
+    return 2
+  }
+  read -r CENTRE_X1 CENTRE_X2 CENTRE_X3 <<< "${vals}"
+  for v in "${CENTRE_X1}" "${CENTRE_X2}" "${CENTRE_X3}"; do
+    case "${v}" in
+      ''|*[!0-9.]*)
+        echo "FATAL: '${RESULTS_JSON_REL}' does not hold a usable optimum." >&2
+        return 2 ;;
+    esac
+  done
   return 0
 }
 
@@ -249,12 +257,25 @@ if [ "${CENTRE_OVERRIDE}" -eq 1 ]; then
     esac
   done
 else
-  check_centre_against_optimum
+  resolve_centre_from_artifact || exit 2
+  if [ "${CENTRE_X1}" != "${CENTRE_SNAPSHOT_X1}" ] \
+     || [ "${CENTRE_X2}" != "${CENTRE_SNAPSHOT_X2}" ] \
+     || [ "${CENTRE_X3}" != "${CENTRE_SNAPSHOT_X3}" ]; then
+    echo "NOTICE: the CCD centre resolved from ${RESULTS_JSON_REL} is" >&2
+    echo "        (${CENTRE_X1}, ${CENTRE_X2}, ${CENTRE_X3}); the Sec 2.7 snapshot is" >&2
+    echo "        (${CENTRE_SNAPSHOT_X1}, ${CENTRE_SNAPSHOT_X2}, ${CENTRE_SNAPSHOT_X3})." >&2
+    echo "        Sec 2.7 centres the DoE on the CURRENT GA optimum, so the" >&2
+    echo "        resolved centre is used.  To fly the snapshot instead:" >&2
+    echo "          --centre ${CENTRE_SNAPSHOT_X1},${CENTRE_SNAPSHOT_X2},${CENTRE_SNAPSHOT_X3}" >&2
+  fi
 fi
 
 MANIFEST_REL="${OUT_REL}/manifest.csv"
 STATE_REL="${OUT_REL}/.state"
 EXPECTED_ROWS=$(( STEPS / DUMP_INTERVAL ))
+
+# The design fingerprint (A10): everything that changes the physical DoE.
+DESIGN_FINGERPRINT="centre=${CENTRE_X1},${CENTRE_X2},${CENTRE_X3} half=${HALF_X1},${HALF_X2},${HALF_X3} steps=${STEPS} skin=${SKIN}"
 
 # ---------------------------------------------------------------------
 # 1.  The design (A1, A2, A9) and the physical geometry (A3)
@@ -405,6 +426,31 @@ write_manifest() {
       fi
     done
   } > "${MANIFEST_REL}.tmp" && mv "${MANIFEST_REL}.tmp" "${MANIFEST_REL}"
+}
+
+# A10: bind the per-point state rows to the design that produced them.  A
+# fingerprint change means the old rows describe a DIFFERENT DoE, so they
+# are discarded instead of being mixed into the new manifest.
+prepare_state() {
+  local fp_file="${STATE_REL}/design.fingerprint"
+  local prev=""
+  if [ -f "${fp_file}" ]; then
+    prev="$(cat "${fp_file}")"
+  fi
+  if [ "${prev}" != "${DESIGN_FINGERPRINT}" ]; then
+    if [ -n "${prev}" ]; then
+      echo "   [state] the design changed:" >&2
+      echo "          was: ${prev}" >&2
+      echo "          now: ${DESIGN_FINGERPRINT}" >&2
+      echo "          discarding the per-point state rows of the old design." >&2
+      rm -f "${STATE_REL}/ccd_1.row" "${STATE_REL}/ccd_2.row" \
+            "${STATE_REL}/ccd_3.row" "${STATE_REL}/ccd_4.row" \
+            "${STATE_REL}/ccd_5.row" "${STATE_REL}/ccd_6.row" \
+            "${STATE_REL}/ccd_7.row" "${STATE_REL}/ccd_8.row" \
+            "${STATE_REL}/ccd_9.row"
+    fi
+    printf '%s\n' "${DESIGN_FINGERPRINT}" > "${fp_file}"
+  fi
 }
 
 # ---------------------------------------------------------------------
@@ -608,6 +654,7 @@ main() {
   preflight || exit 3
   if [ "${DRY_RUN}" -eq 0 ]; then
     mkdir -p "${OUT_REL}" "${STATE_REL}"
+    prepare_state
     write_manifest
   fi
   campaign

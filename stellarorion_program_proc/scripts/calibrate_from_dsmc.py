@@ -573,6 +573,7 @@ class RunPoint:
     nose_radius_flown: float | None = None
     steps: int = 0
     cd_cross_check: float = float("nan")
+    optional_columns_present: tuple[str, ...] = ()
 
 
 def _read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -798,6 +799,9 @@ def read_run(
         nose_radius_flown=nose_radius_flown,
         steps=len(rows),
         cd_cross_check=cross_check,
+        optional_columns_present=tuple(
+            column for column in OPTIONAL_RUN_COLUMNS if column in header
+        ),
     )
 
 
@@ -1195,6 +1199,13 @@ def render_report(result: FitResult) -> str:
         lines.append("Excluded from the fit:")
         for run, reason in result.skipped:
             lines.append(f"  - {run.path.name}: {reason}")
+    lines.append("")
+    lines.append("CALIBRATION DESIGN 2.4 optional columns present in the runs:")
+    for run in result.fit_points:
+        lines.append(
+            f"  {run.path.name}: "
+            f"{list(run.optional_columns_present) if run.optional_columns_present else 'none'}"
+        )
     lines.append("")
     lines.append("Fitted drag coefficients (cd_raw_presented_area residual):")
     for suffix, coefficient in zip(COEFFICIENT_SUFFIXES, result.cd_coefficients):
