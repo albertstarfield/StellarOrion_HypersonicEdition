@@ -394,8 +394,8 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
         Thermal Analysis & 1D F-TPS with contact conductance & Sutton--Graves + Fay--Riddell correlations + DSMC surface computes \\
         Optimization & Sequential parametric sweeps & Simple GA (population 50, up to 200 generations), 3,600 evaluations \\
         Design Space & 3--4 parameters & 5 effective coordinates, LHS-seeded GA \\
-        Optimum Verification & Not reported & Enforced DSMC re-simulation gate with multi-fidelity correction \\
-        Formal Verification & Not reported & GNATprove level 4; 527 checks, 400 proved \\
+        Optimum Verification & Not reported & Enforced DSMC re-simulation gate; double pass GA with a bounded heat-load correction \\
+        Formal Verification & Not reported & GNATprove level 4; 747 checks, all proved \\
         Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
         Grid Independence & Not reported & Automated grid-factor optimization \\

@@ -248,7 +248,9 @@ def _load_validation_refs() -> dict[str, float]:
 #  Estimated runtime  : geometry QA < 5 s; DSMC leg 2-3 h at 2200 steps
 #                       [Citation: run.py "SPARTA DSMC validation runs take
 #                       2-3h at 2200 steps"]; PINN pipeline 5-30 min;
-#                       round-2 BO ~ 1-2 min (70 Ada FFI evals)
+#                       round-2 GA ~ 1 min (the analytic GA re-run with the
+#                       corrected heat-load weight); the BO branch of the
+#                       round-2 pass is ~ 1-2 min (70 Ada FFI evals)
 #  WCET               : bounded by _GATE_DSMC_TIMEOUT_S (4 h) and
 #                       _GATE_PIPE_TIMEOUT_S (90 min) subprocess timeouts
 #  Space complexity   : O(1) auxiliary; child output goes to log files
@@ -266,7 +268,7 @@ _GATE_CORR_MAX = 2.0                # A5 upper clamp
 _GATE_PIPE_TARGET_STEP = 300000000  # run.py Phase 2b template [Citation 8]
 _GATE_PIPE_ITERATIONS = 4000        # run.py Phase 2b template [Citation 8]
 class _GateBOKwargs(TypedDict):
-    """Keyword arguments for the round-2 Bayesian Optimization call.
+    """Keyword arguments for the Bayesian branch of the round-2 pass.
 
     AXIOM: `run_bayesian_optimize` declares exactly four keyword parameters --
     `n_initial: int`, `n_iter: int`, `xi: float`, `seed: int` -- and accepts no
@@ -279,7 +281,7 @@ class _GateBOKwargs(TypedDict):
     APPLICATION: this TypedDict pins the four keys and their types one-to-one
     against the callee signature, making the unpack provably total and
     key-compatible. The literal values are unchanged from the pre-TypedDict
-    definition, so the round-2 BO budget is still 20 LHS + 50 EI iterations at
+    definition, so the BO branch's round-2 budget is still 20 LHS + 50 EI iterations at
     xi=0.01 with seed 42.
 
     FORWARDING: the call site does NOT use `**{...}` unpacking. `**` into a
@@ -859,7 +861,8 @@ def _make_corrected_cost(correction: "float"):
 
     Returns:
         Callable (r_n, r_tor, half_cone_deg) -> float suitable for
-        run_bayesian_optimize(). At c == 1.0 the result equals
+        run_bayesian_optimize(); the GA branch realises the very same
+        correction as an effective heat-load weight. At c == 1.0 the result equals
         hiad_cost_function exactly (asserted by the self-test).
 
     References:
@@ -872,7 +875,7 @@ def _make_corrected_cost(correction: "float"):
         """Corrected round-2 cost: base heat term biased by the fidelity factor.
 
         Returns:
-            float objective value J_round2 for the Bayesian round-2 optimizer.
+            float objective value J_round2 for the round-2 pass.
 
         References:
             - https://docs.python.org/3/library/functions.html#min
@@ -1106,7 +1109,7 @@ def _hybrid_gate(
     """Orchestrate the hybrid validation gate + correction loop.
 
     Flow (full mode): preconditions -> prepare dir -> geometry QA ->
-    DSMC -> PINN -> verdict -> correction -> round-2 BO ->
+    DSMC -> PINN -> verdict -> correction -> round-2 (GA or BO) ->
     (optional round-2 validation) -> persist everything -> return code.
 
     Dry-run mode: preconditions -> geometry QA -> print planned commands
@@ -1277,7 +1280,8 @@ def _hybrid_gate(
     #            is algebraically identical to the corrected cost.
     round2_weight: float | None = None
     if args.optimizer == "bo":
-        print("\n  Stage 3/3: round-2 Bayesian Optimization with corrected J ...")
+        print("\n  Stage 3/3: round-2 Bayesian Optimization with corrected J "
+              "(the --optimizer bo branch) ...")
         try:
             corrected_cost = _make_corrected_cost(correction)
             # Explicit keywords, not `**_GATE_BO_KWARGS` -- see _GateBOKwargs.

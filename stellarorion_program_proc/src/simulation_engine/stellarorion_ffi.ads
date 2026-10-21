@@ -312,6 +312,15 @@ package StellarOrion_FFI is
    --        (stellarorion_ga_runner) owns the tasking and the secondary
    --        stack and is the ONLY route that uses the parallel
    --        evaluator.
+   --    A9. This entry is the genetic-algebra ENGINE of the DOUBLE PASS
+   --        GA pipeline, exposed to C.  The host calls it TWICE: pass 1
+   --        minimises the analytic screening cost (MODEL SPACE); the DSMC
+   --        validation of the pass-1 winner yields the bounded residual
+   --        correction factor c = clamp(q_hybrid/q_analytic, 0.5, 2.0);
+   --        pass 2 re-runs the same engine with the corrected cost.  ONE
+   --        DSMC run validates each pass.  This layer NEVER calls DSMC:
+   --        the search is ANALYTICAL and the DSMC runs live in PHYSICAL
+   --        SPACE in the host's validation legs.
    --    A8. The calibration file is NOT loaded through this layer.
    --        CALIBRATION DESIGN 2.5 decided that the Ada/C string
    --        conversion makes the FFI route the wrong place for it: the

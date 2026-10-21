@@ -11,7 +11,7 @@ The gate executes five legs as a post-optimization stage:
     \item \textbf{DSMC leg.} The selected winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless}} at its geometry, writing to a dedicated results directory. The reference dataset used for the baseline comparison is never overwritten.
     \item \textbf{Refinement leg.} The validation pipeline is executed on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and it records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
-    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$, and the optimizer is re-run with the corrected cost, producing a corrected design.
+    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$: the corrected objective is $J^{(2)}(\mathbf{x}) = J(\mathbf{x}) + (c-1)\,Q(\mathbf{x})/Q_{target}$, which the implementation realises as an effective heat-load weight of $c$. The same genetic algorithm is then re-run with that weight --- in closed form, with no solver call --- producing the corrected design of Sec.~\ref{sec:double_pass_ga}.
 \end{enumerate}
 
 \subsection{Final DSMC Verification}
