@@ -7,6 +7,8 @@ Each RUN OWNS its plots (the guide lists each run's own tree; per RUNS.md, `00_r
 
 The topology optimiser is the **double pass GA optimization**: pass 1 is an LHS-seeded genetic algorithm over the ANALYTIC screening model (MODEL SPACE); the DSMC residual of pass 1 becomes the bounded correction factor c = clamp(q_hybrid/q_analytic, 0.5, 2.0); pass 2 re-runs the GA analytically with that factor; DSMC validates pass 1 and pass 2 (PHYSICAL SPACE).
 
+The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PINN' wording inside their GENERATED markdown (validation_pipeline_output/dsmc_pinn_switch_section.md, unified_comparison_table.md); they are records of those runs and are not regenerated.  The current method label is DSMC+PINN_AUX: the PINN is an auxiliary denoiser, not a co-equal validator.
+
 ## 00_reference/
 - (root level): 70 artefacts (directly in results/00_reference/plots/)
 - `derived/`: 6 artefacts (under results/00_reference/plots/derived/)
@@ -48,9 +50,7 @@ The topology optimiser is the **double pass GA optimization**: pass 1 is an LHS-
 - (root level): 18 artefacts (directly in results/validation_smooth/plots/)
 - Total under validation_smooth: **18**
 
-## validation_optimized/
-- (root level): 39 artefacts (directly in results/validation_optimized/plots/)
-- Total under validation_optimized: **39**
+## validation_optimized: (no plots directory)
 
 ## OptimizedTopology/
 - (root level): 1 artefacts (directly in results/OptimizedTopology/plots/)
@@ -63,6 +63,8 @@ The topology optimiser is the **double pass GA optimization**: pass 1 is an LHS-
 - `calibration_aborted_oldcentre_20261021/`: 0 PNG/MP4 artefacts, 1 CSV files
 - `plots/`: 12 PNG/MP4 artefacts, 0 CSV files
 - `tps_conduction/`: 0 PNG/MP4 artefacts, 6 CSV files
+- `validation_lhs_optimum/`: 10 PNG/MP4 artefacts, 5 CSV files
+- `validation_optimized_stale_20261020/`: 49 PNG/MP4 artefacts, 6 CSV files
 
 The Stage-1 calibration campaign (`calibration/`) writes one `validation_timeseries.csv` per CCD point -- the 22 legacy columns plus the calibration columns (unclamped drag, the raw drag per reference area, the DSMC surface heat load and the flown geometry) -- and the campaign index in `calibration/manifest.csv`.
 

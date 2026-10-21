@@ -1414,6 +1414,14 @@ def _write_results_readme() -> None:
                   "the GA analytically with that factor; DSMC validates pass 1 "
                   "and pass 2 (PHYSICAL SPACE).")
     lines.append("")
+    lines.append("The trees produced BEFORE the 2026-10-20 relabel keep the "
+                  "historical 'DSMC\u2192PINN' wording inside their GENERATED "
+                  "markdown (validation_pipeline_output/"
+                  "dsmc_pinn_switch_section.md, unified_comparison_table.md); "
+                  "they are records of those runs and are not regenerated.  The "
+                  "current method label is DSMC+PINN_AUX: the PINN is an "
+                  "auxiliary denoiser, not a co-equal validator.")
+    lines.append("")
     for run in run_names:
         plots = results_dir / run / "plots"
         if not plots.is_dir():
