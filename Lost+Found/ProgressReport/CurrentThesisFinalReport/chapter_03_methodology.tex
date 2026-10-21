@@ -400,7 +400,7 @@ For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA
     \dot{q}_{stag} = 1.7415 \times 10^{-4} \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times 3378^3 \approx 1.536 \times 10^{5} \ \text{W/m}^2 = 15.36 \ \text{W/cm}^2
 \end{equation}
 
-The correlation constant is the value implemented in the Ada/SPARK model, $C_{SG} = 1.7415 \times 10^{-4}$; an earlier revision of this work used $1.7415 \times 10^{-4}$, which raises the computed flux by about $5\,\%$ and produced the $16.14$\,W/cm$^2$ quoted in that revision. The evaluation above uses the $1.5$\,m body radius as the nose radius, which is the convention of the validation comparison. The optimizer evaluates the same correlation at the physical nose radius $R_n=\kappa X_1$ of Eq.~\eqref{eq:nose_ratio} ($0.55$\,m at the baseline), which is why its screening flux is $25.36$\,W/cm$^2$ at the baseline. The $12.20$\,W/cm$^2$ value in the validation export is a third, legacy evaluation at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$; it is not the run condition and is not used here. Rapisarda (2023) reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ (+6.26\% above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
+The correlation constant is the value implemented in the Ada/SPARK model, $C_{SG} = 1.7415 \times 10^{-4}$; an earlier revision of this work used $1.83 \times 10^{-4}$, which raises the computed flux by about $5\,\%$ and produced the $16.14$\,W/cm$^2$ quoted in that revision. The evaluation above uses the $1.5$\,m body radius as the nose radius, which is the convention of the validation comparison. The optimizer evaluates the same correlation at the physical nose radius $R_n=\kappa X_1$ of Eq.~\eqref{eq:nose_ratio} ($0.55$\,m at the baseline), which is why its screening flux is $25.36$\,W/cm$^2$ at the baseline. The $12.20$\,W/cm$^2$ value in the validation export is a third, legacy evaluation at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$; it is not the run condition and is not used here. Rapisarda (2023) reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ (+6.26\% above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
 
 \subsubsection*{Note on SPARTA Surface Energy}
 The raw SPARTA DSMC kinetic energy ($ke$) surface compute cannot be used directly as an absolute heat flux in W/m$^2$. SPARTA's \texttt{fix ave/surf} outputs kinetic energy per simulated particle per timestep per face element -- a simulation-internal unit that depends on $f_{num}$, timestep $dt$, and face area in a non-trivially-normalized way. It is retained only as a \textbf{relative shape-ranking signal} for the optimizer (comparing geometries against each other). For all absolute thermal calculations, the Sutton-Graves correlation is used.
@@ -438,6 +438,28 @@ The framework supports multiple TPS material presets as summarized in Table~\ref
         Multi-layer (stack) & -- & -- & -- & Combined FTPS stack \\ \hline
     \end{tabularx}
 \end{table}
+
+\subsection{Composite Thermal-Propagation Chain}
+\label{sec:thermal_chain}
+
+The two lumped models above are the legacy interface of the thermal model: a radiative-equilibrium surface temperature and a single-slab backface temperature. The framework implements the full propagation chain behind them, per surface element, as a layered one-dimensional solver: the convective load enters the outer ply, is conducted inwards through the layup, is re-radiated from the hot face, and the resulting in-plane coupling is closed with a lumped lateral term.
+
+The hot-face boundary condition balances the two outward paths, conduction through the layup resistance $R=\sum_i \delta_i/k_i$ and radiation to the freestream,
+\begin{equation}
+    \dot{q}_{wall} = \frac{T_{surf}-T_{back}}{R} + \epsilon\sigma\left(T_{surf}^{4}-T_{\infty}^{4}\right),
+    \label{eq:thermal_balance}
+\end{equation}
+where $\epsilon$ and $\sigma$ are as above and $T_{back}$ is supplied by the transient model of this section. The left-hand side is monotone in $T_{surf}$, so the equation has a unique root, which the solver finds by bisection and Newton iteration; the solver is registered in the unit-test suite, so the root exists and is unique for every element.
+
+The lateral (in-plane) term is applied \emph{after} the one-dimensional solve and is not a two-dimensional PDE: each element exchanges heat with its neighbours through a lumped conductance $G_{lat}$,
+\begin{equation}
+    \dot{q}_{lateral} = G_{lat}\left(T_{surf}-T_{surf}^{neighbours}\right),
+    \label{eq:lateral}
+\end{equation}
+and the resulting source is added to the element's energy balance. The measured magnitude is negligible for this geometry: for the reference run the first element carries $\dot{q}_{conv}=143{,}760$\,W/m$^2$, $\dot{q}_{cond}=3{,}362$\,W/m$^2$, $\dot{q}_{rad}=140{,}399$\,W/m$^2$ and $\dot{q}_{lateral}=0.0083$\,W/m$^2$, i.e.\ about $6\times10^{-8}$ of the convective load, with $T_{surf}=1327.2$\,K, $T_{back}=300$\,K and $R=0.3056$\,m$^2$K/W across the 3\,648 surface elements and the five-ply layup.
+
+The per-element results are exported to the run's \texttt{results/tps\_conduction} tree (element table, per-ply table, through-thickness profiles and a summary), and Chapter~\ref{ch:results} reports them.
+
 
 \subsection{Statistical Convergence Monitoring}
 As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500--1100 particle-time steps depending on the geometry complexity.
