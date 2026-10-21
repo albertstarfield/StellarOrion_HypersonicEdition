@@ -162,43 +162,98 @@ def _right_border_x(rgb: np.ndarray) -> int:
     return int(np.median(found))
 
 
-def measure(path: Path) -> dict[str, int]:
+def _left_border_x(rgb: np.ndarray) -> int:
+    """Return the column of the saturated core of the boxes' left border.
+
+    Parameters
+    ==========
+    rgb : np.ndarray
+        Image array of shape (height, width, 3).
+
+    Returns
+    =======
+    int
+        Median leftmost saturated column of the six non-red border colours.
+
+    Raises
+    ======
+    SystemExit
+        If fewer than five of the six border colours agree within three
+        pixels, which means the image does not look like the flowchart.
+    """
+    found = []
+    for colour in BORDER_RGB:
+        mask = near(rgb, colour, BORDER_TOL)
+        columns = np.nonzero(mask.sum(axis=0) >= MIN_COL_SEGMENT)[0]
+        if columns.size:
+            found.append(int(columns.min()))
+    if len(found) < 5:
+        raise SystemExit(
+            f"only {len(found)} box borders found, expected at least 5 of 6"
+        )
+    agreed = sum(1 for x in found if abs(x - found[0]) <= 3)
+    if agreed < 5:
+        raise SystemExit(f"box border columns disagree: {sorted(found)}")
+    return int(np.median(found))
+
+
+def measure(path: Path, side: str = "right") -> dict[str, int]:
     """Measure the loop geometry of a rendered flowchart.
 
     Parameters
     ==========
     path : Path
         Path of the PNG to measure.
+    side : str
+        The side of the box column that carries the loop, ``"right"`` or
+        ``"left"``. The left side is measured from the boxes' left border
+        and the rightmost loop ink on each row.
 
     Returns
     =======
     dict
-        Keys ``box_right_x``, ``loop_left_x``, ``bow_gap_px``,
-        ``touch_rows``, ``touch_run`` and ``loop_rows``, all in pixels.
+        Keys ``side``, ``border_x``, ``loop_near_x``, ``sep_gap_px``,
+        ``max_gap_px``, ``touch_rows``, ``touch_run`` and ``loop_rows``,
+        all pixel quantities.
 
     Raises
     ======
     SystemExit
-        If the image has no loop ink to the right of the box column.
+        If the image has no loop ink on the requested side of the box
+        column.
+    ValueError
+        If ``side`` is neither ``"right"`` nor ``"left"``.
     """
+    if side not in ("right", "left"):
+        raise ValueError(f"side must be 'right' or 'left', got {side!r}")
     rgb = np.asarray(Image.open(path).convert("RGB"))
-    box_right_x = _right_border_x(rgb)
+    border_x = _right_border_x(rgb) if side == "right" else _left_border_x(rgb)
     red = near(rgb, LOOP_RGB, LOOP_TOL)
 
-    # Loop ink is red that sits to the right of the box column. The seventh
-    # box shares that red but lies entirely within the column, so masking it
-    # out keeps the box outline from being read as loop geometry.
+    # Loop ink is red that sits outside the box column. The seventh box
+    # shares that red but lies entirely within the column, so masking the
+    # column out keeps the box outline from being read as loop geometry.
     loop = red.copy()
-    loop[:, : box_right_x + 1] = False
-    rows = np.nonzero(loop.any(axis=1))[0]
-    if rows.size == 0:
-        raise SystemExit(f"{path.name}: no loop ink right of the box column")
-
-    loop_left_x = int(np.nonzero(loop.any(axis=0))[0].min())
-    gaps = []
-    for row in rows:
-        first = int(np.nonzero(loop[row])[0].min())
-        gaps.append(first - box_right_x - 1)
+    if side == "right":
+        loop[:, : border_x + 1] = False
+        rows = np.nonzero(loop.any(axis=1))[0]
+        if rows.size == 0:
+            raise SystemExit(f"{path.name}: no loop ink right of the box column")
+        loop_near_x = int(np.nonzero(loop.any(axis=0))[0].min())
+        gaps = []
+        for row in rows:
+            first = int(np.nonzero(loop[row])[0].min())
+            gaps.append(first - border_x - 1)
+    else:
+        loop[:, border_x:] = False
+        rows = np.nonzero(loop.any(axis=1))[0]
+        if rows.size == 0:
+            raise SystemExit(f"{path.name}: no loop ink left of the box column")
+        loop_near_x = int(np.nonzero(loop.any(axis=0))[0].max())
+        gaps = []
+        for row in rows:
+            last = int(np.nonzero(loop[row])[0].max())
+            gaps.append(border_x - last - 1)
 
     flush = [gap <= FLUSH_PX for gap in gaps]
     touch_rows = int(sum(flush))
@@ -209,8 +264,9 @@ def measure(path: Path) -> dict[str, int]:
         touch_run = max(touch_run, run)
 
     return {
-        "box_right_x": box_right_x,
-        "loop_left_x": loop_left_x,
+        "side": side,
+        "border_x": border_x,
+        "loop_near_x": loop_near_x,
         "sep_gap_px": int(np.median(gaps)),
         "max_gap_px": int(max(gaps)),
         "touch_rows": touch_rows,
@@ -246,8 +302,9 @@ def main(argv: list[str]) -> int:
         and result["touch_rows"] <= MAX_TOUCH_ROWS
     )
     print(
-        f"{path.name}: box border core x={result['box_right_x']}, "
-        f"loop left ink x={result['loop_left_x']}, "
+        f"{path.name}: loop side={result['side']}, "
+        f"box border core x={result['border_x']}, "
+        f"nearest loop ink x={result['loop_near_x']}, "
         f"median gap {result['sep_gap_px']}px floor {MIN_SEP_GAP_PX}px "
         f"(widest {result['max_gap_px']}px), flush rows "
         f"{result['touch_rows']} longest run {result['touch_run']} bound "

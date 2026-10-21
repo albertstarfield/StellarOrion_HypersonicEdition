@@ -271,7 +271,7 @@ LOOP_LW = 1.4
 # the connection style is applied in display space and cannot be predicted
 # from the data-space curvature. At this value the measured clearance sits
 # above the eight pixel floor with margin.
-LOOP_X = BOX_X1 + 0.32
+LOOP_X = BOX_X0 - 0.32
 # Bow depth, that is how far the curve's leftmost point sits left of the
 # chord. A quadratic Bezier reaches exactly half of the control point
 # offset, so the apex lands at LOOP_X - LOOP_BOW / 2 and the clearance to
@@ -287,7 +287,7 @@ LOOP_SAMPLES = 241
 # Arrowhead: length along the column and half width at the base.
 LOOP_HEAD_LEN = 0.13
 HEAD_HALF_RATIO = 0.62
-ENTRY_X = BOX_X1
+ENTRY_X = BOX_X0
 # Both connectors stop a hair INSIDE the border rather than exactly on it.
 # WHY: the box border is a 1.5 pt stroke centred on BOX_X1, so a connector
 # that ends at BOX_X1 leaves a sliver of white between its own ink and the
@@ -365,11 +365,13 @@ def check_text(name: str, value: str) -> None:
             raise RuntimeError(f"banned dash {bad!r} in {name}")
 
 
-def measured_loop_clearance(path: Path) -> dict[str, int]:
+def measured_loop_clearance(path: Path, side: str = "right") -> dict[str, int]:
     """Measure the loop clearance on a saved PNG and enforce both bounds.
 
     Parameters
         path: the saved PNG to measure.
+        side: side of the box column that carries the loop, "right" or
+            "left" (this figure uses "left").
     Returns
         the measurement dictionary from measure_loop_gap.measure, whose
         keys are box_right_x, loop_left_x, gap_px, contact_rows and
@@ -383,7 +385,7 @@ def measured_loop_clearance(path: Path) -> dict[str, int]:
         SystemExit: propagated from the measurement when the image does not
             look like this flowchart at all.
     """
-    result = measure(path)
+    result = measure(path, side=side)
     if result["sep_gap_px"] < MIN_SEP_GAP_PX:
         raise RuntimeError(
             f"loop median clearance from the box border is only "
@@ -657,7 +659,7 @@ def draw() -> None:
     # analytic clearance below is true of the drawn curve, and the pixel
     # guard in measure_loop_gap still confirms the rendered result.
     mid_y = 0.5 * (y_loop_from + y_loop_to)
-    control = (LOOP_X - LOOP_BOW, mid_y)
+    control = (LOOP_X + LOOP_BOW, mid_y)
     ts = np.linspace(0.0, 1.0, LOOP_SAMPLES)
     bx = (1.0 - ts) ** 2 * LOOP_X + 2.0 * (1.0 - ts) * ts * control[0] + ts**2 * LOOP_X
     by = (1.0 - ts) ** 2 * y_loop_from + 2.0 * (1.0 - ts) * ts * mid_y + ts**2 * y_loop_to
@@ -665,11 +667,11 @@ def draw() -> None:
     # so the curve's leftmost point is what has to clear the box edge. Testing
     # the control point instead would demand twice the clearance and reject a
     # curve that is in fact well clear.
-    apex_x = float(bx.min())
-    if apex_x - BOX_X1 < BOW_CLEAR_MIN:
+    apex_x = float(bx.max())
+    if BOX_X0 - apex_x < BOW_CLEAR_MIN:
         raise RuntimeError(
             f"loop apex reaches x {apex_x:.4f}, which clears the box edge "
-            f"{BOX_X1:.4f} by only {apex_x - BOX_X1:.4f} in, need "
+            f"{BOX_X0:.4f} by only {BOX_X0 - apex_x:.4f} in, need "
             f"{BOW_CLEAR_MIN:.4f} in"
         )
     ax.plot(
@@ -685,7 +687,7 @@ def draw() -> None:
     # the dashed path from the border of the box the loop leaves out to
     # the chord. Without it the loop appears to start in empty space.
     ax.plot(
-        [BOX_X1 - CONNECTOR_OVERLAP, LOOP_X],
+        [LOOP_X, BOX_X0 + CONNECTOR_OVERLAP],
         [y_loop_from, y_loop_from],
         color=RED,
         linewidth=LOOP_LW,
@@ -704,13 +706,13 @@ def draw() -> None:
     # was measured, which is why the overlap is derived from the stroke
     # width rather than typed as a literal.
     stroke_half = 0.5 * BOX_LW / 72.0
-    tip_x = ENTRY_X - 0.4 * stroke_half
+    tip_x = ENTRY_X + 0.4 * stroke_half
     head_len = LOOP_HEAD_LEN
     head_half = 0.5 * head_len * HEAD_HALF_RATIO
     ax.add_patch(
         Polygon(
-            [(tip_x, y_loop_to), (tip_x + head_len, y_loop_to + head_half),
-             (tip_x + head_len, y_loop_to - head_half)],
+            [(tip_x, y_loop_to), (tip_x - head_len, y_loop_to + head_half),
+             (tip_x - head_len, y_loop_to - head_half)],
             closed=True,
             facecolor=RED,
             edgecolor=RED,
@@ -720,7 +722,7 @@ def draw() -> None:
     )
 
     ax.text(
-        LOOP_X + 0.18,
+        LOOP_X - 0.18,
         2.0,
         LOOP_LABEL_1,
         rotation=90,
@@ -732,7 +734,7 @@ def draw() -> None:
         zorder=3,
     )
     ax.text(
-        LOOP_X + 0.40,
+        LOOP_X - 0.40,
         2.0,
         LOOP_LABEL_2,
         rotation=90,
@@ -746,7 +748,7 @@ def draw() -> None:
         raise RuntimeError(
             f"loop subscript prints at {LOOP_MATH_FS * SUBSCRIPT_SCALE:.1f} pt"
         )
-    if W - (LOOP_X + 0.40 + LOOP_MATH_FS / 72.0 / 2.0) < 0.02:
+    if LOOP_X - (0.40 + LOOP_MATH_FS / 72.0 / 2.0) < 0.02:
         raise RuntimeError("rotated loop labels overflow the canvas")
 
     # Pre-save floor check uses the worst magnification the fit can
@@ -775,7 +777,7 @@ def draw() -> None:
     # Measured guard on the written file. measure_loop_gap is the single
     # implementation of this measurement, so the generator and the
     # standalone audit tool can never disagree about the same image.
-    gap = measured_loop_clearance(FIGDIR / "dsmc_algorithm_flowchart.png")
+    gap = measured_loop_clearance(FIGDIR / "dsmc_algorithm_flowchart.png", side="left")
     print(
         f"loop measured on the saved PNG: median gap {gap['sep_gap_px']}px "
         f"floor {MIN_SEP_GAP_PX}px, flush rows {gap['touch_rows']} longest "
