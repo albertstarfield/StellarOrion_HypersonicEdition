@@ -3334,7 +3334,7 @@ package body StellarOrion_Sparta is
                          --  FLIGHT STATE ACTUALLY USED BY THIS SG CORRELATION
                          --  (CALIBRATION_DESIGN.md §1.4 — Stage 0 finding)
                          --  =================================================================
-                         --  FINDING: the heat_flux_sg_Wm2 column is NOT evaluated
+                         --  FINDING: the heatflux_sg_Wm2 column is NOT evaluated
                          --  at the per-row trajectory state published in the SAME
                          --  row (alt_km / vel_ms / mach / dyn_press_pa).  It uses the
                          --  RUN-LEVEL flight state:

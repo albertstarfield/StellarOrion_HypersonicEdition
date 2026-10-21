@@ -100,14 +100,14 @@ CB = ["#004488", "#DDAA33", "#BB5566", "#228833", "#AA4499", "#66CCEE"]
 # significant figures, so anything beyond the last quoted digit is a change of
 # result rather than of rounding.
 CLAIMS = {
-    "history_len": 96,
+    "history_len": 38,
     "population_size": 50,
     "max_generations": 200,
     "baseline_cost": 4.6017,
-    "optimum_cost": 4.1408,
-    "optimum_R_N": 1.9967,
-    "optimum_r_tor": 0.1450,
-    "optimum_half_cone": 52.8151,
+    "optimum_cost": 4.1788,
+    "optimum_R_N": 1.3359,
+    "optimum_r_tor": 0.1796,
+    "optimum_half_cone": 58.6071,
 }
 
 

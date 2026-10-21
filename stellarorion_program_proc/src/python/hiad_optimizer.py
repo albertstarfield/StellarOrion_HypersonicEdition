@@ -826,8 +826,12 @@ def _load_hybrid_flux(csv_path: "str") -> "tuple[float, float]":
       * ``heatflux_max_Wm2``   - the peak surface heat flux the DSMC
         measured on the flown vehicle (the convective load the correlation
         is supposed to predict);
-      * ``heat_flux_sg_Wm2``   - the Sutton-Graves prediction for the flown
-        nose radius at the run state (the analytic side).
+      * ``heatflux_sg_Wm2``   - the Sutton-Graves prediction for the flown
+        nose radius at the run state (the analytic side).  NOTE the exact
+        spelling: the Ada writer emits "heatflux_sg_Wm2" (no underscore
+        between "heat" and "flux"), while the Fay-Riddell column is
+        "heat_flux_fr_wm2" and the reference-area columns are
+        "cd_raw_body_area" / "cd_raw_presented_area".
 
     AXIOM A1: the ratio of the two is the heat-flux FIDELITY ratio - it is
       dimensionless, it is evaluated on one state, and it is non-zero
@@ -853,11 +857,30 @@ def _load_hybrid_flux(csv_path: "str") -> "tuple[float, float]":
     if not rows:
         raise RuntimeError(f"validation CSV has no data rows: {csv_path}")
     last = rows[-1]
-    for col in ("heatflux_max_Wm2", "heat_flux_sg_Wm2"):
-        if col not in last:
-            raise RuntimeError(f"validation CSV lacks the column {col}: {csv_path}")
-    peak = float(last["heatflux_max_Wm2"])
-    sg = float(last["heat_flux_sg_Wm2"])
+
+    #  WHY the normalised lookup: the Ada writer emits the two flux columns
+    #  as "heatflux_max_Wm2" and "heatflux_sg_Wm2" (stellarorion_sparta.adb
+    #  :3694) - the SG column has NO underscore between "heat" and "flux".
+    #  A previous revision of this helper asked for "heat_flux_sg_Wm2" and
+    #  the gate aborted with "lacks the column".  Matching on the
+    #  normalised form (lower case, underscores removed) makes the lookup
+    #  immune to that class of spelling drift; a column that is genuinely
+    #  absent still raises, because a silent fallback would hide a broken
+    #  run.
+    def _norm(name: str) -> str:
+        return name.replace("_", "").lower()
+
+    indexed = {_norm(k): v for k, v in last.items()}
+    values = []
+    for wanted in ("heatflux_max_Wm2", "heatflux_sg_Wm2"):
+        key = _norm(wanted)
+        if key not in indexed:
+            raise RuntimeError(
+                f"validation CSV lacks the column {wanted} "
+                f"(available: {sorted(last.keys())}): {csv_path}")
+        values.append(float(indexed[key]))
+    peak = values[0]
+    sg = values[1]
     if not (math.isfinite(peak) and math.isfinite(sg)) or peak <= 0.0 or sg <= 0.0:
         raise RuntimeError(
             f"non-positive or non-finite heat flux in {csv_path}: "
