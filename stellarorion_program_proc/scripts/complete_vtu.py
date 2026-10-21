@@ -62,7 +62,8 @@
 #   [3] results/<tree>/validation_timeseries.csv — 22 per-step columns
 #   [4] scripts/audit_vtu.py — independent real-VTK verification gate
 #
-# AUTHOR: Albert Starfield Wahyu Suryo Samudro
+# AUTHOR: Wahyu Suryo Samudro
+# USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 #
 # EXIT: 0 all files completed & verified; 1 at least one failure;
 #       2 usage error.  A partial failure is NEVER reported as success.

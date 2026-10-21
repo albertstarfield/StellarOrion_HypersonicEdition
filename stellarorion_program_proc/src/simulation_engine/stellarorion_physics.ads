@@ -27,7 +27,8 @@
 --
 --  Citations are given inline per function.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with StellarOrion_Types; use StellarOrion_Types;
 

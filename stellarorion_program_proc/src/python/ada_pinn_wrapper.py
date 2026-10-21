@@ -16,7 +16,8 @@ CITATIONS:
   [3] NASA TP-2013-4012 — IRVE-3 flight data
   [4] Anderson (2006), Hypersonic Gas Dynamics
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import ctypes

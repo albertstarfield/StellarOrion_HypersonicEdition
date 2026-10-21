@@ -7,7 +7,8 @@
 --  Runs the 18 self-tests covering physics, geometry, environment,
 --  optimization, TPS materials, atomic parity and dual watchdog.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_Self_Test is
 

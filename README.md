@@ -1,6 +1,7 @@
 # StellarOrion HypersonicEdition
 
-**Author:** Albert Starfield Wahyu Suryo Samudro
+**Author:** Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 
 **Supervised by:**
 1. Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.

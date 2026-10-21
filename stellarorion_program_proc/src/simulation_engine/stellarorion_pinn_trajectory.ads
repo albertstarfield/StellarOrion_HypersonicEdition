@@ -25,7 +25,8 @@
 --    [4] Anderson, J.D. (2006), Hypersonic and High-Temperature Gas Dynamics
 --    [5] Rapisarda (2023), MSc Thesis, TU Delft — Table 4.10
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_PINN_Trajectory is
    pragma SPARK_Mode (On);

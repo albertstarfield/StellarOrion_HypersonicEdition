@@ -16,7 +16,8 @@
 --    Ensure_Docker_Running         - pre-flight Docker/Colima daemon check
 --    Check_Amaryllis_Idle_Automode - create idle-resume hook when present
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_Runtime_Guard is
 

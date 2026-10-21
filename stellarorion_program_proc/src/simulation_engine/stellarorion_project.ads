@@ -3,7 +3,8 @@
 --  Ada 2012 / SPARK 2014
 --  This is the root package visible to all child units.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_Project is
    pragma SPARK_Mode (On);

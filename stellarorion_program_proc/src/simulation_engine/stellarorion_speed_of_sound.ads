@@ -10,7 +10,8 @@
 --    it inside the formally verified subset without disturbing the atmosphere
 --    package.
 --
---  Author: Albert Starfield Wahyu Suryo Samudro
+--  Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_Speed_Of_Sound is
    pragma SPARK_Mode (On);

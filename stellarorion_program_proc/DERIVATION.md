@@ -1,6 +1,7 @@
 # DERIVATION.md — StellarOrion 4-Step Pipeline Mathematical Foundation
 
-**Author:** Albert Starfield Wahyu Suryo Samudro
+**Author:** Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 **Date:** 2026-09-09
 **Version:** 1.0
 

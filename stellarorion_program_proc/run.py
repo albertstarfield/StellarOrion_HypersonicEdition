@@ -18,7 +18,8 @@ Exit Codes:
   2 -- Ada/SPARK build or verification failure
   3 -- Runtime failure
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 # Standard Library Imports

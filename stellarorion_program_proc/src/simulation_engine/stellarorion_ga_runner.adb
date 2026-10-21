@@ -111,7 +111,8 @@
 --       (body radius 1.5 m, nose 0.55 m, torus 0.135 m, cone 60 deg):
 --       the anchor of the analytic-to-physical convention.
 --
---  Author: Albert Starfield Wahyu Suryo Samudro
+--  Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 -- =============================================================================
 
 with Ada.Command_Line;      use Ada.Command_Line;

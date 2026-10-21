@@ -36,7 +36,8 @@
 --    [4] Bird (1994), Molecular Gas Dynamics -- Knudsen number
 --    [5] DeepXDE docs -- PINN training metrics
 --
---  Author: Albert Starfield Wahyu Suryo Samudro
+--  Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_Trajectory_Output is
    pragma SPARK_Mode (On);

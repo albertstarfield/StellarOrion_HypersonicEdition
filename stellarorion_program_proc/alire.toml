@@ -2,8 +2,10 @@ name = "stellarorion_program_proc"
 version = "0.1.0-dev"
 description = "HIAD aerothermodynamic simulation suite"
 
-authors = ["Albert Starfield Wahyu Suryo Samudro <stellarorion@users.noreply.github.com>"]
-maintainers = ["Albert Starfield Wahyu Suryo Samudro <stellarorion@users.noreply.github.com>"]
+authors = ["Wahyu Suryo Samudro <stellarorion@users.noreply.github.com>"]
+# USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
+maintainers = ["Wahyu Suryo Samudro <stellarorion@users.noreply.github.com>"]
+# USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 licenses = "MIT"
 tags = ["hypersonic", "hiad", "dsmc"]
 

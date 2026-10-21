@@ -50,7 +50,8 @@ CITATIONS:
   [5] render_optimization_comparison.py — dark-theme / output-path precedent
   [6] matplotlib 3.11 docs — https://matplotlib.org/stable/api/
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import json

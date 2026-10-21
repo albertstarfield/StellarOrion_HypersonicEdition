@@ -39,7 +39,8 @@
          the real field, used for the velocity-cubed scaling identity.
          https://coq.inria.fr/library/Coq.Reals.Rbase.html
 
-   Author: Albert Starfield Wahyu Suryo Samudro *)
+   Author: Wahyu Suryo Samudro *)
+   (* USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" *)
 
 Require Import Coq.Reals.Reals.
 Require Import Coq.micromega.Lra.

@@ -51,7 +51,8 @@ CITATIONS
     [4] numpy.loadtxt documentation.
         https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import os

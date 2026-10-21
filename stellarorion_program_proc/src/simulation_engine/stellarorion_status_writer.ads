@@ -3,7 +3,8 @@
 --  Writes .status.json for the Python sidecar UI to poll.
 --  Ada 2012 / SPARK 2014
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_Status_Writer is
    pragma SPARK_Mode (On);

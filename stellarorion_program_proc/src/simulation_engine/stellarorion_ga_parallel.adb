@@ -1,7 +1,8 @@
 --  StellarOrion_HypersonicEdition — Parallel Population Evaluation
 --  Ada 2012 (Ravenscar restriction profile applied per unit)
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 --
 --  PURPOSE
 --     Body of the concurrent population evaluator.  The structure is the

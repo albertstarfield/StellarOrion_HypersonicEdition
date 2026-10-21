@@ -60,7 +60,8 @@ CITATIONS:
   [6] matplotlib LogNorm —
       https://matplotlib.org/stable/api/_as_gen/matplotlib.colors.LogNorm.html
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import json

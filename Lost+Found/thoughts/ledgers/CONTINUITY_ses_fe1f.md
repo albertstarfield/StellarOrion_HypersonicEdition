@@ -47,7 +47,8 @@ Conduct a complete inventory of the StellarOrion HypersonicEdition Ada+Python si
 5. Examine `run.py`, `tests/test_run_pipeline.py`, `alire.toml`, `stellarorion_program_proc.gpr` for build/integration details
 
 ## Critical Context
-- **Author**: Albert Starfield Wahyu Suryo Samudro; supervised by Dr.-Ing. Mochammad Agoes Moelyadi and Yohanes Bimo Dwianto
+- **Author**: Wahyu Suryo Samudro; supervised by Dr.-Ing. Mochammad Agoes Moelyadi and Yohanes Bimo Dwianto
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 - **Physics constants sourced from**: NASA TR R-376 (Sutton-Graves), CODATA 2018, Bird 1994, ISA ISO 2533:1975, Rapisarda 2023 thesis
 - **IRVE-3 validation targets**: Peak heat flux 13.8 W/cm², total heat load 188 J/cm², peak deceleration 19.7 g, ballistic coeff 26.9 kg/m², stagnation pressure ~12.4 kPa
 - **CLI flags** (from `stellarorion_project.adb`): `--self-test`, `--validate`, `--validate-only`, `--demo`, `--optimize`, `--test <mode>` (baseline/sample/pinn_calibration/sparta/pyfluent/pyansys/openfoam), `--compareCalibrate`, `--compareCalibratePINN`, `--validationPINN`, `--solver <name>`, `--steps <N>`, `--grid-factor <F>`, `--chemistry <mode>` (5sp/11sp/mars), `--vehicle <name>` (irve3/orion), `--objective <name>` (drag/heat), `--doe <method>`

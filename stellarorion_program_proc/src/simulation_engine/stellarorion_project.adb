@@ -55,7 +55,8 @@
 --    --tps-k <F>               Override TPS thermal conductivity
 --    --tps-material <name>     Predefined TPS layup (irve3-ftps / sic / pyrogel / kapton / multi)
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Command_Line;        use Ada.Command_Line;
@@ -123,7 +124,8 @@ package body StellarOrion_Project is
       Put_Line ("======================================================");
       Put_Line ("  StellarOrion HypersonicEdition  v2.0");
       Put_Line ("  Ada 2012 / SPARK 2014  |  SPARTA DSMC");
-      Put_Line ("  Author: Albert Starfield Wahyu Suryo Samudro");
+      Put_Line ("  Author: Wahyu Suryo Samudro");
+      -- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
       Put_Line ("======================================================");
       New_Line;
    exception

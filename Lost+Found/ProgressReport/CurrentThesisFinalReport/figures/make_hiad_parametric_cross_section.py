@@ -63,7 +63,8 @@ CITATIONS
       figure chain (same source credit as hiad_design_sensitivity.png).
   [4] matplotlib 3.x — https://matplotlib.org/stable/api/
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 from __future__ import annotations

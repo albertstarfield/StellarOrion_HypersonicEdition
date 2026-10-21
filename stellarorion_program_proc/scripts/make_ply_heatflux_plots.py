@@ -52,7 +52,8 @@ CITATIONS
         Pyrogel 3350 / AKK).
     [4] matplotlib boxplot + bar docs. https://matplotlib.org/stable/api/
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 from __future__ import annotations

@@ -14,7 +14,8 @@
 --  stellarorion_project.adb ("data/runs") kept verbatim to preserve
 --  behavior; single-source it if the two ever diverge.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with Ada.Text_IO;                 use Ada.Text_IO;
 

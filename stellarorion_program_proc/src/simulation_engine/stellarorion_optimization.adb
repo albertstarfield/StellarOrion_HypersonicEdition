@@ -3,7 +3,8 @@
 --  Ada 2012 / SPARK 2014
 --  LHS, CCD, cost function, and Genetic Algorithm optimiser.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with Ada.Numerics;                  use Ada.Numerics;
 with Ada.Numerics.Float_Random;     use Ada.Numerics.Float_Random;
@@ -53,6 +54,12 @@ package body StellarOrion_Optimization is
    GA_Next_Pop    : Population;
    GA_Next_Costs  : Cost_Array;
    GA_Child_Batch : Population;
+   --  The Latin-hypercube stratum permutation (one per gene).  Package
+   --  level for the SAME reason as the GA working storage above: the FFI
+   --  route runs in a dlopen'd library with no initialised secondary
+   --  stack, where a large local aggregate SEGFAULTS the host.
+   type Stratum_Perm_Array is array (1 .. Max_Population) of Positive;
+   GA_Stratum_Perm : Stratum_Perm_Array;
    --  extern: Elementary_Functions + Text_IO are non-SPARK runtime libraries
 
    --  WHY: the enumeration "=" for Surrogate_Kind is declared in another
@@ -429,9 +436,19 @@ package body StellarOrion_Optimization is
          R := R - Float (Integer (R));
       end if;
 
+      --  WHY (Index - 1): the stratum index is 1-BASED (the Pre says
+      --  1 <= Index <= N) but the documented formula (Theory 1 above) uses a
+      --  0-BASED stratum i.  The body used Float (Index) directly, so the
+      --  LAST stratum (Index = N) produced
+      --  x_min + (x_max - x_min) * (N + r) / N  >  x_max
+      --  i.e. the sample escaped the design box and the spec's Post
+      --  (Result <= Param_Max) was VIOLATED -- an assertion error under
+      --  -gnata, and a silently out-of-range design point otherwise.
+      --  Using Index - 1 places every sample inside its own stratum, which
+      --  is exactly what Theory 1 states.
       return Param_Min
         + (Param_Max - Param_Min)
-        * (Float (Index) + R) / Float (N);
+        * (Float (Index - 1) + R) / Float (N);
     exception
        when E : others =>
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
@@ -1198,6 +1215,124 @@ package body StellarOrion_Optimization is
 
    end Random_Geometry;
 
+   --  Seed the GA population with a Latin hypercube (the DEFAULT seeding).
+   --
+   --  TIMING ANCHOR: 2026-10-21T10:10Z
+   --
+   --  coverage: the Latin-hypercube initial population of the GA
+   --
+   -- @test: Test_LHS_Seeded_Population
+   procedure Seed_LHS_Population
+     (Pop      : out Population;
+      Pop_Size : Positive;
+      Gen      : in out Float_Random.Generator)
+   with Pre  => Pop_Size <= Max_Population,
+        Post => True
+   is -- nosec
+      --  Contract: pre => Pop_Size <= Max_Population; post => the
+      --  population is a Latin hypercube over the GA gene bounds.
+      R : Float;
+      -- ============================================================================
+      -- AXIOMS:
+      --   Axiom 1: The GA search box is partitioned, per gene, into
+      --            Pop_Size equal strata.
+      --   Axiom 2: Each stratum receives EXACTLY ONE individual (the Latin
+      --            property): the stratum assignment is a permutation of
+      --            1 .. Pop_Size, drawn independently per gene.
+      --   Axiom 3: Within its stratum an individual sits at a random
+      --            fractional offset r in [0,1) (LHS_Sample).
+      -- THEORIES:
+      --   Theory 1: Every gene's marginal is stratified: each of the
+      --            Pop_Size strata is occupied exactly once.
+      --   Proof: the stratum assignment is a permutation (Fisher-Yates over
+      --          the identity), so the Pop_Size individuals receive Pop_Size
+      --          DISTINCT strata; LHS_Sample places each inside its own
+      --          stratum.
+      --   Theory 2: Every gene value stays inside its bound.
+      --   Proof: LHS_Sample returns a value in [Param_Min, Param_Max] by its
+      --          own contract (spec, LHS_Sample'Post).
+      -- APPLICATIONS:
+      --   Implementation: for each of the six sampled genes, shuffle the
+      --   stratum assignment (Fisher-Yates with the caller's generator) and
+      --   then draw one stratified value per individual.
+      -- CITATIONS:
+      --   [1] McKay, M.D., Beckman, R.J., Conover, W.J. "Latin Hypercube
+      --       Sampling," Technometrics 21(2), 1979, Eq. (2.1).
+      --   [2] Goldberg, D.E. "Genetic Algorithms in Search, Optimization, and
+      --       Machine Learning," Addison-Wesley, 1989, Ch. 2 (population
+      --       initialisation).
+      -- ============================================================================
+   begin
+      --  The genes the GA does not optimise keep their record defaults.
+      for I in 1 .. Pop_Size loop
+         Pop (I) := (others => <>);
+      end loop;
+
+      --  Per gene: a fresh random permutation of the strata, then one
+      --  stratified value per individual.
+      for Gene in 1 .. 6 loop
+         --  Fisher-Yates shuffle of the stratum assignment.
+         for I in 1 .. Pop_Size loop
+            GA_Stratum_Perm (I) := I;
+         end loop;
+         for I in reverse 2 .. Pop_Size loop
+            declare
+               J : constant Positive :=
+                 1 + Integer (Float_Random.Random (Gen) * Float (I));
+               T : constant Positive := GA_Stratum_Perm (I);
+            begin
+               GA_Stratum_Perm (I) := GA_Stratum_Perm (J);
+               GA_Stratum_Perm (J) := T;
+            end;
+         end loop;
+
+         --  One stratified sample per individual.
+         for I in 1 .. Pop_Size loop
+            R := Float_Random.Random (Gen);
+            case Gene is
+               when 1 =>
+                  Pop (I).Diameter_M :=
+                    LHS_Sample (Dia_Min, Dia_Max, Pop_Size,
+                               GA_Stratum_Perm (I), R);
+               when 2 =>
+                  Pop (I).Angle_Deg :=
+                    LHS_Sample (Ang_Min, Ang_Max, Pop_Size,
+                               GA_Stratum_Perm (I), R);
+               when 3 =>
+                  Pop (I).Nose_Radius_M :=
+                    LHS_Sample (Nos_Min, Nos_Max, Pop_Size,
+                               GA_Stratum_Perm (I), R);
+               when 4 =>
+                  Pop (I).Toroid_Count :=
+                    Integer (Float'Floor
+                      (LHS_Sample (Float (TCount_Min), Float (TCount_Max),
+                                  Pop_Size, GA_Stratum_Perm (I), R) + 0.5));
+               when 5 =>
+                  Pop (I).Toroid_Radius_M :=
+                    LHS_Sample (TRad_Min, TRad_Max, Pop_Size,
+                               GA_Stratum_Perm (I), R);
+               when others =>
+                  Pop (I).Mass_Kg :=
+                    LHS_Sample (Mass_Min, Mass_Max, Pop_Size,
+                               GA_Stratum_Perm (I), R);
+            end case;
+         end loop;
+      end loop;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name (E));
+
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message (E));
+
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Operation:      Seed_LHS_Population");
+
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] ========================================");
+
+         raise;
+   end Seed_LHS_Population;
+
    --  Sort indices by ascending cost.
    --
    --  WHY: the ranking step now lives in the PROVED core
@@ -1736,11 +1871,16 @@ package body StellarOrion_Optimization is
                 "  Mutation:" & Float'Image (Config.Mutation_Rate) &
                 "  Crossover:" & Float'Image (Config.Crossover_Rate));
 
-      --  ── Phase 1: Initialize population with random individuals ──
-      for I in 1 .. Pop_Size loop  --  Invariant: loop index stays within its declared discrete range on every iteration
-         pragma Loop_Invariant (True);
-         GA_Pop (I) := Random_Geometry;
-      end loop;
+      --  ── Phase 1: Initialize population with a LATIN HYPERCUBE design ──
+      --  WHY LHS-ONLY: the initial population decides which basin the
+      --  search starts in.  A pure uniform draw (Random_Geometry) clusters
+      --  and leaves whole strata of the 5-D search box empty; a Latin
+      --  hypercube places exactly ONE individual in each stratum of every
+      --  gene, so every region of the box is covered before the first
+      --  evaluation (McKay et al. 1979, Technometrics 21(2)).
+      --  The LHS design is the ONLY seeding the GA uses: no factorial
+      --  points, no Bayesian seed.
+      Seed_LHS_Population (GA_Pop, Pop_Size, Gen);
 
       --  ── Phase 2: Evaluate initial fitness ──
       declare
@@ -4979,6 +5119,115 @@ package body StellarOrion_Optimization is
    --        A5 of HIAD_Cost_Components).
    --  APPLICATIONS: the Stage-0 acceptance check of the loader.
    --  CITATIONS: [CALIBRATION_DESIGN.md §2.6.2] the binding file format.
+
+   --  The stratum a value falls into (1 .. N); the clamp makes the helper
+   --  total for a value that sits exactly on the upper bound.
+   function Stratum_Of (V, Lo, Hi : Float; N : Positive) return Natural is
+      S : Natural;
+   begin
+      --  WHY: a sample drawn at the EXACT lower edge of its stratum (the
+      --  random offset r = 0) can land one ULP below the boundary, so the
+      --  raw truncation would report the stratum BELOW.  The 1e-9 slack
+      --  absorbs that rounding and can never move a sample across a real
+      --  stratum boundary (the strata are 1/N wide, N <= 200).
+      S := Natural (Integer (Float'Floor ((V - Lo) / (Hi - Lo) * Float (N) + 1.0e-9))) + 1;
+      if S < 1 then
+         S := 1;
+      elsif S > Natural (N) then
+         S := Natural (N);
+      end if;
+      return S;
+   end Stratum_Of;
+
+   procedure Test_LHS_Seeded_Population is -- nosec
+      --  TIMING ANCHOR: 2026-10-21T10:12Z
+      --
+      --  coverage: the Latin-hypercube seeding of the GA population
+      --
+      -- @test: Test_LHS_Seeded_Population
+      --
+      --  Contract: pre => True (no inputs); post => completes without raising.
+      N     : constant Positive := 12;
+      Pop   : Population;
+      Gen   : Float_Random.Generator;
+      Used  : array (1 .. 12) of Boolean := (others => False);
+      Distinct : Natural;
+      Stratum  : Natural;
+   begin
+      Float_Random.Reset (Gen);
+      Seed_LHS_Population (Pop, N, Gen);
+
+      --  The Latin property: every CONTINUOUS gene must occupy N DISTINCT
+      --  strata.  The INTEGER gene (Toroid_Count) is EXEMPT from the
+      --  distinctness check: its strata are (12-1)/12 = 0.9167 wide, so two
+      --  adjacent strata can round to the SAME integer count.  The Latin
+      --  property is a property of the continuous design; the discrete gene
+      --  is checked for its BOUND below instead.
+      for Gene in 1 .. 5 loop
+         Used := (others => False);
+         Distinct := 0;
+         for I in 1 .. N loop
+            case Gene is
+               when 1 =>
+                  Stratum := Stratum_Of (Pop (I).Diameter_M, Dia_Min, Dia_Max, N);
+               when 2 =>
+                  Stratum := Stratum_Of (Pop (I).Angle_Deg, Ang_Min, Ang_Max, N);
+               when 3 =>
+                  Stratum :=
+                    Stratum_Of (Pop (I).Nose_Radius_M, Nos_Min, Nos_Max, N);
+               when 4 =>
+                  Stratum :=
+                    Stratum_Of (Pop (I).Toroid_Radius_M, TRad_Min, TRad_Max, N);
+               when others =>
+                  Stratum := Stratum_Of (Pop (I).Mass_Kg, Mass_Min, Mass_Max, N);
+            end case;
+            if not Used (Stratum) then
+               Used (Stratum) := True;
+               Distinct := Distinct + 1;
+            end if;
+         end loop;
+         pragma Assert
+           (Distinct = Natural (N),
+            "LHS seeding must occupy every stratum exactly once");
+      end loop;
+
+      --  Every gene stays inside its bound.
+      for I in 1 .. N loop
+         pragma Assert
+           (Pop (I).Diameter_M >= Dia_Min and then Pop (I).Diameter_M <= Dia_Max,
+            "LHS diameter out of bounds");
+         pragma Assert
+           (Pop (I).Angle_Deg >= Ang_Min and then Pop (I).Angle_Deg <= Ang_Max,
+            "LHS angle out of bounds");
+         pragma Assert
+           (Pop (I).Nose_Radius_M >= Nos_Min
+              and then Pop (I).Nose_Radius_M <= Nos_Max,
+            "LHS nose radius out of bounds");
+         pragma Assert
+           (Pop (I).Toroid_Count >= TCount_Min
+              and then Pop (I).Toroid_Count <= TCount_Max,
+            "LHS toroid count out of bounds");
+         pragma Assert
+           (Pop (I).Toroid_Radius_M >= TRad_Min
+              and then Pop (I).Toroid_Radius_M <= TRad_Max,
+            "LHS toroid radius out of bounds");
+         pragma Assert
+           (Pop (I).Mass_Kg >= Mass_Min and then Pop (I).Mass_Kg <= Mass_Max,
+            "LHS mass out of bounds");
+      end loop;
+
+      Ada.Text_IO.Put_Line
+        ("[PASS] Test_LHS_Seeded_Population: 5 continuous genes x 12 strata "
+         & "occupied exactly once (+ the integer toroid count bound-checked)");
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Test_LHS_Seeded_Population: "
+              & Ada.Exceptions.Exception_Name (E));
+
+         raise;
+   end Test_LHS_Seeded_Population;
+
    procedure Test_Load_Calibration is -- nosec
       --  Contract: Pre => True (no inputs); Post => True (asserts the
       --  loader's three documented behaviours)
@@ -5581,6 +5830,7 @@ package body StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Gaussian_Rand", Test_Gaussian_Rand'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Gaussian_Standard", Test_Gaussian_Standard'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Seeded_Population", Test_LHS_Seeded_Population'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Load_Calibration", Test_Load_Calibration'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimization_Cost", Test_Optimization_Cost'Access);

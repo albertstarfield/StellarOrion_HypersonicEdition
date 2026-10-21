@@ -5,7 +5,8 @@
 --  Ada 2012 / SPARK 2014
 --  Parity protection: metadata/stellarorion_sensitivity.meta.json
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 ------------------------------------------------------------------------------
 --
 --  ===========================================================================

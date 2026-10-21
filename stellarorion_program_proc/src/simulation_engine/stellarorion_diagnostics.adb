@@ -3,7 +3,8 @@
 -- =============================================================================
 --  AXIOMS / THEORIES / APPLICATIONS / CITATIONS: see stellarorion_diagnostics.ads
 --
---  Author: Albert Starfield Wahyu Suryo Samudro
+--  Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 -- =============================================================================
 
 with Interfaces.C;

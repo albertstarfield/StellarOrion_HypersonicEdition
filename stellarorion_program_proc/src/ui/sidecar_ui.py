@@ -23,7 +23,8 @@ Constraints (Sabotage Verifier):
 Usage:
     python sidecar_ui.py [--port 8080] [--db-dir ../../data/runs]
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import csv

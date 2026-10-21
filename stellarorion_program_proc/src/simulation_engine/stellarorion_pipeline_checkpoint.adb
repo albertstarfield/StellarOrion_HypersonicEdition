@@ -3,7 +3,8 @@
 --  Ada 2012
 --  Save/Resume tracker for the 4-step StellarOrion pipeline.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Calendar;          use Ada.Calendar;

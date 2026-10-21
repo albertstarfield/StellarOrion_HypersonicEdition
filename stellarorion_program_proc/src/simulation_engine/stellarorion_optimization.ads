@@ -33,7 +33,8 @@
 --               Table 4.1 (IRVE-3 geometry), Table 5.4 (design space).
 --    [NASA-TP-2013-4012] IRVE-3 Mission Report.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with StellarOrion_Types; use StellarOrion_Types;
 --  WHY: the GA history buffer is handed to C callers through the FFI
@@ -358,6 +359,7 @@ package StellarOrion_Optimization is
     with Pre  => Config.Population_Size >= 1
                  and Config.Population_Size <= Max_Population,
          Post => True;
+
 
    --  Run the complete surrogate-based optimisation in ONE place:
    --  fit the linear response-surface surrogate on the 2^3 factorial design
@@ -1222,6 +1224,9 @@ package StellarOrion_Optimization is
     procedure Test_Physical_To_Analytic
       with Pre => True, Post => True;
     --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_LHS_Seeded_Population
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
     procedure Test_Load_Calibration
       with Pre => True, Post => True;
     --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -1270,6 +1275,7 @@ package StellarOrion_Optimization is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Components", Test_HIAD_Cost_Components'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Function", Test_HIAD_Cost_Function'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Seeded_Population", Test_LHS_Seeded_Population'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Load_Calibration", Test_Load_Calibration'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Max", Test_Max'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);

@@ -13,7 +13,8 @@
 --    <db_dir>/samples.csv       — one row per DoE sample
 --    <db_dir>/.lock             — lock file for concurrent access
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Strings;              use Ada.Strings;

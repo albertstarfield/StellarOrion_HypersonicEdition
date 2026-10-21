@@ -30,7 +30,8 @@ Checkpoint file format (pipeline_checkpoint.json):
     }
 }
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import json

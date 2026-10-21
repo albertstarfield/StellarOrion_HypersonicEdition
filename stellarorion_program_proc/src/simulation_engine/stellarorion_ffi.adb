@@ -30,7 +30,8 @@
 --   [Sutton51]     Sutton & Graves (1951), J. Aeronautical Sciences.
 --   [NASA-TR-R376] NASA TR R-376 (1972) — C_SG = 1.7415e-4.
 --
--- Author: Albert Starfield Wahyu Suryo Samudro
+-- Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 -- =============================================================================
 
 with StellarOrion_Optimization; use StellarOrion_Optimization;

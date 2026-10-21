@@ -26,7 +26,8 @@
 --              https://docs.python.org/3/library/ctypes.html
 --   [Dyld]    Apple dynamic-loader man pages (macOS dylib symbol resolution).
 --
--- Author: Albert Starfield Wahyu Suryo Samudro
+-- Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 -- =============================================================================
 
 

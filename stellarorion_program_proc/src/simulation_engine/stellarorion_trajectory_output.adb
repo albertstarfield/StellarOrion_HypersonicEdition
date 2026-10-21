@@ -26,7 +26,8 @@
 --    [5] DeepXDE docs -- PINN training metrics
 --    [6] NASA SP-7468 (1976) -- ISA atmosphere
 --
---  Author: Albert Starfield Wahyu Suryo Samudro
+--  Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with StellarOrion_PINN_Trajectory; use StellarOrion_PINN_Trajectory;
 with StellarOrion_Physics;         use StellarOrion_Physics;

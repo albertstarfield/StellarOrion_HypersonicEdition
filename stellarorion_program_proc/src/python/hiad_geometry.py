@@ -30,7 +30,8 @@ CITATIONS:
   [2] Rapisarda (2023) Sec 3.7 — HIAD 4-segment flat-skin profile
   [3] numpy 2.x docs — https://numpy.org/doc/stable/reference/
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import numpy as np

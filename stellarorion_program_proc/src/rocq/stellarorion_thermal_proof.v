@@ -70,7 +70,8 @@
          then discharges the remaining linear problem over the abstracted
          atoms).
 
-   Author: Albert Starfield Wahyu Suryo Samudro
+   Author: Wahyu Suryo Samudro
+   (* USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" *)
    ============================================================================ *)
 
 Require Import Coq.Reals.Reals.

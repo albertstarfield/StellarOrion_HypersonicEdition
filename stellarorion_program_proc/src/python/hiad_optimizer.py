@@ -40,7 +40,8 @@ Exit codes (see main()):
   1 infrastructure or child-process failure (never a fake verdict)
   3 hybrid gate verdict FAIL (q_hybrid > q_target) without --allow-fail
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 import argparse

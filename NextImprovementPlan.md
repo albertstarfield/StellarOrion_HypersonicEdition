@@ -1,6 +1,7 @@
 # NextImprovementPlan.md — Pipeline Feasibility Audit
 
-**Author:** Albert Starfield Wahyu Suryo Samudro
+**Author:** Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 **Date:** September 4, 2026
 **Version:** 4.63 (Audit Cycle 316 — cyclic until user says stop)
 

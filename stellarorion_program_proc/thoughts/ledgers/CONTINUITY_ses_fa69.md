@@ -715,7 +715,8 @@ Now let me read the critical middle section of the SPARTA file where the heat fl
 7: --    [ISA]     ISO 2533:1975, International Standard Atmosphere.
 8: --    [MarsISA] Mars-GRAM 2010 model parameters.
 9: --
-10: --  Author:  Albert Starfield Wahyu Suryo Samudro
+10: --  Author:  Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 11: 
 12: with StellarOrion_Types; use StellarOrion_Types;
 13: 
@@ -883,7 +884,8 @@ Now let me read the critical middle section of the SPARTA file where the heat fl
 3: --  SPARK_Mode => Off : This package performs subprocess calls,
 4: --  Docker bridging, and file I/O to communicate with SPARTA.
 5: --
-6: --  Author:  Albert Starfield Wahyu Suryo Samudro
+6: --  Author:  Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 7: --  Refs:
 8: --    [Plimpton2014] Plimpton, S. & Gallis, M. "SPARTA Stochastic
 9: --                   Particle Automatic Real-Time Application," 2014.
@@ -1083,7 +1085,8 @@ Now let me read the critical middle section of the SPARTA file where the heat fl
 2: --  Ada 2012 / SPARK 2014
 3: --  All physics constants originate from peer-reviewed sources.
 4: --
-5: --  Author:  Albert Starfield Wahyu Suryo Samudro
+5: --  Author:  Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 6: --  Refs:
 7: --    [TR-376]  Sutton, K. & Graves, R. A. "A General Stagnation-Point
 8: --              Convective Heating Equation for Arbitrary Gas Mixtures,"

@@ -8,7 +8,8 @@
 --  Pre-flight Docker Check, AmaryllisIdleAutomode Detection sections).
 --  Behavior is bit-for-bit identical; see docs/PROJECT_DECOMPOSITION_PLAN.md.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with Ada.Text_IO;     use Ada.Text_IO;
 with Ada.Directories; use Ada.Directories;

@@ -42,7 +42,8 @@ CITATIONS
     [3] NASA TP-2013-4012 (IRVE-3), and the project's ``tps_conduction``
         Ada/SPARK model via ``ada_pinn_wrapper`` (single physics truth).
 
-Author: Albert Starfield Wahyu Suryo Samudro
+Author: Wahyu Suryo Samudro
+USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 """
 
 from __future__ import annotations

@@ -54,7 +54,8 @@
 #   [4] Rapisarda (2023) Sec. 3.7 — HIAD 4-segment flat-skin profile
 #   [5] matplotlib mplot3d `plot_surface` + `view_init` documentation
 #
-# AUTHOR: Albert Starfield Wahyu Suryo Samudro
+# AUTHOR: Wahyu Suryo Samudro
+# USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 #
 # TIMING ANALYSIS
 #   Estimated Processing Time: 2 figures x 4 panels x O(N*M) surface emit,

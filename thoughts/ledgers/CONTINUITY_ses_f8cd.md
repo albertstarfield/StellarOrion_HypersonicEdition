@@ -10,7 +10,8 @@ updated: 2026-09-05T20:14:20.611Z
 <context file="./README.md">
 # StellarOrion HypersonicEdition
 
-**Author:** Albert Starfield Wahyu Suryo Samudro
+**Author:** Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 
 **Supervised by:**
 1. Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.
@@ -56,7 +57,8 @@ This project uses a hybrid architecture for running simulations:
 <context file="./README.md">
 # StellarOrion HypersonicEdition
 
-**Author:** Albert Starfield Wahyu Suryo Samudro
+**Author:** Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 
 **Supervised by:**
 1. Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.
@@ -102,7 +104,8 @@ This project uses a hybrid architecture for running simulations:
 <context file="./README.md">
 # StellarOrion HypersonicEdition
 
-**Author:** Albert Starfield Wahyu Suryo Samudro
+**Author:** Wahyu Suryo Samudro
+<!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 
 **Supervised by:**
 1. Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.

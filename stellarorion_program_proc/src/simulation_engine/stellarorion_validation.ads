@@ -15,7 +15,8 @@
 --    The validated IRVE-3 baseline (3.0m, 60 deg, 281 kg) is the starting
 --    point for Earth reentry optimization (LOFTID: 6.0m, 70 deg, ~960 kg).
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with StellarOrion_Types; use StellarOrion_Types;
 

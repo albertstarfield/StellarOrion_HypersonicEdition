@@ -19,7 +19,8 @@
 --    [Bird94] Bird (1994), "Molecular Gas Dynamics"
 --    [NASA13] NASA TP-2013-4012, IRVE-3 flight data
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_PostProcessing is
    pragma SPARK_Mode (On);

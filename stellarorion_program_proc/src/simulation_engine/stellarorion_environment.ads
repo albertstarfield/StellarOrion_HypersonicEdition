@@ -7,7 +7,8 @@
 --    [ISA]   ISO 2533:1975, International Standard Atmosphere.
 --    [US76]  U.S. Standard Atmosphere, 1976.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with StellarOrion_Types; use StellarOrion_Types;
 

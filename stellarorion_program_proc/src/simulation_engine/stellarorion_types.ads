@@ -3,7 +3,8 @@
 --  Ada 2012 / SPARK 2014
 --  All physics constants originate from peer-reviewed sources.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 --  Refs:
 --    [TR-376]  Sutton, K. & Graves, R. A. "A General Stagnation-Point
 --              Convective Heating Equation for Arbitrary Gas Mixtures,"

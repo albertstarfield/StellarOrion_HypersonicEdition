@@ -33,7 +33,8 @@
 --    [Pappus] Pappus's centroid theorem for surfaces of revolution.
 --    [NASA-TP-2013-4012] IRVE-3 Mission Report (3.0m diameter, 281 kg).
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with StellarOrion_Types; use StellarOrion_Types;
 

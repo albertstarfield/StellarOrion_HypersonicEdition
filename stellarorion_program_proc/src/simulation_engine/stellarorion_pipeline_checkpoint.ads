@@ -36,7 +36,8 @@
 --    [Plimpton14] Plimpton, S.J. & Gallis, M.A. "SPARTA — Stochastic PArallel
 --                 Rarefied- gas Time-accurate Analyser," 2014.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 package StellarOrion_Pipeline_Checkpoint is
    pragma SPARK_Mode (Off);

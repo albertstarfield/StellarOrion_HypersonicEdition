@@ -1,7 +1,8 @@
 --  StellarOrion_HypersonicEdition — Optimiser Core (Pure, Provable)
 --  Ada 2012 / SPARK 2014
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 --
 --  PURPOSE
 --     Hold every piece of optimiser logic that can be PROVED, so that the

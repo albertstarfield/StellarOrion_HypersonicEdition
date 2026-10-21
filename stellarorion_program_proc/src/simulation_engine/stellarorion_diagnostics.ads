@@ -35,7 +35,8 @@
 --             file-descriptor write is the only output call that does not
 --             depend on the Ada runtime's I/O elaboration.
 --
---  Author: Albert Starfield Wahyu Suryo Samudro
+--  Author: Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 -- =============================================================================
 
 package StellarOrion_Diagnostics with

@@ -4,7 +4,8 @@
 --  SPARK_Mode => Off : This package performs subprocess calls,
 --  Docker bridging, and file I/O to communicate with SPARTA.
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 --  Refs:
 --    [Plimpton2014] Plimpton, S. & Gallis, M. "SPARTA Stochastic
 --                   Particle Automatic Real-Time Application," 2014.

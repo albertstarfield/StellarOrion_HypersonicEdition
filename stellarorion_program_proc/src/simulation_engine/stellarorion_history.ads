@@ -9,7 +9,8 @@
 --    <db_dir>/samples.csv       — one row per DoE sample
 --    <db_dir>/.lock             — PID/timestamp lock file
 --
---  Author:  Albert Starfield Wahyu Suryo Samudro
+--  Author:  Wahyu Suryo Samudro
+-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro"
 
 with StellarOrion_Types; use StellarOrion_Types;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
