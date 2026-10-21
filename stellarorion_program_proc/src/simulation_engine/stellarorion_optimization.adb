@@ -408,6 +408,7 @@ package body StellarOrion_Optimization is
     is
     --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
        R : Float;
+       X : Float;
     -- ============================================================================
     -- AXIOMS:
     --   Axiom 1: The design space [Param_Min, Param_Max] is partitioned into
@@ -446,9 +447,25 @@ package body StellarOrion_Optimization is
       --  -gnata, and a silently out-of-range design point otherwise.
       --  Using Index - 1 places every sample inside its own stratum, which
       --  is exactly what Theory 1 states.
-      return Param_Min
+      --
+      --  WHY the clamp below: the closed form can land ONE ULP outside the
+      --  box even after the off-by-one fix, because the subtraction
+      --  (Param_Max - Param_Min) and the addition (Param_Min + ...) round in
+      --  opposite directions: 0.01 + 0.99 = 1.0000000000000002 > 1.0.  That
+      --  violated the spec's Post (Result <= Param_Max) and raised an
+      --  assertion error under -gnata (measured in the GA smoke run: the
+      --  nose-radius gene [0.01, 1.0] hit it).  The clamp is a no-op in the
+      --  interior and only acts on that boundary, so the Post becomes
+      --  unconditionally true.
+      X := Param_Min
         + (Param_Max - Param_Min)
         * (Float (Index - 1) + R) / Float (N);
+      if X > Param_Max then
+         X := Param_Max;
+      elsif X < Param_Min then
+         X := Param_Min;
+      end if;
+      return X;
     exception
        when E : others =>
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
