@@ -1,0 +1,9 @@
+{
+  "source_file": "make_grid_independence_plots.py",
+  "source_hash": "67f2d0860f9dc2e9c74e7811e108d1e0723be824687c93d943da07ea667303fd",
+  "rs_checksum": "2d56360608bb71e854f5d271dda6a73c3970198e3b3908f0c8fc1f29ed2e0f9b",
+  "gc_checksum": "f76d7d329f0c0af8252a9d3d394e8ee8b96e39ee016b10cc3a2686f32204ac52",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 20
+}

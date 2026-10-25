@@ -4149,6 +4149,25 @@ package body StellarOrion_Sparta is
          --  Emit CSV + render PNG plots (best-effort; exit code now logged).
         if N_Rows > 0 then
            Write_CSV;
+           --  WHY: the axial surface-pressure figure (thesis figure 4.25) is
+           --  derived from THIS run's per-surface force dump, so it is drawn
+           --  here, beside the timeseries figures, while the dump still exists.
+           --  A deck that kept no surf dump makes the script report it and
+           --  return non-zero; that code is logged, never swallowed, and the
+           --  run's other artefacts are unaffected.
+           Put_Line ("[VTK] Invoking surface-pressure renderer: " & Python_Interpreter
+                     & " scripts/make_surface_pressure_plot.py --results-dir " & Results_Dir);
+           declare
+              Pres_Rc : constant Integer :=
+                System_Return (Python_Interpreter
+                               & " scripts/make_surface_pressure_plot.py --results-dir " & Results_Dir);
+           begin
+              if Pres_Rc /= 0 then
+                 Put_Line (Standard_Error,
+                           "[VTK] Surface-pressure renderer exited with code " &
+                           Img (Pres_Rc) & "; figure may be missing.");
+              end if;
+           end;
            Put_Line ("[VTK] Invoking Python plot renderer: " & Python_Interpreter & " scripts/make_validation_plots.py "
                      & Results_Dir);
            --  AUDIT FIX (M1): use System_Return to capture the Python script's

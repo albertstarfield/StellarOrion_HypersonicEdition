@@ -1119,9 +1119,22 @@ def _phase2c_generate_media_and_sync() -> None:
         if not os.path.isdir(results_dir):
             continue
         _run_media([os.path.join("scripts", "make_validation_plots.py"), results_dir])
+        #  WHY: the surface-pressure figure (thesis figure 4.25) is derived from
+        #  the run's own per-surface force dump, so it is produced here beside
+        #  the timeseries figures.  A tree that kept no surf dump makes the
+        #  script report it and return non-zero; _run_media only warns, because
+        #  the run's data is still valid without the dump.
+        _run_media([os.path.join("scripts", "make_surface_pressure_plot.py"),
+                    "--results-dir", results_dir])
         _run_media([os.path.join("scripts", "make_derived_plots.py"), results_dir])
         _run_media([os.path.join("scripts", "make_vtu_visualization.py"), results_dir])
         _run_media([os.path.join("scripts", "plot_rapisarda_comparison.py"), results_dir])
+
+    #  WHY: the grid-independence figure (thesis figure 4.24) is a CAMPAIGN
+    #  figure, not a per-run figure -- it reads the three level_* records of
+    #  results/grid_independence.  Rendered once here; a missing campaign is
+    #  reported by the script and only warns the media phase.
+    _run_media([os.path.join("scripts", "make_grid_independence_plots.py")])
 
     # Field panels from SPARTA grid dumps. WHY --tree all: covers every results/
     # subtree that has grid.*.out (today only results/validation does). NOTE: the

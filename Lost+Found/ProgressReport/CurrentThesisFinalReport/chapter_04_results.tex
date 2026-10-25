@@ -367,9 +367,10 @@ geometry and a search record. The programme also writes a continuous record
 of each run under \texttt{stellarorion\_program\_proc/results/}, and the rest
 of this section puts that record into the thesis. Every panel here is reused
 verbatim from the results tree, so nothing in it is a second, divergent
-render of the same data. Two figures that the argument would benefit from do
-not exist anywhere in that tree; those two are shown as explicit placeholders
-that say what would have to be produced.
+render of the same data. Two further figures are produced by the pipeline itself from those
+records: the grid-independence of the surface quantities across the three
+refinement levels, and the axial surface-pressure distribution of the
+reference body.
 
 \begin{figure}[H]
 \centering
@@ -513,32 +514,41 @@ is described as a topology change rather than a parameter tweak.}
 
 \begin{figure}[H]
 \centering
-\BeginAccSupp{method=escape,ActualText={A placeholder box reading figure not available in results, explaining that the grid-independence study holds raw solver output at three levels but no plot of heat load against refinement level exists.}}
-\includegraphics[width=0.9\textwidth]{figures/placeholder_grid_independence.png}
+\BeginAccSupp{method=escape,ActualText={Two panels. The left panel plots the stagnation-point peak heat flux against refinement level for the three grids, falling from 2.059 to 1.946 to 1.797 megawatts per square metre, with level-to-level changes of minus 5.49 and minus 7.66 per cent. The right panel plots the integrated drag force over the same levels, falling from 48.012 to 45.918 to 45.697 kilonewtons, with level-to-level changes of minus 4.36 and minus 0.48 per cent. The heat flux has not converged; the drag force has.}}
+\includegraphics[width=0.95\textwidth]{figures/grid_independence_qoi.png}
 \EndAccSupp{}
-\caption[Missing: grid-independence of the heat load]{%
-Placeholder. The grid-independence study stores raw solver output at
-\texttt{results/grid\_independence/level\_\{1,2,3\}} and no plot of the
-integrated heat load or the drag coefficient against refinement level exists
-anywhere in the results tree. The figure would be produced by post-processing
-those three levels into a single $Q$-against-level chart; until that is done,
-the grid sensitivity in Table~\ref{tab:grid_study} rests on the tabulated
-values alone and has no graphical evidence behind it.}
-\label{fig:grid_independence_missing}
+\caption[Grid independence of the surface quantities]{%
+Grid independence of the surface quantities across the three refinement
+levels (L1 $70\times70$, L2 $100\times100$, L3 $139\times139$; 4\,900,
+10\,000 and 19\,321 cells). The stagnation-point peak heat flux falls from
+$2.059$ to $1.946$ to $1.797$\,MW\,m$^{-2}$, a further $-7.66\,\%$ between
+the two finest levels, so the surface heat flux is \emph{not}
+grid-converged. The integrated drag force falls from $48.012$ to $45.918$ to
+$45.697$\,kN and moves by only $-0.48\,\%$ between the two finest levels, so
+it \emph{is} converged. Every value is read from the per-level
+\texttt{case.json} record of the run, and the annotations are level-to-level
+changes in the sense of Roache~\cite{roache1998verification} and
+Celik et al.~\cite{celik2008procedure}.}
+\label{fig:grid_independence}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\BeginAccSupp{method=escape,ActualText={A placeholder box reading figure not available in results, explaining that no surface-pressure distribution along the body has been plotted anywhere in the results tree.}}
-\includegraphics[width=0.9\textwidth]{figures/placeholder_surface_pressure.png}
+\BeginAccSupp{method=escape,ActualText={A surface-pressure profile along the axis of the reference body at step 2200. The pressure peaks at 5.23 kilopascals at an axial station of 0.0104 metres, oscillates between roughly 3.2 and 5.0 kilopascals along the toroid stack, drops through a trough near 0.27 metres, and falls to essentially zero beyond 1.1 metres as the base is reached.}}
+\includegraphics[width=0.95\textwidth]{figures/surface_pressure_vs_axial.png}
 \EndAccSupp{}
-\caption[Missing: surface-pressure distribution]{%
-Placeholder. No surface-pressure distribution along the body has been plotted
-anywhere in the results tree, although the pressure is the quantity from which
-the drag of Figure~\ref{fig:flight_history} is integrated. The figure would be
-produced by projecting the step-2200 surface solution onto axial position;
-until that is done, the drag force can only be quoted as a total.}
-\label{fig:surface_pressure_missing}
+\caption[Surface-pressure distribution along the body]{%
+Axial surface-pressure distribution of the reference body at step~2200. The
+pressure is \emph{derived} from the solver's per-surface force by projecting
+it onto the band normal, which cancels the tangential shear, over the
+axisymmetric band area $2\pi rL$; it is not a native pressure dump. The
+derivation is checked against the run's own total: the axial integral of the
+derived pressure over the band areas is $49.4$\,kN against the $45.7$\,kN
+total drag, the difference being the neglected shear. The peak is
+$5.23$\,kPa at $x = 0.0104$\,m, the toroid stack produces the alternating
+high and low bands along the windward face, and beyond $x \approx 1.1$\,m the
+base sits at essentially zero pressure.}
+\label{fig:surface_pressure}
 \end{figure}
 
 \section{Comparative Analysis with Prior Work}
