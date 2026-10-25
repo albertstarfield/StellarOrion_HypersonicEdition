@@ -318,9 +318,9 @@ def main() -> int:
         figsize=(6.0, 4.2),
         suptitle="Shape morphing along the round-2 trajectory",
         footer=("Reused verbatim from results/validation_optimized_round2/plots/. The four design variables are "
-                "logged at every step, so the geometric\nchange reported in Section 4.14 is traceable step by "
+                "logged at every step, so the geometric change reported in Section 4.14 is traceable step by "
                 "step rather than quoted at two endpoints."),
-        bottom=0.115,
+        bottom=0.170, hspace=0.12,
     )
 
     placeholder(
