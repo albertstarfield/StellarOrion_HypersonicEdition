@@ -404,7 +404,7 @@ Table~\ref{tab:validation}, which uses the flight reference area.}
 Surface heat flux (red, left axis, W/cm\textsuperscript{2}) and surface
 temperature (blue dashed, right axis, K) against axial position at steps
 100, 1000 and 2200, reused from
-\texttt{results/00\_reference/plots/vtu\_heatflux\_vs\_x\_step\{100,1000,2200\}.png}.
+\texttt{\seqsplit{results/00\_reference/plots/vtu\_heatflux\_vs\_x\_step\{100,1000,2200\}}.png}.
 The shoulder carries the maximum and the aft face the minimum, which is why
 the ply stack of Figure~\ref{fig:tps_reuse} is graded rather than uniform, and
 no station reaches the red dotted silicon-carbide limit of $1673$\,K. No
@@ -420,7 +420,7 @@ curve is rescaled or edited.}
 \caption[Sampling development of the reference case]{%
 Sampling development of the reference case: cells holding at least ten particles,
 reused from
-\texttt{results/99\_shared/cfd\_fields/grid\_mesh\_map\_smooth\_00\_reference\_step\_\{0,500,1500,2200\}.png}.
+\texttt{\seqsplit{results/99\_shared/cfd\_fields/grid\_mesh\_map\_smooth\_00\_reference\_step\_\{0,500,1500,2200\}}.png}.
 The results tree archives 149 such steps at intervals of one hundred; the four
 shown here bracket the sampling. The computational mesh and the two body outlines are
 identical in all four panels; the annotated number is the count of cells holding at
@@ -455,7 +455,7 @@ the optimisation section.}
 \caption[Survivability and surface temperature]{%
 Survivability assessment and surface-temperature history of the reference
 body, reused from
-\texttt{results/00\_reference/plots/\{survivability\_assessment,T\_surface\_vs\_step\}.png}.
+\texttt{\seqsplit{results/00\_reference/plots/\{survivability\_assessment,T\_surface\_vs\_step\}}.png}.
 These panels exist only for the reference tree: no equivalent temperature
 history was written for the gate-passing topology, whose thermal evidence is
 therefore the per-ply conduction plate of Figure~\ref{fig:tps_reuse} rather
@@ -470,7 +470,7 @@ than a time series.}
 \EndAccSupp{}
 \caption[Central composite design and sensitivity]{%
 Central composite design and its sensitivity map, reused from
-\texttt{results/99\_shared/\{ga\_ccd\_design,ga\_ccd\_sensitivity\}.png}.
+\texttt{\seqsplit{results/99\_shared/\{ga\_ccd\_design,ga\_ccd\_sensitivity\}}.png}.
 The design fixes which of the three variables --- nose diameter $X_1$, torus
 radius $X_2$ and half-cone angle $X_3$ --- the search is allowed to move, and
 the sensitivity map shows that the drag reward dominates the heat-load penalty
@@ -487,7 +487,7 @@ Figure~\ref{fig:ga_trajectory} exhibits.}
 \caption[Denoising of the sampled field]{%
 Kriging denoising of the sampled field and the noise reduction it achieves,
 reused from
-\texttt{results/99\_shared/kriging/\{kriging\_denoise\_step100,kriging\_noise\_reduction\_step100\}.png}.
+\texttt{\seqsplit{results/99\_shared/kriging/\{kriging\_denoise\_step100,kriging\_noise\_reduction\_step100\}}.png}.
 DSMC fields carry statistical scatter at this cell count, so the smooth
 contours of Figures~\ref{fig:thermal_map}--\ref{fig:knudsen_map} are the
 denoised view of the same data; the right-hand panel quantifies what the
@@ -503,7 +503,7 @@ single-cell value.}
 \EndAccSupp{}
 \caption[Geometry of the gate-passing candidate against step]{%
 Geometry of the gate-passing candidate against step, reused from
-\texttt{results/validation\_optimized\_round2/plots/geom\_*\_vs\_step.png}.
+\texttt{\seqsplit{results/validation\_optimized\_round2/plots/geom\_*\_vs\_step.png}}.
 Only this tree records the geometry at every step; the reference tree holds it
 constant by construction. The four curves are the trace of the shape change
 that produced the $0.62\times$ body of

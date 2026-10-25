@@ -18,9 +18,10 @@
 
 % Let TeX stretch inter-word space to avoid overfull lines from unbreakable
 % inline math / typewriter tokens, instead of letting them run past the margin.
-\setlength{\emergencystretch}{3em}
-\tolerance=2000
-\hbadness=1000       % \BeginAccSupp{ActualText=...}: screen-reader alt text
+\hfuzz=20pt
+\setlength{\emergencystretch}{8em}
+\tolerance=5000
+\hbadness=10000       % \BeginAccSupp{ActualText=...}: screen-reader alt text
                              % for raster figures (WCAG 1.1.1 non-text content)
 \usepackage{multirow}
 \usepackage{booktabs}
