@@ -359,6 +359,188 @@ The convergence record and the design path describe the search itself. The next 
 
 The thermal cost of the topological change is therefore small: the optimised body raises the mean surface temperature by less than $30$\,K and leaves the peak unchanged, while the heat-flux distribution and the energy balance remain essentially the same shape. What the topology buys is the drag reward reported above, not a thermal penalty.
 
+\section{Supporting Evidence from the Simulation Record}
+\label{sec:results_tree_evidence}
+
+The figures above are single snapshots of a converged state, a mesh, a
+geometry and a search record. The programme also writes a continuous record
+of each run under \texttt{stellarorion\_program\_proc/results/}, and the rest
+of this section puts that record into the thesis. Every panel here is reused
+verbatim from the results tree, so nothing in it is a second, divergent
+render of the same data. Two figures that the argument would benefit from do
+not exist anywhere in that tree; those two are shown as explicit placeholders
+that say what would have to be produced.
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Four rows by two columns of time histories. Rows are drag coefficient, total drag force, total heat load and deceleration load from top to bottom; columns are the reference tree on the left and the gate-passing optimised topology on the right. The reference drag force falls from 62.5 kN to about 45 kN, the peak deceleration is 22.5 g and the heat load is flat at 165.7 J per square centimetre. The optimised topology reaches the same drag force and deceleration with a heat load of 117.5 J per square centimetre.}}
+\includegraphics[width=0.85\textwidth]{figures/flight_history_panel.png}
+\EndAccSupp{}
+\caption[Integrated flight history of the reference and optimised bodies]{%
+Integrated flight history of the reference and of the optimised topology,
+reused from \texttt{results/00\_reference/plots/} (left) and
+\texttt{results/validation\_optimized\_round2/plots/} (right). Rows are
+(a)~drag coefficient, (b)~total drag force, (c)~total heat load and
+(d)~deceleration load. These are the histories behind Table~\ref{tab:validation}
+and the gate totals: the reference drag force falls from $62.5$\,kN to about
+$45$\,kN against a final value of $45{,}613$\,N in Table~\ref{tab:validation}, the
+peak deceleration is $22.5$ against $22.72$\,g, and the accumulated heat load
+is flat at $165.7$\,J/cm\textsuperscript{2} against $165.716$ for the
+reference and $117.5$ against $117.526$ for the gate-passing topology. The
+drag coefficient plotted here is the instantaneous DSMC value on the body
+reference area; it is deliberately not the surrogate cost-model value quoted
+in the optimisation section, nor the IRVE-3 flight value of
+Table~\ref{tab:validation}, which uses the flight reference area.}
+\label{fig:flight_history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Three panels of surface heat flux and surface temperature against axial position at steps 100, 1000 and 2200. Heat flux is the red curve on the left axis in watts per square centimetre, surface temperature the blue dashed curve on the right axis in kelvin, and a red dotted line marks the SiC limit of 1673 kelvin. The shoulder carries the maximum and the aft face the minimum.}}
+\includegraphics[width=0.95\textwidth]{figures/heatflux_vs_x_panel.png}
+\EndAccSupp{}
+\caption[Surface heat flux along the meridian]{%
+Surface heat flux (red, left axis, W/cm\textsuperscript{2}) and surface
+temperature (blue dashed, right axis, K) against axial position at steps
+100, 1000 and 2200, reused from
+\texttt{results/00\_reference/plots/vtu\_heatflux\_vs\_x\_step\{100,1000,2200\}.png}.
+The shoulder carries the maximum and the aft face the minimum, which is why
+the ply stack of Figure~\ref{fig:tps_reuse} is graded rather than uniform, and
+no station reaches the red dotted silicon-carbide limit of $1673$\,K. No
+curve is rescaled or edited.}
+\label{fig:heatflux_x}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Four sampling snapshots of the reference case at steps 0, 500, 1500 and 2200. The computational mesh and the two body outlines are identical in all four; the annotated number of cells holding at least ten DSMC particles falls from 18879 to 16349.}}
+\includegraphics[width=0.98\textwidth]{figures/field_development_strip.png}
+\EndAccSupp{}
+\caption[Sampling development of the reference case]{%
+Sampling development of the reference case: cells holding at least ten particles,
+reused from
+\texttt{results/99\_shared/cfd\_fields/grid\_mesh\_map\_smooth\_00\_reference\_step\_\{0,500,1500,2200\}.png}.
+The results tree archives 149 such steps at intervals of one hundred; the four
+shown here bracket the sampling. The computational mesh and the two body outlines are
+identical in all four panels; the annotated number is the count of cells holding at
+least ten DSMC particles, 18879, 18036, 16585 and 16349, so the panels document the
+sampling filling the domain rather than a change of flow state. Step 2200 is the
+statistically steady state from which every field panel of this chapter is taken.}
+\label{fig:field_development}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Two panels, each showing the same body in four azimuth views with an axial-position colour scale. Left is the reference geometry with length 1.2694 metres and maximum radius 1.8802 metres; right is the optimised topology with the same length and a maximum radius of 1.8298 metres.}}
+\includegraphics[width=0.9\textwidth]{figures/geometry_3d_plate.png}
+\EndAccSupp{}
+\caption[Three-dimensional geometry, four views]{%
+Three-dimensional geometry in four azimuth views, reused from
+\texttt{results/99\_shared/geometry/}: the reference body on the left and the
+optimised topology on the right. This is the only three-dimensional view of
+the bodies in the thesis; Figure~\ref{fig:topology_comparison} gives the
+meridional section and the envelope difference, and this plate shows the same
+geometry in the round. The cost metric printed inside the panels belongs to
+the round-one run that produced these views and is not the composite cost of
+the optimisation section.}
+\label{fig:geometry_3d}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Two panels: a survivability assessment and the surface-temperature history of the reference body. The surface temperature rises with the flight and the back-face temperature stays pinned at 300 kelvin.}}
+\includegraphics[width=0.9\textwidth]{figures/survivability_panel.png}
+\EndAccSupp{}
+\caption[Survivability and surface temperature]{%
+Survivability assessment and surface-temperature history of the reference
+body, reused from
+\texttt{results/00\_reference/plots/\{survivability\_assessment,T\_surface\_vs\_step\}.png}.
+These panels exist only for the reference tree: no equivalent temperature
+history was written for the gate-passing topology, whose thermal evidence is
+therefore the per-ply conduction plate of Figure~\ref{fig:tps_reuse} rather
+than a time series.}
+\label{fig:survivability}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Two panels: the central composite design used to sample the three design variables, and its sensitivity map showing how the composite cost responds to each variable.}}
+\includegraphics[width=0.9\textwidth]{figures/ccd_sensitivity_panel.png}
+\EndAccSupp{}
+\caption[Central composite design and sensitivity]{%
+Central composite design and its sensitivity map, reused from
+\texttt{results/99\_shared/bo\_figures/\{ga\_ccd\_design,ga\_ccd\_sensitivity\}.png}.
+The design fixes which of the three variables --- nose diameter $X_1$, torus
+radius $X_2$ and half-cone angle $X_3$ --- the search is allowed to move, and
+the sensitivity map shows that the drag reward dominates the heat-load penalty
+over most of the box, which is the behaviour the converged path of
+Figure~\ref{fig:ga_trajectory} exhibits.}
+\label{fig:ccd_sensitivity}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Two panels showing a kriging denoised field and the noise-reduction achieved by that filter at step 100 of the reference run.}}
+\includegraphics[width=0.95\textwidth]{figures/kriging_denoise_panel.png}
+\EndAccSupp{}
+\caption[Denoising of the sampled field]{%
+Kriging denoising of the sampled field and the noise reduction it achieves,
+reused from
+\texttt{results/99\_shared/kriging/\{kriging\_denoise\_step100,kriging\_noise\_reduction\_step100\}.png}.
+DSMC fields carry statistical scatter at this cell count, so the smooth
+contours of Figures~\ref{fig:thermal_map}--\ref{fig:knudsen_map} are the
+denoised view of the same data; the right-hand panel quantifies what the
+filter removes, which is why no conclusion in this chapter is drawn from a
+single-cell value.}
+\label{fig:kriging}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Four panels of the gate-passing geometry against step: body diameter, nose radius, torus radius and half-cone angle. The diameter, nose radius and torus radius fall with step while the half-cone angle rises.}}
+\includegraphics[width=0.85\textwidth]{figures/morphing_geometry_panel.png}
+\EndAccSupp{}
+\caption[Geometry of the gate-passing candidate against step]{%
+Geometry of the gate-passing candidate against step, reused from
+\texttt{results/validation\_optimized\_round2/plots/geom\_*\_vs\_step.png}.
+Only this tree records the geometry at every step; the reference tree holds it
+constant by construction. The four curves are the trace of the shape change
+that produced the $0.62\times$ body of
+Figure~\ref{fig:topology_comparison}, and they are the reason the optimisation
+is described as a topology change rather than a parameter tweak.}
+\label{fig:morphing_geometry}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={A placeholder box reading figure not available in results, explaining that the grid-independence study holds raw solver output at three levels but no plot of heat load against refinement level exists.}}
+\includegraphics[width=0.9\textwidth]{figures/placeholder_grid_independence.png}
+\EndAccSupp{}
+\caption[Missing: grid-independence of the heat load]{%
+Placeholder. The grid-independence study stores raw solver output at
+\texttt{results/grid\_independence/level\_\{1,2,3\}} and no plot of the
+integrated heat load or the drag coefficient against refinement level exists
+anywhere in the results tree. The figure would be produced by post-processing
+those three levels into a single $Q$-against-level chart; until that is done,
+the grid sensitivity in Table~\ref{tab:grid_study} rests on the tabulated
+values alone and has no graphical evidence behind it.}
+\label{fig:grid_independence_missing}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={A placeholder box reading figure not available in results, explaining that no surface-pressure distribution along the body has been plotted anywhere in the results tree.}}
+\includegraphics[width=0.9\textwidth]{figures/placeholder_surface_pressure.png}
+\EndAccSupp{}
+\caption[Missing: surface-pressure distribution]{%
+Placeholder. No surface-pressure distribution along the body has been plotted
+anywhere in the results tree, although the pressure is the quantity from which
+the drag of Figure~\ref{fig:flight_history} is integrated. The figure would be
+produced by projecting the step-2200 surface solution onto axial position;
+until that is done, the drag force can only be quoted as a total.}
+\label{fig:surface_pressure_missing}
+\end{figure}
+
 \section{Comparative Analysis with Prior Work}
 \label{sec:comparison_rapisarda}
 A direct comparison between the present framework and the prior MDAO framework of Rapisarda (2023)~\cite{rapisarda2023mdao} highlights the methodological advances introduced in this research. While both frameworks target HIAD survivability optimization using the IRVE-3 geometry as a baseline, the underlying computational approaches differ fundamentally.
