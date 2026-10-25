@@ -703,7 +703,7 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
 
 Two distinct tolerance statements apply to this table. First, the MDAO reference model reproduces the flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$ respectively, comfortably inside the $\pm 10\%$ margin normally required of a calibrated reconstruction; this confirms that the IRVE-3 flight data adopted here are internally consistent and suitable as a validation target. Second, the geometry-sensitive quantities computed by this work satisfy that same margin: the ballistic coefficient deviates by $+3.0\%$ and the drag coefficient is 1.4625.
 
-The single-trajectory-point evaluation of the DSMC solution does \emph{not} satisfy the $\pm 10\%$ margin, but the deviations fall in opposite directions on the two classes of quantity and have different causes. The two \emph{integrated} quantities are under-predicted: total heat load by $-15.0\%$ and peak deceleration by $-14.6\%$. The flight reconstruction and the MDAO model integrate the heating and deceleration history across the complete reentry, whereas the DSMC run samples a single trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions; integrating over the full trajectory raises both the accumulated heat load and the peak deceleration towards the measured values, and the close agreement of these two deltas on a common value of approximately $-15\%$ localises their residual in the trajectory integration rather than in the geometry or the flow solver. The \emph{pointwise} stagnation heat flux behaves oppositely, over-predicting by $+12.4\%$, because the Sutton--Graves figure is a continuum correlation built on a spherical nose cap: it carries neither the heat-shielding effect of the scalloped torus nor the rarefied-flow departure that the DSMC solver resolves, and it therefore acts as a conservative upper bound on the stagnation flux at this condition. The ballistic coefficient closes the argument from the other side, agreeing to $+3.0\%$ and confirming that the scalloped geometry is reproduced correctly. The numerical framework is consequently judged sound on the strength of the geometry-sensitive agreement, with the trajectory-integration gap and the correlation-versus-solver gap carried forward separately and explicitly as stated limitations rather than absorbed into a tolerance claim.
+The single-trajectory-point evaluation of the DSMC solution does \emph{not} satisfy the $\pm 10\%$ margin, but the deviations fall in opposite directions on the two classes of quantity and have different causes. The two \emph{integrated} quantities are under-predicted for the heat load and over-predicted for the deceleration: total heat load by $-15.0\%$ and peak deceleration by $+15.3\%$. The flight reconstruction and the MDAO model integrate the heating and deceleration history across the complete reentry, whereas the DSMC run samples a single trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions; integrating over the full trajectory raises the accumulated heat load towards the measured value, while the deceleration peak occurs in the early transient at the high-dynamic-pressure condition, which is a different instant from the flight peak. The \emph{pointwise} stagnation heat flux behaves oppositely, over-predicting by $+12.4\%$, because the Sutton--Graves figure is a continuum correlation built on a spherical nose cap: it carries neither the heat-shielding effect of the scalloped torus nor the rarefied-flow departure that the DSMC solver resolves, and it therefore acts as a conservative upper bound on the stagnation flux at this condition. The ballistic coefficient closes the argument from the other side, agreeing to $+3.0\%$ and confirming that the scalloped geometry is reproduced correctly. The numerical framework is consequently judged sound on the strength of the geometry-sensitive agreement, with the trajectory-integration gap and the correlation-versus-solver gap carried forward separately and explicitly as stated limitations rather than absorbed into a tolerance claim.
 
 \section{Computational Infrastructure}
 
@@ -715,17 +715,7 @@ SPARTA simulations are executed within a Docker-containerized Linux environment 
     \item Consistent library versions and compiler toolchains
 \end{itemize}
 
-The Python optimization environment runs on the native OS to leverage hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS, Intel OneAPI, and specialized accelerators from Huawei CANN, Moore Threads MUSA, and Qualcomm Snapdragon).
-
-\subsection{Hardware Acceleration}
-The framework supports GPU acceleration across multiple vendors:
-\begin{itemize}
-    \item \textbf{NVIDIA:} CUDA via Kokkos backend
-    \item \textbf{AMD:} ROCm
-    \item \textbf{Apple:} Metal Performance Shaders (MPS)
-    \item \textbf{Intel:} OneAPI/OpenCL
-    \item \textbf{Specialized:} Huawei CANN, Moore Threads MUSA, Biren SUPA, Snapdragon OpenCL
-\end{itemize}
+The Python optimization environment runs on the native OS; the analytic cost of Eq.~\eqref{eq:ga_cost} is evaluated in closed form, so the search itself requires no GPU acceleration.
 
 \section{Computational and Optimization Standards}
 \label{sec:comp_standards}
@@ -789,7 +779,7 @@ The LHS stratum permutation and the GA operators draw from the Ada random genera
     \begin{tabular}{|l|l|}
         \hline
         \textbf{Component} & \textbf{Version} \\ \hline
-        Python & 3.10+ \\ \hline
+        Python & 3.14 \\ \hline
         NumPy & 1.24+ \\ \hline
         Ada/SPARK toolchain & GNAT 16.1 \\ \hline
         DSMC solver & SPARTA (Docker) \\ \hline

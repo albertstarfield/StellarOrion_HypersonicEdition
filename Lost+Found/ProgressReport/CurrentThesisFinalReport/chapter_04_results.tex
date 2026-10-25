@@ -179,7 +179,7 @@ The present work's DSMC run reports a total heat load of 165.72~J/cm\textsupersc
 The peak heat flux in Table~\ref{tab:validation} is a Sutton--Graves evaluation, not a quantity resolved by the solver: 15.36~W/cm\textsuperscript{2} at $R=1.5$\,m and $V_{\infty}=3{,}378$\,m/s with $C_{SG}=1.7415\times10^{-4}$. The analytic model used by the optimizer evaluates the same correlation at the physical nose radius $R_n=\kappa R_N$ of Eq.~\eqref{eq:nose_ratio} ($0.55$\,m at the baseline), which gives 25.36~W/cm\textsuperscript{2}; the $12.20$~W/cm\textsuperscript{2} in the validation export is a legacy evaluation at $V_{\infty}=2{,}700$\,m/s. The three values are the same correlation at different $(R_n,V_{\infty})$ pairs, and none of them is a stagnation-point sample of the DSMC field. The $+6.9\%$ in Table~\ref{tab:validation} is therefore a scale comparison between a single-point correlation and a trajectory-integrated flight peak, not a validated error bound.
 
 \section{Scallop Pocket Temperature Analysis}
-The temperature distribution within the toroidal pockets shows that the recirculation zones between toroid crests create regions of reduced heating. Figure~\ref{fig:scallop_pocket} is an axial trace sampled at the centre of a single scallop pocket: the temperature holds at the ambient value upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak of approximately $3.1 \times 10^3$\,K, and then decays through the recirculation region back towards ambient. This confirms quantitatively that the valleys act as thermal buffer zones relative to the heated crests.
+The temperature distribution within the toroidal pockets shows that the recirculation zones between toroid crests create regions of reduced heating. Figure~\ref{fig:scallop_pocket} is an axial trace sampled at the centre of a single scallop pocket: the temperature holds at the ambient value upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak of approximately $3.6 \times 10^3$\,K, and then decays through the recirculation region back towards ambient. This confirms quantitatively that the valleys act as thermal buffer zones relative to the heated crests.
 
 \begin{figure}[H]
     \centering
@@ -204,7 +204,7 @@ The thermal-propagation chain of Sec.~\ref{sec:thermal_chain} is resolved per su
     \label{fig:tps_ply}
 \end{figure}
 
-The profiles confirm the balance of Eq.~\eqref{eq:thermal_balance}. The hot face sits at $T_{surf}\approx1327$\,K while the backface remains at 300\,K, so the layup resistance carries only $\dot{q}_{cond}=3{,}362$\,W/m$^2$ against a convective load of $143{,}760$\,W/m$^2$; the remaining $140{,}399$\,W/m$^2$ leaves the surface by radiation. The insulation therefore works mainly by keeping the hot face cold enough for the radiative path, not by absorbing the load. The lateral coupling of Eq.~\eqref{eq:lateral} contributes $0.0083$\,W/m$^2$, seven orders of magnitude below the convective load, so the one-dimensional treatment is adequate for this geometry; the term is retained because it is what closes the energy balance element by element. The optimised geometry starts $110$\,K cooler at the outer face, which is the thermal consequence of the $14\,\%$ lower stagnation flux it was selected for.
+The profiles confirm the balance of Eq.~\eqref{eq:thermal_balance}. The hot face sits at $T_{surf}\approx1327$\,K while the backface remains at 300\,K, so the layup resistance carries only $\dot{q}_{cond}=3{,}362$\,W/m$^2$ against a convective load of $143{,}760$\,W/m$^2$; the remaining $140{,}399$\,W/m$^2$ leaves the surface by radiation. The insulation therefore works mainly by keeping the hot face cold enough for the radiative path, not by absorbing the load. The lateral coupling of Eq.~\eqref{eq:lateral} contributes $0.0083$\,W/m$^2$, seven orders of magnitude below the convective load, so the one-dimensional treatment is adequate for this geometry; the term is retained because it is what closes the energy balance element by element. The optimised geometry starts $29$\,K hotter at the outer face ($830.03$\,K against $801.35$\,K), which is the thermal consequence of the drag-reward term of the cost dominating the heat-load term.
 \section{Convergence and Residuals}
 The DSMC simulation convergence is monitored through residual tracking (Figure~\ref{fig:convergence}). Each curve plots the normalised residual $|x - x_{\mathrm{ref}}|/|x_{\mathrm{ref}}|$ of a monitored quantity against the particle-time step, where $x_{\mathrm{ref}}$ is the mean of the final three samples and is taken as the converged level. All three residuals fall by roughly three orders of magnitude between step 100 and step 2200, which is the statistical steady-state expected of a particle method~\cite{bird1994molecular}. The approach is not monotonic: because each estimate is a finite-sample mean over the particles present in the cell, the residuals retain visible scatter (most conspicuously in the heat flux, which fluctuates by a factor of two between adjacent samples late in the run) as the statistics accumulate. The monotone trend is therefore a property of the trend, not of individual samples.
 
@@ -235,7 +235,7 @@ The quantitative evidence for the chosen grid is the three-level grid-independen
 The simulation confirms that the scalloped toroidal geometry creates localized hot spots at the toroid crests. Comparing the scalloped and smooth runs at the same trajectory condition, the scalloped configuration raises the peak heat flux by 15.2\% and the per-element average by only 4.0\%, while the drag coefficient increases by 9.5\%; the total heat load and peak deceleration are unchanged. This distribution of the augmentation over a small crest area, rather than over the whole surface, is the physical signature expected from the inverse-square-root radius scaling ($\dot{q} \propto 1/\sqrt{R}$) of the Sutton-Graves correlation~\cite{sutton1971gravesh}. The recirculation zones in the valleys provide partial thermal shielding, reducing the time-averaged heat load on the Flexible Thermal Protection System (FTPS)~\cite{hollis2018surface}.
 
 \subsection{Flow Regime Characterization}
-The Knudsen number field map demonstrates that the flow around the HIAD at 51.8\,km altitude spans all three regimes: free-molecular in the far-field, transitional in the shock layer, and near-continuum at the stagnation region. This confirms the necessity of using DSMC rather than continuum CFD for accurate aerothermal prediction at these conditions~\cite{mos2006lowdensity}.
+The Knudsen number field map demonstrates that the flow around the HIAD at 51.8\,km altitude spans all three regimes: transitional in the shock layer, and near-continuum at the stagnation region. This confirms the necessity of using DSMC rather than continuum CFD for accurate aerothermal prediction at these conditions~\cite{mos2006lowdensity}.
 
 \subsection{Recirculation and Shock-Boundary Layer Interaction}
 The velocity vector analysis reveals stable recirculation zones in the toroidal valleys, which are qualitatively consistent with the shock-boundary layer interaction (SBLI) patterns observed in hypersonic blunt-body flows~\cite{guo2019hypersonic}. The DSMC method captures these phenomena through direct molecular collision statistics, without requiring empirical turbulence closures.
@@ -470,7 +470,7 @@ than a time series.}
 \EndAccSupp{}
 \caption[Central composite design and sensitivity]{%
 Central composite design and its sensitivity map, reused from
-\texttt{results/99\_shared/bo\_figures/\{ga\_ccd\_design,ga\_ccd\_sensitivity\}.png}.
+\texttt{results/99\_shared/\{ga\_ccd\_design,ga\_ccd\_sensitivity\}.png}.
 The design fixes which of the three variables --- nose diameter $X_1$, torus
 radius $X_2$ and half-cone angle $X_3$ --- the search is allowed to move, and
 the sensitivity map shows that the drag reward dominates the heat-load penalty
@@ -577,7 +577,7 @@ The present framework implements a simple Genetic Algorithm (GA) on an analytic 
 % Bayesian-optimisation material has been removed from this thesis.
 
 \subsection{Reproducibility and Accessibility}
-The present framework is fully open-source, Python-based, and Docker-containerized. The SPARTA simulation runs in a reproducible Linux environment, while the Python optimization pipeline runs on the native OS with support for global hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS). Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.
+The present framework is fully open-source, Python-based, and Docker-containerized. The SPARTA simulation runs in a reproducible Linux environment, while the Python optimization pipeline runs on the native OS and evaluates the analytic cost of Eq.~\eqref{eq:ga_cost} in closed form. Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.
 
 \begin{table}[H]
     \centering
@@ -597,7 +597,7 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
 
         Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
-        Grid Independence & Not reported & Automated grid-factor optimization \\
+        Grid Independence & Not reported & Three-level study ($70\times70$, $100\times100$, $139\times139$ cells) \\
         \bottomrule
     \end{tabularx}
 \end{table}
