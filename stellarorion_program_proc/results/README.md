@@ -10,7 +10,7 @@ The topology optimiser is the **double pass GA optimization**: pass 1 is an LHS-
 The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PINN' wording inside their GENERATED markdown (validation_pipeline_output/dsmc_pinn_switch_section.md, unified_comparison_table.md); they are records of those runs and are not regenerated.  The current method label is DSMC+PINN_AUX: the PINN is an auxiliary denoiser, not a co-equal validator.
 
 ## 00_reference/
-- (root level): 70 artefacts (directly in results/00_reference/plots/)
+- (root level): 71 artefacts (directly in results/00_reference/plots/)
 - `derived/`: 6 artefacts (under results/00_reference/plots/derived/)
 - `full_300M_dsmc_pinn/`: 18 artefacts (under results/00_reference/plots/full_300M_dsmc_pinn/)
 - `mp4/`: 1 artefacts (under results/00_reference/plots/mp4/)
@@ -19,7 +19,7 @@ The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PIN
 - `tps_per_ply/`: 7 artefacts (under results/00_reference/plots/tps_per_ply/)
 - `validation_pipeline/`: 9 artefacts (under results/00_reference/plots/validation_pipeline/)
 - `vtu_snapshots/`: 24 artefacts (under results/00_reference/plots/vtu_snapshots/)
-- Total under 00_reference: **168**
+- Total under 00_reference: **169**
 
 ## 01_smooth/
 - (root level): 48 artefacts (directly in results/01_smooth/plots/)

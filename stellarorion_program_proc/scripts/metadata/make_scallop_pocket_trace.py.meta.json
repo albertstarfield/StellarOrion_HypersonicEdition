@@ -1,0 +1,9 @@
+{
+  "source_file": "make_scallop_pocket_trace.py",
+  "source_hash": "c0e8d40b15a0b6bb496609fa2c2a9d0ab6ee19483366d8c938b1b57af5f3a1a1",
+  "rs_checksum": "4953c6461d7e06be63e740f6f5c82df3a33fd48fbab319aa917ff0ec7ff7e205",
+  "gc_checksum": "0ba2bf3e3b7b41bcab9540cc38a95edf3d75e1fd62f23346756003ccf1ee534f",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 31
+}

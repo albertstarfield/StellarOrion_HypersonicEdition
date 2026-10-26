@@ -1162,6 +1162,14 @@ def _phase2c_generate_media_and_sync() -> None:
     #  un-flown campaign does not invalidate the run being processed.
     _run_media([os.path.join("scripts", "integrate_trajectory_load.py")])
 
+    #  WHY: the scallop-pocket axial trace (thesis figure) is the one panel whose
+    #  generator had been lost -- the included PNG was an orphan artifact that no
+    #  script in the repository could reproduce, so its caption's peak could not
+    #  be checked against data.  scripts/make_scallop_pocket_trace.py rebuilds it
+    #  from the step-2200 grid dump of the reference tree and prints the measured
+    #  peak, so a missing dump now surfaces as a warning instead of a silent gap.
+    _run_media([os.path.join("scripts", "make_scallop_pocket_trace.py")])
+
     # Field panels from SPARTA grid dumps. WHY --tree all: covers every results/
     # subtree that has grid.*.out (today only results/validation does). NOTE: the
     # script exits 1 when some trees have no dumps -- that is a data limitation
