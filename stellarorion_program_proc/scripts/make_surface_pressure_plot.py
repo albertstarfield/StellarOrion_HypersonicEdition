@@ -305,6 +305,51 @@ def pressure_profile(
     return profile, sign
 
 
+def dump_step(path: Path) -> int | None:
+    """Read the SPARTA step number from a dump file's header.
+
+    Parameters:
+        path: the dump whose ``ITEM: TIMESTEP`` block should be read.
+
+    Returns:
+        The step as an ``int``, or ``None`` when the header is missing, the
+        value is not an integer, or the file cannot be read.
+
+    Raises:
+        Nothing: an unreadable or malformed dump is reported on stderr and the
+        caller falls back to a step-free label rather than inventing a number.
+
+    AXIOMS:
+        A1  A SPARTA dump begins with ``ITEM: TIMESTEP`` and the step on the
+            following line; that pair is the only authoritative statement of
+            which step the file holds.
+
+    THEOREMS:
+        T1  The step stated in the header equals the step in the file name for
+            every dump this project writes, so labelling the figure from either
+            source agrees; the header is preferred because the file may be
+            renamed by a probe or a copy.
+
+    CITATIONS:
+        [SPARTA] Plimpton & Gallis, SPARTA Users Manual, dump command -- the
+            ``ITEM: TIMESTEP`` / value pair is the documented header form.
+
+    WHY: the title previously hard-coded "step-2200", so a figure drawn from an
+    earlier dump (a partial run, a probe copy, or a differently numbered case)
+    claimed a step it did not come from.  The title now states the dump's own
+    step, and says only "DSMC surface dump" when the step cannot be read.
+    """
+    try:
+        with path.open(encoding="utf-8", errors="replace") as handle:
+            for line in handle:
+                if line.strip() == "ITEM: TIMESTEP":
+                    value = handle.readline().strip()
+                    return int(value) if value.lstrip("-").isdigit() else None
+    except OSError as exc:
+        print(f"[pressure] cannot read the step from {path}: {exc}", file=sys.stderr)
+    return None
+
+
 def render(
     profile: list[tuple[float, float, float, float]],
     dump: Path,
@@ -339,7 +384,11 @@ def render(
             label=f"peak {p_kpa[peak_index]:.2f} kPa at x = {x[peak_index]:.4f} m")
     ax.set_xlabel("Axial station $x$ (m)")
     ax.set_ylabel(r"Surface pressure $p$ (kPa)")
-    ax.set_title("Surface pressure along the HIAD body (step-2200 DSMC surface dump)")
+    label = "DSMC surface dump"
+    step = dump_step(dump)
+    if step is not None:
+        label = f"step-{step} DSMC surface dump"
+    ax.set_title(f"Surface pressure along the HIAD body ({label})")
     ax.grid(True, alpha=0.3)
     ax.legend(loc="upper right", fontsize=9)
     source_note = (
