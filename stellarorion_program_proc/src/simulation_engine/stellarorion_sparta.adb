@@ -753,8 +753,15 @@ package body StellarOrion_Sparta is
                 Img (1) & " " & Img (Avg_Nrepeat) &
                 " " & Img (Avg_Nfreq) & " c_1[*]");
       Put_Line (File, "");
+      --  WHY: the `press` keyword appends a NATIVE per-surface pressure to
+      --  the surfF compute, so the surf dump gains f_surfavg[4] = pressure
+      --  (Pa) as a single TRAILING column.  The existing dump positions are
+      --  unchanged (f_1[1..3] then f_surfavg[1..3]), so every reader of the
+      --  old layout keeps working; the surface-pressure figure reads the new
+      --  column by HEADER NAME, never by position.
+      --  Source: SPARTA src/compute_surf.cpp (the `press` keyword).
       Put_Line (File, "compute         surfF surf hiad_surf " &
-                To_String (Mixture_Name) & " fx fy fz");
+                To_String (Mixture_Name) & " fx fy fz press");
       Put_Line (File, "fix             surfavg ave/surf hiad_surf " &
                 Img (1) & " " & Img (Avg_Nrepeat) &
                 " " & Img (Avg_Nfreq) & " c_surfF[*]");

@@ -129,6 +129,90 @@ def level_deltas(values: list[float]) -> list[float]:
     return out
 
 
+def richardson(rows: list[dict], key: str) -> dict:
+    """Estimate the grid-converged value of one quantity by Richardson extrapolation.
+
+    Parameters:
+        rows: the level records returned by :func:`load_levels`, coarse to fine.
+        key: the quantity to extrapolate (``qoi_value`` or ``drag``).
+
+    Returns:
+        A dict with ``coarse``, ``medium``, ``fine``, ``p`` (observed order of
+        accuracy), ``exact`` (the extrapolated value), ``gci_pct`` (the fine-grid
+        Grid Convergence Index, factor of safety 1.25), ``monotone`` (whether the
+        three values converge monotonically) and ``n`` (how many levels were used).
+
+    Raises:
+        Nothing: a series with fewer than three levels, or one whose differences
+        have opposite signs, falls back to the assumed first order and reports
+        ``monotone = False`` rather than fabricating an order.
+
+    AXIOMS:
+        A1  The three levels share one geometry and one flight condition, so the
+            only difference between them is the grid spacing.
+        A2  The spacing scales as h ~ 1 / n_grid; the absolute factor cancels in
+            every ratio below, so no cell size has to be measured.
+
+    THEOREMS:
+        T1  For a series that converges as f(h) = f_exact + C h^p, the observed
+            order follows from the ratio of successive differences,
+            (f1 - f2) / (f2 - f3) = (h1^p - h2^p) / (h2^p - h3^p); the right-hand
+            side is strictly increasing in p, so the order is found by bisection
+            and no assumption about the refinement ratio being constant is needed.
+        T2  With p known, f_exact = f1 - C h1^p and C = (f1 - f2) / (h1^p - h2^p).
+
+    CITATIONS:
+        [Roache1998] Roache, Verification and Validation in Computational Science
+            and Engineering, Hermosa, 1998 (the Grid Convergence Index).
+        [Celik2008] Celik et al., J. Fluids Eng. 130(7) 078001, 2008,
+            doi:10.1115/1.2960953 (the ASME V&V 20 procedure: observed order,
+            extrapolated value, GCI with a factor of safety of 1.25 on three grids).
+
+    WHY: the three-level campaign shows the peak heat flux is not converged; an
+    extrapolated value and its GCI let the thesis state how far the production
+    grid is from the limit instead of reporting only the two raw deltas.
+    """
+    values = [float(row[key]) for row in rows]
+    h = [1.0 / float(row["n_grid"]) for row in rows if row["n_grid"]]
+    out = {"coarse": values[0], "medium": values[1] if len(values) > 1 else values[0],
+           "fine": values[-1], "p": 1.0, "exact": values[-1], "gci_pct": float("nan"),
+           "monotone": False, "n": len(values)}
+    if len(values) < 3 or len(h) < 3:
+        return out
+    h1, h2, h3 = h[-3], h[-2], h[-1]
+    f1, f2, f3 = values[-3], values[-2], values[-1]
+    d12, d23 = f1 - f2, f2 - f3
+    if d12 == 0.0 or d23 == 0.0 or d12 * d23 <= 0.0:
+        #  Non-monotone or already identical: no observed order can be extracted.
+        return out
+    target = d12 / d23
+
+    def ratio(p: float) -> float:
+        return (h1 ** p - h2 ** p) / (h2 ** p - h3 ** p)
+
+    lo, hi = 0.05, 8.0
+    if ratio(lo) > target or ratio(hi) < target:
+        #  WHY: for f = f_exact + C h^p the ratio of successive differences is
+        #  always > 1 (h1 > h2 > h3, p > 0).  A target at or below that bound means
+        #  the differences do not shrink with refinement at all, so no observed
+        #  order exists and NO extrapolated value may be claimed -- reporting one
+        #  would be a fabricated number.  monotone stays False.
+        return out
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if ratio(mid) < target:
+            lo = mid
+        else:
+            hi = mid
+    p_obs = 0.5 * (lo + hi)
+    c = d12 / (h1 ** p_obs - h2 ** p_obs)
+    exact = f1 - c * h1 ** p_obs
+    out.update({"p": p_obs, "exact": exact, "monotone": True})
+    if exact:
+        out["gci_pct"] = 1.25 * abs(f1 - exact) / abs(exact) * 100.0
+    return out
+
+
 def render(rows: list[dict], out_png: Path, out_csv: Path) -> None:
     """Draw the two-panel grid-independence figure and write the CSV.
 
@@ -146,10 +230,18 @@ def render(rows: list[dict], out_png: Path, out_csv: Path) -> None:
     q_delta = level_deltas(q_mw)
     drag_delta = level_deltas(drag_kn)
 
+    #  WHY: the observed order and the GCI come from the same three levels as the
+    #  plotted series; the extrapolated value is drawn as a dashed asymptote so the
+    #  reader sees how far the finest grid still sits from the limit.
+    rich_q = richardson(rows, "qoi_value")
+    rich_d = richardson(rows, "drag")
+    rich_q["exact_plot"] = rich_q["exact"] / 1.0e6
+    rich_d["exact_plot"] = rich_d["exact"] / 1.0e3
+
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.4), constrained_layout=True)
-    for ax, series, deltas, title, unit, colour in (
-        (axes[0], q_mw, q_delta, "Stagnation-point peak heat flux", "MW/m$^2$", "#c0392b"),
-        (axes[1], drag_kn, drag_delta, "Integrated drag force", "kN", "#1f77b4"),
+    for ax, series, deltas, title, unit, colour, extrap in (
+        (axes[0], q_mw, q_delta, "Stagnation-point peak heat flux", "MW/m$^2$", "#c0392b", rich_q),
+        (axes[1], drag_kn, drag_delta, "Integrated drag force", "kN", "#1f77b4", rich_d),
     ):
         ax.plot(range(len(series)), series, "o-", color=colour, linewidth=2.0, markersize=7)
         for idx, value in enumerate(series):
@@ -168,11 +260,30 @@ def render(rows: list[dict], out_png: Path, out_csv: Path) -> None:
         ax.set_ylabel(f"{title} ({unit})")
         ax.set_title(f"{title} vs. grid level")
         ax.grid(True, alpha=0.3)
-        margin = 0.08 * (max(series) - min(series) or max(abs(v) for v in series) or 1.0)
+        if extrap["monotone"]:
+            ax.axhline(extrap["exact_plot"], color=colour, linestyle="--", linewidth=1.2,
+                       alpha=0.75, label="Richardson limit")
+            ax.annotate(
+                f"Richardson: p = {extrap['p']:.2f}\n"
+                f"limit = {extrap['exact_plot']:.3f} {unit}\n"
+                f"GCI = {extrap['gci_pct']:.1f}% of the limit",
+                xy=(0.02, 0.03), xycoords="axes fraction", ha="left", va="bottom",
+                fontsize=8.0, color="#333333",
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": "white",
+                      "edgecolor": colour, "alpha": 0.85},
+            )
+        else:
+            ax.annotate("Richardson limit not available\n(non-monotone series)",
+                        xy=(0.02, 0.03), xycoords="axes fraction", ha="left", va="bottom",
+                        fontsize=8.0, color="#777777")
+        span = max(series + [extrap["exact_plot"]]) - min(series + [extrap["exact_plot"]])
+        margin = 0.08 * (span or max(abs(v) for v in series) or 1.0)
         #  WHY: the value labels sit 10 pt above the markers, so the top pad has
         #  to be larger than the bottom pad or the first label is clipped by the
         #  axis frame (measured on the first render of this figure).
-        ax.set_ylim(min(series) - margin, max(series) + 2.5 * margin)
+        low = min(min(series), extrap["exact_plot"]) - margin
+        high = max(max(series), extrap["exact_plot"]) + 2.5 * margin
+        ax.set_ylim(low, high)
 
     fig.suptitle(
         "Grid independence of the DSMC surface quantities "
@@ -191,12 +302,34 @@ def render(rows: list[dict], out_png: Path, out_csv: Path) -> None:
                              f"{row['qoi_value']:.6f}", f"{row['drag']:.6f}",
                              f"{row['wall_time_s']:.3f}"])
 
+    rich_csv = out_csv.with_name("grid_independence_richardson.csv")
+    with rich_csv.open("w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["quantity", "unit", "coarse", "medium", "fine", "observed_order",
+                         "extrapolated", "gci_pct_of_limit", "monotone", "levels_used"])
+        for name, unit, extrap in (("peak_heat_flux", "W/m2", rich_q), ("drag", "N", rich_d)):
+            writer.writerow([name, unit,
+                             f"{extrap['coarse']:.6f}", f"{extrap['medium']:.6f}",
+                             f"{extrap['fine']:.6f}",
+                             f"{extrap['p']:.4f}" if extrap["monotone"] else "",
+                             f"{extrap['exact']:.6f}" if extrap["monotone"] else "",
+                             f"{extrap['gci_pct']:.4f}" if extrap["monotone"] else "",
+                             str(extrap["monotone"]).lower(), extrap["n"]])
+
     print(f"[grid] peak heat flux (MW/m^2): {', '.join(f'{v:.3f}' for v in q_mw)}")
     print(f"[grid] level-to-level change: {', '.join(f'{d:+.2f}%' for d in q_delta)}")
     print(f"[grid] integrated drag (kN): {', '.join(f'{v:.3f}' for v in drag_kn)}")
     print(f"[grid] level-to-level change: {', '.join(f'{d:+.2f}%' for d in drag_delta)}")
+    for name, unit, extrap in (("peak heat flux", "MW/m^2", rich_q), ("drag", "kN", rich_d)):
+        if extrap["monotone"]:
+            print(f"[grid] Richardson {name}: p = {extrap['p']:.2f}, limit = "
+                  f"{extrap['exact_plot'] if name.startswith('peak') else extrap['exact'] / 1.0e3:.3f} "
+                  f"{unit}, GCI = {extrap['gci_pct']:.1f}% of the limit")
+        else:
+            print(f"[grid] Richardson {name}: not available (non-monotone series)")
     print(f"[grid] wrote {out_png}")
     print(f"[grid] wrote {out_csv}")
+    print(f"[grid] wrote {rich_csv}")
 
 
 def main(argv: list[str] | None = None) -> int:
