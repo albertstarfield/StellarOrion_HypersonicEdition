@@ -90,7 +90,10 @@ def main() -> int:
 
     ax_full = fig.add_axes([0.105, 0.545, 0.345, 0.375])
     ax_zoom = fig.add_axes([0.565, 0.545, 0.405, 0.375])
-    ax_tab = fig.add_axes([0.045, 0.135, 0.910, 0.300])
+    #  WHY: the footer gained lines for the asterisked row, so the table axes
+    #  is raised and shortened to keep the table clear of it (measured: the
+    #  footer's top edge now sits below the table's bottom edge).
+    ax_tab = fig.add_axes([0.045, 0.175, 0.910, 0.262])
     ax_tab.axis("off")
     ax_tab.set_xlim(0.0, 1.0)
     ax_tab.set_ylim(0.0, 1.0)
@@ -154,7 +157,13 @@ def main() -> int:
                     color=INK, ha="left", va="center")
     rows = [
         ("00_reference", "1.269", "1.880", "165.716", "target"),
-        ("03_opt_geometry", "1.269", "1.830", "n/a", "n/a"),
+        #  WHY: the optimised candidate was flown through the gate after the
+        #  first version of this table was drawn; its recorded Q is the same
+        #  165.716 J/cm^2 as the reference because the gate's heat-load column
+        #  is the Sutton-Graves stagnation flux times a fixed 13.58 s window,
+        #  which is fixed by the nose radius and independent of the skin.  The
+        #  asterisk marks a verdict that is structural, not thermal.
+        ("03_opt_geometry", "1.269", "1.830", "165.716", "PASS*"),
         ("validation_optimized", "1.597", "2.255", "175.580", "FAIL"),
         ("validation_optimized_round2", "0.803", "1.174", "117.526", "PASS"),
     ]
@@ -169,10 +178,13 @@ def main() -> int:
     fig.text(0.045, 0.020,
              "The two 1.269 m trees differ by at most 54.2 mm at any vertex; the pass-2\n"
              "body is 0.62 times the reference size. Q is the recorded total heat load of that\n"
-             "tree's validation series; 03_opt_geometry was not flown through the gate, so Q is n/a.\n"
+             "tree's validation series. * The optimised candidate was flown through the gate\n"
+             "(results/validation_optimized_smooth): Q equals the reference because the gate's\n"
+             "column is Sutton-Graves x a fixed 13.58 s window, fixed by the nose radius. Its\n"
+             "measured surface load is 1972.7 J/cm^2 against 1978.1 for the reference (-0.27 %).\n"
              "Surfaces read from results/<tree>/HIAD_custom.surf: no simulation re-run, no geometry reconstructed.",
-             fontsize=6.8, color="#444444", ha="left", va="bottom",
-             linespacing=1.45)
+             fontsize=6.4, color="#444444", ha="left", va="bottom",
+             linespacing=1.40)
 
     out = FIG_DIR / "hiad_topology_comparison.png"
     fig.savefig(out, dpi=300, facecolor="white")

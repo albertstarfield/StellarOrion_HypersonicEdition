@@ -58,7 +58,9 @@ The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PIN
 - (root level): 49 artefacts (directly in results/validation_optimized_round2/plots/)
 - Total under validation_optimized_round2: **49**
 
-## validation_optimized_smooth: (no plots directory)
+## validation_optimized_smooth/
+- (root level): 32 artefacts (directly in results/validation_optimized_smooth/plots/)
+- Total under validation_optimized_smooth: **32**
 
 ## reference_surface_pressure/
 - (root level): 32 artefacts (directly in results/reference_surface_pressure/plots/)
