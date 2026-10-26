@@ -1240,6 +1240,59 @@ def _phase2c_generate_media_and_sync() -> None:
     _write_results_readme()
 
 
+def _phase2d_trajectory_campaign() -> None:
+    """Fly the multi-point DSMC trajectory stations and integrate them.
+
+    WHY: review item #3 replaces the single-point validation with a
+    trajectory-aware measurement, and that costs hours of DSMC.  It therefore
+    lives behind its own opt-in flag instead of inside Phase 2c, whose media
+    scripts are expected to finish in a minute.  The campaign itself is owned by
+    scripts/run_trajectory_campaign.py, which verifies each station's ARTEFACT
+    and records a per-station case.json -- run.py only invokes it, so the
+    orchestration is reproducible from the repo rather than from a shell queue
+    in a temporary directory.
+
+    AXIOMS:
+        A1  A station is complete only when its timeseries row count matches the
+            dump cadence; the exit status alone is not proof (a truncated solve
+            still leaves rows on disk).
+        A2  --resume adopts stations already measured, so re-invoking this phase
+            never re-flies work that is already paid for.
+
+    Returns:
+        None.
+
+    Exceptions:
+        None -- a campaign failure is reported through the step result and does
+        not abort the rest of the pipeline; the integrator's own status is
+        reported separately.
+    """
+    phase_header(7, "Trajectory Campaign (multi-point DSMC)")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
+    python = venv_python if os.path.isfile(venv_python) else sys.executable
+    script = os.path.join(script_dir, "scripts", "run_trajectory_campaign.py")
+    if not os.path.isfile(script):
+        step_result(False, "scripts/run_trajectory_campaign.py not found - campaign skipped",
+                    time.monotonic())
+        return
+    started = step_start("Flying / adopting the trajectory stations", verbose=True)
+    ok, stdout, stderr = _run(
+        [python, script, "--resume"],
+        cwd=script_dir,
+        env={
+            "STELLARORION_PYTHON": python,
+            "MACOSX_DEPLOYMENT_TARGET": "26.0",
+        },
+        capture=True,
+        verbose=False,
+        timeout=24 * 3600,
+    )
+    for line in stdout.strip().splitlines():
+        step_info(line)
+    step_result(ok, "trajectory campaign complete", started, stdout=stdout, stderr=stderr)
+
+
 def _sync_media_into_canonical_tree() -> None:
     """Sync every generated PNG/MP4 from its legacy output dir into results/plots/.
 
@@ -2441,6 +2494,17 @@ def _parse_args() -> tuple[argparse.Namespace, list[str]]:  # nosec: SMT false p
             "solve outputs, and per-ply artefacts, then exit (inspection only). "
         ),
     )
+    parser.add_argument(
+        "--trajectory-campaign",
+        action="store_true",
+        help=(
+            "Fly the multi-point DSMC trajectory stations (review item #3) after "
+            "the media phase, then integrate them over the flight-time axis. "
+            "Opt-in because it is hours of DSMC: run.py stays fast by default. "
+            "Already-complete stations are adopted (the campaign driver is called "
+            "with --resume), so a rerun costs only the stations that are missing."
+        ),
+    )
     args, unknown = parser.parse_known_args()
     return args, unknown
 
@@ -2606,6 +2670,11 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
         # -- Phase 2c: Media Regeneration + Sync (default: runs unless --skip-media or --ada-only)
         if (not args.ada_only) and (not args.skip_media):
             _phase2c_generate_media_and_sync()
+
+        # -- Phase 2d: Trajectory campaign (opt-in --trajectory-campaign).
+        # WHY opt-in: it is hours of DSMC; the default pipeline must stay fast.
+        if args.trajectory_campaign and (not args.ada_only):
+            _phase2d_trajectory_campaign()
 
         # -- Phase 3: Ada/SPARK Build
         # Skip Ada only when --pinnExtrapolate is used as standalone flag

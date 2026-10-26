@@ -4,6 +4,17 @@
 --  StellarOrion_Self_Test); kept verbatim for a pure move.
 
 with Ada.Text_IO;             use Ada.Text_IO;
+--  WHY (2026-10-26): a solve that dies part-way must be visible to any
+--  orchestrator through the PROCESS EXIT STATUS. Run_Validate_Full detects the
+--  failure (Success => DOK is False on a truncated or empty dump set) but used
+--  to `return` silently, so bin/main exited 0 and a shell or Python driver that
+--  judged success by the exit code could not tell a complete campaign from a
+--  campaign where every station's solver was dead. Measured: trajectory
+--  stations 02..05 all exited 0 with 0 or 15 of 23 surf dumps.
+--  Set_Exit_Status records the status and lets the program finish normally, so
+--  the locks are still released (unlike GNAT.OS_Lib.OS_Exit, which would skip
+--  the cleanup on this path).
+with Ada.Command_Line;
 with Ada.Directories;         use Ada.Directories;
 with Ada.Numerics;
 with Ada.Exceptions;          use Ada.Exceptions;
@@ -1365,6 +1376,11 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       if not DOK then
          Put_Line ("  SPARTA simulation FAILED or produced no output.");
          Put_Line ("  Check Docker logs and " & Results_Dir & "/ for details.");
+         --  AXIOM: a detected failure that does not reach the exit status is a
+         --  silent failure -- the caller cannot distinguish it from success.
+         --  The status is recorded (not forced) so the lock-release and the
+         --  status-writer cleanup below still run before the process exits.
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
       Put_Line ("  SPARTA simulation completed successfully.");

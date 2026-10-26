@@ -1,0 +1,9 @@
+{
+  "source_file": "run_trajectory_campaign.py",
+  "source_hash": "ea73db8913a816f94bf44504f39b87910ad4616722898270275bd27758857f05",
+  "rs_checksum": "bf5f33631ed70ab8a3f75470f8d017e9dec3bde885ec1ebc299f51ebb233fdad",
+  "gc_checksum": "6919e654d1279525c82f5b802148e5ef27c38034a0408574cc7de6ec492c1037",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 45
+}
