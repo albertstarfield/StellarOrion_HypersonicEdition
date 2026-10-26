@@ -541,20 +541,27 @@ Celik et al.~\cite{celik2008procedure}.}
 
 \begin{figure}[H]
 \centering
-\BeginAccSupp{method=escape,ActualText={A surface-pressure profile along the axis of the reference body at step 2200. The pressure peaks at 5.23 kilopascals at an axial station of 0.0104 metres, oscillates between roughly 3.2 and 5.0 kilopascals along the toroid stack, drops through a trough near 0.27 metres, and falls to essentially zero beyond 1.1 metres as the base is reached.}}
+\BeginAccSupp{method=escape,ActualText={A surface-pressure profile along the axis of the reference body at step 2200, sampled by the solver itself. The pressure peaks at 5.23 kilopascals at the first axial station, 0.0055 metres, with the adjacent station at 0.0104 metres only 3 per cent lower, oscillates between roughly 2.4 and 5.0 kilopascals along the toroid stack, falls to a trough of 1.04 kilopascals at 0.262 metres, and drops below 0.44 kilopascals beyond 1.1 metres as the base is reached. The axial force components of the same 76 surface bands sum to 45.410 kilonewtons, which is the run's integrated drag at that step.}}
 \includegraphics[width=0.95\textwidth]{figures/surface_pressure_vs_axial.png}
 \EndAccSupp{}
 \caption[Surface-pressure distribution along the body]{%
 Axial surface-pressure distribution of the reference body at step~2200. The
-pressure is \emph{derived} from the solver's per-surface force by projecting
-it onto the band normal, which cancels the tangential shear, over the
-axisymmetric band area $2\pi rL$; it is not a native pressure dump. The
-derivation is checked against the run's own total: the axial integral of the
-derived pressure over the band areas is $49.4$\,kN against the $45.7$\,kN
-total drag, the difference being the neglected shear. The peak is
-$5.23$\,kPa at $x = 0.0104$\,m, the toroid stack produces the alternating
-high and low bands along the windward face, and beyond $x \approx 1.1$\,m the
-base sits at essentially zero pressure.}
+pressures are the solver's \emph{own} per-surface pressure, written by the
+SPARTA \texttt{press} keyword requested on the \texttt{compute surfF} card and
+dumped as the trailing column \texttt{f\_surfavg[4]}; no pressure is derived
+from a force and no term is neglected. The run is the reference geometry
+($D = 3.0$\,m, nose radius $0.55$\,m, toroid radius $0.135$\,m, half-cone
+$60^{\circ}$, six toroids, scalloped skin) on the production grid
+($n_{\mathrm{grid}} = 139$, grid factor~$0.7$), giving 76 surface bands. The
+peak is $5.23$\,kPa at $x = 0.0055$\,m, and the adjacent band at
+$0.0104$\,m is $5.08$\,kPa, so the two are within $3\,\%$ of one another and
+the peak station is not resolved beyond that band width. The toroid stack
+produces the alternating high and low bands along the windward face, the
+deepest trough is $1.04$\,kPa at $x = 0.262$\,m, and beyond $x \approx 1.1$\,m
+the base sits below $0.44$\,kPa. The axial force components of those same 76
+bands sum to $45.410$\,kN, which reproduces the run's integrated drag at that
+step to within the dump's rounding, so the profile and the force balance are
+read from one dump and agree.}
 \label{fig:surface_pressure}
 \end{figure}
 
