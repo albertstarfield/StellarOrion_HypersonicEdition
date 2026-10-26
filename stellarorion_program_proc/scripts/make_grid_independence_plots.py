@@ -58,7 +58,47 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-LEVEL_DIRS = ("level_1", "level_2", "level_3")
+#  WHY a discovery function and not a fixed three-name tuple: the GCI needs at
+#  least three levels, but a fourth is exactly how a series whose successive
+#  differences GROW is resolved (review item #2).  A hard-coded tuple silently
+#  ignored level_4 and would have reported the same non-monotone verdict after
+#  the fourth solve had already been paid for.
+LEVEL_PREFIX = "level_"
+
+
+def level_dirs(campaign: Path) -> list[str]:
+    """List the level directory names of a campaign, coarsest to finest.
+
+    Parameters:
+        campaign: the campaign directory holding ``level_*`` subdirectories.
+
+    Returns:
+        The directory names sorted by their numeric suffix, so ``level_10``
+        sorts after ``level_9`` (a plain string sort would not).
+
+    Raises:
+        FileNotFoundError: the campaign directory does not exist.
+
+    AXIOMS:
+        A1  The level index in the directory name is the refinement order:
+            level_1 is the coarsest grid and the highest index is the finest.
+        A2  A campaign may hold any number of levels >= 1; the caller decides
+            how many it needs (Richardson needs at least three).
+
+    THEOREMS:
+        T1  Sorting by ``int(name[len(LEVEL_PREFIX):])`` is monotone in the
+            level index for every name this producer writes, and tolerates a
+            two-digit index that a lexicographic sort would misplace.
+    """
+    if not campaign.is_dir():
+        raise FileNotFoundError(f"grid-independence campaign not found: {campaign}")
+    names = [
+        entry.name
+        for entry in campaign.iterdir()
+        if entry.is_dir() and entry.name.startswith(LEVEL_PREFIX)
+    ]
+    return sorted(names, key=lambda n: int(n[len(LEVEL_PREFIX):]))
+
 DEFAULT_CAMPAIGN = Path("results") / "grid_independence"
 
 
@@ -77,10 +117,8 @@ def load_levels(campaign: Path) -> list[dict]:
         FileNotFoundError: the campaign directory does not exist.
         RuntimeError: no level produced a usable record.
     """
-    if not campaign.is_dir():
-        raise FileNotFoundError(f"grid-independence campaign not found: {campaign}")
     rows: list[dict] = []
-    for name in LEVEL_DIRS:
+    for name in level_dirs(campaign):
         record = campaign / name / "case.json"
         if not record.is_file():
             print(f"[grid] {name}: no case.json - level skipped", file=sys.stderr)

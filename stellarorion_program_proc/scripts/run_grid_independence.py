@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Emit the 3-level mesh-independence case trees SOP Ch.6 / Ch.12#4 require.
+"""Emit the multi-level mesh-independence case trees SOP Ch.6 / Ch.12#4 require.
 
 AXIOMS
   A1.  Every level is a REAL SPARTA solve of the production deck with ONLY
@@ -32,8 +32,13 @@ THEORIES
        counts positions binds the wrong quantity to the wrong name.
 
 APPLICATIONS
-  -  `python scripts/run_grid_independence.py`  -> three level dirs plus
-     results/grid_independence/level_{1,2,3}/case.json
+  -  `python scripts/run_grid_independence.py`  -> one level dir per entry of
+     --levels plus results/grid_independence/level_<k>/case.json.  Three
+     levels is the minimum the GCI needs; a fourth is how a non-monotone
+     series is resolved (see make_grid_independence_plots.py, review item #2).
+     Add a level without re-flying the others with
+     `--levels 70 100 139 200 --only 4` (dirs are numbered by LIST ORDER, so
+     the list must still start with the three existing sizes).
   -  `python scripts/generate_sop_artifacts.py --grid-independence` then
      aggregates them into the JSON the GUI reads.
 
@@ -395,15 +400,25 @@ def _record(level_dir: Path, record: dict[str, object]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the 3-level study.
+    """Run the mesh-independence study over the requested levels.
 
     Parameters:
         argv: argument list; defaults to sys.argv[1:].
     Returns:
-        0 when all three levels reached status "ok", 1 otherwise.
+        0 when every level that was actually run reached status "ok", 1
+        otherwise.
     Exceptions:
         Missing SPARTA binary or template is reported and returns 1 -- never
         a silent success with zero levels.
+
+    AXIOMS:
+        A1  The Grid Convergence Index is undefined for fewer than three
+            levels (two grids give a difference, not an order), so fewer than
+            three sizes is refused rather than run.
+        A2  A fourth level is permitted and is the only sound way to settle a
+            series whose successive differences grow -- no extrapolated value
+            may be invented from a non-monotone three-level series.
+
     References: Standard Operating Procedure of CFD.md, Ch.6, Ch.15
     """
     parser = argparse.ArgumentParser(
@@ -429,8 +444,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[grid-indep] ERROR: template deck missing: {template}",
               file=sys.stderr)
         return 1
-    if len(args.levels) != 3:
-        print("[grid-indep] ERROR: exactly 3 level sizes are required",
+    if len(args.levels) < 3:
+        #  WHY: two grids give a difference but no observed order, so the GCI
+        #  would be undefined; refuse rather than emit a meaningless number.
+        print("[grid-indep] ERROR: at least 3 level sizes are required",
               file=sys.stderr)
         return 1
 
