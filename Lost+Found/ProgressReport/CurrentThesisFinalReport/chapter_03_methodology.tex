@@ -656,7 +656,7 @@ SPARTA grid dumps provide field maps of macroscopic quantities accumulated from 
     \centering
     \caption{SPARTA Grid Data Columns and Physical Variables.}
     \label{tab:grid_data}
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.09\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.07\textwidth}|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.07\textwidth}|}
         \hline
         \textbf{Column} & \textbf{Physical Variable} & \textbf{Unit} \\ \hline
         1--4 & Cell bounds ($x_{lo}, y_{lo}, x_{hi}, y_{hi}$) & m \\ \hline
@@ -689,9 +689,9 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
     \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
     \label{tab:irve3_validation}
     \small
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.19\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}X|}
         \hline
-        \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\ \hline
+        \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{Stellar\-Orion (This Work)} & \textbf{SO Error (\%)} \\ \hline
         Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 15.36 W/cm$^2$ & $+6.9$, \emph{not like-for-like} \\ \hline
         Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
         Peak Deceleration & 19.7\,$g$ & -- & 22.72\,$g$ & $+15.3$ \\ \hline

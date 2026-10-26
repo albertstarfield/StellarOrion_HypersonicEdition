@@ -34,7 +34,10 @@ where $C_{SG} = 1.7415 \times 10^{-4}$\,W$\cdot$s$^2$/m$^{5}$ for Earth air in S
 \subsection{Stagnation Point Results}
 For the baseline IRVE-3 configuration the correlation is evaluated at the SPARTA DSMC run condition ($h = 51.8$\,km, ISA $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, $V_{\infty} = 3{,}378$\,m/s) with the IRVE-3 body radius $R_N = 1.5$\,m corresponding to the 3\,m aeroshell diameter:
 \begin{equation}
-    \dot{q}_{stag} = 1.7415 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \approx 1.536 \times 10^{5} \ \text{W/m}^2 = 15.36 \ \text{W/cm}^2
+    \begin{split}
+        \dot{q}_{stag} &= 1.7415 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \\
+        &\approx 1.536 \times 10^{5} \ \text{W/m}^2 = 15.36 \ \text{W/cm}^2
+    \end{split}
 \end{equation}
 
 An earlier revision of this work used $C_{SG} = 1.83 \times 10^{-4}$ and reported $16.14$\,W/cm$^2$ for the same condition, about $5\%$ higher. The optimizer evaluates the same correlation at the physical nose radius $R_n = \kappa R_N = 0.55$\,m (Eq.~\eqref{eq:nose_ratio}), which gives $25.36$\,W/cm$^2$ at the baseline, while the $12.20$\,W/cm$^2$ in the validation export is a legacy evaluation at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$. These are the same correlation at different $(R_n,V_{\infty})$ pairs, not three measurements.
@@ -156,7 +159,7 @@ The simulation results are validated against the IRVE-3 post-flight aerothermal 
     \caption{Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay--Riddell) reference and this work shown as distinct columns. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver; the flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only. See the accompanying text for the other Sutton--Graves values the code reports and why they differ.}
     \label{tab:validation}
     \small
-    \begin{tabularx}{\textwidth}{>{\RaggedRight\arraybackslash}p{0.23\textwidth} >{\RaggedRight\arraybackslash}p{0.145\textwidth} >{\RaggedRight\arraybackslash}p{0.145\textwidth} >{\RaggedRight\arraybackslash}p{0.145\textwidth} >{\RaggedRight\arraybackslash}X}
+    \begin{tabularx}{\textwidth}{>{\RaggedRight\arraybackslash}p{0.23\textwidth} >{\RaggedRight\arraybackslash}p{0.145\textwidth} >{\RaggedRight\arraybackslash}p{0.145\textwidth} >{\RaggedRight\arraybackslash}p{0.17\textwidth} >{\RaggedRight\arraybackslash}X}
         \hline
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO} & \textbf{StellarOrion} & \textbf{Assessment} \\
         \hline

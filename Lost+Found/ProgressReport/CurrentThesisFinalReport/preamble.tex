@@ -13,6 +13,16 @@
 \usepackage{array}         % >{<width>} column specs for wrapping table cells
 \usepackage{ragged2e}      % \RaggedRight for wrapped table cells
 \usepackage{seqsplit}      % \seqsplit lets long \texttt{} paths break at any char
+% WHY: seqsplit.sty defines \seqsplit with a bare \def, and its expansion opens
+% with \futurelet.  A \futurelet cannot be written to a file, so any \seqsplit
+% used inside a moving argument (\caption, \section) was written verbatim into
+% main.lof / main.toc and corrupted every later list entry
+% ("Paragraph ended before \contentsline was complete").  Re-declaring it as a
+% robust command makes the write emit the macro name only; it expands normally
+% when the list of figures is typeset.
+\let\StellarOrionSeqSplit\seqsplit
+\DeclareRobustCommand{\StellarOrionBreakableText}[1]{\StellarOrionSeqSplit{#1}}
+\let\seqsplit\StellarOrionBreakableText
 \usepackage{url}           % \path{}: breakable monospace with hyphenation
 \usepackage{accsupp}
 
