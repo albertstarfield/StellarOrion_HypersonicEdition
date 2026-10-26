@@ -1569,6 +1569,12 @@ def _write_results_readme() -> None:
         ("results/trajectory_stations/integrated_load.csv",
          ("the per-station DSMC surface flux and its trapezoidal integral "
           "over the flight-time axis")),
+        ("results/trajectory_stations/campaign.json",
+         ("the campaign record: geometry, plan, steps, and per station the "
+          "exit code, row count and wall time.  WHY it is listed here: it is "
+          "the only artefact that says whether all five stations really flew "
+          "-- a killed campaign writes no file at all rather than a file "
+          "claiming success")),
     ]
     present = [(p, why) for p, why in campaign
                if (results_dir.parent / p).is_file()]

@@ -76,6 +76,8 @@ The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PIN
 - `results/grid_independence/grid_independence_qoi.csv` -- the values plotted in that figure
 - `results/grid_independence/grid_independence_richardson.csv` -- Richardson extrapolation of those series: observed order, extrapolated limit, GCI (empty cells where the series is non-monotone and no limit may be claimed)
 - `results/00_reference/trajectory_stations.csv` -- the multi-point trajectory sampling plan -- one row per station with altitude, Mach, fnum and cumulative Sutton-Graves load
+- `results/trajectory_stations/integrated_load.csv` -- the per-station DSMC surface flux and its trapezoidal integral over the flight-time axis
+- `results/trajectory_stations/campaign.json` -- the campaign record: geometry, plan, steps, and per station the exit code, row count and wall time.  WHY it is listed here: it is the only artefact that says whether all five stations really flew -- a killed campaign writes no file at all rather than a file claiming success
 
 The surface-pressure figure (thesis Fig. 4.25) is per-run, so it lives in each run's own tree as `results/<run>/plots/surface_pressure_vs_axial.png` beside its CSV; it is written by the DSMC leg itself, while the per-surface dump still exists, and re-rendered by Phase 2c.  It reads the deck's native pressure column `f_surfavg[4]` and falls back to the derived p = -(F.n)/(2*pi*r*L) only for dumps that predate the `press` keyword.
 
@@ -87,6 +89,7 @@ The surface-pressure figure (thesis Fig. 4.25) is per-run, so it lives in each r
 - `grid_independence/`: 2 PNG/MP4 artefacts, 3 CSV files
 - `plots/`: 12 PNG/MP4 artefacts, 0 CSV files
 - `tps_conduction/`: 0 PNG/MP4 artefacts, 6 CSV files
+- `trajectory_stations/`: 160 PNG/MP4 artefacts, 16 CSV files
 - `validation_lhs_optimum/`: 10 PNG/MP4 artefacts, 5 CSV files
 
 The Stage-1 calibration campaign (`calibration/`) writes one `validation_timeseries.csv` per CCD point -- the 22 legacy columns plus the calibration columns (unclamped drag, the raw drag per reference area, the DSMC surface heat load and the flown geometry) -- and the campaign index in `calibration/manifest.csv`.
