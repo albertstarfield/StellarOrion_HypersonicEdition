@@ -514,7 +514,7 @@ is described as a topology change rather than a parameter tweak.}
 
 \begin{figure}[H]
 \centering
-\BeginAccSupp{method=escape,ActualText={Two panels. The left panel plots the stagnation-point peak heat flux against refinement level for the three grids, falling from 2.059 to 1.946 to 1.797 megawatts per square metre, with level-to-level changes of minus 5.49 and minus 7.66 per cent. The right panel plots the integrated drag force over the same levels, falling from 48.012 to 45.918 to 45.697 kilonewtons, with level-to-level changes of minus 4.36 and minus 0.48 per cent. The heat flux has not converged; the drag force has.}}
+\BeginAccSupp{method=escape,ActualText={Two panels. The left panel plots the stagnation-point peak heat flux against refinement level for the three grids, falling from 2.059 to 1.946 to 1.797 megawatts per square metre, with level-to-level changes of minus 5.49 and minus 7.66 per cent. The right panel plots the integrated drag force over the same levels, falling from 48.012 to 45.918 to 45.697 kilonewtons, with level-to-level changes of minus 4.36 and minus 0.48 per cent. Richardson extrapolation of the drag series gives an observed order of 6.24 and a limit of 45.665 kilonewtons with a grid-convergence index of 6.4 per cent of the limit; the heat-flux series admits no extrapolation because its successive differences grow with refinement, so no converged value can be claimed from three levels. The heat flux has not converged; the drag force has.}}
 \includegraphics[width=0.95\textwidth]{figures/grid_independence_qoi.png}
 \EndAccSupp{}
 \caption[Grid independence of the surface quantities]{%
@@ -525,7 +525,11 @@ $2.059$ to $1.946$ to $1.797$\,MW\,m$^{-2}$, a further $-7.66\,\%$ between
 the two finest levels, so the surface heat flux is \emph{not}
 grid-converged. The integrated drag force falls from $48.012$ to $45.918$ to
 $45.697$\,kN and moves by only $-0.48\,\%$ between the two finest levels, so
-it \emph{is} converged. Every value is read from the per-level
+it \emph{is} converged. A Richardson extrapolation of the drag series returns an observed
+order of $p = 6.24$ and a limit of $45.665$\,kN with a grid-convergence index of
+$6.4\,\%$ of that limit; the heat-flux series admits no extrapolation because its
+successive differences \emph{grow} with refinement, so it is a non-monotone series in the
+sense of Roache and no converged value can be claimed from three levels. Every value is read from the per-level
 \texttt{case.json} record of the run, and the annotations are level-to-level
 changes in the sense of Roache~\cite{roache1998verification} and
 Celik et al.~\cite{celik2008procedure}.}
