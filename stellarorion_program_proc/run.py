@@ -144,7 +144,23 @@ _COQ_STATUS_FILE = _PROJECT_ROOT / "results" / "coq_proof_status.json"
 #   - StellarOrion_program_proc/scripts/*.py docstrings (media generators)
 #   - StellarOrion_program_proc/src/python/generate_outputs.py MP4 generator
 
-_VALIDATION_TREES = ("validation", "00_reference", "01_smooth")
+#  WHY the longer list: the review campaign added four trees that are real
+#  validation runs but were never registered here, so Phase 2c's per-tree loop
+#  silently skipped them -- their derived plots, VTU snapshots and Rapisarda
+#  comparison were never produced even though the runs existed.  Every tree a
+#  validation run writes must appear here or its media is silently absent
+#  (silent-degradation).  `trajectory_stations` is deliberately NOT listed: its
+#  per-station trees are consumed as a CAMPAIGN by
+#  scripts/integrate_trajectory_load.py, not per-tree here.
+_VALIDATION_TREES = (
+    "validation",
+    "00_reference",
+    "01_smooth",
+    "reference_surface_pressure",
+    "validation_optimized",
+    "validation_optimized_round2",
+    "validation_optimized_smooth",
+)
 # Trees that own a CFD surf snapshot (paraview/surf_*.vtu) and a per-ply TPS
 # set.  Single source for both the VTU-completion loop and the per-ply loop
 # below, so the two can never drift apart (no_copy_paste_divergence).
@@ -1136,6 +1152,16 @@ def _phase2c_generate_media_and_sync() -> None:
     #  reported by the script and only warns the media phase.
     _run_media([os.path.join("scripts", "make_grid_independence_plots.py")])
 
+    #  WHY: the multi-point trajectory load (review item #3) is likewise a
+    #  CAMPAIGN figure -- it reads the per-station trees under
+    #  results/trajectory_stations/ and integrates their final surface flux over
+    #  the flight-time axis of results/00_reference/trajectory_profile.csv.  It
+    #  cannot belong to any single run, so it is rendered once here beside the
+    #  grid-independence figure.  With no station trees the script reports each
+    #  missing station and returns non-zero; _run_media only warns, because an
+    #  un-flown campaign does not invalidate the run being processed.
+    _run_media([os.path.join("scripts", "integrate_trajectory_load.py")])
+
     # Field panels from SPARTA grid dumps. WHY --tree all: covers every results/
     # subtree that has grid.*.out (today only results/validation does). NOTE: the
     # script exits 1 when some trees have no dumps -- that is a data limitation
@@ -1400,6 +1426,9 @@ def _write_results_readme() -> None:
     run_folders = ["00_reference", "01_smooth", "02_early_window",
                    "03_opt_geometry", "validation", "validation_scalloped",
                    "validation_smooth", "validation_optimized",
+                   "validation_optimized_round2",
+                   "validation_optimized_smooth",
+                   "reference_surface_pressure",
                    "OptimizedTopology"]
     run_names = [r for r in run_folders
                   if (results_dir / r).is_dir()]
@@ -1466,6 +1495,48 @@ def _write_results_readme() -> None:
                          f"(under results/{run}/plots/{c}/)")
         lines.append(f"- Total under {run}: **{total}**")
         lines.append("")
+    #  CAMPAIGN FIGURES: three artefacts are produced once per campaign, not
+    #  per run, so they belong to no single run's plots/ tree and the per-run
+    #  sections above cannot account for them.  WHY the existence check: an
+    #  un-flown campaign must be reported as absent, never listed as if it
+    #  existed (no fabricated inventory).
+    campaign = [
+        ("results/grid_independence/grid_independence_qoi.png",
+         ("grid-independence figure (thesis Fig. 4.24) -- peak heat flux and "
+          "integrated drag vs refinement level")),
+        ("results/grid_independence/grid_independence_qoi.csv",
+         "the values plotted in that figure"),
+        ("results/grid_independence/grid_independence_richardson.csv",
+         ("Richardson extrapolation of those series: observed order, "
+          "extrapolated limit, GCI (empty cells where the series is "
+          "non-monotone and no limit may be claimed)")),
+        ("results/00_reference/trajectory_stations.csv",
+         ("the multi-point trajectory sampling plan -- one row per station "
+          "with altitude, Mach, fnum and cumulative Sutton-Graves load")),
+        ("results/trajectory_stations/integrated_load.csv",
+         ("the per-station DSMC surface flux and its trapezoidal integral "
+          "over the flight-time axis")),
+    ]
+    present = [(p, why) for p, why in campaign
+               if (results_dir.parent / p).is_file()]
+    if present:
+        lines.append("## Campaign figures (produced once per campaign, not "
+                     "per run)")
+        lines.append("")
+        for path, why in present:
+            lines.append(f"- `{path}` -- {why}")
+        lines.append("")
+        lines.append("The surface-pressure figure (thesis Fig. 4.25) is "
+                     "per-run, so it lives in each run's own tree as "
+                     "`results/<run>/plots/surface_pressure_vs_axial.png` "
+                     "beside its CSV; it is written by the DSMC leg itself, "
+                     "while the per-surface dump still exists, and re-rendered "
+                     "by Phase 2c.  It reads the deck's native pressure column "
+                     "`f_surfavg[4]` and falls back to the derived "
+                     "p = -(F.n)/(2*pi*r*L) only for dumps that predate the "
+                     "`press` keyword.")
+        lines.append("")
+
     #  OTHER MEDIA TREES: results/ also holds trees that are NOT per-RUN
     #  plot folders -- the shared bo_figures/ga_* twins, the Stage-1
     #  calibration campaign and the DSMC field maps.  They carry media and

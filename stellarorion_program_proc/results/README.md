@@ -54,19 +54,38 @@ The trees produced BEFORE the 2026-10-20 relabel keep the historical 'DSMC→PIN
 - (root level): 49 artefacts (directly in results/validation_optimized/plots/)
 - Total under validation_optimized: **49**
 
+## validation_optimized_round2/
+- (root level): 49 artefacts (directly in results/validation_optimized_round2/plots/)
+- Total under validation_optimized_round2: **49**
+
+## validation_optimized_smooth: (no plots directory)
+
+## reference_surface_pressure/
+- (root level): 32 artefacts (directly in results/reference_surface_pressure/plots/)
+- Total under reference_surface_pressure: **32**
+
 ## OptimizedTopology/
 - (root level): 1 artefacts (directly in results/OptimizedTopology/plots/)
 - Total under OptimizedTopology: **1**
+
+## Campaign figures (produced once per campaign, not per run)
+
+- `results/grid_independence/grid_independence_qoi.png` -- grid-independence figure (thesis Fig. 4.24) -- peak heat flux and integrated drag vs refinement level
+- `results/grid_independence/grid_independence_qoi.csv` -- the values plotted in that figure
+- `results/grid_independence/grid_independence_richardson.csv` -- Richardson extrapolation of those series: observed order, extrapolated limit, GCI (empty cells where the series is non-monotone and no limit may be claimed)
+- `results/00_reference/trajectory_stations.csv` -- the multi-point trajectory sampling plan -- one row per station with altitude, Mach, fnum and cumulative Sutton-Graves load
+
+The surface-pressure figure (thesis Fig. 4.25) is per-run, so it lives in each run's own tree as `results/<run>/plots/surface_pressure_vs_axial.png` beside its CSV; it is written by the DSMC leg itself, while the per-surface dump still exists, and re-rendered by Phase 2c.  It reads the deck's native pressure column `f_surfavg[4]` and falls back to the derived p = -(F.n)/(2*pi*r*L) only for dumps that predate the `press` keyword.
 
 ## Other trees under results/ (shared, campaign and field-map trees)
 
 - `99_shared/`: 184 PNG/MP4 artefacts, 5 CSV files
 - `calibration/`: 0 PNG/MP4 artefacts, 1 CSV files
 - `calibration_aborted_oldcentre_20261021/`: 0 PNG/MP4 artefacts, 1 CSV files
+- `grid_independence/`: 2 PNG/MP4 artefacts, 3 CSV files
 - `plots/`: 12 PNG/MP4 artefacts, 0 CSV files
 - `tps_conduction/`: 0 PNG/MP4 artefacts, 6 CSV files
 - `validation_lhs_optimum/`: 10 PNG/MP4 artefacts, 5 CSV files
-- `validation_optimized_round2/`: 59 PNG/MP4 artefacts, 6 CSV files
 
 The Stage-1 calibration campaign (`calibration/`) writes one `validation_timeseries.csv` per CCD point -- the 22 legacy columns plus the calibration columns (unclamped drag, the raw drag per reference area, the DSMC surface heat load and the flown geometry) -- and the campaign index in `calibration/manifest.csv`.
 
