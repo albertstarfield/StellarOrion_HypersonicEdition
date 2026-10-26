@@ -517,22 +517,28 @@ is described as a topology change rather than a parameter tweak.}
 
 \begin{figure}[H]
 \centering
-\BeginAccSupp{method=escape,ActualText={Two panels. The left panel plots the stagnation-point peak heat flux against refinement level for the three grids, falling from 2.059 to 1.946 to 1.797 megawatts per square metre, with level-to-level changes of minus 5.49 and minus 7.66 per cent. The right panel plots the integrated drag force over the same levels, falling from 48.012 to 45.918 to 45.697 kilonewtons, with level-to-level changes of minus 4.36 and minus 0.48 per cent. Richardson extrapolation of the drag series gives an observed order of 6.24 and a limit of 45.665 kilonewtons with a grid-convergence index of 6.4 per cent of the limit; the heat-flux series admits no extrapolation because its successive differences grow with refinement, so no converged value can be claimed from three levels. The heat flux has not converged; the drag force has.}}
+\BeginAccSupp{method=escape,ActualText={Two panels. The left panel plots the stagnation-point peak heat flux against refinement level for four grids, falling from 2.059 to 1.946 to 1.797 to 1.536 megawatts per square metre, with level-to-level changes of minus 5.49, minus 7.66 and minus 14.53 per cent. The right panel plots the integrated drag force over the same levels, falling from 48.012 to 45.918 to 45.697 to 44.064 kilonewtons, with level-to-level changes of minus 4.36, minus 0.48 and minus 3.57 per cent. Neither series can be extrapolated: in both, the successive differences grow with refinement, so both are non-monotone in the sense of Roache and no converged value is claimed. The fourth level also refutes the drag extrapolation that three levels had suggested.}}
 \includegraphics[width=0.95\textwidth]{figures/grid_independence_qoi.png}
 \EndAccSupp{}
 \caption[Grid independence of the surface quantities]{%
-Grid independence of the surface quantities across the three refinement
-levels (L1 $70\times70$, L2 $100\times100$, L3 $139\times139$; 4\,900,
-10\,000 and 19\,321 cells). The stagnation-point peak heat flux falls from
-$2.059$ to $1.946$ to $1.797$\,MW\,m$^{-2}$, a further $-7.66\,\%$ between
-the two finest levels, so the surface heat flux is \emph{not}
-grid-converged. The integrated drag force falls from $48.012$ to $45.918$ to
-$45.697$\,kN and moves by only $-0.48\,\%$ between the two finest levels, so
-it \emph{is} converged. A Richardson extrapolation of the drag series returns an observed
-order of $p = 6.24$ and a limit of $45.665$\,kN with a grid-convergence index of
-$6.4\,\%$ of that limit; the heat-flux series admits no extrapolation because its
-successive differences \emph{grow} with refinement, so it is a non-monotone series in the
-sense of Roache and no converged value can be claimed from three levels. Every value is read from the per-level
+Grid independence of the surface quantities across four refinement
+levels (L1 $70\times70$, L2 $100\times100$, L3 $139\times139$,
+L4 $200\times200$; 4\,900, 10\,000, 19\,321 and 40\,000 cells).
+The stagnation-point peak heat flux falls from $2.059$ to $1.946$ to
+$1.797$ to $1.536$\,MW\,m$^{-2}$, a level-to-level change of $-5.49$,
+$-7.66$ and $-14.53\,\%$; it is therefore \emph{not} grid-converged, and
+the finest grid moves it further than any coarser refinement did, so the
+production grid over-predicts the peak flux. The integrated drag force falls
+from $48.012$ to $45.918$ to $45.697$ to $44.064$\,kN ($-4.36$, $-0.48$ and
+$-3.57\,\%$): the apparent plateau at $139\times139$ was not a limit and
+the $-0.48\,\%$ step did not survive the next refinement. Neither series
+admits a Richardson extrapolation, because in both cases the successive
+differences \emph{grow} with refinement ($0.113 \to 0.149 \to 0.261$\,MW\,m$^{-2}$
+and $2.095 \to 0.221 \to 1.633$\,kN); they are non-monotone in the sense of
+Roache, so no extrapolated value is reported for either. The three-level drag
+estimate implied by the first three levels ($p = 6.24$, $45.665$\,kN, GCI
+$6.4\,\%$ of the limit) is superseded by the fourth level and is not claimed.
+Every value is read from the per-level
 \texttt{case.json} record of the run, and the annotations are level-to-level
 changes in the sense of Roache~\cite{roache1998verification} and
 Celik et al.~\cite{celik2008procedure}.}

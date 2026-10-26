@@ -175,7 +175,8 @@ def richardson(rows: list[dict], key: str) -> dict:
         key: the quantity to extrapolate (``qoi_value`` or ``drag``).
 
     Returns:
-        A dict with ``coarse``, ``medium``, ``fine``, ``p`` (observed order of
+        A dict with ``coarse``, ``medium``, ``fine`` (the FINEST three levels,
+        i.e. the ones the order was fitted on), ``p`` (observed order of
         accuracy), ``exact`` (the extrapolated value), ``gci_pct`` (the fine-grid
         Grid Convergence Index, factor of safety 1.25), ``monotone`` (whether the
         three values converge monotonically) and ``n`` (how many levels were used).
@@ -186,7 +187,7 @@ def richardson(rows: list[dict], key: str) -> dict:
         ``monotone = False`` rather than fabricating an order.
 
     AXIOMS:
-        A1  The three levels share one geometry and one flight condition, so the
+        A1  The levels used share one geometry and one flight condition, so the
             only difference between them is the grid spacing.
         A2  The spacing scales as h ~ 1 / n_grid; the absolute factor cancels in
             every ratio below, so no cell size has to be measured.
@@ -212,7 +213,13 @@ def richardson(rows: list[dict], key: str) -> dict:
     """
     values = [float(row[key]) for row in rows]
     h = [1.0 / float(row["n_grid"]) for row in rows if row["n_grid"]]
-    out = {"coarse": values[0], "medium": values[1] if len(values) > 1 else values[0],
+    #  WHY the triple is taken from the FINEST three: the observed order is a
+    #  property of the last refinement step, so coarse/medium/fine must name the
+    #  three values the fit actually used.  Reporting values[0] and values[1] in a
+    #  four-level campaign labelled a fit that never touched them (measured: the
+    #  CSV read coarse/medium = levels 1 and 2 while the order came from 2, 3, 4).
+    out = {"coarse": values[-3] if len(values) >= 3 else values[0],
+           "medium": values[-2] if len(values) >= 2 else values[0],
            "fine": values[-1], "p": 1.0, "exact": values[-1], "gci_pct": float("nan"),
            "monotone": False, "n": len(values)}
     if len(values) < 3 or len(h) < 3:
