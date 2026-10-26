@@ -46,6 +46,11 @@ APPLICATIONS
             --profile results/00_reference/trajectory_profile.csv \\
             --out-csv results/trajectory_stations/integrated_load.csv
 
+    It is also the campaign's ONLY figure producer, so run.py Phase 2c calls it
+    with no arguments once per campaign and the default output set is
+    ``integrated_load.csv`` plus
+    ``results/trajectory_stations/plots/trajectory_load_integration.png``.
+
 CITATIONS
     [SG1971] Sutton & Graves, NASA TR R-376, 1971 (the q ~ sqrt(rho/R_n) V^3
         stagnation-point correlation implemented at
@@ -188,6 +193,151 @@ def trapezoid(times: list[float], values: list[float]) -> float:
     return total
 
 
+def render(
+    measured: list[dict],
+    load_avg: float,
+    load_sg: float,
+    out_png: Path,
+) -> Path | None:
+    """Draw the station fluxes and the running integrated load.
+
+    Parameters:
+        measured: the per-station records assembled by :func:`main`.
+        load_avg: the trapezoid integral of ``q_avg`` over the station window.
+        load_sg: the trapezoid integral of the Sutton-Graves flux over the
+            same window.
+        out_png: destination path of the rendered figure.
+
+    Returns:
+        The path written, or ``None`` when the figure could not be drawn (no
+        matplotlib, or fewer than two stations so no integral exists).
+
+    Raises:
+        Nothing: a missing plotting backend is reported on stderr and the CSV
+        that was already written stays valid, so a headless host without
+        matplotlib still gets the numbers.
+
+    AXIOMS:
+        A1  Only ``q_avg`` integrates to a heat LOAD: it is the area-averaged
+            wall flux.  The peak column is a maximum over surfaces, so its
+            integral would be a flux-times-time artefact and is NOT drawn as a
+            load.
+        A2  Sutton-Graves is a stagnation-point correlation while ``q_avg`` is
+            a body average over all 76 surface bands, so the two curves are not
+            like-for-like at any station.  The figure states this in its footer
+            rather than leaving the reader to assume a like-for-like overlay.
+
+    THEOREMS:
+        T1  The running integral is the left Riemann sum of the same trapezoid
+            panels used for ``load_avg``, so its final value equals
+            ``load_avg`` exactly and the right panel cannot disagree with the
+            printed number.
+
+    CITATIONS:
+        [SG1971] Sutton & Graves, NASA TR R-376, 1971.
+        [Lau2013] Lau, IRVE-3 flight reconstruction (195.06 J/cm2).
+    """
+    if len(measured) < 2:
+        #  WHY: one station has no integral.  Drawing a single marker over a
+        #  zero-length window would suggest a measured load that does not exist.
+        print("[load] fewer than two stations measured - no integrated figure drawn",
+              file=sys.stderr)
+        return None
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError as exc:  # pragma: no cover - host without matplotlib
+        print(f"[load] matplotlib unavailable ({exc}); figure skipped, CSV stands",
+              file=sys.stderr)
+        return None
+
+    times = [m["time_s"] for m in measured]
+    q_avg = [m["q_avg_wcm2"] for m in measured]
+    q_max = [m["q_max_wcm2"] for m in measured]
+    q_sg = [m["q_sg_wcm2"] for m in measured]
+    running = [0.0]
+    for i in range(1, len(times)):
+        dt = times[i] - times[i - 1]
+        running.append(running[-1] + 0.5 * (q_avg[i] + q_avg[i - 1]) * dt)
+
+    #  WHY: subplots_adjust instead of constrained_layout, because the footer
+    #  text is placed with fig.text and constrained_layout cannot reserve room
+    #  for it - it clipped the footer on the scallop-pocket figure.
+    fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.8))
+    fig.subplots_adjust(left=0.070, right=0.985, top=0.900, bottom=0.270)
+
+    ax = axes[0]
+    ax.plot(times, q_sg, "s-", color="#1f77b4", linewidth=1.4,
+            label="Sutton-Graves (stagnation correlation)")
+    ax.plot(times, q_max, "^--", color="#7f7f7f", linewidth=1.2,
+            label="DSMC peak surface flux (max over 76 bands)")
+    ax.plot(times, q_avg, "o-", color="#c0392b", linewidth=1.8,
+            label="DSMC area-averaged flux (body average)")
+    for m in measured:
+        ax.annotate(f"{m['alt_km']:.1f} km", xy=(m["time_s"], m["q_avg_wcm2"]),
+                    xytext=(0, -12), textcoords="offset points",
+                    ha="center", fontsize=7.4, color="#c0392b")
+    ax.set_xlabel("Flight time (s)")
+    ax.set_ylabel("Surface heat flux (W/cm$^2$)")
+    ax.set_title("Measured stations across the heating pulse")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=7.6, loc="upper left")
+    #  WHY: the first station's flux is close to zero, so its altitude label
+    #  (offset 12 pt below the marker) would be clipped by the axis frame; the
+    #  pad keeps every annotation inside the plot.
+    ax.set_ylim(bottom=-0.10 * max(q_max))
+
+    ax = axes[1]
+    ax.plot(times, running, "o-", color="#c0392b", linewidth=1.8,
+            label="integrated DSMC load (area-averaged)")
+    ax.axhline(FLIGHT_LOAD_JCM2, color="#1f77b4", linestyle="--", linewidth=1.3,
+               label=f"IRVE-3 flight load {FLIGHT_LOAD_JCM2:.2f} J/cm$^2$")
+    #  WHY: the rising curve occupies the upper right, so the summary box is
+    #  anchored in axes coordinates on the free left flank instead of following
+    #  the last data point, where it overlapped the line.
+    ax.annotate(
+        f"{load_avg:.2f} J/cm$^2$ over the {len(measured)} measured stations\n"
+        f"Sutton-Graves, same window: {load_sg:.2f} J/cm$^2$\n"
+        f"ratio DSMC/SG: {load_avg / load_sg:.3f}" if load_sg else "",
+        xy=(0.04, 0.52), xycoords="axes fraction",
+        ha="left", va="top", fontsize=8.0, color="#333333",
+        bbox={"boxstyle": "round,pad=0.35", "facecolor": "white",
+              "edgecolor": "#c0392b", "alpha": 0.9},
+    )
+    ax.set_xlabel("Flight time (s)")
+    ax.set_ylabel("Accumulated load (J/cm$^2$)")
+    ax.set_title("Running integral over the sampled window")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=7.6, loc="upper left")
+
+    fig.text(
+        0.070, 0.140,
+        "Measured window only: t = "
+        f"{times[0]:.0f}-{times[-1]:.0f} s of the 197 s entry. "
+        "No endpoint is invented beyond the flown stations.",
+        fontsize=6.8, color="#444444",
+    )
+    fig.text(
+        0.070, 0.098,
+        "Caveat: the DSMC curve is the area-averaged wall flux over all 76 surface bands while "
+        "Sutton-Graves is a",
+        fontsize=6.8, color="#444444",
+    )
+    fig.text(
+        0.070, 0.064,
+        "stagnation-point correlation, so the two are not like-for-like; the ratio measures "
+        "correlation fidelity, not a modelling error.",
+        fontsize=6.8, color="#444444",
+    )
+
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_png, dpi=200)
+    plt.close(fig)
+    return out_png
+
+
 def main(argv: list[str] | None = None) -> int:
     """Integrate the station fluxes and write the comparison table.
 
@@ -216,6 +366,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--out-csv", type=Path,
         default=Path("results/trajectory_stations/integrated_load.csv"),
+    )
+    parser.add_argument(
+        "--out-png", type=Path,
+        default=Path("results/trajectory_stations/plots/trajectory_load_integration.png"),
     )
     args = parser.parse_args(argv)
 
@@ -312,6 +466,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[load] DSMC / SG over the window: {load_avg / load_sg:.4f}")
     print(f"[load] flight value for comparison: {FLIGHT_LOAD_JCM2:.2f} J/cm^2")
     print(f"[load] wrote {args.out_csv}")
+    #  WHY: the figure is part of the DEFAULT plot pass, not an optional extra.
+    #  run.py Phase 2c calls this script once per campaign, so the render must
+    #  happen here or the campaign stays numberless on disk.  The CSV has
+    #  already been written above, so a missing backend cannot lose the data.
+    png = render(measured, load_avg, load_sg, args.out_png)
+    if png is not None:
+        print(f"[load] wrote {png}")
     return 0
 
 

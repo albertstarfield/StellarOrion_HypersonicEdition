@@ -1157,9 +1157,12 @@ def _phase2c_generate_media_and_sync() -> None:
     #  results/trajectory_stations/ and integrates their final surface flux over
     #  the flight-time axis of results/00_reference/trajectory_profile.csv.  It
     #  cannot belong to any single run, so it is rendered once here beside the
-    #  grid-independence figure.  With no station trees the script reports each
-    #  missing station and returns non-zero; _run_media only warns, because an
-    #  un-flown campaign does not invalidate the run being processed.
+    #  grid-independence figure, and this call IS the default producer of BOTH
+    #  campaign artefacts: integrated_load.csv and
+    #  results/trajectory_stations/plots/trajectory_load_integration.png.  With no
+    #  station trees the script reports each missing station and returns
+    #  non-zero; _run_media only warns, because an un-flown campaign does not
+    #  invalidate the run being processed.
     _run_media([os.path.join("scripts", "integrate_trajectory_load.py")])
 
     #  WHY: the scallop-pocket axial trace (thesis figure) is the one panel whose
@@ -1577,6 +1580,13 @@ def _write_results_readme() -> None:
         ("results/trajectory_stations/integrated_load.csv",
          ("the per-station DSMC surface flux and its trapezoidal integral "
           "over the flight-time axis")),
+        ("results/trajectory_stations/plots/trajectory_load_integration.png",
+         ("the campaign figure, written by the same script: the measured "
+          "station fluxes against the Sutton-Graves curve, and the running "
+          "integral beside the IRVE-3 flight load.  WHY it is listed here: the "
+          "campaign is the largest evidence block in the results chapter and "
+          "it previously existed only as a CSV, so no reader could see the "
+          "heating pulse it integrates")),
         ("results/trajectory_stations/campaign.json",
          ("the campaign record: geometry, plan, steps, and per station the "
           "exit code, row count and wall time.  WHY it is listed here: it is "
