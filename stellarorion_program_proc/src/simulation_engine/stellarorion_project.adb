@@ -1161,6 +1161,12 @@ package body StellarOrion_Project is
             Put_Line ("[DOCKER] Please start Docker Desktop or run:");
             Put_Line ("  colima start");
             Put_Line ("[DOCKER] Aborting.");
+            --  AXIOM: "aborting" must be observable. A driver that judges the
+            --  run by the exit status (the campaign driver, run.py, a shell
+            --  queue) cannot distinguish "aborted before the solver started"
+            --  from "finished" if the process still exits 0. Measured
+            --  2026-10-26: this branch printed FATAL and exited 0.
+            Set_Exit_Status (Failure);
             return;
          end if;
       end if;
