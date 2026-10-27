@@ -1,0 +1,9 @@
+{
+  "source_file": "make_dsmc_step_animation.py",
+  "source_hash": "6fc47b4323cb9f020e8a5e6d99f1e92b39a6730ba5f68ef73459a4bb37aade0f",
+  "rs_checksum": "ef9238acf4f46741034fac895280d18fc20b79c271f7af569b020b6243a6860e",
+  "gc_checksum": "ee054638752ea564642fbacc4bacfbb14d7adc7ebed732386d779aee7409f189",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 50
+}

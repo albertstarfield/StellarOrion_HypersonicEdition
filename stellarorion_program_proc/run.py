@@ -1145,6 +1145,15 @@ def _phase2c_generate_media_and_sync() -> None:
         _run_media([os.path.join("scripts", "make_derived_plots.py"), results_dir])
         _run_media([os.path.join("scripts", "make_vtu_visualization.py"), results_dir])
         _run_media([os.path.join("scripts", "plot_rapisarda_comparison.py"), results_dir])
+        #  WHY: the per-step grid dumps are the only record of the DSMC
+        #  transient -- the relaxation from the freestream fill to the
+        #  converged shock.  Only a tree that kept those dumps can be animated,
+        #  so the renderer reports and exits non-zero when they are absent;
+        #  _run_media only warns, because a converged case is still valid
+        #  without the video.  It writes <tree>/plots/dsmc_steps.mp4 and needs
+        #  ffmpeg on the host, which the script itself resolves and checks.
+        _run_media([os.path.join("scripts", "make_dsmc_step_animation.py"),
+                    "--tree", os.path.join("results", tree), "--no-frames"])
 
     #  WHY: the grid-independence figure (thesis figure 4.24) is a CAMPAIGN
     #  figure, not a per-run figure -- it reads the three level_* records of

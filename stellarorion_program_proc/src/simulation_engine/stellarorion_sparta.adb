@@ -4175,6 +4175,27 @@ package body StellarOrion_Sparta is
                            Img (Pres_Rc) & "; figure may be missing.");
               end if;
            end;
+           --  WHY: the per-step grid dumps are the only record of the DSMC
+           --  transient -- the relaxation from the freestream fill to the
+           --  converged bow shock.  Cleanup_Ephemeral_State deletes grid.*.out
+           --  as soon as this routine returns, so the animation has to be
+           --  encoded HERE, beside the pressure figure, or a fresh run can
+           --  never produce it.  A tree that kept no dumps makes the script
+           --  report it and return non-zero; that code is logged, never
+           --  swallowed, and the run's other artefacts are unaffected.
+           Put_Line ("[VTK] Invoking DSMC step-animation renderer: " & Python_Interpreter
+                     & " scripts/make_dsmc_step_animation.py --no-frames --tree " & Results_Dir);
+           declare
+              Anim_Rc : constant Integer :=
+                System_Return (Python_Interpreter
+                               & " scripts/make_dsmc_step_animation.py --no-frames --tree " & Results_Dir);
+           begin
+              if Anim_Rc /= 0 then
+                 Put_Line (Standard_Error,
+                           "[VTK] DSMC step-animation renderer exited with code " &
+                           Img (Anim_Rc) & "; video may be missing.");
+              end if;
+           end;
            Put_Line ("[VTK] Invoking Python plot renderer: " & Python_Interpreter & " scripts/make_validation_plots.py "
                      & Results_Dir);
            --  AUDIT FIX (M1): use System_Return to capture the Python script's
