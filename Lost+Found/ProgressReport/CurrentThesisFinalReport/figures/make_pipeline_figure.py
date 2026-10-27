@@ -101,6 +101,7 @@ C_PROCESS = "#004488"
 C_CHECK = "#BB5566"
 C_OUTPUT = "#228833"
 C_EDGE = "#333333"
+C_GA = "#AA3377"          # Paul Tol magenta/purple: the GA band
 
 # Printed size, derived from the document geometry rather than chosen:
 #     text height = 29.7 cm - 3 cm - 3 cm = 23.7 cm = 9.33071 in
@@ -138,7 +139,8 @@ LABEL_FS = 8.4
 FIT_MARGIN_IN = 0.04
 
 
-def box(ax, x, y, w, h, text, fc, fs=LABEL_FS, style="round,pad=0,rounding_size=0.02"):
+def box(ax, x, y, w, h, text, fc: str, fs=LABEL_FS,
+        style="round,pad=0,rounding_size=0.02"):
     """Draw one rounded stage box with a centred label.
 
     Parameters:
@@ -159,12 +161,13 @@ def box(ax, x, y, w, h, text, fc, fs=LABEL_FS, style="round,pad=0,rounding_size=
         (x, y), w, h, boxstyle=style, linewidth=0.9,
         edgecolor=C_EDGE, facecolor=fc, zorder=2))
     t = ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
-                fontsize=fs, color="white" if fc == C_PROCESS else "black",
+                fontsize=fs,
+                color="white" if fc in {C_PROCESS, C_GA} else "black",
                 zorder=3, linespacing=1.35)
     return w, t
 
 
-def io_box(ax, x, y, w, h, text, fc, fs=LABEL_FS, slant_in=0.05):
+def io_box(ax, x, y, w, h, text, fc: str, fs=LABEL_FS, slant_in=0.05):
     """Draw one input/output parallelogram with a centred label.
 
     ISO 5807 data symbol: a right-leaning parallelogram, distinct from the
@@ -303,11 +306,12 @@ def main() -> int:
     fits_box = []    # (text artist, box width in inches, context)
     fits_canvas = []  # (text artist, canvas width in inches, context)
 
-    title = ax.text(0.5, 0.992, "Validation pipeline executed by the engine",
+    title = ax.text(0.5, 0.995, "Validation pipeline and optimization loop",
                     ha="center", va="top", fontsize=LABEL_FS, weight="bold")
     fits_canvas.append((title, WIDTH_IN, "title"))
-    sub = ax.text(0.5, 0.966,
-                  "Stages in execution order, as printed by the full validation run",
+    sub = ax.text(0.5, 0.972,
+                  "Twelve stages, the optimization loop, one generation of the GA, "
+                  "the double pass",
                   ha="center", va="top", fontsize=LABEL_FS, style="italic")
     fits_canvas.append((sub, WIDTH_IN, "subtitle"))
 
@@ -327,14 +331,16 @@ def main() -> int:
     ]
     # Two columns spanning the full canvas. The vertical gap between the
     # two columns is deliberately kept wide: the 6 -> 7 wrap arrow is routed
-    # through it, so it never crosses a box. top/gap were re-solved when the
-    # dedicated Start terminator was added above stage 1: top dropped 0.905 ->
-    # 0.885 and gap 0.030 -> 0.026 so the column BOTTOM stays at 0.335,
-    # preserving the wrap-lane clearance below both columns.
-    n_per_col, w, h = 6, 0.46, 0.070
+    # through it, so it never crosses a box. h and gap were re-solved on
+    # 2026-10-26 when bands 2, 3 and 4 (the optimization loop, one generation
+    # of the genetic algorithm and the double pass) were added BELOW the
+    # columns: the column bottom moved 0.335 -> 0.581, which is what buys the
+    # 0.56 of canvas those three bands need. Every stage label is one line,
+    # so a 0.044 box is still 21 pt tall against an 8.4 pt label.
+    n_per_col, w, h = 6, 0.46, 0.044
     x_left, x_right = 0.010, 0.530
-    top, gap = 0.885, 0.026
-    lane_y = 0.330                      # clear lane below both columns
+    top, gap = 0.905, 0.012
+    lane_y = 0.574                      # clear lane below both columns
     assert len(stages) == n_per_col * 2
 
     pos = {}
@@ -360,15 +366,15 @@ def main() -> int:
     # wrap). Exact stadium geometry via terminator() -- see its docstring.
     term_w, term_h = 0.12, 0.026
     sx_c = x_left + w / 2
-    bw, t = terminator(ax, sx_c - term_w / 2, 0.900, term_w, term_h, "Start")
+    bw, t = terminator(ax, sx_c - term_w / 2, 0.918, term_w, term_h, "Start")
     fits_box.append((t, bw * WIDTH_IN, "Start terminator"))
-    ax.annotate("", xy=(sx_c, 0.885), xytext=(sx_c, 0.900),
+    ax.annotate("", xy=(sx_c, 0.905), xytext=(sx_c, 0.918),
                 arrowprops=dict(arrowstyle="-|>", color="black",
                                 linewidth=1.6, mutation_scale=13), zorder=5)
     ex_c = x_right + w / 2
-    bw, t = terminator(ax, ex_c - term_w / 2, 0.290, term_w, term_h, "Stop")
+    bw, t = terminator(ax, ex_c - term_w / 2, 0.512, term_w, term_h, "Stop")
     fits_box.append((t, bw * WIDTH_IN, "Stop terminator"))
-    ax.annotate("", xy=(ex_c, 0.316), xytext=(ex_c, 0.335),
+    ax.annotate("", xy=(ex_c, 0.538), xytext=(ex_c, 0.581),
                 arrowprops=dict(arrowstyle="-|>", color="black",
                                 linewidth=1.6, mutation_scale=13), zorder=5)
 
@@ -395,49 +401,54 @@ def main() -> int:
     ax.annotate("", xy=(x_right + 0.020, y_top_right), xytext=seg[-1],
                 arrowprops=dict(arrowstyle="-|>", color="black", linewidth=1.6,
                                 mutation_scale=13), zorder=5)
-    # The label sits BELOW the lane line, in the clear band between the column
-    # bottoms (y 0.335) and the loop title, so it crosses neither boxes nor the
-    # wrap connector's vertical run.
+    # The label sits BELOW the lane line (y 0.574), clear of the Stop terminal
+    # at x 0.76 and of the loop title at y 0.504, so it crosses neither the
+    # boxes nor the wrap connector's vertical run.
     cont = ax.text(x_gap, lane_y - 0.016, "continues", fontsize=LABEL_FS,
                    ha="center", va="top", color="black")
     fits_canvas.append((cont, WIDTH_IN, "continues"))
 
-    #  optimisation loop, its own row with room for the feedback path 
-    loop_head = ax.text(0.5, 0.268, "Geometry optimization loop",
+    # ------------------------------------------------------------------
+    # Band 2: the geometry optimization loop, with its rejection feedback.
+    # Driven by the cost function and gated by the DSMC re-simulation: the
+    # solver is never inside the search, it only accepts or rejects a design
+    # that the closed-form cost has already proposed.
+    # ------------------------------------------------------------------
+    loop_head = ax.text(0.5, 0.504, "Geometry optimization loop",
                         ha="center", va="top", fontsize=LABEL_FS, weight="bold")
     fits_canvas.append((loop_head, WIDTH_IN, "loop heading"))
-    loop_sub = ax.text(0.5, 0.246,
+    loop_sub = ax.text(0.5, 0.478,
                        "(driven by the cost function, gated by DSMC re-simulation)",
                        ha="center", va="top", fontsize=LABEL_FS, style="italic")
     fits_canvas.append((loop_sub, WIDTH_IN, "loop subheading"))
-    loop = ["Design space\n(LHS or CCD)",
-            "Bayesian\noptimization",
+    loop = ["Design space\n(Latin hypercube)",
+            "Genetic\nalgorithm",
             "Cost function\n$J(x)$",
             "DSMC\nre-simulation",
             "Accept if\n$q \\leq Q_{target}$"]
     # 5*lw_ + 4*lgap must fit inside [0.020, 0.980]:
     # 5*0.182 + 4*0.012 = 0.958, ending at 0.978.
-    lw_, lh, lgap = 0.182, 0.082, 0.012
-    ly = 0.105                          # high enough that the lane below (0.03) is inside ylim
+    lw_, lh, lgap = 0.182, 0.066, 0.012
+    ly = 0.381                          # band 2 row spans 0.381 .. 0.447
     for i, label in enumerate(loop):
         x0 = 0.020 + i * (lw_ + lgap)
         fc = C_CHECK if i == 3 else C_PROCESS
-        # Symbol set: "Design space (LHS or CCD)" is the loop's data entry
-        # (the candidate design set), so it is an input parallelogram; the
-        # remaining loop boxes are processing steps and stay rectangles.
+        # Symbol set: the design space is the loop's data entry (the
+        # candidate design set), so it is an input parallelogram; every other
+        # loop box is a processing step and stays a rectangle.
         if i == 0:
             bw, t = io_box(ax, x0, ly, lw_, lh, label, fc)
         else:
             bw, t = box(ax, x0, ly, lw_, lh, label, fc)
         fits_box.append((t, bw * WIDTH_IN, f"loop {i + 1}"))
-        if i:
+        if i != 0:
             ax.annotate("", xy=(x0, ly + lh / 2), xytext=(x0 - lgap, ly + lh / 2),
-                        arrowprops=dict(arrowstyle="-|>", color="black", linewidth=1.4,
-                                        mutation_scale=11), zorder=5)
+                        arrowprops=dict(arrowstyle="-|>", color="black",
+                                        linewidth=1.4, mutation_scale=11), zorder=5)
     # Rejection feedback, routed strictly below the row so it crosses nothing.
     x_first = 0.020 + lw_ / 2
     x_last = 0.020 + 4 * (lw_ + lgap) + lw_
-    fb_y = 0.045
+    fb_y = 0.346
     ax.plot([x_last, x_last, x_first, x_first], [ly, fb_y, fb_y, ly],
             color=C_CHECK, lw=1.4, zorder=5, solid_capstyle="butt")
     ax.annotate("", xy=(x_first, ly + 0.006), xytext=(x_first, fb_y),
@@ -446,6 +457,73 @@ def main() -> int:
     reject = ax.text((x_first + x_last) / 2, fb_y - 0.004, "reject and resample",
                      fontsize=LABEL_FS, ha="center", va="top", color=C_CHECK)
     fits_canvas.append((reject, WIDTH_IN, "feedback label"))
+
+    # ------------------------------------------------------------------
+    # Band 3: one generation of the genetic algorithm. The five boxes are
+    # the operators of Sec. 3.7.4 in execution order: evaluate the closed
+    # form, select by tournament, cross over uniformly, mutate with a
+    # Gaussian offset, keep the best two. The magenta path is the next
+    # generation; the stop rule beside it is what ends the campaign.
+    # ------------------------------------------------------------------
+    ga_head = ax.text(0.5, 0.310, "Inside the genetic algorithm: one generation",
+                      ha="center", va="top", fontsize=LABEL_FS, weight="bold")
+    fits_canvas.append((ga_head, WIDTH_IN, "ga heading"))
+    ga_steps = ["Evaluate\n$J(x)$, closed form",
+                "Tournament\nselection, k = 3",
+                "Uniform\ncrossover 0.7",
+                "Gaussian\nmutation 0.1",
+                "Elitism\nbest 2 kept"]
+    gy, gh = 0.205, 0.066                # band 3 row spans 0.205 .. 0.271
+    for i, label in enumerate(ga_steps):
+        x0 = 0.020 + i * (lw_ + lgap)
+        bw, t = box(ax, x0, gy, lw_, gh, label, C_GA)
+        fits_box.append((t, bw * WIDTH_IN, f"ga step {i + 1}"))
+        if i != 0:
+            ax.annotate("", xy=(x0, gy + gh / 2), xytext=(x0 - lgap, gy + gh / 2),
+                        arrowprops={"arrowstyle": "-|>", "color": "black",
+                                    "linewidth": 1.4, "mutation_scale": 11},
+                        zorder=5)
+    # Next-generation path, routed strictly below the operator row.
+    gx_first = 0.020 + lw_ / 2
+    gx_last = 0.020 + 4 * (lw_ + lgap) + lw_ / 2
+    back_y = 0.175
+    ax.plot([gx_last, gx_last, gx_first, gx_first], [gy, back_y, back_y, gy],
+            color=C_GA, lw=1.4, zorder=5, solid_capstyle="butt")
+    ax.annotate("", xy=(gx_first, gy + 0.006), xytext=(gx_first, back_y),
+                arrowprops={"arrowstyle": "-|>", "color": C_GA, "linewidth": 1.4,
+                            "mutation_scale": 11}, zorder=5)
+    next_gen = ax.text(0.408, back_y - 0.004, "next generation",
+                       fontsize=LABEL_FS, ha="center", va="top", color=C_GA)
+    fits_canvas.append((next_gen, WIDTH_IN, "next generation"))
+    stop_rule = ax.text(0.978, back_y - 0.004,
+                        "stop: 200 generations or no gain of 1e-6 over 20",
+                        fontsize=LABEL_FS, ha="right", va="top", color="black")
+    fits_canvas.append((stop_rule, WIDTH_IN, "stop rule"))
+
+    # ------------------------------------------------------------------
+    # Band 4: the double pass. The same algorithm runs twice with one
+    # measurement in between; the correction factor is clamped to
+    # [0.5, 2.0] and applied to the heat-load term alone (Sec. 3.7.5).
+    # ------------------------------------------------------------------
+    band = FancyBboxPatch(
+        (0.012, 0.020), 0.976, 0.118,
+        boxstyle="round,pad=0,rounding_size=0.010", linewidth=0.9,
+        edgecolor=C_EDGE, facecolor="#EDF2F9", zorder=1)
+    ax.add_patch(band)
+    band_head = ax.text(0.5, 0.130, "Double pass of the same algorithm",
+                        ha="center", va="top", fontsize=LABEL_FS, weight="bold")
+    fits_canvas.append((band_head, WIDTH_IN, "band 4 heading"))
+    pass_lines = [
+        "Pass 1:  LHS 50  ->  GA in closed form  ->  winner x1  ->  DSMC 2200 steps",
+        "c = clamp(q_DSMC / q_SG, 0.5, 2.0)  applied to the heat-load term only",
+        "Pass 2:  the same GA with the re-weighted heat load  ->  validate winner x2",
+    ]
+    py = 0.106
+    for n, line in enumerate(pass_lines):
+        t = ax.text(0.5, py, line, ha="center", va="top", fontsize=LABEL_FS,
+                    color="black")
+        fits_canvas.append((t, WIDTH_IN, f"pass line {n + 1}"))
+        py -= 0.025
 
     # Every label must fit where it lives BEFORE anything is saved.
     check_fits(fig, fits_box, "box")
