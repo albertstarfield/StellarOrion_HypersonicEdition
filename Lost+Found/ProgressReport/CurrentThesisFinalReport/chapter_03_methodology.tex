@@ -1,5 +1,6 @@
 \clearpage
 \chapter{METHODOLOGY}
+\label{ch:methodology}
 
 \section{Theory Anchors and First Principles}
 \label{sec:theory_anchors}
@@ -166,7 +167,7 @@ The process is divided into five primary stages:
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation within a Docker-containerized Linux environment, tracking millions of simulated particles through advection, molecular collisions, and surface interactions.
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
     \item \textbf{Survivability Optimization:} Simple Genetic Algorithm (GA) with tournament selection, uniform crossover, Gaussian mutation and elitism for automated multi-objective optimization of HIAD geometry.
-    \item \textbf{Validation and Analysis:} Validation of the solution through a three-level grid independence study ($70\times70$, $100\times100$ and $139\times139$ cells, Figure~\ref{fig:grid_independence}) and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
+    \item \textbf{Validation and Analysis:} Validation of the solution through a four-level grid independence study ($70\times70$, $100\times100$, $139\times139$ and $200\times200$ cells, Figure~\ref{fig:grid_independence}) and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
 \section{Geometric Modeling and Computational Domain}
@@ -229,7 +230,7 @@ The two configurations established for this study -- \textbf{Configuration A (Sc
 \begin{figure}[H]
     \centering
     \BeginAccSupp{method=escape,ActualText={Cutaway of the HIAD in its stowed launch configuration inside the launch vehicle, headed Stowed with a quoted 18.5 inch diameter. A long tapered stowed pack sits above the vehicle internals, which include a pale green spherical payload and stacked avionics and battery boxes; below them a green upper stage band and a pale blue lower stage are labelled 22 inch diameter, and three orange landing legs extend downward from the lower stage.}}%
-\includegraphics[width=0.35\textwidth]{figures/Spec1.png}%
+\includegraphics[width=0.2\textwidth]{figures/Spec1.png}%
 \EndAccSupp{}%
     \caption{Launch configuration of the HIAD system, showing the stowed constraint.}
     \label{fig:stowed_deployed}
@@ -284,7 +285,7 @@ A realistic 5-species air model is employed: N$_2$, O$_2$, NO, N, and O. The col
     \sigma = \pi d_{ref}^2 \left( \frac{g_{ref}}{g} \right)^{2(\omega - 0.5)}
 \end{equation}
 
-where $g$ is the relative velocity of colliding molecules and $\omega$ is the viscosity index specific to each gas species. The VSS model captures the molecular-level interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry conditions.
+where $g$ is the relative velocity of colliding molecules and $\omega$ is the viscosity index specific to each gas species. The VSS model captures the molecular-level interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry conditions. The wall interaction is fully diffuse with an accommodation coefficient of $1.0$ (\texttt{surf\_collide 1 diffuse 1.0} in the solver input), so all incident molecular energy is transferred to the surface at the wall temperature; this is the standard fully-accommodated (thermal equilibrium) assumption for a cold wall.
 
 \subsubsection*{Particle Tracking}
 SPARTA tracks millions of simulated particles through three fundamental processes:
@@ -301,14 +302,14 @@ While DSMC is a particle method, a Cartesian computational grid is required for 
     \item \textbf{Macroscopic Sampling:} Cells serve as sampling volumes for accumulating density, temperature, pressure, and velocity statistics from the particle data.
 \end{enumerate}
 
-The grid resolution must be finer than the local mean free path ($\lambda$) to resolve the shock structure and boundary layer gradients. A grid-factor parameter (default: 0.7) controls the mesh density multiplier; the grid independence of that choice was verified by a three-level study ($70\times70$, $100\times100$ and $139\times139$ cells, Figure~\ref{fig:grid_independence} and Table~\ref{tab:grid_study}).
+The grid resolution must be finer than the local mean free path ($\lambda$) to resolve the shock structure and boundary layer gradients. A grid-factor parameter (default: 0.7) controls the mesh density multiplier; the grid independence of that choice was verified by a four-level study ($70\times70$, $100\times100$, $139\times139$ and $200\times200$ cells, Figure~\ref{fig:grid_independence} and Table~\ref{tab:grid_study}).
 
 \subsection{Grid Independence Study}
-To ensure the numerical solution is independent of the grid resolution, a grid independence study was performed on the reference body at the same freestream condition and trajectory point, at three Cartesian resolutions:
+To ensure the numerical solution is independent of the grid resolution, a grid independence study was performed on the reference body at the same freestream condition and trajectory point, at four Cartesian resolutions:
 
 \begin{table}[H]
     \centering
-    \caption{Grid independence study: three refinement levels.}
+    \caption{Grid independence study: four refinement levels.}
     \label{tab:mesh_independence}
     \begin{tabular}{|l|c|c|c|}
         \hline
@@ -316,10 +317,11 @@ To ensure the numerical solution is independent of the grid resolution, a grid i
         L1 & $70\times70$ & 2.059 & 48.012 \\ \hline
         L2 & $100\times100$ & 1.946 & 45.918 \\ \hline
         L3 & $139\times139$ & 1.797 & 45.697 \\ \hline
+        L4 & $200\times200$ & 1.536 & 44.064 \\ \hline
     \end{tabular}
 \end{table}
 
-The integrated drag force is converged at the coarsest level (changes by $-0.48\,\%$ between L2 and L3), while the stagnation-point peak heat flux is not (changes by $-7.66\,\%$), so the $139\times139$ grid (19\,321 cells) is retained as the production grid and used for every result in this thesis. The graphical record is Figure~\ref{fig:grid_independence}; the cross-reference table is Table~\ref{tab:grid_study}.
+Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4), with growing successive differences in both. The $139\times139$ grid (19\,321 cells) is retained as the production grid on cost grounds, not because convergence has been demonstrated. The graphical record is Figure~\ref{fig:grid_independence}; the cross-reference table is Table~\ref{tab:grid_study}.
 
 \section{Surface Data Extraction and Flight Metrics}
 
@@ -344,7 +346,7 @@ SPARTA accumulates surface force and energy data using the \texttt{dump surf} co
 
 \subsection{Ballistic Coefficient (\texorpdfstring{$\beta$}{beta})}
 \label{sec:ballistic}
-The ballistic coefficient is a measure of the vehicle's ability to maintain its speed during reentry~\cite{anderson2006hypersonic}:
+The ballistic coefficient is a measure of the vehicle's ability to maintain its speed during reentry~\cite{AndersonHypersonic}:
 
 \begin{equation}
     \beta = \frac{m}{C_D A}
@@ -437,6 +439,8 @@ The framework supports multiple TPS material presets as summarized in Table~\ref
         Multi-layer (stack) & -- & -- & -- & Combined FTPS stack \\ \hline
     \end{tabularx}
 \end{table}
+
+\noindent The reference five-ply layup totals $7.106$\,mm: two Nicalon SiC plies of $0.506$\,mm each, two Pyrogel 3350 plies of $3.047$\,mm each, and a $0.025$\,mm Kapton back face (\texttt{results/tps\_conduction/00\_reference/tps\_step2200\_layers.csv}).
 
 \subsection{Composite Thermal-Propagation Chain}
 \label{sec:thermal_chain}
@@ -657,9 +661,9 @@ The simulation domain is initialized with freestream particles injected from the
 \subsection{Vehicle Surface}
 The vehicle surface is modeled as a diffuse reflection boundary with fully accommodate thermal wall conditions:
 \begin{itemize}
-    \item \textbf{Wall Temperature:} $T_{wall} = 300$\,K (isothermal)
+    \item \textbf{Wall Temperature:} $T_{wall} = 1000$\,K (isothermal), matching the \texttt{surf\_collide 1 diffuse 1000 1.0} line of the archived SPARTA input \texttt{in.hiad}
     \item \textbf{Reflection Model:} Diffuse (maximally entropic)
-    \item \textbf{Catalytic Efficiency:} Fully catalytic (recombination of dissociated species at the wall)
+    \item \textbf{Catalytic Efficiency:} Not specified in the solver input (default non-catalytic wall); gas-phase reactions are enabled via \texttt{react tce air.react}, and no \texttt{surf\_react} command is issued, so dissociated species recombine only in the gas phase.
 \end{itemize}
 
 \subsection{Symmetry and Outflow}
@@ -698,7 +702,7 @@ The local Knudsen number is computed from the SPARTA grid data:
 This enables the identification of continuum ($Kn < 0.01$), transitional ($0.01 < Kn < 1$), and, where applicable, free-molecular ($Kn > 1$) regions within the flow field.
 
 \subsection{Validation Against Flight Data}
-The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
+The numerical model is validated against IRVE-3 flight data~\cite{old2013irve3postflight} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
 
 \begin{table}[H]
     \centering

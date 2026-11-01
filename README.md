@@ -9,7 +9,7 @@
 
 ---
 
-StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics (Plimpton & Gallis, 2014) and a **Bayesian Optimization (GP Matern 5/2 + Expected Improvement)** stage for survivability optimization.
+StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics (Plimpton & Gallis, 2014) and a **genetic-algorithm (GA) optimization stage on a closed-form aerothermal cost** for survivability optimization. (An earlier Bayesian-optimisation (GP Matern 5/2 + Expected Improvement) stage was removed; see the thesis, Ch. 3, and `Optimization_Attempt_1.md` for the historical attempt.)
 
 > **Note:** The legacy `main.py` entry point was deprecated on 2026-08-21 and has since been
 > removed from the repository. All functionality now lives in the Ada/SPARK binary and the
