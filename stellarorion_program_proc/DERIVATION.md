@@ -1,9 +1,9 @@
-# DERIVATION.md — StellarOrion 4-Step Pipeline Mathematical Foundation
+# DERIVATION.md — StellarOrion Pipeline Mathematical Foundation (current: DSMC + GA)
 
 **Author:** Wahyu Suryo Samudro
 <!-- USE "Wahyu Suryo Samudro" NOT "Albert Starfield Wahyu Suryo Samudro" -->
 **Date:** 2026-09-09
-**Version:** 1.0
+**Version:** 2.0 (updated 2026-11-02: pipeline is now DSMC + GA; PINN/BO retained as auxiliary/historical)
 
 ---
 
@@ -20,7 +20,11 @@
 
 ---
 
-## 1. Overview: The 4-Step Pipeline
+## 1. Overview: Pipeline (current state)
+
+Current active pipeline: **DSMC (SPARTA) + Genetic Algorithm (GA) on a closed-form aerothermal cost**. The earlier 4-step description (DSMC → Kriging → PINN → Bayesian Opt) is retained below as historical context; PINN is an auxiliary denoiser, BO is a removed/unused code path (`hiad_optimizer.py`, `Optimization_Attempt_1.md`).
+
+## 1b. Historical: 4-Step Pipeline (archived)
 
 StellarOrion's simulation pipeline proceeds through four sequential stages:
 
