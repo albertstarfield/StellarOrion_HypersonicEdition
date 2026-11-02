@@ -153,3 +153,18 @@ $V_\infty=3378$~m/s: $\dot q_s\approx1.536\times10^5$~W/m$^2=15.36$~W/cm$^2$.
 \sqrt{\frac{1.5}{0.135}}=\frac{10}{3}\approx3.333,\qquad
 \kappa=\frac{0.55}{1.5}=\frac{11}{30}\approx0.3667.
 \]
+
+
+### Sutton--Graves Heat Flux Derivation
+
+The Sutton--Graves stagnation-point convective heat flux correlation is given by:
+
+\dot{q} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \, V_\infty^3
+
+where C_{SG} = 1.7415 × 10^{-4} W m^{-2} (kg m^{-3})^{-1/2} (m s^{-1})^{-3}.
+
+Dimensional verification with SPARTA DSMC run conditions (rho_inf = 7.851e-4 kg/m^3, R_N = 1.5 m, V_inf = 3378 m/s):
+
+\dot{q} = 1.7415e-4 × sqrt(7.851e-4 / 1.5) × (3378)^3 ≈ 1.536e5 W/m^2 = 15.36 W/cm^2
+
+This single-point value is +6.9% relative to the 14.36 W/cm^2 flight measurement and +0.7% relative to Rapisarda's trajectory-integrated peak of 15.26 W/cm^2.
