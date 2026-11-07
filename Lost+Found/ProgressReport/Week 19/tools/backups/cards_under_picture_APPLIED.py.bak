@@ -1,0 +1,276 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Give the seven detail slides their points as cards instead of a side column.
+
+WHY: three complaints of the owner in order. The notes at eleven point were
+too small; setting them as points in a column on the right changed nothing;
+and the plot still dominated the slide. The layout therefore goes back to
+the one the rest of the deck uses: the picture sits on top, and the points
+become a band of horizontal glass cards underneath, which makes the words
+the content of the slide and the plot its evidence.
+
+The script is a guarded driver: it measures every narration band before it
+writes, reverts the column layout it no longer needs, and leaves all files
+untouched when a single check fails.
+"""
+
+from __future__ import annotations
+
+import ast
+import json
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT))
+
+SPEC = PROJECT / "scaffold.json"
+GENERATOR = PROJECT / "make_pptx.py"
+TESTS = PROJECT / "tests" / "test_make_pptx.py"
+README = PROJECT / "README.md"
+BACKUP_DIR = Path(__file__).resolve().parent / "backups"
+SPEC_BACKUP = BACKUP_DIR / "scaffold_before_cards_under_picture.json"
+GENERATOR_BACKUP = BACKUP_DIR / "make_pptx_before_cards_under_picture.py"
+TESTS_BACKUP = BACKUP_DIR / "test_before_cards_under_picture.py"
+README_BACKUP = BACKUP_DIR / "README_before_cards_under_picture.md"
+EM_DASH = "\u2014"
+
+FRAME_IDS = (
+    "recall-methodology-optimization",
+    "recall-methodology-setup",
+    "recall-methodology-mesh",
+    "recall-methodology-convergence",
+    "recall-methodology-convection",
+    "recall-methodology-conduction",
+    "recall-methodology-radiation",
+)
+
+CAPTIONS: dict[str, str] = {
+    "recall-methodology-optimization": (
+        "The twelve stage validation pipeline of the engine, with the geometry optimization "
+        "loop that feeds the next geometry back."
+    ),
+    "recall-methodology-setup": (
+        "The SPARTA grid of the reference run at grid factor 0.7, and the solver chain that "
+        "feeds it."
+    ),
+    "recall-methodology-mesh": (
+        "Three-level refinement of the peak surface flux against the 10 percent tolerance "
+        "set on 2026-10-16."
+    ),
+    "recall-methodology-convergence": (
+        "Normalised residuals of drag, lift and heat flux over the particle-time steps of "
+        "the reference run."
+    ),
+    "recall-methodology-convection": (
+        "The Sutton-Graves correlation that carries the convective load of every candidate "
+        "geometry."
+    ),
+    "recall-methodology-conduction": (
+        "Through-thickness and per-ply temperature of the FTPS layup at the final step of "
+        "the reference run."
+    ),
+    "recall-methodology-radiation": (
+        "Temperature through the five-ply stack, hot face to back face, of the reference run."
+    ),
+}
+
+#: The generator changes of the previous round are reverted here, because the
+#: notes no longer stand in a column beside the picture.
+GENERATOR_RULES: list[tuple[str, str, int]] = [
+    (
+        ("#: The type size of the notes that stand beside a picture which owns the\n"
+        "#: content area. WHY: at eleven point a column of notes reads as fine print\n"
+        "#: next to a large picture, so the notes of a figure frame are set larger\n"
+        "#: and shorter instead, as one point per line.\n"
+        "FEATURE_NOTES_SIZE = Pt(14)\n"),
+        "",
+        1,
+    ),
+    (
+        ("    caption_lines = figure.caption.splitlines()\n"
+        "    if len(caption_lines) == 0:\n"
+        "        caption_lines = [figure.caption]\n"
+        "    caption_size = FILLED_CAPTION_SIZE\n"),
+        ("    caption_lines = figure.caption.splitlines()\n"
+        "    if len(caption_lines) == 0:\n"
+        "        caption_lines = [figure.caption]\n"),
+        1,
+    ),
+    (
+        ("        source_height = _source_box_height(figure.source, caption_width)\n"
+        "        caption_height = area_height - source_height - FILLED_SOURCE_GAP_IN\n"
+        "        source_top = area_top + caption_height + FILLED_SOURCE_GAP_IN\n"
+        "        caption_size = FEATURE_NOTES_SIZE\n"
+        "        # WHY: the owner wants the notes as points rather than prose, and a\n"
+        "        # point that wraps has to keep its marker at the start of the first\n"
+        "        # line, so every line of the caption is drawn with its own bullet.\n"
+        '        caption_lines = [f"\\u2022  {line}" for line in caption_lines if len(line.strip()) != 0]\n'),
+        ("        source_height = _source_box_height(figure.source, caption_width)\n"
+        "        caption_height = area_height - source_height - FILLED_SOURCE_GAP_IN\n"
+        "        source_top = area_top + caption_height + FILLED_SOURCE_GAP_IN\n"),
+        1,
+    ),
+    (
+        "        caption_lines,\n        size=caption_size,\n",
+        "        caption_lines,\n        size=FILLED_CAPTION_SIZE,\n",
+        1,
+    ),
+    (
+        ('        caption_text = collapse_whitespace(_shape_text(caption).replace("\\u2022", " "))\n'
+        "        if collapse_whitespace(frame.figure.caption) not in caption_text:\n"),
+        "        if collapse_whitespace(frame.figure.caption) not in _shape_text(caption):\n",
+        1,
+    ),
+]
+
+TEST_OLD = """    frames = [frame for frame in spec.frames if frame.id.startswith("recall-methodology-")]
+    assert len(frames) == EXPECTED_METHODOLOGY_FRAME_COUNT
+    deck = NativePresentation(str(built))
+    for frame in frames:
+        assert frame.figure is not None
+        assert len(frame.body) == 0
+        slide = _slide_of(deck, frame.id)
+        names = {shape.name for shape in slide.shapes}
+        assert make_pptx.FIGURE_SHAPE_PREFIX + frame.id in names
+        assert make_pptx.FIGURE_SHAPE_PREFIX + frame.id + "_image" in names
+"""
+TEST_NEW = """    frames = [frame for frame in spec.frames if frame.id.startswith("recall-methodology-")]
+    assert len(frames) == EXPECTED_METHODOLOGY_FRAME_COUNT
+    deck = NativePresentation(str(built))
+    for frame in frames:
+        assert frame.figure is not None
+        points = _points_of(frame)
+        assert len(points) >= 3
+        slide = _slide_of(deck, frame.id)
+        names = {shape.name for shape in slide.shapes}
+        assert make_pptx.FIGURE_SHAPE_PREFIX + frame.id in names
+        assert make_pptx.FIGURE_SHAPE_PREFIX + frame.id + "_image" in names
+        assert len(_cards_of(slide, frame.id)) == len(points)
+"""
+
+BULLET_MARKER = "* The methodology is a block of eight slides"
+NEW_BULLET = """* The methodology is a block of eight slides, opened by the overview and
+  then the reasoning: `GRAPHICAL FRAMEWORK: RESEARCH WORKFLOW` carries the
+  eleven stage workflow of the thesis and comes first because it is the
+  overview of everything that follows, `METHODOLOGY AND REASONING` keeps the
+  per-step definitions, and `METHODOLOGY: THE OPTIMIZATION FLOWCHART` carries
+  the twelve stage validation pipeline of the engine with the geometry
+  optimization loop drawn under it. The six slides that follow explain how
+  the simulation is run, one figure each: the setup (the mesh of the run, the
+  geometry, the grid, the chain of solvers and the air model), the grid
+  independence, the convergence of the particle solver, and then the three
+  heat-flux channels one by one, the convection, the conduction and the
+  re-radiation. Every one of them is a figure frame in the house layout: a
+  short caption beside the picture on top, and the facts of the slide as a
+  band of horizontal glass cards underneath, so the words carry the slide and
+  the plot is its evidence.
+"""
+
+
+def main() -> int:
+    """Turn the seven side columns into bands of cards under the picture."""
+    problems: list[str] = []
+    try:
+        original_spec = SPEC.read_bytes()
+        document = json.loads(original_spec)
+        frames = document.get("frames")
+        by_id = {str(frame.get("id")): frame for frame in frames}
+        problems.extend(f"the specification does not hold the frame '{frame_id}'" for frame_id in FRAME_IDS if frame_id not in by_id)
+
+        generator_text = GENERATOR.read_text(encoding="utf-8")
+        for old, _new, expected in GENERATOR_RULES:
+            found = generator_text.count(old)
+            if found != expected:
+                problems.append(
+                    f"make_pptx.py: expected {expected} occurrence(s), found {found}: {old[:60]!r}",
+                )
+        tests_text = TESTS.read_text(encoding="utf-8")
+        if tests_text.count(TEST_OLD) != 1:
+            problems.append("tests/test_make_pptx.py: the methodology test was not found")
+        readme_text = README.read_text(encoding="utf-8")
+        if readme_text.count(BULLET_MARKER) != 1:
+            problems.append("README.md: the methodology bullet was not found")
+        if len(problems) != 0:
+            for problem in problems:
+                _ = sys.stdout.write(f"MISMATCH {problem}\n")
+            return 1
+
+        # Every frame is rebuilt from its own point lines, so the words of the
+        # cards and the words of the column can never drift apart.
+        for frame_id in FRAME_IDS:
+            frame = by_id[frame_id]
+            figure = frame.get("figure")
+            points = [line for line in figure["caption"].split("\n") if len(line.strip()) != 0]
+            figure["caption"] = CAPTIONS[frame_id]
+            figure.pop("layout", None)
+            frame["body"] = "\n".join(f"- {point}" for point in points)
+
+        # The band has to fit before anything is written, so the plan of every
+        # frame is measured against the real constants of the generator.
+        import make_pptx as maker  # ruff: ignore[import-outside-top-level]
+
+        spec_path = PROJECT / "scaffold.json"
+        trial = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+        spec_path.write_text(trial, encoding="utf-8")
+        try:
+            measured = maker.load_spec(spec_path)
+            for frame in measured.frames:
+                if frame.id in FRAME_IDS:
+                    plan = maker._plan_narration_cards(frame, maker.BODY_FONT, maker.FILLED_BAND_COLUMNS)
+                    if plan.band_height_in > maker.FILLED_BAND_MAX_IN:
+                        problems.append(
+                            f"the cards of {frame.id} need {plan.band_height_in:.2f} in "
+                            f"but the band is {maker.FILLED_BAND_MAX_IN} in",
+                        )
+        finally:
+            _ = spec_path.write_bytes(original_spec)
+        if len(problems) != 0:
+            for problem in problems:
+                _ = sys.stdout.write(f"MISMATCH {problem}\n")
+            return 1
+
+        for old, new, _expected in GENERATOR_RULES:
+            generator_text = generator_text.replace(old, new, 1)
+        _ = ast.parse(generator_text)
+        tests_text = tests_text.replace(TEST_OLD, TEST_NEW, 1)
+        _ = ast.parse(tests_text)
+
+        lines = readme_text.split("\n")
+        start = next(
+            (position for position, line in enumerate(lines) if line.startswith(BULLET_MARKER)),
+            -1,
+        )
+        end = start + 1
+        while end < len(lines) and lines[end].startswith("  "):
+            end += 1
+        readme_text = "\n".join(lines[:start] + NEW_BULLET.rstrip("\n").split("\n") + lines[end:])
+
+        for name, text in (
+            ("the specification", trial),
+            ("the generator", generator_text),
+            ("the tests", tests_text),
+            ("README.md", readme_text),
+        ):
+            if EM_DASH in text:
+                _ = sys.stdout.write(f"MISMATCH {name} would carry an em dash\n")
+                return 1
+
+        _ = BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        _ = SPEC_BACKUP.write_bytes(original_spec)
+        _ = GENERATOR_BACKUP.write_bytes(GENERATOR.read_bytes())
+        _ = TESTS_BACKUP.write_bytes(TESTS.read_bytes())
+        _ = README_BACKUP.write_bytes(README.read_bytes())
+        _ = SPEC.write_text(trial, encoding="utf-8")
+        _ = GENERATOR.write_text(generator_text, encoding="utf-8")
+        _ = TESTS.write_text(tests_text, encoding="utf-8")
+        _ = README.write_text(readme_text, encoding="utf-8")
+    except (KeyError, IndexError, TypeError, ValueError, AttributeError, json.JSONDecodeError) as error:
+        _ = sys.stdout.write(f"MISMATCH {type(error).__name__}: {error}\n")
+        return 1
+    _ = sys.stdout.write("the seven detail slides now carry their points as cards under the picture\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

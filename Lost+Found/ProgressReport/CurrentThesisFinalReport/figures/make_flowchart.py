@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Revised (v2): removed duplicate validation diamond, added GA optimization stage.
 """Regenerate ``flowchart.png``, the study-workflow figure (Chapters 1 and 3).
 
 WHY THIS FILE EXISTS
@@ -305,47 +306,50 @@ def build(out_path: Path) -> None:
     w_dia = 0.58   # decision diamond width
 
     # ── Terminators and processes ───────────────────────────────────────────
+    # Revised workflow (v2): duplicate validation diamond removed (model
+    # replication folded into the Data Retrieval stage as a sub-step); a
+    # Survivability Optimization (GA) stage inserted before Data Analysis;
+    # single remaining validation gate is the simulation-validity decision.
     _box(ax, ys[0], "Start", w_ell, 0.040, kind="ellipse")
     _box(ax, ys[1], "Various of papers\nStudy", w_box, BOX_H, kind="par")
     _box(ax, ys[2], "Literature Study", w_box, BOX_H)
-    _box(ax, ys[3], "Data Retrieval and Familiar\nStudy Collection",
+    _box(ax, ys[3], "Data Retrieval and Familiar\nStudy Collection\n"
+                    "(replicate axisymmetric slice;\nadjust if replication fails)",
+         w_box, BOX_H * 1.55)
+    _box(ax, ys[4], "Simulate the Geometry\nin Mach 5-6",
          w_box, BOX_H * 1.30)
-    _diamond(ax, ys[4], "Replicate Axisymmetric\nSlice Model Design?",
+    _box(ax, ys[5], "Simulation Result", w_box, BOX_H, kind="par")
+    _diamond(ax, ys[6], "Theoretically valid? or\nwithin error range?",
              w_dia, DIAMOND_H)
-    _box(ax, ys[5], "Simulate the Geometry\nin Mach 5-6",
+    _box(ax, ys[7], "Survivability Optimization\n(Genetic Algorithm)",
          w_box, BOX_H * 1.30)
-    _box(ax, ys[6], "Simulation Result", w_box, BOX_H, kind="par")
-    _diamond(ax, ys[7], "Theoretically valid? or\nwithin error range?",
-             w_dia, DIAMOND_H)
     _box(ax, ys[8], "Data Analysis\nSimulation", w_box, BOX_H * 1.30)
     _box(ax, ys[9], "Conclusion and\nRecommendation",
          w_box, BOX_H * 1.30)
+
 
     # ── Spine connectors ────────────────────────────────────────────────────
     # Each spans from the bottom edge of one shape to the top edge of the next,
     # so no arrow can overlap a label.
     for i in range(len(ys) - 1):
         half_lo = (0.040 if i == 0 else
-                   BOX_H * 0.65 if i in (3, 5, 8, 9) else
-                   DIAMOND_H / 2 if i in (4, 7) else
+                   BOX_H * 0.65 if i in (3, 4, 7, 8, 9) else
+                   DIAMOND_H / 2 if i in (6,) else
                    BOX_H / 2)
         half_hi = (0.040 if i + 1 == 0 else
-                   BOX_H * 0.65 if i + 1 in (3, 5, 8, 9) else
-                   DIAMOND_H / 2 if i + 1 in (4, 7) else
+                   BOX_H * 0.65 if i + 1 in (3, 4, 7, 8, 9) else
+                   DIAMOND_H / 2 if i + 1 in (6,) else
                    BOX_H / 2)
         _arrow(ax, (SPINE_X, ys[i] - half_lo),
                (SPINE_X, ys[i + 1] + half_hi))
 
-    # Branch labels on the two decision exits. Each is a single string placed in
-    # the clear gap *below* the diamond and offset left of the spine arrow, so
-    # it can never land on the diamond outline. The "Yes" prefix is part of the
-    # same string rather than a second text object: two objects at the same
-    # height would overlap, which is the exact failure being repaired.
-    y_exit1 = (ys[4] - DIAMOND_H / 2 + ys[5] + BOX_H * 0.65) / 2
-    ax.text(SPINE_X - 0.045, y_exit1, "Yes: specification aligned",
-            ha="right", va="center", fontsize=FS_EDGE, color=TEXT, zorder=5,
+    # Branch label on the single remaining decision exit.
+    y_exit = (ys[6] - DIAMOND_H / 2 + ys[7] + BOX_H * 0.65) / 2
+    ax.text(SPINE_X - 0.045, y_exit, "Yes: valid", ha="right", va="center",
+            fontsize=FS_EDGE, color=TEXT, zorder=5,
             bbox=dict(boxstyle="round,pad=0.15", facecolor="white",
                       edgecolor="none"))
+
 
     y_exit2 = (ys[7] - DIAMOND_H / 2 + ys[8] + BOX_H * 0.65) / 2
     ax.text(SPINE_X - 0.045, y_exit2, "Yes: valid", ha="right", va="center",
@@ -353,36 +357,18 @@ def build(out_path: Path) -> None:
             bbox=dict(boxstyle="round,pad=0.15", facecolor="white",
                       edgecolor="none"))
 
-    # ── Feedback loop 1: first decision "No" -> Data Retrieval ──────────────
-    # Exits the diamond's right vertex, runs right, then up into the right edge
-    # of the Data Retrieval box. The right margin is kept clear of 1.0 so the
-    # label is never clipped -- the original's second defect.
-    loop_x = 0.88
-    y_ret = ys[3]
-    _arrow(ax, (SPINE_X + w_dia / 2, ys[4]), (loop_x, ys[4]))
-    _arrow(ax, (loop_x, ys[4]), (loop_x, y_ret))
-    _arrow(ax, (loop_x, y_ret), (SPINE_X + w_box / 2, y_ret))
-    ax.text((SPINE_X + w_dia / 2 + loop_x) / 2, ys[4] + 0.022,
-            "Adjustment\nNeeded", ha="center", va="bottom", fontsize=FS_EDGE,
-            color=TEXT,
-            bbox=dict(boxstyle="round,pad=0.15", facecolor="white",
-                      edgecolor="none"))
-    # "No" labels sit just outside each diamond's right vertex, on the same
-    # side as the feedback loop they feed. The matching "Yes" labels are drawn
-    # with the exit arrows above, so no label is defined twice.
-    ax.text(SPINE_X + w_dia / 2 + 0.045, ys[4] - 0.030, "No", ha="left",
-            va="center", fontsize=FS_EDGE, color=TEXT, zorder=5)
-    ax.text(SPINE_X + w_dia / 2 + 0.045, ys[7] - 0.030, "No", ha="left",
+    # "No" label sits just outside the (single) diamond's right vertex.
+    ax.text(SPINE_X + w_dia / 2 + 0.045, ys[6] - 0.030, "No", ha="left",
             va="center", fontsize=FS_EDGE, color=TEXT, zorder=5)
 
-    # ── Feedback loop 2: second decision "No" -> Simulate ───────────────────
-    # Same geometry as loop 1, returning to the Simulate box instead.
-    loop_x2 = 0.94
-    y_ret2 = ys[5]
-    _arrow(ax, (SPINE_X + w_dia / 2, ys[7]), (loop_x2, ys[7]))
-    _arrow(ax, (loop_x2, ys[7]), (loop_x2, y_ret2))
-    _arrow(ax, (loop_x2, y_ret2), (SPINE_X + w_box / 2, y_ret2))
-    ax.text((SPINE_X + w_dia / 2 + loop_x2) / 2, ys[7] + 0.022,
+
+    # ── Feedback loop: validity decision "No" -> Simulate ──────────────────
+    loop_x = 0.90
+    y_ret = ys[4]
+    _arrow(ax, (SPINE_X + w_dia / 2, ys[6]), (loop_x, ys[6]))
+    _arrow(ax, (loop_x, ys[6]), (loop_x, y_ret))
+    _arrow(ax, (loop_x, y_ret), (SPINE_X + w_box / 2, y_ret))
+    ax.text((SPINE_X + w_dia / 2 + loop_x) / 2, ys[6] + 0.022,
             "Invalid", ha="center", va="bottom", fontsize=FS_EDGE, color=TEXT,
             zorder=5,
             bbox=dict(boxstyle="round,pad=0.15", facecolor="white",
@@ -425,7 +411,7 @@ def main() -> int:
     size = args.out.stat().st_size
     print(f"wrote {args.out} ({size} bytes, {FIGSIZE[0]}x{FIGSIZE[1]} in @ "
           f"{DPI} dpi)")
-    print("  11 stages, 2 decision diamonds, 2 feedback loops")
+    print("  9 stages, 1 decision diamond, 1 feedback loop, 1 optimization stage")
     return 0
 
 

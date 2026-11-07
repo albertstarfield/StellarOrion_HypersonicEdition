@@ -34,6 +34,15 @@ This project uses a hybrid architecture for running simulations:
 
 ---
 
+## 📊 Key Figures (thesis)
+
+- `Lost+Found/ProgressReport/CurrentThesisFinalReport/figures/hiad_topology_comparison.png` — reference vs. optimised geometry (Fig. 4.x)
+- `Lost+Found/ProgressReport/CurrentThesisFinalReport/figures/ga_convergence.png` — GA convergence
+- `Lost+Found/ProgressReport/CurrentThesisFinalReport/figures/grid_independence_qoi.png` — grid independence (Fig. 4.24)
+- `Lost+Found/ProgressReport/CurrentThesisFinalReport/figures/flight_history_panel.png` — flight history
+
+Full figure set: `Lost+Found/ProgressReport/CurrentThesisFinalReport/figures/` (60 referenced in the thesis).
+
 ## 📁 Source Layout (`stellarorion_program_proc/`)
 
 Inventory as of 2026-09-23 (51 Ada units · ~35.4k Ada LOC · ~35.2k Python LOC under `src/`).

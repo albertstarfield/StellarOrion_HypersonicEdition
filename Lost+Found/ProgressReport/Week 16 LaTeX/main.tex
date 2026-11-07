@@ -273,7 +273,7 @@
   \end{tabular}
   \vspace{0.2cm}
   \textbf{Objective loop:} BO (LHS 20 + EI 50 steps, incumbent $1.7654\to1.6051$,
-  $-9.08\%$) \; DoE (LHS/CCD-15), Kriging denoising, DSMC + PINN as the
+  $-9.08\%$) \; DoE (LHS/CCD-15), Kriging denoising, DSMC+PINN\_AUX as the
   expensive oracle. Hard gate: DSMC direct simulation (no surrogate) on the
   optimum-shape candidate.
 \end{frame}
@@ -313,7 +313,7 @@
     J=Q/Q_t+0.5\,q/q_{ref}+0.5\,\beta_{dev}
       +0.25\,C_d/C_{d,ref}+\Lambda\,\mathrm{Pen}.
   \]
-  \textbf{Why faster:} one snapshot serves every sample, so DSMC/PINN run only
+  \textbf{Why faster:} one snapshot serves every sample, so DSMC+PINN\_AUX run only
   after CCD/LHS/BO shortlist candidates.
 \end{frame}
 

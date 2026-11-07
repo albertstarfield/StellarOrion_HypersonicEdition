@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Give the Optimization Pipeline its four equation pictures.
+
+WHY: every methodology subsection of the deck that explains physics carries a
+picture of its governing equation with a glossary of its symbols, and the
+optimization subsection had none. The thesis holds the design vector, the
+composite cost with its four terms, the operators of the genetic algorithm and
+the correction factor of the second pass, so those four are typeset in the
+same style as the seven that already exist.
+
+The script also teaches the driver to measure an equation line against the
+canvas: a line too wide for the picture is stepped down in size instead of
+being cut off at the edge.
+
+The script is a guarded replacement driver: it counts every anchor, refuses
+to write when a count does not match, and leaves the file untouched when a
+check fails.
+"""
+
+from __future__ import annotations
+
+import ast
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent.parent
+SCRIPT = Path(__file__).resolve().parent / "make_equation_pictures.py"
+BACKUP = Path(__file__).resolve().parent / "backups" / "make_equation_pictures_before_pipeline.py.bak"
+EM_DASH = "\u2014"
+#: How many equation pictures the script must find after its own patch.
+EQUATION_PICTURE_COUNT = 11
+
+ANCHOR_LOOP = '''  # noqa: Q001for index, line in enumerate(lines):
+    axis.text(
+        0.5,
+        start - index * step,
+        line,
+        ha="center",
+        va="center",
+        fontsize=19,
+        color="#0A132C",
+    )
+'''
+
+LOOP_NEW = '''  # noqa: Q001equation_artists = []
+for index, line in enumerate(lines):
+    artist = axis.text(
+        0.5,
+        start - index * step,
+        line,
+        ha="center",
+        va="center",
+        fontsize=19,
+        color="#0A132C",
+    )
+    equation_artists.append(artist)
+
+# WHY: an equation that runs past the canvas is unreadable, so every line is
+# measured against the real renderer and the type is stepped down while any
+# one of them is wider than the band it sits in. A line that still does not
+# fit at the smallest size stops the render instead of being cut off.
+renderer = figure.canvas.get_renderer()
+limit_px = int(0.94 * figure.get_size_inches()[0] * figure.dpi)
+equation_size = 19.0
+while True:
+    widest = max(artist.get_window_extent(renderer=renderer).width for artist in equation_artists)
+    if widest <= limit_px:
+        break
+    equation_size -= 1.0
+    if equation_size < 14.0:
+        raise SystemExit(
+            "an equation still needs %.0f px at %g pt, only %.0f px fit"
+            % (widest, equation_size, limit_px)
+        )
+    for artist in equation_artists:
+        artist.set_fontsize(equation_size)
+'''
+
+ANCHOR_TAIL = '''  # noqa: Q001            "q_stag = incoming stagnation heat flux (W/m2)",
+        ],
+    ),
+]
+'''
+
+TAIL_NEW = '''  # noqa: Q001            "q_stag = incoming stagnation heat flux (W/m2)",
+        ],
+    ),
+    (
+        "thesis_equation_design_space.png",
+        [
+            r"$\\mathbf{x} = (X_1,\\ X_2,\\ X_3,\\ N_t,\\ m)$",
+            r"$X_1 = D/2, \\qquad X_2 = r_{tor}, \\qquad X_3 = \\theta_c$",
+        ],
+        "chapter 3, the design vector of the design space",
+        [
+            "x = design vector of the five variables",
+            "X_1 = D/2 = body radius (m)",
+            "X_2 = r_tor = torus radius (m)",
+            "X_3 = theta_c = half-cone angle (deg)",
+            "N_t = number of toroids",
+            "m = vehicle mass (kg)",
+            "kappa = 0.3667, the nose radius ratio",
+        ],
+    ),
+    (
+        "thesis_equation_cost_function.png",
+        [
+            (
+                r"$J(\\mathbf{x}) = W_{HL}\\frac{Q}{Q_{target}}"
+                r" + W_{q}\\frac{\\dot{q}_{SG}}{\\dot{q}_{ref}}"
+                r" + W_{\\beta}\\left(\\frac{\\beta}{\\beta_{ref}} - 1\\right)^{2}$"
+            ),
+            (
+                r"$+ \\ W_{Cd}\\,\\max\\!\\left(0,\\ \\frac{C_{d,goal} - C_d}"
+                r"{C_{d,goal}}\\right) + \\Lambda_{pen}\\,\\Phi(\\mathbf{x})$"
+            ),
+            r"$Q = \\dot{q}_{SG}\\,\\tau, \\qquad \\tau = 13.582459\\ \\mathrm{s}$",
+        ],
+        "chapter 3, the composite cost and the heat load",
+        [
+            "J = composite cost the search minimises",
+            "W_HL, W_q, W_beta, W_Cd = weights of the four terms",
+            "Q = total heat load, Q_target its target",
+            "q_stag = stagnation heat flux, q_ref its reference",
+            "beta = ballistic coefficient, beta_ref its reference",
+            "C_d = drag coefficient, C_d_goal the wanted value",
+            "Lambda_pen = weight of the penalty Phi(x)",
+            "tau = exposure time of the entry (s)",
+        ],
+    ),
+    (
+        "thesis_equation_ga.png",
+        [
+            r"$P = 50, \\qquad G_{max} = 200, \\qquad k_t = 3$",
+            r"$p_c = 0.7, \\qquad p_m = 0.1, \\qquad \\epsilon = 10^{-6}$",
+        ],
+        "chapter 3, the operators and the stopping rule of the genetic algorithm",
+        [
+            "P = designs in one generation",
+            "G_max = maximum number of generations",
+            "k_t = size of the tournament that picks a parent",
+            "p_c = probability of crossover",
+            "p_m = probability of mutation for each gene",
+            "epsilon = stagnation tolerance on the best cost",
+        ],
+    ),
+    (
+        "thesis_equation_double_pass.png",
+        [
+            (
+                r"$c = \\mathrm{clamp}\\!\\left(\\frac{q^{DSMC}_{flux}}"
+                r"{q^{SG}_{flux}},\\ 0.5,\\ 2.0\\right)$"
+            ),
+            (
+                r"$J^{(2)}(\\mathbf{x}) = J(\\mathbf{x})"
+                r" + (c - 1)\\,\\frac{Q(\\mathbf{x})}{Q_{target}}$"
+            ),
+        ],
+        "chapter 3, the correction factor and the corrected cost",
+        [
+            "c = fidelity ratio of solver over correlation",
+            "q_DSMC = peak surface flux measured by the solver",
+            "q_SG = Sutton-Graves prediction of the same run",
+            "0.5 and 2.0 = the clamp limits of the factor",
+            "J = cost of the first pass",
+            "J(2) = corrected cost of the second pass",
+            "Q/Q_target = normalised heat load term",
+        ],
+    ),
+]
+'''
+
+RULES: list[tuple[str, str, int]] = [
+    (ANCHOR_LOOP, LOOP_NEW, 1),
+    (ANCHOR_TAIL, TAIL_NEW, 1),
+]
+
+
+def main() -> int:
+    """Add the four optimization equations and the width guard to the driver.
+
+    Returns:
+        Zero when the script was patched, one when a guard refused.
+
+    """
+    text = SCRIPT.read_text(encoding="utf-8")
+    problems: list[str] = []
+    for old, _new, expected in RULES:
+        found = text.count(old)
+        if found != expected:
+            problems.append(f"expected {expected} occurrence(s), found {found}: {old[:60]!r}")
+    if len(problems) != 0:
+        for problem in problems:
+            _ = sys.stdout.write(f"MISMATCH {problem}\n")
+        return 1
+    for old, new, _expected in RULES:
+        text = text.replace(old, new, 1)
+    if EM_DASH in text:
+        _ = sys.stdout.write("MISMATCH the script would carry an em dash\n")
+        return 1
+    try:
+        _ = ast.parse(text)
+    except SyntaxError as error:
+        _ = sys.stdout.write(f"MISMATCH the script would not parse: {error}\n")
+        return 1
+    if text.count("thesis_equation_") != EQUATION_PICTURE_COUNT:
+        _ = sys.stdout.write(
+            f"MISMATCH expected {EQUATION_PICTURE_COUNT} equation pictures, "
+            f"found {text.count('thesis_equation_')}\n",
+        )
+        return 1
+    _ = BACKUP.parent.mkdir(parents=True, exist_ok=True)
+    _ = BACKUP.write_bytes(SCRIPT.read_bytes())
+    _ = SCRIPT.write_text(text, encoding="utf-8")
+    _ = sys.stdout.write("the four optimization equations and the width guard are in\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

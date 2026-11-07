@@ -32,7 +32,7 @@ TA3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (
 TA4 & Equilibrium distribution follows Maxwell--Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
 TA5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
 TA6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -68,12 +68,12 @@ For rapid engineering estimates, the stagnation-point heat flux is approximated 
 where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $R_n$ is the nose radius, and $V_\infty$ is the flight velocity. This correlation is used both for initial thermal loading estimates and as a validation benchmark against DSMC results.
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
-% to produce the optimised body, so all PINN material is removed from this
+% to produce the optimized body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
 % is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
-% field) and the default optimiser is now a simple genetic algorithm; the
-% Bayesian-optimisation material has been removed from this thesis.
+% field) and the default optimizer is now a simple genetic algorithm; the
+% Bayesian-optimization material has been removed from this thesis.
 
 \paragraph{Step 5: Genetic-Algorithm Optimization.}
 The closed-form cost of Eq.~\eqref{eq:ga_cost} is minimized by a simple genetic algorithm: a population of fifty designs is evolved with tournament selection, uniform crossover, Gaussian mutation and elitism until the best cost stagnates. Because the cost is analytic, an individual is evaluated without a solver call, and the search therefore explores thousands of candidate geometries rather than a handful of DSMC cases. The initial population is a Latin hypercube sample of the design box, so the first generation is stratified in every coordinate; no factorial screen and no fitted response surface are used.
@@ -92,14 +92,14 @@ Figure~\ref{fig:governing_equations} summarizes the full derivation chain from k
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, routes through the DSMC solver (SPARTA in Docker) and through the Ada/SPARK per-element 1-D layered thermal solver that turns the resolved surface heat flux into a backface temperature, then through the genetic-algorithm optimiser, before producing ParaView-ready VTK and STL files for visualization. The continuum solvers named in the tool inventory of the appendix (OpenFOAM, Fluent) are not part of the thermal chain: the 1-D conduction, the radiative hot-face balance and the lateral coupling are all solved in Ada/SPARK, as set out in Sec.~\ref{sec:thermal_chain}.
+The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, routes through the DSMC solver (SPARTA in Docker) and through the Ada/SPARK per-element 1-D layered thermal solver that turns the resolved surface heat flux into a backface temperature, then through the genetic-algorithm optimizer, before producing ParaView-ready VTK and STL files for visualization. The continuum solvers named in the tool inventory of the appendix (OpenFOAM, Fluent) are not part of the thermal chain: the 1-D conduction, the radiative hot-face balance and the lateral coupling are all solved in Ada/SPARK, as set out in Sec.~\ref{sec:thermal_chain}.
 
 \begin{figure}[H]
     \centering
     \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline in five columns: input, core engine, solvers, models and output. The input column holds CadQuery geometry export, flight conditions and the design variables. The core engine is the Ada Engine. The solvers column holds SPARTA as the DSMC solver in Docker and Ada/SPARK as the one-dimensional layered thermal solver. The models column holds the Genetic Algorithm with a population of fifty. The output column holds ParaView VTK and STL rendering. An orange feedback arrow labelled GA optimization returns from the genetic algorithm to the core engine.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver and Ada/SPARK 1-D layered thermal solver $\rightarrow$ Genetic Algorithm optimiser $\rightarrow$ ParaView visualization. The thermal chain is solved in Ada/SPARK, not in a continuum CFD package. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.}
+    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver and Ada/SPARK 1-D layered thermal solver $\rightarrow$ Genetic Algorithm optimizer $\rightarrow$ ParaView visualization. The thermal chain is solved in Ada/SPARK, not in a continuum CFD package. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -131,7 +131,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \multirow{3}{=}{\textbf{Sampling (LHS)}} & Method & Latin hypercube, one per stratum \\
  & Samples ($N$) & 50 strata per coordinate \\
  & Active variables & Body radius, torus radius, half-cone angle, toroid count, mass \\ \midrule
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
 \multirow{6}{=}{\textbf{GA Optimization}} & Population ($P$) & 50 \\
  & Generations ($G_{\max}$) & 200 \\
  & Tournament size ($k_t$) & 3 \\
@@ -150,13 +150,11 @@ To systematically isolate the effects of the ``scalloped'' surface geometry, the
 \begin{figure}[H]
     \centering
     % Same artwork as Figure 1.6 (fig:flowchart_ch1), regenerated by
-    % figures/make_flowchart.py. Height-constrained with keepaspectratio because
-    % the 1760x3600 px source is taller than it is wide; a width-based request
-    % would overflow the text height and the float would be unplaceable.
-    \BeginAccSupp{method=escape,ActualText={Vertical flowchart of the five-stage numerical research workflow, read from top to bottom: Start, then a literature stage comprising a stream of papers feeding into a literature study and into a data retrieval and familiar-study collection stage; a first decision asking whether the axisymmetric slice model has been replicated, whose No branch is labelled Adjustment Needed and loops back to the data retrieval stage while its Yes branch is labelled specification aligned; a simulation stage that runs the geometry at Mach 5 to 6; a parallelogram for the simulation result; and a second decision asking whether the result is theoretically valid or within the error range, whose No branch is labelled Invalid and loops back to the simulation stage while its Yes branch is labelled valid; then a data analysis and simulation stage, a conclusion and recommendation stage, and End. The same diagram appears earlier as the research methodology flowchart in the introduction.}}%
+    % figures/make_flowchart.py (v2). Height-constrained with keepaspectratio.
+    \BeginAccSupp{method=escape,ActualText={Vertical flowchart of the numerical research workflow, read from top to bottom: Start, then a literature stage comprising a stream of papers feeding into a literature study and into a data retrieval and familiar-study collection stage (which also replicates the axisymmetric slice model and adjusts if replication fails); a simulation stage that runs the geometry at Mach 5 to 6; a parallelogram for the simulation result; a single validation decision asking whether the result is theoretically valid or within the error range, whose No branch is labelled Invalid and loops back to the simulation stage while its Yes branch is labelled valid; then a survivability optimization stage using a genetic algorithm, a data analysis and simulation stage, a conclusion and recommendation stage, and End. The same diagram appears earlier as the research methodology flowchart in the introduction.}}%
 \includegraphics[height=0.72\textheight, keepaspectratio]{figures/flowchart.png}%
 \EndAccSupp{}%
-    \caption{Flowchart of the numerical research methodology, with the two feedback loops that iterate the design and the validation stages. This is the same diagram as Figure~\ref{fig:flowchart_ch1}, repeated here so the six stages enumerated below can be read against it.}
+    \caption{Flowchart of the numerical research methodology, with the single feedback loop that re-runs the simulation when the result is not theoretically valid. This is the same diagram as Figure~\ref{fig:flowchart_ch1}, repeated here so the five stages enumerated below can be read against it.}
     \label{fig:flowchart}
 \end{figure}
 \par
@@ -165,7 +163,7 @@ The process is divided into five primary stages:
     \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles using CadQuery Python scripting, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter.
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation within a Docker-containerized Linux environment, tracking millions of simulated particles through advection, molecular collisions, and surface interactions.
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
     \item \textbf{Survivability Optimization:} Simple Genetic Algorithm (GA) with tournament selection, uniform crossover, Gaussian mutation and elitism for automated multi-objective optimization of HIAD geometry.
     \item \textbf{Validation and Analysis:} Validation of the solution through a four-level grid independence study ($70\times70$, $100\times100$, $139\times139$ and $200\times200$ cells, Figure~\ref{fig:grid_independence}) and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
@@ -468,12 +466,12 @@ The per-element results are exported to the run's \texttt{results/tps\_conductio
 As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500--1100 particle-time steps depending on the geometry complexity.
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
-% to produce the optimised body, so all PINN material is removed from this
+% to produce the optimized body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
 % is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
-% field) and the default optimiser is now a simple genetic algorithm; the
-% Bayesian-optimisation material has been removed from this thesis.
+% field) and the default optimizer is now a simple genetic algorithm; the
+% Bayesian-optimization material has been removed from this thesis.
 
 \section{Survivability Optimization}
 \label{sec:ga_opt}
@@ -502,7 +500,7 @@ The optimizer is a simple genetic algorithm (GA) whose initial population is a L
 \end{figure}
 
 \subsection{Design Space and Parameters}
-The search acts on the effective design vector $\mathbf{x}=(X_1,X_2,X_3,N_t,m)$: the body radius $X_1=D/2$, the torus minor radius $X_2=r_{tor}$, the half-cone angle $X_3=\theta_c$, the toroid count $N_t$ and the vehicle mass $m$. The bounds are the defaults of the production runner (Table~\ref{tab:design_variables}). The mass cancels in the ballistic-coefficient ratio and therefore does not change the geometry that the cost sees; it is carried because it determines the physical vehicle and the deceleration load. The nose bluntness used by the Sutton--Graves correlation is not an independent coordinate: it is derived from the body radius as
+The search acts on the effective design vector $\mathbf{x}=(X_1,X_2,X_3,N_t,m)$: the body radius $X_1=D/2$, the torus minor radius $X_2=r_{tor}$, the half-cone angle $X_3=\theta_c$, the toroid count $N_t$ and the vehicle mass $m$. The bounds are the defaults of the production runner (Table~\ref{tab:design_variables}). The mass cancels in the ballistic-coefficient ratio and therefore does not change the geometry that the cost sees; it is carried because it determines the physical vehicle and the deceleration load, and the toroid count is fixed at six in the recorded campaign. The nose bluntness used by the Sutton--Graves correlation is not an independent coordinate: it is derived from the body radius as
 \begin{equation}
     R_n = \kappa X_1, \qquad \kappa = 0.3667,
     \label{eq:nose_ratio}
@@ -516,13 +514,14 @@ which maps the $1.5$\,m reference body radius onto the $0.55$\,m nose flown by t
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.30\textwidth}|c|c|X|}
         \hline
         \textbf{Variable} & \textbf{Symbol} & \textbf{Bounds} & \textbf{Unit} \\ \hline
-        Body radius ($D/2$) & $X_1$ & $[0.25, 7.5]$ & m \\ \hline
-        Torus minor radius & $X_2$ & $[0.01, 0.5]$ & m \\ \hline
+        Body radius ($D/2$) & $X_1$ & $[0.5, 3.0]$ & m \\ \hline
+        Torus minor radius & $X_2$ & $[0.05, 0.5]$ & m \\ \hline
         Half-cone angle & $X_3$ & $[40, 80]$ & deg \\ \hline
-        Toroid count & $N_t$ & $[1, 12]$ & -- \\ \hline
+        Toroid count & $N_t$ & 6 (fixed) & -- \\ \hline
         Vehicle mass & $m$ & $[10, 1000]$ & kg \\ \hline
     \end{tabularx}
 \end{table}
+The bounds in Table~\ref{tab:design_variables} are the analytic screening box of the production runner (\texttt{Project\_To\_Analytic\_Box} in the Ada engine), not the wider $[0.25, 7.5]$\,m validity precondition that the geometry kernel accepts: the pass-2 winner sits on the $X_1=3.0$\,m ceiling and the $X_2=0.05$\,m floor of this box, which is why it is reported as boundary-limited.
 
 A design is admissible only inside the structural envelope. The maximum body radius derived from $(X_1,X_2,X_3,N_t)$ must not exceed $R_{\max} = 3.0$\,m (the IRVE-3 diameter limit), the body radius must not fall below $1.0$\,m, and the nose cap must house the payload cavity. These limits enter the cost function as quadratic penalties rather than as hard filters, so the population is never blocked from moving through an infeasible region on its way to a feasible one.
 
@@ -602,12 +601,12 @@ The population is evaluated concurrently. A generation is embarrassingly paralle
 
 The search terminates when the generation cap is reached or when the best cost has not improved by more than $\epsilon = 10^{-6}$ for $G_{pat} = 20$ consecutive generations. The stagnation counter is maintained by a SPARK-proved core routine that saturates instead of overflowing and rejects non-finite costs, so a failed evaluation is counted as ``not stagnating'' and the search continues rather than silently spinning. The recorded campaign reported in Chapter~\ref{ch:results} converged on the stagnation criterion after 38 generations and 1900 individual evaluations; the corrected pass-2 re-run used 201 generations and 10050 evaluations.
 
-\subsection{Double Pass GA Optimisation}
+\subsection{Double Pass GA Optimization}
 \label{sec:double_pass_ga}
 
-The optimisation is organised as two passes of the same genetic algorithm, separated by high-fidelity re-simulation. The separation is deliberate. The closed-form cost is cheap enough to be evaluated thousands of times, so it is used for the search itself; the quantity it is supposed to predict --- the heat load of the vehicle --- is expensive, so it is measured only where a decision is taken.
+The optimization is organized as two passes of the same genetic algorithm, separated by high-fidelity re-simulation. The separation is deliberate. The closed-form cost is cheap enough to be evaluated thousands of times, so it is used for the search itself; the quantity it is supposed to predict --- the heat load of the vehicle --- is expensive, so it is measured only where a decision is taken.
 
-\textbf{Pass 1 (model space).} The GA of Sec.~\ref{sec:ga_operators} minimises the cost of Eq.~\eqref{eq:ga_cost} over the design box, every individual evaluated in closed form. No solver call is made inside this pass: the search explores thousands of candidate geometries, and the winner $\mathbf{x}^{(1)}$ is the optimum of the stated analytic objective.
+\textbf{Pass 1 (model space).} The GA of Sec.~\ref{sec:ga_operators} minimizes the cost of Eq.~\eqref{eq:ga_cost} over the design box, every individual evaluated in closed form. No solver call is made inside this pass: the search explores thousands of candidate geometries, and the winner $\mathbf{x}^{(1)}$ is the optimum of the stated analytic objective.
 
 \textbf{Validation of the pass-1 winner (physical space).} $\mathbf{x}^{(1)}$ is converted to a vehicle with Eq.~\eqref{eq:nose_ratio} and re-simulated with the full DSMC chain at 2200 steps; the refined pipeline returns the measured heat load $q_{hybrid}$ of that geometry. This is the only high-fidelity run of pass 1: the solver measures one design, it does not search.
 
@@ -641,7 +640,7 @@ The computational framework supports multiple solver backends to address differe
         \hline
         \textbf{Stage} & \textbf{Solver} & \textbf{Rationale} \\ \hline
         Exploration & Analytic GA & Closed-form evaluation of 1000s of candidates \\ \hline
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
         Validation & DSMC only & Independent kinetic check of the analytic ranking \\ \hline
         High-Density (Future) & Fluent & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
     \end{tabularx}

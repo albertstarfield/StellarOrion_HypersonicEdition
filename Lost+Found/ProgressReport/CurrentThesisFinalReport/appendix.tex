@@ -185,7 +185,7 @@ The StellarOrion simulation engine is implemented in Ada/SPARK and organized int
     \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
     \item \texttt{\seqsplit{stellarorion\_simulation.ads/adb}} -- SPARTA DSMC simulation driver and Docker integration
     \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with Latin-hypercube seeding
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
     \item \texttt{\seqsplit{stellarorion\_calibration.ads/adb}} -- Automated calibration against IRVE-3 flight data
 \end{itemize}
 
@@ -227,11 +227,11 @@ The verified run analyzes 747 checks: 687 are discharged by the prover (92\,\% o
 \end{table}
 
 \subsection{Interpretation and Limitations}
-No check is left unproved in this run. The residual post-processing obligations that the earlier 2026-09-27 run left open --- floating-point overflow and array-index checks in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} --- are now discharged as well, so the gate reports no proof failure anywhere in the analysed units.
+No check is left unproved in this run. The residual post-processing obligations that the earlier 2026-09-27 run left open --- floating-point overflow and array-index checks in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} --- are now discharged as well, so the gate reports no proof failure anywhere in the analyzed units.
 
-It is equally important to state what the gate does \emph{not} cover. GNATprove analyses the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 1,900 evaluations of the first optimization pass reported in Figure~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions are formally proven.
+It is equally important to state what the gate does \emph{not} cover. GNATprove analyzes the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 1,900 evaluations of the first optimization pass reported in Figure~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions are formally proven.
 
-This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. The defensible statement is the one in Table~\ref{tab:proof_summary}: every check in the analysed Ada/SPARK units is discharged, and the residual risk is not a proof failure but the scope boundary --- the Python optimization driver remains outside GNATprove.
+This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. The defensible statement is the one in Table~\ref{tab:proof_summary}: every check in the analyzed Ada/SPARK units is discharged, and the residual risk is not a proof failure but the scope boundary --- the Python optimization driver remains outside GNATprove.
 
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}
@@ -422,7 +422,7 @@ with collision integral
 The equilibrium solution is the Maxwell--Boltzmann distribution
 $f_{\mathrm{eq}}=n(m/2\pi k_BT)^{3/2}\exp(-m|\mathbf v-\mathbf u|^2/2k_BT)$.
 
-\section{Chapman--Enskog: Boltzmann $\to$ Navier--Stokes}
+\section{\texorpdfstring{Chapman--Enskog: Boltzmann $\to$ Navier--Stokes}{Chapman--Enskog: Boltzmann to Navier--Stokes}}
 Expanding $f=f_{\mathrm{eq}}(1+\Phi^{(1)}+\cdots)$ in $Kn$:
 \begin{itemize}
   \item zeroth order ($Kn^0$): Euler equations (inviscid);

@@ -1,0 +1,98 @@
+{
+  "complete": true,
+  "geometry": {
+    "angle": 60.0,
+    "diameter": 3.0,
+    "nose": 0.55,
+    "skin": "scalloped",
+    "tradius": 0.135
+  },
+  "plan": "results/00_reference/trajectory_stations.csv",
+  "records": [
+    {
+      "rows": 22,
+      "station": 1,
+      "status": "ok"
+    },
+    {
+      "alt_km": 73.8491,
+      "attempts": 0,
+      "command": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main --validate --headless --diameter 3.0 --nose 0.55 --tradius 0.135 --angle 60.0 --skin scalloped --steps 2200 --alt 73.849100 --mach 25.033238 --fnum 1.911817e+18 --results-dir results/trajectory_stations/station_02",
+      "exit_code": null,
+      "expected_rows": 22,
+      "fnum": 1.911817e+18,
+      "mach": 25.033238,
+      "rows": 0,
+      "station": 2,
+      "status": "dry-run",
+      "steps": 2200,
+      "time_s": 63.0,
+      "vel_ms": 7254.19,
+      "wall_time_s": 0.0
+    },
+    {
+      "alt_km": 67.0007,
+      "attempts": 0,
+      "command": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main --validate --headless --diameter 3.0 --nose 0.55 --tradius 0.135 --angle 60.0 --skin scalloped --steps 2200 --alt 67.000700 --mach 22.248225 --fnum 5.222466e+18 --results-dir results/trajectory_stations/station_03",
+      "exit_code": null,
+      "expected_rows": 22,
+      "fnum": 5.222466e+18,
+      "mach": 22.248225,
+      "rows": 0,
+      "station": 3,
+      "status": "dry-run",
+      "steps": 2200,
+      "time_s": 72.0,
+      "vel_ms": 6702.74,
+      "wall_time_s": 0.0
+    },
+    {
+      "alt_km": 61.3822,
+      "attempts": 0,
+      "command": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main --validate --headless --diameter 3.0 --nose 0.55 --tradius 0.135 --angle 60.0 --skin scalloped --steps 2200 --alt 61.382200 --mach 18.486175 --fnum 1.110298e+19 --results-dir results/trajectory_stations/station_04",
+      "exit_code": null,
+      "expected_rows": 22,
+      "fnum": 1.110298e+19,
+      "mach": 18.486175,
+      "rows": 0,
+      "station": 4,
+      "status": "dry-run",
+      "steps": 2200,
+      "time_s": 80.0,
+      "vel_ms": 5760.05,
+      "wall_time_s": 0.0
+    },
+    {
+      "alt_km": 54.4047,
+      "attempts": 0,
+      "command": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main --validate --headless --diameter 3.0 --nose 0.55 --tradius 0.135 --angle 60.0 --skin scalloped --steps 2200 --alt 54.404700 --mach 11.850913 --fnum 2.653030e+19 --results-dir results/trajectory_stations/station_05",
+      "exit_code": null,
+      "expected_rows": 22,
+      "fnum": 2.65303e+19,
+      "mach": 11.850913,
+      "rows": 0,
+      "station": 5,
+      "status": "dry-run",
+      "steps": 2200,
+      "time_s": 92.0,
+      "vel_ms": 3839.0,
+      "wall_time_s": 0.0
+    }
+  ],
+  "stations_complete": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "stations_failed": [],
+  "stations_requested": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "steps": 2200
+}

@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""Remove the old timeline chrome before it is drawn again in update mode.
+
+WHY: the axis and the milestone discs of the overall-progress timeline are
+drawn apart from the milestone cards. The refresh that update mode runs
+removed only the cards and then drew a fresh axis and fresh discs, so every
+update run left a second copy of each stacked at the same coordinates. The
+chrome is now removed the same way the numbered discs of a pill list are.
+
+The script is a guarded replacement driver: it counts every anchor, refuses
+to write when a count does not match, parses the result and leaves the files
+untouched on any failure. It also takes a backup of both files first.
+"""
+
+from __future__ import annotations
+
+import ast
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent.parent
+GENERATOR = PROJECT / "make_pptx.py"
+TESTS = PROJECT / "tests" / "test_make_pptx.py"
+BACKUP_DIR = Path(__file__).resolve().parent / "backups"
+GENERATOR_BACKUP = BACKUP_DIR / "make_pptx_before_timeline_dedupe.py"
+TESTS_BACKUP = BACKUP_DIR / "test_make_pptx_before_timeline_dedupe.py"
+EM_DASH = "\u2014"
+
+ANCHOR_PILL_END = '''    for raw_shape in list(slide.shapes):
+        shape: Shape = raw_shape
+        if shape.name.startswith(NAME_PILL_LIST_NUMBER):
+            element = shape._element  # ruff: ignore[private-member-access]
+            element.getparent().remove(element)
+
+
+def _add_pill_list(
+'''
+
+NEW_FUNCTION = '''    for raw_shape in list(slide.shapes):
+        shape: Shape = raw_shape
+        if shape.name.startswith(NAME_PILL_LIST_NUMBER):
+            element = shape._element  # ruff: ignore[private-member-access]
+            element.getparent().remove(element)
+
+
+def _remove_timeline_chrome(slide: Slide) -> None:
+    """Remove the axis and the milestone discs of a timeline.
+
+    WHY: the axis and the discs are drawn apart from the milestone cards, so
+    a timeline that is drawn again without removing them would leave a second
+    copy of each at the same coordinates and the slide would carry two axes
+    and two discs per milestone.
+
+    Args:
+        slide: The slide the chrome sits on.
+
+    """
+    for raw_shape in list(slide.shapes):
+        shape: Shape = raw_shape
+        if shape.name == NAME_TIMELINE_AXIS or shape.name.startswith(NAME_TIMELINE_NODE):
+            element = shape._element  # ruff: ignore[private-member-access]
+            element.getparent().remove(element)
+
+
+def _add_pill_list(
+'''
+
+ANCHOR_TIMELINE_BRANCH = '''    if frame.timeline:
+        for card in _collect_narration_shapes(slide, frame.id):
+            element = card._element  # ruff: ignore[private-member-access]
+            element.getparent().remove(element)
+        plan = _plan_timeline(frame, BODY_FONT, TIMELINE_COLUMNS)
+        _add_timeline_cards(slide, frame, palette, plan)
+        return
+'''
+
+TIMELINE_BRANCH_NEW = '''    if frame.timeline:
+        for card in _collect_narration_shapes(slide, frame.id):
+            element = card._element  # ruff: ignore[private-member-access]
+            element.getparent().remove(element)
+        _remove_timeline_chrome(slide)
+        plan = _plan_timeline(frame, BODY_FONT, TIMELINE_COLUMNS)
+        _add_timeline_cards(slide, frame, palette, plan)
+        return
+'''
+
+ANCHOR_TEST = '''def test_every_owner_block_of_the_outline_has_a_pill_of_its_own(
+'''
+
+NEW_TEST = '''def test_update_does_not_duplicate_the_timeline_chrome(
+    spec: make_pptx.Scaffold,
+    tmp_path: Path,
+    sky_path: Path,
+) -> None:
+    """Running the update leaves one axis and one disc per milestone.
+
+    WHY: the axis and the discs are drawn apart from the milestone cards, so
+    a refresh that draws them again without removing the old ones would leave
+    two of each stacked at the same place on the slide.
+    """
+    output = tmp_path / "deck.pptx"
+    _ = make_pptx.build_regenerate(spec, output, with_sections=True, sky_path=sky_path)
+    for _attempt in range(2):
+        _ = make_pptx.build_update(
+            spec,
+            output,
+            force_bodies=False,
+            force_titles=False,
+            rebuild_sections=False,
+            sky_path=sky_path,
+        )
+    deck = NativePresentation(str(output))
+    host = _timeline_slide(deck)
+    names = [_name_of(shape) for shape in host.shapes]
+    assert names.count("timeline_axis") == 1
+    assert sum(1 for name in names if name.startswith("timeline_node_")) == EXPECTED_MILESTONE_COUNT
+
+
+def test_every_owner_block_of_the_outline_has_a_pill_of_its_own(
+'''
+
+RULES: list[tuple[Path, list[tuple[str, str, int]]]] = [
+    (
+        GENERATOR,
+        [
+            (ANCHOR_PILL_END, NEW_FUNCTION, 1),
+            (ANCHOR_TIMELINE_BRANCH, TIMELINE_BRANCH_NEW, 1),
+        ],
+    ),
+    (TESTS, [(ANCHOR_TEST, NEW_TEST, 1)]),
+]
+
+
+def main() -> int:
+    """Apply the dedupe of the timeline chrome and add the regression test."""
+    problems: list[str] = []
+    loaded: list[tuple[Path, str, list[tuple[str, str, int]]]] = []
+    for path, rules in RULES:
+        text = path.read_text(encoding="utf-8")
+        loaded.append((path, text, rules))
+        for old, _new, expected in rules:
+            found = text.count(old)
+            if found != expected:
+                problems.append(f"{path.name}: expected {expected} occurrence(s), found {found}: {old[:60]!r}")
+    if problems:
+        for problem in problems:
+            sys.stdout.write(f"MISMATCH {problem}\n")
+        return 1
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    for path, text, rules in loaded:
+        for old, new, _expected in rules:
+            text = text.replace(old, new, 1)
+        if EM_DASH in text:
+            sys.stdout.write(f"MISMATCH {path.name} would carry an em dash\n")
+            return 1
+        try:
+            ast.parse(text)
+        except SyntaxError as error:
+            sys.stdout.write(f"MISMATCH {path.name} would not parse: {error}\n")
+            return 1
+        backup = GENERATOR_BACKUP if path == GENERATOR else TESTS_BACKUP
+        backup.write_bytes(path.read_bytes())
+        path.write_text(text, encoding="utf-8")
+        sys.stdout.write(f"patched {path.name}\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

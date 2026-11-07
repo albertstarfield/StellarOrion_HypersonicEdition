@@ -1,0 +1,110 @@
+{
+  "status": "NOT_MET",
+  "reason": "finest-two change 14.529% exceeds the 10% tolerance (QoI 1.79686e+06 -> 1.5358e+06)",
+  "levels": [
+    {
+      "level": 1,
+      "n_grid": 70,
+      "steps": 2200,
+      "run_record_id": "gi-l1-70x70-20261016T042042",
+      "geometry": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/00_reference/in.hiad",
+      "generated_at": "2026-10-16T04:20:42+00:00",
+      "status": "ok",
+      "exit_code": 0,
+      "n_cells": 4900,
+      "wall_time_s": 1488.274,
+      "qoi_name": "heat_peak_wm2",
+      "qoi_value": 2059003.8,
+      "secondary": {
+        "drag": 48012.349,
+        "lift": -15786.825,
+        "n_particles": 598704.0,
+        "final_step": 2200.0,
+        "cpu_s": 1488.0576
+      }
+    },
+    {
+      "level": 2,
+      "n_grid": 100,
+      "steps": 2200,
+      "run_record_id": "gi-l2-100x100-20261016T044531",
+      "geometry": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/00_reference/in.hiad",
+      "generated_at": "2026-10-16T04:45:31+00:00",
+      "status": "ok",
+      "exit_code": 0,
+      "n_cells": 10000,
+      "wall_time_s": 2205.432,
+      "qoi_name": "heat_peak_wm2",
+      "qoi_value": 1946003.8,
+      "secondary": {
+        "drag": 45917.798,
+        "lift": -16346.201,
+        "n_particles": 853362.0,
+        "final_step": 2200.0,
+        "cpu_s": 2205.1475
+      }
+    },
+    {
+      "level": 3,
+      "n_grid": 139,
+      "steps": 2200,
+      "run_record_id": "gi-l3-139x139-20261016T052216",
+      "geometry": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/00_reference/in.hiad",
+      "generated_at": "2026-10-16T05:22:16+00:00",
+      "status": "ok",
+      "exit_code": 0,
+      "n_cells": 19321,
+      "wall_time_s": 2755.935,
+      "qoi_name": "heat_peak_wm2",
+      "qoi_value": 1796863.0,
+      "secondary": {
+        "drag": 45697.034,
+        "lift": -17644.098,
+        "n_particles": 1187032.0,
+        "final_step": 2200.0,
+        "cpu_s": 2755.6266
+      }
+    },
+    {
+      "level": 4,
+      "n_grid": 200,
+      "steps": 2200,
+      "run_record_id": "gi-l4-200x200-20261026T051613",
+      "geometry": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/00_reference/in.hiad",
+      "generated_at": "2026-10-26T05:16:13+00:00",
+      "status": "ok",
+      "exit_code": 0,
+      "n_cells": 40000,
+      "wall_time_s": 3478.626,
+      "qoi_name": "heat_peak_wm2",
+      "qoi_value": 1535798.9,
+      "secondary": {
+        "drag": 44064.047,
+        "lift": -18069.084,
+        "n_particles": 1707566.0,
+        "final_step": 2200.0,
+        "cpu_s": 3477.8394
+      }
+    }
+  ],
+  "deltas_pct": [
+    5.488090891332983,
+    7.663952146444937,
+    14.528881723314472
+  ],
+  "tolerance_pct": 10.0,
+  "tolerance_source": "owner decision 2026-10-16; SOP Ch.6 step 4 leaves the tolerance to the study",
+  "convergence": {
+    "r21": 1.4285714285714286,
+    "r32": 1.39,
+    "observed_order_p": null,
+    "method": "Richardson extrapolation + GCI, Fs=1.3 (3 meshes only)",
+    "citation": "Celik et al., J. Fluids Eng. 130 (2008) 078001",
+    "note": "refinement ratios are not constant (r21=1.4286, r32=1.3900); GCI is an estimate, not a bound; observed order undefined (zero change in one interval)"
+  },
+  "gci_vs_tolerance": {
+    "ok": true,
+    "detail": "no GCI estimate available"
+  },
+  "sop": "Ch.6 / Ch.12#4 / Ch.15"
+}

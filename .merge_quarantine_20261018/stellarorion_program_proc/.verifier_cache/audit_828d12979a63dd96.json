@@ -1,0 +1,258 @@
+{
+  "cache_key": "828d12979a63dd96",
+  "violations": [
+    {
+      "severity": "CRITICAL",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_safe_access.ads",
+      "line": 12,
+      "message": "SPARK_Mode(Off) WITHOUT justification \u2014 FRAUD: formal verification disabled with no documented rationale. This is not a bug, this is sabotage. Every SPARK_Mode(Off) MUST have a justification comment. No exceptions. No excuses.\nVALID JUSTIFICATION KEYWORDS (use one or more in your comment):\n  C/C++ Bridging:    interface.c, c_binding, c_interface, pragma_import, extern\n  Python Bridging:   python_binding, pyinterface, ctypes, cpython, pycffi\n  Shared Memory:     shm, shared_memory, mmap, memory_mapped, System.Address\n  Assembly/Inline:    asm, inline_asm, machine_code, register, low_level\n  Multithreading:    thread, task, protected, reentrant, mutex, semaphore\n  Hardware Access:    hardware, register, memory_mapped, volatile, atomic\n  FFI/Foreign:       ffi, foreign, extern, calling_convention, linker\n  Performance:       performance, optimization (WEAK \u2014 must document why SPARK can't work)\n\nEXAMPLES OF VALID JUSTIFICATIONS:\n  SPARK_Mode(Off) -- c_binding: Interface.C.int for socket() FFI call\n  SPARK_Mode(Off) -- shm: shared memory access via System.Address\n  SPARK_Mode(Off) -- thread: protected type for reentrant task entry\n  SPARK_Mode(Off) -- hardware: memory-mapped register at 0x40000000\n  SPARK_Mode(Off) -- python_binding: CPython API PyObject* handling\n\nAUDIT ENFORCEMENT (what the verifier checks):\n  - If justification keywords match C/Python/ASM/SHM \u2192 LOW severity (expected)\n  - If justification is vague/missing \u2192 HIGH severity (must document)\n  - If SPARK_Mode(Off) hides suspicious code (Unchecked_Conversion, etc.) \u2192 CRITICAL\n  - Auditor will verify the Off scope is LIMITED to the justified section only",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.String_Access allocation for FFI Spawn interface -- nosec: DYNAMIC_ALLOCATION",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/main.adb",
+      "line": 34,
+      "message": "SPARK_Mode(Off) with weak justification: \"Jump_Back: Sabotage \u00a714 compliance (NO_JUMP_BACK)\" \u2014 verify this is truly necessary or if SPARK-compatible alternative exists.\nVALID JUSTIFICATION KEYWORDS (use one or more in your comment):\n  C/C++ Bridging:    interface.c, c_binding, c_interface, pragma_import, extern\n  Python Bridging:   python_binding, pyinterface, ctypes, cpython, pycffi\n  Shared Memory:     shm, shared_memory, mmap, memory_mapped, System.Address\n  Assembly/Inline:    asm, inline_asm, machine_code, register, low_level\n  Multithreading:    thread, task, protected, reentrant, mutex, semaphore\n  Hardware Access:    hardware, register, memory_mapped, volatile, atomic\n  FFI/Foreign:       ffi, foreign, extern, calling_convention, linker\n  Performance:       performance, optimization (WEAK \u2014 must document why SPARK can't work)\n\nEXAMPLES OF VALID JUSTIFICATIONS:\n  SPARK_Mode(Off) -- c_binding: Interface.C.int for socket() FFI call\n  SPARK_Mode(Off) -- shm: shared memory access via System.Address\n  SPARK_Mode(Off) -- thread: protected type for reentrant task entry\n  SPARK_Mode(Off) -- hardware: memory-mapped register at 0x40000000\n  SPARK_Mode(Off) -- python_binding: CPython API PyObject* handling\n\nAUDIT ENFORCEMENT (what the verifier checks):\n  - If justification keywords match C/Python/ASM/SHM \u2192 LOW severity (expected)\n  - If justification is vague/missing \u2192 HIGH severity (must document)\n  - If SPARK_Mode(Off) hides suspicious code (Unchecked_Conversion, etc.) \u2192 CRITICAL\n  - Auditor will verify the Off scope is LIMITED to the justified section only",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.Spawn requires dynamic allocation for FFI -- nosec: DYNAMIC_ALLOCATION",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_reports.adb",
+      "line": 12,
+      "message": "SPARK_Mode(Off) with weak justification: \"Jump_Back: Sabotage \u00a714 compliance (NO_JUMP_BACK)\" \u2014 verify this is truly necessary or if SPARK-compatible alternative exists.\nVALID JUSTIFICATION KEYWORDS (use one or more in your comment):\n  C/C++ Bridging:    interface.c, c_binding, c_interface, pragma_import, extern\n  Python Bridging:   python_binding, pyinterface, ctypes, cpython, pycffi\n  Shared Memory:     shm, shared_memory, mmap, memory_mapped, System.Address\n  Assembly/Inline:    asm, inline_asm, machine_code, register, low_level\n  Multithreading:    thread, task, protected, reentrant, mutex, semaphore\n  Hardware Access:    hardware, register, memory_mapped, volatile, atomic\n  FFI/Foreign:       ffi, foreign, extern, calling_convention, linker\n  Performance:       performance, optimization (WEAK \u2014 must document why SPARK can't work)\n\nEXAMPLES OF VALID JUSTIFICATIONS:\n  SPARK_Mode(Off) -- c_binding: Interface.C.int for socket() FFI call\n  SPARK_Mode(Off) -- shm: shared memory access via System.Address\n  SPARK_Mode(Off) -- thread: protected type for reentrant task entry\n  SPARK_Mode(Off) -- hardware: memory-mapped register at 0x40000000\n  SPARK_Mode(Off) -- python_binding: CPython API PyObject* handling\n\nAUDIT ENFORCEMENT (what the verifier checks):\n  - If justification keywords match C/Python/ASM/SHM \u2192 LOW severity (expected)\n  - If justification is vague/missing \u2192 HIGH severity (must document)\n  - If SPARK_Mode(Off) hides suspicious code (Unchecked_Conversion, etc.) \u2192 CRITICAL\n  - Auditor will verify the Off scope is LIMITED to the justified section only",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off); -- c_binding: I/O and exception handling for report generation (Ada.Text_IO)",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_safe_access.adb",
+      "line": 9,
+      "message": "SPARK_Mode(Off) with weak justification: \"@test: Safe_Get is tested via StellarOrion_Self_Test.Test_Safe_Access\" \u2014 verify this is truly necessary or if SPARK-compatible alternative exists.\nVALID JUSTIFICATION KEYWORDS (use one or more in your comment):\n  C/C++ Bridging:    interface.c, c_binding, c_interface, pragma_import, extern\n  Python Bridging:   python_binding, pyinterface, ctypes, cpython, pycffi\n  Shared Memory:     shm, shared_memory, mmap, memory_mapped, System.Address\n  Assembly/Inline:    asm, inline_asm, machine_code, register, low_level\n  Multithreading:    thread, task, protected, reentrant, mutex, semaphore\n  Hardware Access:    hardware, register, memory_mapped, volatile, atomic\n  FFI/Foreign:       ffi, foreign, extern, calling_convention, linker\n  Performance:       performance, optimization (WEAK \u2014 must document why SPARK can't work)\n\nEXAMPLES OF VALID JUSTIFICATIONS:\n  SPARK_Mode(Off) -- c_binding: Interface.C.int for socket() FFI call\n  SPARK_Mode(Off) -- shm: shared memory access via System.Address\n  SPARK_Mode(Off) -- thread: protected type for reentrant task entry\n  SPARK_Mode(Off) -- hardware: memory-mapped register at 0x40000000\n  SPARK_Mode(Off) -- python_binding: CPython API PyObject* handling\n\nAUDIT ENFORCEMENT (what the verifier checks):\n  - If justification keywords match C/Python/ASM/SHM \u2192 LOW severity (expected)\n  - If justification is vague/missing \u2192 HIGH severity (must document)\n  - If SPARK_Mode(Off) hides suspicious code (Unchecked_Conversion, etc.) \u2192 CRITICAL\n  - Auditor will verify the Off scope is LIMITED to the justified section only",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off); -- justified: Unchecked_Conversion for GNAT.OS_Lib.String_Access allocation (Ada RM 13.9); c_binding: Ada unchecked cast for FFI -- nosec: DYNAMIC_ALLOCATION",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_status_writer.adb",
+      "line": 11,
+      "message": "SPARK_Mode(Off) with weak justification: \"Jump_Back: Sabotage \u00a714 compliance (NO_JUMP_BACK)\" \u2014 verify this is truly necessary or if SPARK-compatible alternative exists.\nVALID JUSTIFICATION KEYWORDS (use one or more in your comment):\n  C/C++ Bridging:    interface.c, c_binding, c_interface, pragma_import, extern\n  Python Bridging:   python_binding, pyinterface, ctypes, cpython, pycffi\n  Shared Memory:     shm, shared_memory, mmap, memory_mapped, System.Address\n  Assembly/Inline:    asm, inline_asm, machine_code, register, low_level\n  Multithreading:    thread, task, protected, reentrant, mutex, semaphore\n  Hardware Access:    hardware, register, memory_mapped, volatile, atomic\n  FFI/Foreign:       ffi, foreign, extern, calling_convention, linker\n  Performance:       performance, optimization (WEAK \u2014 must document why SPARK can't work)\n\nEXAMPLES OF VALID JUSTIFICATIONS:\n  SPARK_Mode(Off) -- c_binding: Interface.C.int for socket() FFI call\n  SPARK_Mode(Off) -- shm: shared memory access via System.Address\n  SPARK_Mode(Off) -- thread: protected type for reentrant task entry\n  SPARK_Mode(Off) -- hardware: memory-mapped register at 0x40000000\n  SPARK_Mode(Off) -- python_binding: CPython API PyObject* handling\n\nAUDIT ENFORCEMENT (what the verifier checks):\n  - If justification keywords match C/Python/ASM/SHM \u2192 LOW severity (expected)\n  - If justification is vague/missing \u2192 HIGH severity (must document)\n  - If SPARK_Mode(Off) hides suspicious code (Unchecked_Conversion, etc.) \u2192 CRITICAL\n  - Auditor will verify the Off scope is LIMITED to the justified section only",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off); -- c_binding: Ada.Text_IO I/O for status output and file operations",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_types.adb",
+      "line": 8,
+      "message": "SPARK_Mode(Off) with weak justification: \"Jump_Back: Sabotage \u00a714 compliance (NO_JUMP_BACK)\" \u2014 verify this is truly necessary or if SPARK-compatible alternative exists.\nVALID JUSTIFICATION KEYWORDS (use one or more in your comment):\n  C/C++ Bridging:    interface.c, c_binding, c_interface, pragma_import, extern\n  Python Bridging:   python_binding, pyinterface, ctypes, cpython, pycffi\n  Shared Memory:     shm, shared_memory, mmap, memory_mapped, System.Address\n  Assembly/Inline:    asm, inline_asm, machine_code, register, low_level\n  Multithreading:    thread, task, protected, reentrant, mutex, semaphore\n  Hardware Access:    hardware, register, memory_mapped, volatile, atomic\n  FFI/Foreign:       ffi, foreign, extern, calling_convention, linker\n  Performance:       performance, optimization (WEAK \u2014 must document why SPARK can't work)\n\nEXAMPLES OF VALID JUSTIFICATIONS:\n  SPARK_Mode(Off) -- c_binding: Interface.C.int for socket() FFI call\n  SPARK_Mode(Off) -- shm: shared memory access via System.Address\n  SPARK_Mode(Off) -- thread: protected type for reentrant task entry\n  SPARK_Mode(Off) -- hardware: memory-mapped register at 0x40000000\n  SPARK_Mode(Off) -- python_binding: CPython API PyObject* handling\n\nAUDIT ENFORCEMENT (what the verifier checks):\n  - If justification keywords match C/Python/ASM/SHM \u2192 LOW severity (expected)\n  - If justification is vague/missing \u2192 HIGH severity (must document)\n  - If SPARK_Mode(Off) hides suspicious code (Unchecked_Conversion, etc.) \u2192 CRITICAL\n  - Auditor will verify the Off scope is LIMITED to the justified section only",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off); -- justified: Unchecked_Conversion for type casting (Ada RM 13.9); c_binding: Ada unchecked cast for FFI",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "PYTHON_FUNCTION_COVERAGE",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/python/pipeline_comparison.py",
+      "line": 761,
+      "message": "Python Function Coverage: 'test_cost' lacks type hints (PEP 484)",
+      "standard": "PEP 484, ISO/IEC 25010",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "PYTHON_FUNCTION_COVERAGE",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/python/pipeline_comparison.py",
+      "line": 761,
+      "message": "Python Function Coverage: 'test_cost' lacks test reference \u2014 add '# test:' marker in docstring or test_ref annotation",
+      "standard": "ISO/IEC 25010, ECSS-Q-ST-80C",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_environment.adb",
+      "line": 794,
+      "message": "SPARK_Mode(Off) justified: \"extern: ISA fallback; full MSIS needs external Python pymsis via C popen bridge\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_history.adb",
+      "line": 32,
+      "message": "SPARK_Mode(Off) justified: \"extern: Ada.Directories/Ada.Exceptions file persistence for run history (non-SPARK libs)\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_history.ads",
+      "line": 18,
+      "message": "SPARK_Mode(Off) justified: \"extern: run-history API backed by non-SPARK runtime libs (Unbounded_String, Directories)\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_optimization.adb",
+      "line": 23,
+      "message": "SPARK_Mode(Off) justified: \"extern: Elementary_Functions + Text_IO are non-SPARK runtime libraries\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_optimization.ads",
+      "line": 41,
+      "message": "SPARK_Mode(Off) justified: \"extern: GA/LHS API uses non-SPARK runtime (Elementary_Functions, Text_IO diagnostics)\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_optimize.ads",
+      "line": 10,
+      "message": "SPARK_Mode(Off) justified: \"extern: orchestrates GA/metamodel runs writing run artifacts;\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_project.adb",
+      "line": 86,
+      "message": "SPARK_Mode(Off) justified: \"extern: spawns Python sidecar process via GNAT.OS_Lib; outside SPARK subset\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_reports.ads",
+      "line": 12,
+      "message": "SPARK_Mode(Off) justified: \"extern: orchestrates verified-off run modes; outside SPARK subset\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_runtime_guard.adb",
+      "line": 29,
+      "message": "SPARK_Mode(Off) justified: \"extern: file I/O + GNAT.OS_Lib subprocess dispatch; outside SPARK subset\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_runtime_guard.ads",
+      "line": 23,
+      "message": "SPARK_Mode(Off) justified: \"extern: file I/O + GNAT.OS_Lib subprocess dispatch; outside SPARK subset\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_self_test.adb",
+      "line": 36,
+      "message": "SPARK_Mode(Off) justified: \"extern: console I/O + status-file writes; outside SPARK subset\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_self_test.ads",
+      "line": 14,
+      "message": "SPARK_Mode(Off) justified: \"extern: console I/O + status-file writes; outside SPARK subset\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_sparta.adb",
+      "line": 35,
+      "message": "SPARK_Mode(Off) justified: \"extern: writes SPARTA run scripts + Ada.Directories/Exceptions I/O (non-SPARK)\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_sparta.ads",
+      "line": 18,
+      "message": "SPARK_Mode(Off) justified: \"extern: SPARTA Docker script generation with Ada.Directories file I/O\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "SPARK_MODE_OFF",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_test_modes.ads",
+      "line": 13,
+      "message": "SPARK_Mode(Off) justified: \"extern: sidecar interop; outside SPARK subset\" \u2014 legitimate use case detected",
+      "standard": "DO-178C \u00a75.2.2, ECSS-Q-ST-80C \u00a76.3, SPARK User Guide \u00a76.1",
+      "code_snippet": "pragma SPARK_Mode (Off);",
+      "solvers": [],
+      "counterexample": ""
+    }
+  ]
+}

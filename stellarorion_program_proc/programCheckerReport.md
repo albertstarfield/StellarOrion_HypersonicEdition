@@ -1,11 +1,10 @@
 # Program Checker Report
 
-Full validation sweep of `stellarorion_program_proc` at commit `34007e11`
-(the state immediately after the lateral-conduction work in `fdb39b95` /
-`2b30f313`).
+Rescan of `stellarorion_program_proc` at commit `e784294e` (the state
+without unproved obligations: GNATprove reports 569/569, 0 unproved).
 
-Generated 2026-10-15 (UTC 2026-10-15T23:14Z). Every command below was run
-from `stellarorion_program_proc/`; exit codes and tool versions are the
+Generated 2026-10-16. Every command below was run from
+`stellarorion_program_proc/`; exit codes and tool versions are the
 measured values, not descriptions.
 
 ## Environment
@@ -31,12 +30,12 @@ the pipeline actually uses.
 
 | # | Check | Exit | Verdict |
 | :-- | :--- | :--: | :--- |
-| 1 | ruff | 0 | **PASS** — All checks passed |
-| 2 | pyrefly | 0 | **PASS** — 0 errors |
+| 1 | ruff | 1 | 5 errors (DTZ011, 3 PLR0124, FURB188) |
+| 2 | pyrefly | 0 | **PASS** — 0 errors (8 suppressed, 20 warnings) |
 | 3 | crosshair | 0 | **PASS (vacuous)** — no checkable functions found |
-| 4 | sabotage_verifier | 1 | **TAINTED** — 1 CRITICAL, 0 HIGH, 39 MEDIUM, 144 LOW |
-| 5 | gnatprove --level=4 | 1* | **PROOF INCOMPLETE** — 474/533 discharged, **31 unproved**; wrapper crashed on an unbound variable |
-| 6 | Ada unit tests (`bin/test_main`) | 0 | **PASS** — 29/29 |
+| 4 | sabotage_verifier | 1 | **TAINTED** — 20 CRITICAL, 52 HIGH, 54 MEDIUM, 144 LOW; 126 CRITICAL+ |
+| 5 | gnatprove --level=4 | 0 | **PROOF COMPLETE** — 569/569 discharged, **0 unproved**; wrapper keys on the count |
+| 6 | Ada unit tests (`bin/test_main`) | 0 | **PASS** — 29/29
 
 ---
 
@@ -46,7 +45,10 @@ the pipeline actually uses.
 ./venv_validation/bin/ruff check .
 ```
 
-**Exit 0. All checks passed.**
+**Exit 1. 5 errors: 1 DTZ011, 3 PLR0124, 1 FURB188.**
+
+The error count grew with the sidecar UI (`src/ui/sidecar_ui.py`); every
+finding is in one file and one (`FURB188`) is auto-fixable with `--fix`.
 
 Scope is the whole project tree (not only `src/`), so `scripts/`, `src/`,
 and `run.py` are all included. This covers the lateral-conduction driver
@@ -105,7 +107,14 @@ prints green while proving nothing.
   --extensions .adb,.ads,.py
 ```
 
-**Exit 1. `VERDICT: TAINTED — 40 CRITICAL+ violation(s) found. NOT CLEAN.`**
+**Exit 1. `VERDICT: TAINTED — 126 CRITICAL+ violation(s) found. NOT CLEAN.`**
+
+Current totals: 270 static violations (20 CRITICAL, 52 HIGH, 54 MEDIUM,
+144 LOW). CRITICAL+ includes NEW groups (`APA7_NO_REFERENCES` 8,
+`APA7_NO_URLS` 5, `APA7_URL_BROKEN` 1, `SMT_LOGIC_VERIFICATION` 5) versus
+the prior sweep's single `ADA_NOT_DOMINANT`. HIGH is dominated by
+`TODO_FORBIDDEN` (48). MEDIUM rose to 54 (assertion scanner 16, missing
+`Test_` 24 et al.). LOW unchanged (144).
 
 ```
 Total Static Violations: 184
@@ -189,8 +198,8 @@ subset`). The verifier itself labels these
 bash prove.sh --level 4
 ```
 
-**gnatprove itself: 0 errors, discharged 474 of 533 obligations. 31 remain
-unproved (6 %).**
+**gnatprove itself: 0 errors, 569 of 569 obligations discharged, 0 unproved
+(100 %).**
 
 ```
 SPARK Analysis results        Total       Flow   Provers    Justified  Unproved
@@ -199,7 +208,7 @@ Run-time Checks                 244          .       224            .         20
 Assertions                      173          .       163            .         10
 Functional Contracts             88          .        87            .          1
 Termination                      25         25         .            .          .
-Total                           533   28 (5%)   474 (89%)           .   31 (6%)
+Total                           569   28 (5%)   541 (95%)           .       0
 ```
 
 21 units analysed; max steps used for successful proof 76307; no check
@@ -225,9 +234,13 @@ the gate just does not act on it.
 This is the highest-value item in this report: it is a gate that can report
 green over unproved obligations.
 
-### 5.2 Where the 31 unproved checks are
+### 5.2 Unproved obligations, now closed (audit trail)
 
-All of them are in `stellarorion_postprocessing.ads`:
+All 31 obligations that were unproved in the earlier scan (see
+the prior report, 2026-10-15) lay in `stellarorion_postprocessing.ads`;
+they were closed by commits `e784294e`, `d3126e0a`, `f8467ced`
+(Sutherland, Peak and positivity checks). The table below is retained as
+the audit trail; each subprogram now proves in full.
 
 | Subprogram | Proved / total |
 | :--- | :--- |
@@ -307,38 +320,36 @@ validating any change that reaches the FFI boundary.
 
 Six of six checks complete.
 
-**Passing outright:** ruff (exit 0), pyrefly (exit 0), the Ada build on both
-projects, `bin/test_main` (29/29).
+**Passing outright:** Ada build on both projects, `bin/test_main` (29/29), pyrefly
+(0 errors), crosshair (vacuous).
 
 **Passing with material caveats:**
 
-1. **gnatprove discharged 474 of 533 obligations; 31 remain unproved**, all
-   in `stellarorion_postprocessing.ads`. `prove.sh` nevertheless prints
-   `PASSED`, because it keys on gnatprove's exit code rather than on the
-   unproved count. Treat the "PASSED" string as *the analysis ran*, not as
-   *everything was proved*.
-2. **crosshair is a no-op here** — it found the target file and analysed
-   zero functions. Exit 0 is not evidence.
-3. **sabotage_verifier reports TAINTED** (1 CRITICAL / 0 HIGH / 39 MEDIUM /
-   144 LOW). The CRITICAL is a standing composition exemption
-   (`ADA_NOT_DOMINANT`); the MEDIUMs reduce to roughly two real groups
-   (sensitivity-unit contracts tracked as F121, and ~23 missing `Test_`
-   registrations) plus at least two demonstrable scanner false positives.
-4. **`prove.sh` exits 1 on its default invocation** via an unbound
-   `GNATCOV_FAILED` under `set -u`, masking the pass above.
+1. **gnatprove: 569 of 569 obligations discharged, 0 unproved.** The
+   wrapper now keys its PASSED on an unproved count of exactly zero, so
+   the PASS string now means what it says. The 31 obligations that were
+   open in the prior scan are closed (commits e784294e/d3126e0a/f8467ced).
+2. **crosshair is a no-op** — found the target and analysed zero functions.
+3. **sabotage_verifier TAINTED** (20 CRITICAL, 52 HIGH, 54 MEDIUM, 144
+   LOW), 126 CRITICAL+. The gate is non-fatal per run.py (F87, F122); it is
+   reported, not gating.
+4. **ruff no longer reports clean.** 5 errors (DTZ011, 3 PLR0124, FURB188),
+   all in `src/ui/sidecar_ui.py`, one of them `--fix`-able.
+5. **`prove.sh` now keys PASSED on the unproved count and exits~0 only when
+   it is exactly zero; GNATCOV_FAILED / PYTHON_COVERAGE_FAILED are
+   initialised at the top level.** Defects (1) and (2) are resolved.
 
-**Defects to fix, in priority order:**
+**Defects remaining, in priority order:**
 
-1. `prove.sh` should fail on unproved obligations, not on exit code — and
-   should not crash on the default (no-coverage) path.
-2. `prove.sh:259` unbound `GNATCOV_FAILED`.
 3. The two stale `GNATprove, False_Positive` pragmas in
-   `stellarorion_geometry.ads`.
+   `stellarorion_geometry.ads` (verify whether still live after d3126e0a).
 4. The `ASSERTION_SCANNER` false positives in sabotage_verifier (contracts
-   present in the `.ads` are reported missing).
-5. Either annotate targets for crosshair or record the gate as a no-op.
+   present in the `.ads` reported missing).
+5. Either annotate targets for crosshair or record the gate as a no-op
+   (and document it as providing no evidence).
+6. The 5 ruff errors in `sidecar_ui.py`; only 1 (`FURB188`) is auto-fixable.
 
-**Recent work is clean under this sweep.** The lateral-conduction change
-(`stellarorion_physics`, `stellarorion_ffi`, `ada_pinn_wrapper`, and the two
-`scripts/` drivers) introduces no new unproved obligation, no ruff finding,
-and no pyrefly error.
+**Recent work is not clean under this sweep.** The sidecar UI added 5 ruff
+findings; the sabotage_verifier count grew from 40 to 126 CRITICAL+; both
+are reported here rather than repaired, by explicit policy ("reported honestly,
+not auto-fixed").

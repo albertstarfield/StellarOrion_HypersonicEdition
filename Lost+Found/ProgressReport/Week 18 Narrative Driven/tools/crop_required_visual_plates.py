@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Trim three thesis plates to the panels the deck actually uses.
+
+WHY: the plates of Chapter 2 and Chapter 4 were exported as full thesis pages,
+so each one carries a band of small provenance text under its panels that
+repeats, word for word, the source line the deck already prints beneath the
+picture. On a projected slide that band is unreadable small print that
+duplicates a caption two inches away, and it costs the panels the height they
+need. The literature coverage map additionally carries a two-line banner title
+that says what the slide caption already says, and the banner is 17 percent of
+that picture's height.
+
+The crop lines are not guesses. Each one sits in a measured band of blank rows
+between two bands of ink, and this script refuses to write a picture whose cut
+row still holds ink, so no panel and no label can be lost silently. The thesis
+files are only ever read; the trimmed copies are written into the deck's
+figures folder.
+
+Bands measured on the source pictures (first and last row of ink, inclusive):
+
+heatflux_vs_x_panel.png 1800x1065
+    y    6..  44  figure title, kept
+    y   58.. 794  the three panels, kept
+    y  953..1048  provenance paragraph, dropped
+geometry_3d_plate.png 1800x1065
+    y    6..  44  figure title, kept
+    y   58.. 912  the two panels, kept
+    y  953..1050  provenance paragraph, dropped
+literature_review_map.png 1401x935
+    y   42.. 155  banner title, dropped
+    y  193.. 496  column headers, kept
+    y  519.. 760  the two coverage rows, kept
+    y  795.. 856  coverage key, kept
+
+Citations:
+    Pillow 13, https://pillow.readthedocs.io/en/stable/reference/Image.html
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from PIL import Image
+
+PROJECT = Path(__file__).resolve().parent.parent
+REPO = PROJECT.parents[2]
+FIGURES = PROJECT / "figures"
+THESIS_FIGURES = REPO / "Lost+Found/ProgressReport/CurrentThesisFinalReport/figures"
+
+#: A picture below this size in bytes was not written properly.
+MIN_PICTURE_BYTES = 20000
+#: A row counts as holding ink when this many sampled pixels are darker than
+#: the ink threshold. The plates are white pages with dark type and panels.
+INK_THRESHOLD = 245
+INK_MIN_PIXELS = 3
+
+#: (source name, output name, crop box as left, upper, right, lower, what the
+#: crop drops). The output name follows the deck's thesis_ naming convention.
+PLATES: list[tuple[str, str, tuple[int, int, int, int], str]] = [
+    (
+        "heatflux_vs_x_panel.png",
+        "thesis_heatflux_vs_x_panel.png",
+        (0, 0, 1800, 810),
+        "the three-line provenance paragraph under the panels",
+    ),
+    (
+        "literature_review_map.png",
+        "thesis_literature_review_map.png",
+        (0, 175, 1401, 870),
+        "the two-line banner title above the column headers",
+    ),
+]
+
+
+def _row_has_ink(image: Image.Image, row: int) -> bool:
+    """Report whether one row of a picture holds any ink.
+
+    Args:
+        image: The picture, already converted to greyscale.
+        row: The row to test, counted from the top.
+
+    Returns:
+        True when at least INK_MIN_PIXELS sampled pixels are darker than the
+        ink threshold.
+    """
+    found = 0
+    for x in range(0, image.width, 2):
+        # WHY: getpixel is used rather than load(), because load() may hand
+        # back None on a picture that is not fully decoded yet.
+        value = image.getpixel((x, row))
+        if isinstance(value, int) and value < INK_THRESHOLD:
+            found += 1
+            if found >= INK_MIN_PIXELS:
+                return True
+    return False
+
+
+def crop_one(source: Path, output: Path, box: tuple[int, int, int, int], dropped: str) -> str:
+    """Crop one plate, verify the cut rows are blank and write the copy.
+
+    Args:
+        source: The thesis plate, read only.
+        output: The trimmed picture to write into the deck's figures folder.
+        box: The crop box as left, upper, right, lower.
+        dropped: What the crop removes, used in the report line.
+
+    Returns:
+        A one line report of what was written.
+
+    Raises:
+        SystemExit: When the source is missing, when a cut row still holds ink,
+            or when the written picture is too small to be real.
+    """
+    if not source.is_file():
+        _ = sys.stderr.write(f"MISMATCH the thesis plate is missing: {source}\n")
+        raise SystemExit(1)
+    grey = Image.open(source).convert("L")
+    # WHY: only the two cut rows are read back out of the box; the left and
+    # right edges are the full width of the plate, so they are not unpacked.
+    upper = box[1]
+    lower = box[3]
+    # WHY: the cut must land in blank space. If the upper row of the kept
+    # region still holds ink the crop would slice a label in half, so the run
+    # stops instead of shipping a picture with a severed heading.
+    for row in (upper, lower - 1):
+        if 0 <= row < grey.height and _row_has_ink(grey, row):
+            _ = sys.stderr.write(
+                f"MISMATCH row {row} of {source.name} still holds ink, "
+                "the crop box would cut a label\n",
+            )
+            raise SystemExit(1)
+    colour = Image.open(source).convert("RGB")
+    trimmed = colour.crop(box)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    trimmed.save(output)
+    size = output.stat().st_size if output.is_file() else 0
+    if size < MIN_PICTURE_BYTES:
+        _ = sys.stderr.write(f"MISMATCH {output.name} was not written: {size} bytes\n")
+        raise SystemExit(1)
+    return (
+        f"[ok] {output.name}: {trimmed.width}x{trimmed.height}px, {size} bytes, "
+        f"aspect {trimmed.width / trimmed.height:.2f}, dropped {dropped}"
+    )
+
+
+def main() -> int:
+    """Trim every plate and report what was written.
+
+    Returns:
+        Zero when every picture was written, one when a plate was missing or a
+        crop line landed on ink.
+    """
+    for source_name, output_name, box, dropped in PLATES:
+        report = crop_one(THESIS_FIGURES / source_name, FIGURES / output_name, box, dropped)
+        _ = sys.stdout.write(report + "\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

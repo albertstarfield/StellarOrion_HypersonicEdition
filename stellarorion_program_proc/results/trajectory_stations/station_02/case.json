@@ -1,0 +1,16 @@
+{
+  "alt_km": 73.8491,
+  "attempts": 1,
+  "command": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/bin/main --validate --headless --diameter 3.0 --nose 0.55 --tradius 0.135 --angle 60.0 --skin scalloped --steps 2200 --alt 73.849100 --mach 25.033238 --fnum 1.911817e+18 --results-dir results/trajectory_stations/station_02",
+  "exit_code": 0,
+  "expected_rows": 22,
+  "fnum": 1.911817e+18,
+  "mach": 25.033238,
+  "rows": 22,
+  "station": 2,
+  "status": "ok",
+  "steps": 2200,
+  "time_s": 63.0,
+  "vel_ms": 7254.19,
+  "wall_time_s": 949.203
+}

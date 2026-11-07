@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Sequence the methodology block so both flowcharts come before the detail.
+
+WHY: the block read reasoning, six detail slides, optimization flowchart,
+research workflow. The two flowcharts were at the back, so the deck
+presented the parts before the whole flow. Both flowcharts now follow the
+reasoning, and the six detail slides follow them.
+
+The script is a guarded replacement driver: it checks the current order
+before it moves anything, counts every anchor of the two documents it
+touches, refuses to write a file that carries an em dash, parses the result
+and leaves every file untouched when a check fails.
+"""
+
+from __future__ import annotations
+
+import ast
+import json
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent.parent
+SPEC = PROJECT / "scaffold.json"
+README = PROJECT / "README.md"
+DOCS_SCRIPT = PROJECT / "tools" / "add_flowchart_docs.py"
+BACKUP_DIR = Path(__file__).resolve().parent / "backups"
+SPEC_BACKUP = BACKUP_DIR / "scaffold_before_methodology_reorder.json"
+README_BACKUP = BACKUP_DIR / "README_before_methodology_reorder.md"
+DOCS_BACKUP = BACKUP_DIR / "add_flowchart_docs_before_docstring_fix.py"
+EM_DASH = "\u2014"
+
+REASONING = "recall-methodology"
+MOVED = ["recall-flowchart", "recall-methodology-optimization"]
+# The order the block is expected to hold before the script runs.
+OLD_PREFIX = [
+    REASONING,
+    "recall-methodology-setup",
+    "recall-methodology-mesh",
+    "recall-methodology-convergence",
+    "recall-methodology-convection",
+    "recall-methodology-conduction",
+    "recall-methodology-radiation",
+    "recall-methodology-optimization",
+    "recall-flowchart",
+]
+NEW_PREFIX = [
+    REASONING,
+    "recall-flowchart",
+    "recall-methodology-optimization",
+    "recall-methodology-setup",
+    "recall-methodology-mesh",
+    "recall-methodology-convergence",
+    "recall-methodology-convection",
+    "recall-methodology-conduction",
+    "recall-methodology-radiation",
+]
+
+NEW_TABLE_BLOCK = (
+    "| 3. Methodology (graphical framework flowchart, per-step definitions, detailed "
+    "methodology, the reasoning) | `RECALL` | `METHODOLOGY AND REASONING` |\n"
+    "| 3. Methodology (the graphical framework flowchart, on its own slide) | `RECALL` | "
+    "`GRAPHICAL FRAMEWORK: RESEARCH WORKFLOW` |\n"
+    "| 3. Methodology (the optimization flowchart) | `RECALL` | "
+    "`METHODOLOGY: THE OPTIMIZATION FLOWCHART` |\n"
+)
+OLD_TABLE_BLOCK = (
+    "| 3. Methodology (graphical framework flowchart, per-step definitions, detailed "
+    "methodology, the reasoning) | `RECALL` | `METHODOLOGY AND REASONING` |\n"
+    "| 3. Methodology (how the simulation is set up) | `RECALL` | "
+    "`METHODOLOGY: THE SIMULATION SETUP` |\n"
+)
+OLD_TAIL_ROWS = (
+    "| 3. Methodology (the optimization flowchart) | `RECALL` | "
+    "`METHODOLOGY: THE OPTIMIZATION FLOWCHART` |\n"
+    "| 3. Methodology (the graphical framework flowchart, on its own slide) | `RECALL` | "
+    "`GRAPHICAL FRAMEWORK: RESEARCH WORKFLOW` |\n"
+)
+DETAIL_ROWS = "".join(
+    f"| 3. Methodology ({label}) | `RECALL` | `METHODOLOGY: {title}` |\n"
+    for label, title in (
+        ("how the simulation is set up", "THE SIMULATION SETUP"),
+        ("the mesh and the grid independence", "THE GRID INDEPENDENCE"),
+        ("the convergence of the particle solver", "THE SOLVER CONVERGENCE"),
+        ("the convection channel", "THE CONVECTION CHANNEL"),
+        ("the conduction channel", "THE CONDUCTION CHANNEL"),
+        ("the re-radiation channel", "THE RE-RADIATION CHANNEL"),
+    )
+)
+
+NEW_BULLET = """* The methodology is a block of eight slides. `METHODOLOGY AND REASONING` keeps
+  the per-step definitions and the reasoning, and the two flowcharts are
+  elaborated right after it, before any detail: `GRAPHICAL FRAMEWORK:
+  RESEARCH WORKFLOW` carries the eleven stage workflow of the thesis, and
+  `METHODOLOGY: THE OPTIMIZATION FLOWCHART` carries the twelve stage
+  validation pipeline of the engine with the geometry optimization loop drawn
+  under it. The six slides that follow explain how the simulation is run, one
+  figure each: the setup (the mesh of the run, the geometry, the grid, the
+  chain of solvers and the air model), the grid independence, the convergence
+  of the particle solver, and then the three heat-flux channels one by one,
+  the convection, the conduction and the re-radiation. Every one of them is a
+  figure frame: the picture is the content of the slide and the notes sit in a
+  column beside it, with the provenance line under the notes.
+"""
+
+DOCSTRING_OLD = """    Raises:
+        SystemExit: When an anchor does not match or the text carries an em dash.
+        ValueError: When the methodology bullet was not found.
+
+    """
+DOCSTRING_NEW = """    Raises:
+        SystemExit: When an anchor does not match or the text carries an em dash.
+
+    """
+
+
+def reorder_spec() -> None:
+    """Move both flowcharts directly behind the reasoning frame.
+
+    Raises:
+        SystemExit: When the block does not hold the expected order.
+    """
+    document = json.loads(SPEC.read_text(encoding="utf-8"))
+    frames: list[dict[str, object]] = document["frames"]
+    ids = [str(frame["id"]) for frame in frames]
+    start = ids.index(REASONING)
+    if ids[start : start + len(OLD_PREFIX)] != OLD_PREFIX:
+        problem = f"MISMATCH the methodology block does not hold the expected order: {ids[start : start + 9]}"
+        _ = sys.stdout.write(problem + "\n")
+        raise SystemExit(1)
+    by_id = {str(frame["id"]): frame for frame in frames}
+    kept = [frame for frame in frames if str(frame["id"]) not in MOVED]
+    insert_at = [str(frame["id"]) for frame in kept].index(REASONING) + 1
+    moved = [by_id[name] for name in MOVED]
+    ordered = kept[:insert_at] + moved + kept[insert_at:]
+    new_ids = [str(frame["id"]) for frame in ordered]
+    new_start = new_ids.index(REASONING)
+    if new_ids[new_start : new_start + len(NEW_PREFIX)] != NEW_PREFIX:
+        problem = "MISMATCH the reordering would not produce the requested sequence"
+        _ = sys.stdout.write(problem + "\n")
+        raise SystemExit(1)
+    document["frames"] = ordered
+    text = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+    if EM_DASH in text:
+        _ = sys.stdout.write("MISMATCH the specification would carry an em dash\n")
+        raise SystemExit(1)
+    _ = SPEC_BACKUP.write_bytes(SPEC.read_bytes())
+    _ = SPEC.write_text(text, encoding="utf-8")
+    _ = sys.stdout.write("the two flowcharts now follow the reasoning frame\n")
+
+
+def build_readme() -> str:
+    """Return the README with the table rows and the bullet in the new order.
+
+    Returns:
+        The new text of README.md.
+
+    Raises:
+        SystemExit: When an anchor does not match or the text carries an em dash.
+
+    """
+    text = README.read_text(encoding="utf-8")
+    anchors: list[tuple[str, int]] = [
+        (OLD_TABLE_BLOCK, 1),
+        (OLD_TAIL_ROWS, 1),
+        (DETAIL_ROWS, 1),
+        ("* The methodology is a block of eight slides.", 1),
+    ]
+    for old, expected in anchors:
+        found = text.count(old)
+        if found != expected:
+            _ = sys.stdout.write(f"MISMATCH README.md: expected {expected}, found {found}: {old[:60]!r}\n")
+            raise SystemExit(1)
+    text = text.replace(OLD_TAIL_ROWS, "", 1)
+    text = text.replace(OLD_TABLE_BLOCK, NEW_TABLE_BLOCK + DETAIL_ROWS, 1)
+    lines = text.split("\n")
+    marker = "* The methodology is a block of eight slides."
+    start = next(index for index, line in enumerate(lines) if line.startswith(marker))
+    end = start + 1
+    while end < len(lines) and lines[end].startswith("  "):
+        end += 1
+    lines = lines[:start] + NEW_BULLET.rstrip("\n").split("\n") + lines[end:]
+    text = "\n".join(lines)
+    if EM_DASH in text:
+        _ = sys.stdout.write("MISMATCH README.md would carry an em dash\n")
+        raise SystemExit(1)
+    return text
+
+
+def main() -> int:
+    """Reorder the block, the README table and the methodology bullet.
+
+    Returns:
+        Zero when every file was written, one when a guard refused.
+
+    """
+    docs_text = DOCS_SCRIPT.read_text(encoding="utf-8")
+    if docs_text.count(DOCSTRING_OLD) != 1:
+        _ = sys.stdout.write("MISMATCH the docstring anchor of add_flowchart_docs.py does not match\n")
+        return 1
+    docs_text = docs_text.replace(DOCSTRING_OLD, DOCSTRING_NEW, 1)
+    try:
+        _ = ast.parse(docs_text)
+    except SyntaxError as error:
+        problem = f"MISMATCH tools/add_flowchart_docs.py would not parse: {error}"
+        _ = sys.stdout.write(problem + "\n")
+        return 1
+    try:
+        readme_text = build_readme()
+        reorder_spec()
+    except SystemExit:
+        return 1
+    _ = README_BACKUP.write_bytes(README.read_bytes())
+    _ = DOCS_BACKUP.write_bytes(DOCS_SCRIPT.read_bytes())
+    _ = README.write_text(readme_text, encoding="utf-8")
+    _ = DOCS_SCRIPT.write_text(docs_text, encoding="utf-8")
+    _ = sys.stdout.write("the README table, the methodology bullet and the docstring follow the new order\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

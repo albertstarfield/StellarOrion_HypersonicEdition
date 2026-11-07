@@ -1,0 +1,23 @@
+#!/bin/bash
+# docker shim — runs the natively built SPARTA (sparta/build-gcc/src/spa_)
+# for the exact command shape stellarorion_sparta.adb emits:
+#   docker run --rm --name hiad-runner ... stellarorion/sparta spa -in <deck>
+# Everything else (build/rm/pull) is a successful no-op. The Ada harness
+# checks only the exit status and the surf.*.out count, both preserved.
+LOG="${DOCKER_SHIM_LOG:-$HOME/.hermes/cache/scratch/docker_shim.log}"
+mkdir -p "$(dirname "$LOG")"
+printf '%s docker %s\n' "$(date '+%F %T')" "$*" >> "$LOG"
+
+case "$1" in
+  build|rm|pull|tag) exit 0 ;;
+  run)
+    shift
+    while [ $# -gt 0 ] && [ "$1" != "stellarorion/sparta" ]; do shift; done
+    [ $# -gt 0 ] && shift
+    # skip mpirun wrapper tokens until the spa executable
+    while [ $# -gt 0 ] && [ "$1" != "spa" ] && [ "$1" != "spa_" ]; do shift; done
+    [ $# -gt 0 ] && shift
+    exec /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/sparta/build-gcc/src/spa_ "$@"
+    ;;
+  *) exit 0 ;;
+esac

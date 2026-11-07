@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Compose the thesis cover and six interior pages into one deck plate.
+
+WHY: the progress slide has to show that the document exists, not assert it.
+A claim that the thesis is written is worth nothing on a slide; a picture of
+the built cover above six pages taken out of the built file is evidence the
+audience can check. The cover therefore dominates, and the six pages are
+taken from the chapters the progress cards talk about, so the picture and
+the words name the same thing.
+
+AXIOMS
+    A1 The plate is a photograph of the artefact, so every pixel of a page
+       comes from `main.pdf` and nothing is redrawn or retyped.
+    A2 A page chosen for the strip must be recognisable at thumbnail size,
+       which means a chapter opening or a page carrying a figure, never a
+       page of solid prose.
+    A3 The cover is the tallest element because the slide reports progress,
+       and the cover is the progress.
+
+THEORIES
+    T1 If the same PDF is rendered twice at the same resolution the plate is
+       byte stable, because pdftoppm is deterministic and the composition
+       below has no random terms.
+    T2 At 300 dpi a letter page is 2550 by 3300 pixels, so a thumbnail asked
+       to fill 297 by 384 pixels is downsampled from over eight times that
+       area and keeps its type edges.
+
+APPLICATIONS
+    Run through the deck virtual environment, which carries Pillow but not
+    matplotlib. Page rendering shells out to the poppler utility rather than
+    pulling a PDF library into the environment.
+
+CITATIONS
+    Pillow 12.0.0 - https://pillow.readthedocs.io/en/stable/
+    Poppler pdftoppm 25.07.0 - https://poppler.freedesktop.org/
+    US Letter 8.5 by 11 in, 612 by 792 pt - Adobe PDF Reference 1.7, 3.2.
+
+EXCEPTIONS
+    Every failure writes a line beginning with MISMATCH to standard error and
+    exits non-zero, so the caller can tell a missing tool from a short picture.
+"""
+
+from __future__ import annotations
+
+import shutil
+import subprocess  # ruff: ignore[suspicious-subprocess-import]
+import sys
+import tempfile
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFilter
+
+PROJECT = Path(__file__).resolve().parent.parent
+REPO = PROJECT.parents[2]
+THESIS_PDF = REPO / "Lost+Found/ProgressReport/CurrentThesisFinalReport/main.pdf"
+OUT = Path(sys.argv[1])
+MIN_BYTES = int(sys.argv[2])
+DPI = int(sys.argv[3])
+
+W_IN, H_IN = 7.70, 4.01
+MARGIN_IN = 0.12
+COVER_H_IN = 2.30
+THUMB_H_IN = 1.20
+THUMB_GAP_IN = 0.07
+COVER_PAGE = 1
+# WHY these six: five of them open a chapter, so the strip reads as the
+# document from front matter to conclusion at thumbnail size, and the sixth is
+# the page carrying the two-pass comparison table. Pages whose figure is
+# rotated ninety degrees to fit the portrait page were rejected, because at
+# thumbnail size a sideways plot reads as a smudge rather than as a result.
+PREVIEW_PAGES = (3, 29, 99, 133, 156, 172)
+PAPER_ASPECT = 612.0 / 792.0
+
+BACKDROP = (247, 249, 252)
+BACKDROP_EDGE = (227, 232, 239)
+BORDER = (27, 42, 74)
+SHADOW = (24, 34, 56)
+
+
+def render_page(page: int, directory: Path, dpi: int) -> Path:
+    """Render one page of the thesis to a PNG and return the file path.
+
+    Args:
+        page: The one-based physical page number in the PDF.
+        directory: The scratch directory the render is written into.
+        dpi: The resolution the page is rasterised at.
+
+    Returns:
+        The PNG that pdftoppm wrote for that page.
+
+    Raises:
+        SystemExit: When pdftoppm is missing or reports a failure, because a
+            plate without its page is worse than no plate at all.
+    """
+    # WHY resolve the binary: a bare name lets the shell pick whatever sits
+    # first on PATH, which ruff flags and which breaks when poppler is not
+    # installed. The lookup also gives the failure a name instead of an
+    # exception raised from deep inside subprocess.
+    binary = shutil.which("pdftoppm")
+    if binary is None:
+        _ = sys.stderr.write("MISMATCH pdftoppm is not on PATH\n")
+        raise SystemExit(1)
+    stem = f"page-{page:03d}"
+    completed = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true]
+        [
+            binary,
+            "-f", str(page),
+            "-l", str(page),
+            "-r", str(dpi),
+            "-png",
+            "-singlefile",
+            str(THESIS_PDF),
+            str(directory / stem),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    written = directory / f"{stem}.png"
+    if completed.returncode != 0 or not written.is_file():
+        _ = sys.stderr.write(
+            "MISMATCH pdf page " + str(page) + " did not render: "
+            + completed.stderr[-400:] + "\n",
+        )
+        raise SystemExit(1)
+    return written
+
+
+def shadow_alpha(value: float) -> int:
+    """Return the alpha a blurred shadow pixel keeps, at about a third.
+
+    Args:
+        value: The blurred mask value, from zero to 255.
+
+    Returns:
+        The alpha to apply, rounded down.
+    """
+    return int(value * 0.34)
+
+
+def place_page(
+    canvas: Image.Image, page_png: Path, left: int, top: int,
+    width: int, height: int,
+) -> None:
+    """Paste one rendered page with a hairline border and a soft shadow.
+
+    WHY: a page dropped onto a light panel without an edge reads as a white
+    hole. The border gives the paper an outline and the shadow lifts it off
+    the backdrop, so the cover still dominates the composition by height.
+
+    Args:
+        canvas: The RGB plate being built.
+        page_png: The rendered page to paste.
+        left: The left edge of the page, in pixels.
+        top: The top edge of the page, in pixels.
+        width: The width the page is drawn at, in pixels.
+        height: The height the page is drawn at, in pixels.
+    """
+    with Image.open(page_png) as opened:
+        page = opened.convert("RGB").resize(
+            (width, height), Image.Resampling.LANCZOS,
+        )
+    # WHY a blurred mask: a hard offset rectangle reads as a second printed
+    # block behind the page. A blurred alpha mask, softened by nine pixels and
+    # held at a third opacity, reads as paper lifting off the panel instead.
+    mask = Image.new("L", (width, height), 0)
+    _ = ImageDraw.Draw(mask).rectangle((0, 0, width - 1, height - 1), fill=255)
+    alpha = mask.filter(ImageFilter.GaussianBlur(9)).point(shadow_alpha, "L")
+    canvas.paste(
+        Image.new("RGB", (width, height), SHADOW), (left + 5, top + 7), alpha,
+    )
+    canvas.paste(page, (left, top))
+    _ = ImageDraw.Draw(canvas).rectangle(
+        (left, top, left + width - 1, top + height - 1), outline=BORDER, width=2,
+    )
+
+
+def main() -> int:
+    """Build the plate, check its size, and report what was drawn.
+
+    Returns:
+        Zero on success, one when the written picture is under the byte floor.
+    """
+    if not THESIS_PDF.is_file():
+        _ = sys.stderr.write("MISMATCH the thesis pdf is missing\n")
+        return 1
+    width_px = round(W_IN * DPI)
+    height_px = round(H_IN * DPI)
+    per_inch = float(DPI)
+    canvas = Image.new("RGB", (width_px, height_px), (255, 255, 255))
+    margin = round(MARGIN_IN * per_inch)
+    cover_h = round(COVER_H_IN * per_inch)
+    cover_w = round(cover_h * PAPER_ASPECT)
+    thumb_h = round(THUMB_H_IN * per_inch)
+    thumb_w = round(thumb_h * PAPER_ASPECT)
+    gap = round(THUMB_GAP_IN * per_inch)
+    strip_w = len(PREVIEW_PAGES) * thumb_w + (len(PREVIEW_PAGES) - 1) * gap
+    strip_left = (width_px - strip_w) // 2
+    strip_top = height_px - margin - thumb_h - round(0.04 * per_inch)
+    cover_left = (width_px - cover_w) // 2
+    cover_top = margin + round(0.10 * per_inch)
+
+    with tempfile.TemporaryDirectory() as scratch:
+        directory = Path(scratch)
+        place_page(
+            canvas, render_page(COVER_PAGE, directory, DPI),
+            cover_left, cover_top, cover_w, cover_h,
+        )
+        for index, page in enumerate(PREVIEW_PAGES):
+            left = strip_left + index * (thumb_w + gap)
+            place_page(
+                canvas, render_page(page, directory, DPI),
+                left, strip_top, thumb_w, thumb_h,
+            )
+
+    canvas.save(OUT, format="PNG", optimize=True)
+    size = OUT.stat().st_size
+    if size < MIN_BYTES:
+        _ = sys.stderr.write(
+            "MISMATCH the progress plate was not written properly: "
+            + str(size) + " bytes\n",
+        )
+        return 1
+    _ = sys.stdout.write(
+        "[ok] progress plate: " + str(width_px) + "x" + str(height_px) + "px, "
+        + str(size) + " bytes, cover " + str(cover_w) + "x" + str(cover_h)
+        + ", six pages " + str(thumb_w) + "x" + str(thumb_h) + "\n",
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

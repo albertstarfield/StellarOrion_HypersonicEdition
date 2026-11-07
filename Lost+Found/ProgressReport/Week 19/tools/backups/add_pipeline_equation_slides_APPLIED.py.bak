@@ -1,0 +1,346 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Give the Optimization Pipeline one equation slide after each of its four.
+
+WHY: the DSMC subsection of the deck explains its physics and then shows the
+equation that governs it; the optimization subsection explains its four
+steps but showed no equation. The thesis carries the design vector, the
+composite cost, the operators of the genetic algorithm and the correction
+factor of the second pass, so each of the four slides now gets its own
+equation slide in the same shape.
+
+The script is a guarded driver: it measures every title and every set of
+cards before writing, counts every anchor, refuses to write a file that
+carries an em dash, parses the result and leaves every file untouched when a
+check fails.
+"""
+
+from __future__ import annotations
+
+import ast
+import json
+import sys
+from pathlib import Path
+from typing import cast
+
+PROJECT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT))
+
+SPEC = PROJECT / "scaffold.json"
+TESTS = PROJECT / "tests" / "test_make_pptx.py"
+README = PROJECT / "README.md"
+BACKUP_DIR = Path(__file__).resolve().parent / "backups"
+SPEC_BACKUP = BACKUP_DIR / "scaffold_before_pipeline_equations.json"
+TESTS_BACKUP = BACKUP_DIR / "test_make_pptx_before_pipeline_equations.py"
+README_BACKUP = BACKUP_DIR / "README_before_pipeline_equations.md"
+EM_DASH = "\u2014"
+#: A picture below this size was not written by the renderer.
+MIN_PICTURE_BYTES = 5000
+SOURCE_LINE = "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py."
+FOOTER = "The equation that governs the step. The narration stays editable in PowerPoint."
+TITLE_BUDGET_IN = 8.165
+
+SLIDES: tuple[tuple[str, str, str, str, tuple[str, ...], str, str], ...] = (
+    (
+        "recall-methodology-pipeline-space",
+        "recall-methodology-equation-pipeline-space",
+        "GOVERNING EQUATION: THE DESIGN SPACE",
+        (
+            "The design vector and the relations that turn it into the geometry of "
+            "the vehicle."
+        ),
+        (
+            "The design vector holds five variables: X1, X2, X3, Nt and the mass",
+            "X1 is the body radius, X2 the torus radius and X3 the half-cone angle",
+            "The nose radius follows the body radius through the ratio kappa, 0.3667",
+            "The box holds the 6-toroid Rapisarda baseline: 1.5 m, 0.135 m, 60 degrees",
+        ),
+        "the slide right after the design space, carrying its design vector.",
+        ("The design vector of the search and the three relations that map it to the "
+        "geometry of the vehicle."),
+    ),
+    (
+        "recall-methodology-pipeline-cost",
+        "recall-methodology-equation-pipeline-cost",
+        "GOVERNING EQUATION: THE COST FUNCTION",
+        (
+            "The composite cost of the genetic algorithm: four weighted terms, a "
+            "penalty and the heat load."
+        ),
+        (
+            "The cost is a weighted sum of four terms, all of them dimensionless",
+            "Heat load and stagnation flux enter through their reference values",
+            "The ballistic coefficient is squared against its reference, drag one sided",
+            "A penalty term pushes the design back inside the limits of the box",
+        ),
+        "the slide right after the cost function, carrying its equation.",
+        ("The composite cost the search minimises: four weighted terms and a penalty "
+        "on the geometry."),
+    ),
+    (
+        "recall-methodology-pipeline-ga",
+        "recall-methodology-equation-pipeline-ga",
+        "GOVERNING EQUATION: THE GENETIC ALGORITHM",
+        ("The operators and the stopping rule that govern the recorded campaign."),
+        (
+            "A population of 50 designs runs for at most 200 generations",
+            "Tournament size 3 picks the parents, so no single design dominates",
+            "Crossover is applied with 0.7, mutation with 0.1 on every gene",
+            "It stops when the best cost stops improving by 1e-6 over 20 generations",
+        ),
+        "the slide right after the genetic algorithm, carrying its parameters.",
+        "The operators of the search and the stagnation rule that ends it.",
+    ),
+    (
+        "recall-methodology-pipeline-gate",
+        "recall-methodology-equation-pipeline-gate",
+        "GOVERNING EQUATION: THE DOUBLE PASS",
+        ("The correction factor of the second pass and the corrected cost it produces."),
+        (
+            "Pass 1 searches in closed form and re-simulates only its own winner",
+            "The factor c is the solver flux over the Sutton-Graves flux of that run",
+            "It is clamped between 0.5 and 2.0 so one bad run cannot invert the cost",
+            "Pass 2 re-runs the same algorithm with the heat load weighted by c",
+        ),
+        "the slide right after the double pass, carrying its correction.",
+        ("The correction factor that ties the second pass back to the solver, and the "
+        "cost it corrects."),
+    ),
+)
+
+TEST_RULES: list[tuple[str, str, int]] = [
+    ("EXPECTED_FRAME_COUNT = 35", "EXPECTED_FRAME_COUNT = 39", 1),
+    ("EXPECTED_METHODOLOGY_FRAME_COUNT = 19", "EXPECTED_METHODOLOGY_FRAME_COUNT = 23", 1),
+    ("EXPECTED_FILLED_FRAME_COUNT = 24", "EXPECTED_FILLED_FRAME_COUNT = 28", 1),
+    (
+        '        "recall-methodology-equation-radiation",\n    }',
+        ('        "recall-methodology-equation-radiation",\n'
+        '        "recall-methodology-equation-pipeline-space",\n'
+        '        "recall-methodology-equation-pipeline-cost",\n'
+        '        "recall-methodology-equation-pipeline-ga",\n'
+        '        "recall-methodology-equation-pipeline-gate",\n    }'),
+        1,
+    ),
+]
+
+README_RULES: list[tuple[str, str, int]] = [
+    ("the thirty-five frames", "the thirty-nine frames", 1),
+    ("(37 slides)", "(41 slides)", 1),
+    ("* 37 slides, 16:9", "* 41 slides, 16:9", 1),
+    (
+        "slides 3 to 37 the thirty-five",
+        "slides 3 to 41 the thirty-nine",
+        1,
+    ),
+    ("the nineteen methodology slides", "the twenty-three methodology slides", 1),
+    (
+        ("| 3. Methodology (the double pass and the DSMC gate) | `RECALL` | "
+        "`METHODOLOGY: DOUBLE PASS AND THE GATE` |"),
+        ("| 3. Methodology (the double pass and the DSMC gate) | `RECALL` | "
+        "`METHODOLOGY: DOUBLE PASS AND THE GATE` |\n"
+        "| 3. Methodology (the equation that governs the step) | `RECALL` | "
+        "`GOVERNING EQUATION: THE DESIGN SPACE` |\n"
+        "| 3. Methodology (the equation that governs the step) | `RECALL` | "
+        "`GOVERNING EQUATION: THE COST FUNCTION` |\n"
+        "| 3. Methodology (the equation that governs the step) | `RECALL` | "
+        "`GOVERNING EQUATION: THE GENETIC ALGORITHM` |\n"
+        "| 3. Methodology (the equation that governs the step) | `RECALL` | "
+        "`GOVERNING EQUATION: THE DOUBLE PASS` |"),
+        1,
+    ),
+]
+
+
+def measure() -> list[str]:
+    """Return every title and card set that does not fit.
+
+    Returns:
+        The problems found, empty when everything fits.
+    """
+    import make_pptx as maker  # ruff: ignore[import-outside-top-level]
+
+    problems: list[str] = []
+    for _after, _new_id, title, _caption, cards, _target, _note in SLIDES:
+        width = maker.measure_text_inches(title, maker.TITLE_FONT, maker.FRAME_TITLE_SIZE.pt)
+        if width > TITLE_BUDGET_IN:
+            problems.append(f"the title {title!r} measures {width:.2f} in")
+        plan = maker._side_points_plan(  # ruff: ignore[private-member-access]
+            tuple(cards),
+            maker.BODY_FONT,
+            maker.SIDE_POINTS_COLUMN_MIN_IN,
+            4.20,
+        )
+        if plan[0] != maker.SIDE_POINTS_TEXT_START_PT:
+            problems.append(f"{title}: the cards need {plan[0]} pt")
+    return problems
+
+
+def slug(frame_id: str) -> str:
+    """Return the picture key of an equation frame identifier.
+
+    Args:
+        frame_id: The identifier of the frame, for example
+            recall-methodology-equation-pipeline-space.
+
+    Returns:
+        The key that names the picture of that frame.
+
+    """
+    return frame_id.rsplit("-", 1)[-1]
+
+
+def build_frames() -> str:
+    """Return the specification text with the four frames inserted.
+
+    Returns:
+        The new text of the specification.
+
+    Raises:
+        SystemExit: When an anchor is missing or the result would not fit.
+    """
+    document = json.loads(SPEC.read_text(encoding="utf-8"))
+    frames = cast("list[dict[str, object]]", document["frames"])
+    problems: list[str] = []
+    for anchor, new_id, *_rest in SLIDES:
+        if new_id in [str(frame.get("id")) for frame in frames]:
+            problems.append(f"the frame '{new_id}' is already in the specification")
+        if anchor not in [str(frame.get("id")) for frame in frames]:
+            problems.append(f"the specification does not hold the frame '{anchor}'")
+    if len(problems) != 0:
+        for problem in problems:
+            _ = sys.stdout.write(f"MISMATCH {problem}\n")
+        raise SystemExit(1)
+    for anchor, new_id, title, caption, cards, target, note in SLIDES:
+        ids = [str(frame.get("id")) for frame in frames]
+        position = ids.index(anchor) + 1
+        body = "\n".join(f"- {card}" for card in cards)
+        frames.insert(
+            position,
+            {
+                "id": new_id,
+                "section": "RECALL",
+                "title": title,
+                "body": body,
+                "target_position": target,
+                "note": note,
+                "figure": {
+                    "path": f"figures/thesis_equation_{PIPELINE_PIC[slug(new_id)]}.png",
+                    "caption": caption,
+                    "source": SOURCE_LINE,
+                    "layout": "side_points",
+                },
+                "footer": FOOTER,
+                "subsection": "Methodology: Optimization Pipeline",
+            },
+        )
+    text = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+    if EM_DASH in text:
+        _ = sys.stdout.write("MISMATCH the specification would carry an em dash\n")
+        raise SystemExit(1)
+    return text
+
+
+PIPELINE_PIC: dict[str, str] = {
+    "space": "design_space",
+    "cost": "cost_function",
+    "ga": "ga",
+    "gate": "double_pass",
+}
+
+
+def check_anchors() -> None:
+    """Verify the counts of the anchors in the test suite and the README.
+
+    Raises:
+        SystemExit: When an anchor does not match its count.
+    """
+    problems: list[str] = []
+    tests_text = TESTS.read_text(encoding="utf-8")
+    for old, _new, expected in TEST_RULES:
+        found = tests_text.count(old)
+        if found != expected:
+            problems.append(f"tests: expected {expected}, found {found}: {old[:50]!r}")
+    readme_text = README.read_text(encoding="utf-8")
+    for old, _new, expected in README_RULES:
+        found = readme_text.count(old)
+        if found != expected:
+            problems.append(f"README: expected {expected}, found {found}: {old[:50]!r}")
+    for _anchor, new_id, title, _caption, _cards, _target, _note in SLIDES:
+        picture = PROJECT / "figures" / f"thesis_equation_{PIPELINE_PIC[slug(new_id)]}.png"
+        if not picture.is_file() or picture.stat().st_size < MIN_PICTURE_BYTES:
+            problems.append(f"the picture of {title} is missing or too small")
+    if len(problems) != 0:
+        for problem in problems:
+            _ = sys.stdout.write(f"MISMATCH {problem}\n")
+        raise SystemExit(1)
+
+
+def apply_docs(spec_text: str) -> tuple[str, str]:
+    """Return the new test file and README text.
+
+    Args:
+        spec_text: The new specification, used only for its em dash check.
+
+    Returns:
+        The new text of the test suite and of the README.
+
+    Raises:
+        SystemExit: When a file would carry an em dash or not parse.
+    """
+    del spec_text
+    tests_text = TESTS.read_text(encoding="utf-8")
+    for old, new, _expected in TEST_RULES:
+        tests_text = tests_text.replace(old, new, 1)
+    if EM_DASH in tests_text:
+        _ = sys.stdout.write("MISMATCH the test file would carry an em dash\n")
+        raise SystemExit(1)
+    try:
+        _ = ast.parse(tests_text)
+    except SyntaxError as error:
+        _ = sys.stdout.write(f"MISMATCH the test file would not parse: {error}\n")
+        raise SystemExit(1) from error
+    readme_text = README.read_text(encoding="utf-8")
+    for old, new, _expected in README_RULES:
+        readme_text = readme_text.replace(old, new, 1)
+    if EM_DASH in readme_text:
+        _ = sys.stdout.write("MISMATCH README.md would carry an em dash\n")
+        raise SystemExit(1)
+    return tests_text, readme_text
+
+
+def main() -> int:
+    """Insert the four frames, then update the tests and the README.
+
+    Returns:
+        Zero when every file was written, one when a guard refused.
+
+    """
+    problems = measure()
+    if len(problems) != 0:
+        for problem in problems:
+            _ = sys.stdout.write(f"MISMATCH {problem}\n")
+        return 1
+    try:
+        check_anchors()
+        spec_text = build_frames()
+        tests_text, readme_text = apply_docs(spec_text)
+    except SystemExit as error:
+        if error.code == 0:
+            return 0
+        return 1
+    except (KeyError, TypeError, ValueError, OSError, json.JSONDecodeError) as error:
+        _ = sys.stdout.write(f"MISMATCH {type(error).__name__}: {error}\n")
+        return 1
+    _ = BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    _ = SPEC_BACKUP.write_bytes(SPEC.read_bytes())
+    _ = TESTS_BACKUP.write_bytes(TESTS.read_bytes())
+    _ = README_BACKUP.write_bytes(README.read_bytes())
+    _ = SPEC.write_text(spec_text, encoding="utf-8")
+    _ = TESTS.write_text(tests_text, encoding="utf-8")
+    _ = README.write_text(readme_text, encoding="utf-8")
+    _ = sys.stdout.write("the four optimization equation slides are in the specification\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

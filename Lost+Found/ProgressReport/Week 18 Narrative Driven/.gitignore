@@ -1,0 +1,4 @@
+# The sky is a build artifact: the generator rebuilds it from the palette in
+# scaffold.json on every run, and its content-hash name changes when the
+# palette changes, so tracking it would leave a stale image in the history.
+figures/sky_*.png

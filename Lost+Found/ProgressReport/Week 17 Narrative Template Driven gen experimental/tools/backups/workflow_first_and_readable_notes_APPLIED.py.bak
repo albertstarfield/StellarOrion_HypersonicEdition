@@ -1,0 +1,330 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Open the block with the research workflow and set the notes as points.
+
+WHY: three complaints of the owner. First, the research workflow is the
+overview of everything that follows, so it belongs before the reasoning
+slide, not after it. Second, the notes beside the pictures of slides 8 to 14
+are eleven point, which reads as fine print. Third, they are prose, and he
+asked for them as points instead.
+
+The script therefore swaps the first two frames of the methodology block,
+sets the type of a notes column to fourteen point, and replaces the seven
+prose captions by short point lines. Every caption is measured at the new
+size before anything is written, and the script leaves all files untouched
+when a single one does not fit.
+"""
+
+from __future__ import annotations
+
+import ast
+import json
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT))
+
+SPEC = PROJECT / "scaffold.json"
+GENERATOR = PROJECT / "make_pptx.py"
+README = PROJECT / "README.md"
+BACKUP_DIR = Path(__file__).resolve().parent / "backups"
+SPEC_BACKUP = BACKUP_DIR / "scaffold_before_notes_as_points.json"
+GENERATOR_BACKUP = BACKUP_DIR / "make_pptx_before_notes_as_points.py"
+README_BACKUP = BACKUP_DIR / "README_before_notes_as_points.md"
+EM_DASH = "\u2014"
+BULLET = "\u2022"
+
+OLD_HEAD = ("recall-methodology", "recall-flowchart")
+NEW_HEAD = ("recall-flowchart", "recall-methodology")
+PREFIX_IDS = (
+    "recall-methodology",
+    "recall-flowchart",
+    "recall-methodology-optimization",
+    "recall-methodology-setup",
+    "recall-methodology-mesh",
+    "recall-methodology-convergence",
+    "recall-methodology-convection",
+    "recall-methodology-conduction",
+    "recall-methodology-radiation",
+)
+
+#: The point lines of every figure frame that owns its panel. WHY: the owner
+#: asked for points instead of prose, so each line is one fact that stands on
+#: its own and each is short enough to wrap once at fourteen point.
+POINTS: dict[str, tuple[str, ...]] = {
+    "recall-methodology-optimization": (
+        "Twelve stage validation pipeline of the engine, with the optimization loop under it.",
+        "Stages 1 to 6: flight parameters, geometry quality assurance, the HIAD surface, the solver script, the container, the DSMC run.",
+        "Stages 7 to 12: surface dumps, flight metrics, survivability check, sanity checks, the IRVE-3 comparison, the export.",
+        "The loop: design space, the Bayesian step, the cost function J(x), the DSMC re-simulation, the accept test on q against Q_target.",
+        "A rejection resamples the design space, so every accepted geometry is re-measured.",
+    ),
+    "recall-methodology-setup": (
+        "One uniform Cartesian grid of the reference run, at grid factor 0.7.",
+        "Geometry: body of revolution carrying a toroidal stack; design vector is the body radius, the torus minor radius, the half-cone angle, the toroid count and the vehicle mass.",
+        "Grid: 139 by 139 cells, finer than the local mean free path.",
+        "Chain: geometry and flight point feed SPARTA in Docker and the Ada/SPARK one dimensional thermal solver.",
+        "The genetic algorithm writes the next geometry back.",
+    ),
+    "recall-methodology-mesh": (
+        "Three levels: 70, 100 and 139 grid points, that is 4,900 / 10,000 / 19,321 cells.",
+        "Particles: 0.60, 0.85 and 1.19 million per level.",
+        "The finest pair moves the peak surface flux by 8.30 percent, inside the 10 percent tolerance of 2026-10-16.",
+        "Axis aligned: skewness 0 and orthogonal quality 1 in every cell; aspect ratio 3.56 reported, not gated.",
+        "The levels carry different particle counts, so the change mixes discretisation with sampling.",
+    ),
+    "recall-methodology-convergence": (
+        "Normalised residuals of drag, lift and the per-element heat flux against the particle-time step.",
+        "About three orders of magnitude over steps 100 to 2200, with finite-sample scatter.",
+        "Retention 0.983 at step 400; stationarity indicator near 0.005.",
+        "The run is closed on the retention and the indicator, not on a residual threshold.",
+    ),
+    "recall-methodology-convection": (
+        "Sutton-Graves carries the convective load: q = C_SG sqrt(rho/R_N) V^3, C_SG = 1.7415e-4.",
+        "At 3378 m/s and a 1.5 m nose radius that is 1.536e5 W/m^2, that is 15.36 W/cm^2.",
+        "The particle solver gives a distribution, so it ranks geometries instead of giving an absolute flux.",
+        "At the candidate nose radius the screening flux at the baseline is 25.36 W/cm^2.",
+    ),
+    "recall-methodology-conduction": (
+        "Heat enters the hot face and conducts inward through the five-ply layup.",
+        "Stack resistance 0.3056 m^2K/W over the 3,648 surface elements.",
+        "Most of the stack is Pyrogel, so the back face stays at 300 K while the hot face reaches 1327.2 K.",
+        "Lateral coupling carries 0.0083 W/m^2, about six parts in a hundred million of the load.",
+    ),
+    "recall-methodology-radiation": (
+        "Hot face radiates as a grey body, q = eps sigma T^4, with emissivity 0.75 on the outer Nicalon SiC ply.",
+        "The load of 143,760 W/m^2 leaves as 140,399 W/m^2 of reradiation and 3,362 W/m^2 of conduction.",
+        "So the surface temperature is set by the radiative balance, and the insulation sees very little of it.",
+    ),
+}
+
+GENERATOR_RULES: list[tuple[str, str, int]] = [
+    (
+        "FEATURE_NOTES_COLUMN_IN = 3.20\n",
+        ("FEATURE_NOTES_COLUMN_IN = 3.20\n"
+        "#: The type size of the notes that stand beside a picture which owns the\n"
+        "#: content area. WHY: at eleven point a column of notes reads as fine print\n"
+        "#: next to a large picture, so the notes of a figure frame are set larger\n"
+        "#: and shorter instead, as one point per line.\n"
+        "FEATURE_NOTES_SIZE = Pt(14)\n"),
+        1,
+    ),
+    (
+        ("    caption_lines = figure.caption.splitlines()\n"
+        "    if len(caption_lines) == 0:\n"
+        "        caption_lines = [figure.caption]\n"),
+        ("    caption_lines = figure.caption.splitlines()\n"
+        "    if len(caption_lines) == 0:\n"
+        "        caption_lines = [figure.caption]\n"
+        "    caption_size = FILLED_CAPTION_SIZE\n"),
+        1,
+    ),
+    (
+        ("        source_height = _source_box_height(figure.source, caption_width)\n"
+        "        caption_height = area_height - source_height - FILLED_SOURCE_GAP_IN\n"
+        "        source_top = area_top + caption_height + FILLED_SOURCE_GAP_IN\n"),
+        ("        source_height = _source_box_height(figure.source, caption_width)\n"
+        "        caption_height = area_height - source_height - FILLED_SOURCE_GAP_IN\n"
+        "        source_top = area_top + caption_height + FILLED_SOURCE_GAP_IN\n"
+        "        caption_size = FEATURE_NOTES_SIZE\n"
+        "        # WHY: the owner wants the notes as points rather than prose, and a\n"
+        "        # point that wraps has to keep its marker at the start of the first\n"
+        "        # line, so every line of the caption is drawn with its own bullet.\n"
+        '        caption_lines = [f"\\u2022  {line}" for line in caption_lines if len(line.strip()) != 0]\n'),
+        1,
+    ),
+    (
+        "        caption_lines,\n        size=FILLED_CAPTION_SIZE,\n",
+        "        caption_lines,\n        size=caption_size,\n",
+        1,
+    ),
+    (
+        "        if collapse_whitespace(frame.figure.caption) not in _shape_text(caption):\n",
+        ('        caption_text = collapse_whitespace(_shape_text(caption).replace("\\u2022", " "))\n'
+        "        if collapse_whitespace(frame.figure.caption) not in caption_text:\n"),
+        1,
+    ),
+]
+
+BULLET_MARKER = "* The methodology is a block of eight slides."
+NEW_BULLET = """* The methodology is a block of eight slides, opened by the overview and
+  then the reasoning: `GRAPHICAL FRAMEWORK: RESEARCH WORKFLOW` carries the
+  eleven stage workflow of the thesis and comes first because it is the
+  overview of everything that follows, `METHODOLOGY AND REASONING` keeps the
+  per-step definitions, and `METHODOLOGY: THE OPTIMIZATION FLOWCHART` carries
+  the twelve stage validation pipeline of the engine with the geometry
+  optimization loop drawn under it. The six slides that follow explain how
+  the simulation is run, one figure each: the setup (the mesh of the run, the
+  geometry, the grid, the chain of solvers and the air model), the grid
+  independence, the convergence of the particle solver, and then the three
+  heat-flux channels one by one, the convection, the conduction and the
+  re-radiation. Every one of them is a figure frame: the picture is the
+  content of the slide, and the notes beside it are set as points at fourteen
+  point in a column of their own, with the provenance line under them.
+"""
+
+README_RULES: list[tuple[str, str, int]] = [
+    (
+        ("| 3. Methodology (graphical framework flowchart, per-step definitions, detailed "
+        "methodology, the reasoning) | `RECALL` | `METHODOLOGY AND REASONING` |\n"
+        "| 3. Methodology (the graphical framework flowchart, on its own slide) | `RECALL` | "
+        "`GRAPHICAL FRAMEWORK: RESEARCH WORKFLOW` |"),
+        ("| 3. Methodology (the graphical framework flowchart, the overview of all below) | "
+        "`RECALL` | `GRAPHICAL FRAMEWORK: RESEARCH WORKFLOW` |\n"
+        "| 3. Methodology (graphical framework flowchart, per-step definitions, detailed "
+        "methodology, the reasoning) | `RECALL` | `METHODOLOGY AND REASONING` |"),
+        1,
+    ),
+]
+
+NOTES_PT = 14.0
+#: The size the generator rule below has to inject, so the measurement here
+#: and the type size of the deck cannot drift apart.
+NOTES_RULE = "FEATURE_NOTES_SIZE = Pt(14)"
+MEASURE_FACTOR = 0.90
+MARGIN_IN = 0.10
+PANEL_HEIGHT_IN = 4.90
+
+
+def prefixed(points: tuple[str, ...]) -> str:
+    """Return the point lines as they will be drawn, one per line.
+
+    Args:
+        points: The point lines of the frame.
+
+    Returns:
+        The lines with the bullet in front of them.
+    """
+    return "\n".join(f"{BULLET}  {line}" for line in points)
+
+
+def caption_fits(frame_id: str, line_text: str) -> str:
+    """Measure one caption against the space its column really has.
+
+    Args:
+        frame_id: The frame the caption belongs to, used in the message.
+        line_text: The caption as it will be drawn.
+
+    Returns:
+        The problem found, or an empty string when the caption fits.
+    """
+    import make_pptx as maker  # ruff: ignore[import-outside-top-level]
+
+    spec = maker.load_spec(SPEC)
+    frame = next(item for item in spec.frames if item.id == frame_id)
+    if frame.figure is None:
+        return f"the frame {frame_id} carries no figure"
+    width = maker.FEATURE_NOTES_COLUMN_IN * MEASURE_FACTOR
+    lines = maker.wrap_line_count(line_text, maker.BODY_FONT, NOTES_PT, width)
+    needed = lines * maker.line_height_inches(maker.BODY_FONT, NOTES_PT)
+    area_height = PANEL_HEIGHT_IN - 2.0 * maker.FILLED_FIGURE_PADDING_IN
+    source_height = maker._source_box_height(frame.figure.source, maker.FEATURE_NOTES_COLUMN_IN)
+    available = area_height - source_height - maker.FILLED_SOURCE_GAP_IN - MARGIN_IN
+    if needed > available:
+        return f"the notes of {frame_id} need {needed:.2f} in but only {available:.2f} in is free"
+    return ""
+
+
+def main() -> int:
+    """Swap the overview to the front and set the seven note columns as points."""
+    problems: list[str] = []
+    try:
+        document = json.loads(SPEC.read_text(encoding="utf-8"))
+        frames = document.get("frames")
+        ids = [str(frame.get("id")) for frame in frames]
+        start = ids.index(PREFIX_IDS[0]) if PREFIX_IDS[0] in ids else -1
+        if start < 0:
+            problems.append("the specification does not hold the reasoning frame")
+        else:
+            head = tuple(ids[start : start + len(PREFIX_IDS)])
+            if head not in {PREFIX_IDS, (*NEW_HEAD, *PREFIX_IDS[2:])}:
+                problems.append(f"the block does not start as expected: {head}")
+            elif head[0:2] == NEW_HEAD:
+                problems.append("the research workflow is already first")
+        for frame_id in POINTS:
+            if frame_id not in ids:
+                problems.append(f"the specification does not hold the frame '{frame_id}'")
+            else:
+                problem = caption_fits(frame_id, prefixed(POINTS[frame_id]))
+                if problem:
+                    problems.append(problem)
+
+        generator_text = GENERATOR.read_text(encoding="utf-8")
+        for old, _new, expected in GENERATOR_RULES:
+            found = generator_text.count(old)
+            if found != expected:
+                problems.append(f"make_pptx.py: expected {expected} occurrence(s), found {found}: {old[:60]!r}")
+        readme_text = README.read_text(encoding="utf-8")
+        for old, _new, expected in README_RULES:
+            found = readme_text.count(old)
+            if found != expected:
+                problems.append(f"README.md: expected {expected} occurrence(s), found {found}: {old[:60]!r}")
+        injected = "\n".join(new for _old, new, _expected in GENERATOR_RULES)
+        if NOTES_RULE not in injected:
+            problems.append("make_pptx.py: no rule injects the fourteen point notes")
+        if BULLET_MARKER not in readme_text:
+            problems.append("README.md has no methodology bullet")
+        if len(problems) != 0:
+            for problem in problems:
+                _ = sys.stdout.write(f"MISMATCH {problem}\n")
+            return 1
+
+        # Everything matched, so the three files are rewritten together.
+        by_id = {str(frame.get("id")): frame for frame in frames}
+        first, second = by_id["recall-methodology"], by_id["recall-flowchart"]
+        index = frames.index(first)
+        if frames[index + 1] is not second:
+            _ = sys.stdout.write("MISMATCH the reasoning frame is not followed by the workflow\n")
+            return 1
+        frames[index], frames[index + 1] = second, first
+        for frame_id, points in POINTS.items():
+            by_id[frame_id]["figure"]["caption"] = "\n".join(points)
+        spec_text = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+
+        for old, new, _expected in GENERATOR_RULES:
+            generator_text = generator_text.replace(old, new, 1)
+        _ = ast.parse(generator_text)
+
+        lines = readme_text.split("\n")
+        bullet_start = next(
+            (position for position, line in enumerate(lines) if line.startswith(BULLET_MARKER)),
+            -1,
+        )
+        bullet_end = bullet_start + 1
+        while bullet_end < len(lines) and lines[bullet_end].startswith("  "):
+            bullet_end += 1
+        readme_text = "\n".join(
+            lines[:bullet_start] + NEW_BULLET.rstrip("\n").split("\n") + lines[bullet_end:],
+        )
+        for old, new, _expected in README_RULES:
+            readme_text = readme_text.replace(old, new, 1)
+
+        for name, text in (
+            ("the specification", spec_text),
+            ("the generator", generator_text),
+            ("README.md", readme_text),
+        ):
+            if EM_DASH in text:
+                _ = sys.stdout.write(f"MISMATCH {name} would carry an em dash\n")
+                return 1
+
+        _ = BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        _ = SPEC_BACKUP.write_bytes(SPEC.read_bytes())
+        _ = GENERATOR_BACKUP.write_bytes(GENERATOR.read_bytes())
+        _ = README_BACKUP.write_bytes(README.read_bytes())
+        _ = SPEC.write_text(spec_text, encoding="utf-8")
+        _ = GENERATOR.write_text(generator_text, encoding="utf-8")
+        _ = README.write_text(readme_text, encoding="utf-8")
+    except (KeyError, IndexError, TypeError, ValueError, AttributeError, json.JSONDecodeError) as error:
+        _ = sys.stdout.write(f"MISMATCH {type(error).__name__}: {error}\n")
+        return 1
+    _ = sys.stdout.write(
+        "the research workflow now opens the block, and the seven note columns are points "
+        "at fourteen point\n",
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -176,7 +176,7 @@ def main() -> int:
             ax_tab.text(x, y, text, fontsize=7.8, color=INK, ha="left",
                         va="center")
     fig.text(0.045, 0.020,
-             "The two 1.269 m trees differ by at most 54.2 mm at any vertex; the pass-2\n"
+             "The two 1.269 m trees differ by at most 50.4 mm at any vertex; the pass-2\n"
              "body is 0.62 times the reference size. Q is the recorded total heat load of that\n"
              "tree's validation series. * The optimised candidate was flown through the gate\n"
              "(results/validation_optimized_smooth): Q equals the reference because the gate's\n"

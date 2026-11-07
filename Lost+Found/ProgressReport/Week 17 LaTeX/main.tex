@@ -38,10 +38,64 @@
 % Citation: Beamer -- https://ctan.org/pkg/beamer
 %           pdfTeX 3.141592653-2.6-1.40.29 (TeX Live 2026)
 % =====================================================================
+% NARRATION REVAMP -- TARGET STRUCTURE (PLACEHOLDER SCAFFOLD ONLY)
+% ---------------------------------------------------------------------
+% Owner directive, 2026-10-21: "for the latest one, create placeholder
+% for these. don't do anything or fill in anything yet", followed by
+% "This is the structure that we need to have on the latest latex one"
+% and "add it into the comments too for this structure too".
+%
+% WHAT THIS BLOCK IS
+%   It records the narration order the deck must end up in. Nothing in
+%   it is filled in. Every item below has exactly one placeholder frame
+%   in the final section "NARRATION REVAMP: PLACEHOLDER SCAFFOLD" at
+%   the end of this file, and each placeholder frame carries, in its
+%   own comment, the position that frame must occupy once its real
+%   content exists.
+%
+% THE STRUCTURE AS GIVEN BY THE OWNER
+%
+%   [ Intro start ]
+%     0. title start
+%   [ intro end ]
+%
+%   [ recall start ]
+%     1. Latar belakang overview
+%     2. Tujuan objective? (all and 2-3 points), Research Scope limit
+%     3. Methodology (update or not?) (Graphical Framework flowchart)
+%        (and it's (each steps and methodology) definition)
+%        (Detailed methodology)
+%        (The reasoning too)
+%     4. Previous issues
+%   [ recall end ]
+%
+%   [ Current progress start ]
+%     5. Overall Progress on the research?
+%        (Not the technical detail on the Resolution)
+%   [ Current progress end ]
+%
+%     6. The progress issue and the resolution (the attempt) and the
+%        update (let's say DSMC, Narration)
+%
+%   [ Ending start ]
+%     Conclusion (How close to the objective and does it answers the
+%     previous issue?)
+%   [ Ending end ]
+%
+%   CFD (What's required?) and Optimized (What's required?) plot:
+%   (Lebih di tulisan), Reference find paper then show on the next or
+%   point 6
+%
+% TRANSLITERATION NOTE (house rule, not an edit of the owner's wording)
+%   The owner's block marks its boundaries with U+2014 em-dashes. This
+%   deck carries a measured zero-em-dash rule (see the PRESENTATION TEXT
+%   BUDGET block above), so those boundary marks are written here as
+%   [ ... ] brackets with ASCII hyphens. The wording of the structure
+%   itself is the owner's, unaltered.
+% =====================================================================
 \documentclass[aspectratio=169,11pt]{beamer}
 
 \input{preamble}
-
 
 \begin{document}
 
@@ -55,11 +109,21 @@
 
 \section{PROBLEM AND ANSWER}
 \begin{frame}{OUTLINE}              % slide 2
-  % Eight sections after the Week 17 narration remix; the TOC needs a smaller
-  % size than the body default to stay inside the frame.
-  \footnotesize
+  % Nine sections in total after the Week 17 restructure (OPTIMIZATION and
+  % ANSWER split out); the ninth and last is the narration placeholder
+  % scaffold at the end of this file. TOC needs a smaller size than the
+  % body default to stay inside the frame.
+  %
+  % WHY \linespread{0.85}: with nine entries at \scriptsize the table ended
+  % 6.48 pt from the paper edge, and the house already rejects 6.8 pt as
+  % too close to the edge for a projected deck (see preamble.tex, the
+  % \plotheight clearance note). Measured with ghostscript at 300 dpi, this
+  % value restores a 15.60 pt clearance; \tiny was measured too but drops
+  % the type to 6 pt, and \parskip=0 changed nothing at all.
+  \scriptsize\linespread{0.85}\selectfont
   \tableofcontents[hideallsubsections]
 \end{frame}
+
 \begin{frame}{PREVIOUS PROBLEM: SUMMARY OF THE THREE ITEMS}   % slide 3
   \small
   \begin{tabular}{@{}c@{\,~}p{5.5cm}@{\,~}p{5.5cm}@{}}
@@ -75,7 +139,6 @@
   \vspace{0.4cm}
 \end{frame}
 
-\section{ANSWER: OPTIMIZATION RESULT}
 \begin{frame}{STATUS UPDATE}
   \begin{tabular}{@{}p{7.2cm}r@{}}
     \textbf{Item} & \textbf{Status} \\
@@ -91,48 +154,83 @@
   stellarorion\_program\_proc/ and the thesis chapters in
   CurrentThesisFinalReport/.}
 \end{frame}
-% Added after the STATUS UPDATE frame at the owner's request: result page using
-% the final thesis 2x2 reference-vs-optimized topology and the DSMC-gated result.
-% Figure copied from CurrentThesisFinalReport/figures/optimization_comparison.png.
-% Numbers: chapter_04_results.tex, tab:bo_before_after, official run 2026-09-26.
-\PlotFrame{OPTIMIZATION RESULT: BASELINE VS. OPTIMUM}
-  {\MaxTextLines{2}%
-   What this is: optimized candidate geometry, not a validation page.
-   Source: results/00\_reference/optimization\_output/plots/optimization\_comparison.png;
-   values from the latest-attempt result table.}
-  {so_topology_4views}
-\begin{frame}{RESULT TABLE: BASELINE VS. OPTIMIZED}
-  \scriptsize
-  \renewcommand{\arraystretch}{1.05}
-  \begin{tabular}{@{}lrrr@{}}
-    \hline
-    \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
-    \hline
-    \multicolumn{4}{@{}l}{\textbf{Geometry and closed-form surrogate}} \\
-    Nose radius $R_N$ & 1.5000 m & 2.9714 m & $+98.10\%$ \\
-    Torus radius $r_{tor}$ & 0.1350 m & 0.0885 m & $-34.47\%$ \\
-    Half-cone angle $\theta_c$ & $60.00^\circ$ & $40.15^\circ$ & $-33.09\%$ \\
-    Drag coefficient $C_d$ & 1.6073 & 1.5597 & $-2.96\%$ \\
-    Sutton--Graves heat flux & 15.36 W/cm$^2$ & 11.47 W/cm$^2$ & $-28.95\%$ \\
-    Total heat load $Q(\mathbf{x})$ & 219.10 J/cm$^2$ & 155.67 J/cm$^2$ & $-28.95\%$ \\
-    Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78\%$ \\
-    \hline
-    \multicolumn{4}{@{}l}{\textbf{DSMC (baseline run / latest gate re-simulation)}} \\
-    Drag coefficient $C_d$ & 1.7655 & 2.5294 & $+43.3\%$ \\
-    Total heat load $Q$ & 165.72 J/cm$^2$ & 77.93 J/cm$^2$ & $-53.0\%$ \\
-    Peak deceleration & 16.55 g & 14.01 g & $-15.3\%$ \\
-    Ballistic coefficient $\beta$ & 27.70 kg/m$^2$ & 10.06 kg/m$^2$ & $-63.7\%$ \\
-    Lift coefficient $C_l$ & $-0.5268$ & $-1.0767$ & $+104.4\%$ \\
-    \hline
+
+\section{SETUP AND DERIVATIONS}
+\begin{frame}{REDEMPTION 1: HEAT FLUX PROPERLY DEFINED (F84)}
+  \small
+  \textbf{Three terms, one balance (steady first-law surface balance, theory F84).}\\
+  \textbf{Convection:} $q_{\mathrm{conv}}=q_{SG}$ from Sutton--Graves at $R_N=0.55$ m,
+  normalized/clamped before the TPS.\\
+  \textbf{Conduction:} $q_{\mathrm{cond}}=(T_s-T_{\mathrm{back}})/R_{\mathrm{tot}}$,
+  Fourier through the 5-ply IRVE-3 FTPS.\\
+  \textbf{Reradiation:} $q_{\mathrm{rad}}=\varepsilon\sigma T_s^4$ to ambient
+  ($\varepsilon=0.80$ stack-level; the outer SiC ply's own $\varepsilon=0.75$
+  is a material property).\\
+  \textbf{Hot-face energy balance:} convection absorbed = reradiation + conduction
+  (+ in-plane lateral):
+  \[
+  q_{\mathrm{conv}} = \varepsilon\sigma T_s^4 + (T_s - T_{\mathrm{back}})/R_{\mathrm{tot}}
+  \]
+  Evaluated at peak ($+$ lateral $Lateral\_G T_s - Lateral\_Src$, default 0.0):
+  $266509.3 = 262415.9 + 4093.4$ W/m$^2$;
+  $T_s=1550.86$ K, $R_{\mathrm{tot}}=0.305583$ m$^2$K/W,
+  stack-level emissivity $\varepsilon=0.80$.\\
+  \begin{tabular}{@{}lll@{}}
+  \textbf{Term} & \textbf{definition} & \textbf{slide}\\
+  \hline
+  Convection & Sutton--Graves $q_{SG}$ (clamped) & 1b\\
+  Conduction & through 5-ply IRVE-3 FTPS & 1a / 1c\\
+  Reradiation & hot face to ambient & (defined above)\\
   \end{tabular}
-  \par{\scriptsize Source: Latest attempt; superseded run deleted 2026-10-14 (latest attempt retained).}
+\end{frame}
+\begin{frame}{REDEMPTION 1d: GOVERNING EQUATIONS BY CHANNEL (F84, F83, F21)}
+  \small
+  \textbf{Convection (Sutton--Graves).}
+  \[
+    q_{SG}=C_{SG}\,\sqrt{\rho/R_N}\,V^3.
+  \]
+  Symbols: $q_{SG}$ [W/m$^2$] is the hot-face convective heat flux.
+  Variables: $C_{SG}=1.7415\times 10^{-4}$ (Earth air; NASA TR R-376 Table T1),
+  $\rho$ [kg/m$^3$] freestream density, $R_N=0.55$ [m] nose radius,
+  $V$ [m/s] velocity ($3378$ at $51.8$ km). The per-element field is normalised
+  $k_{\mathrm{e}}/k_{\mathrm{e,ref}}$ and clamped to $[0,1]$. (F21, F83) \\
+
+  \textbf{Conduction (through 5-ply IRVE-3 FTPS).}
+  \[
+    q_{cond}=(T_s-T_{back})/R_{tot},\qquad
+    R_{tot}=\sum_i \Delta x_i/k_i.
+  \]
+  Symbols: $q_{cond}$ [W/m$^2$] through the TPS; $T_s=1550.86$ K hot face,
+  $T_{back}=300$ K cold face; $\Delta x_i$ [m] ply thickness; $k_i$ [W/mK]
+  ply conductivity (Nicalon SiC, Pyrogel, Kapton); total
+  $R_{tot}=0.305583$ [m$^2$K/W], i.e. $\Sigma_i\Delta x_i/k_i$ over the
+  REDEMPTION 1e table. In-plane lateral conduction now solved:
+  $q_{lat}=G\,T_s-\sum g_{ij}T_j$ (default 0.0 = 1-D solve).
+\end{frame}
+\begin{frame}{REDEMPTION 1d2: RERADIATION, BALANCE, AND CHANNEL MAP}
+  \small
+  \textbf{Reradiation.}
+  \[
+    q_{rad}=\varepsilon\,\sigma_{SB}\,T_s^4.
+  \]
+  Symbols: $q_{rad}$ [W/m$^2$] radiated outward; $\varepsilon=0.80$ stack-level
+  hot-face emissivity (Ada TPS\_Layup\_IRVE3); the outer Nicalon SiC ply's own
+  material $\varepsilon=0.75$ is listed in the REDEMPTION 1e table;
+  $\sigma_{SB}=5.670374\times10^{-8}$ [W/m$^2$K$^4$]; $T_s$ hot-face
+  temperature. \\
+
+  \textbf{Hot-face energy balance.} $q_{conv}=q_{rad}+q_{cond}$:
+  \[
+    266509.3=262415.9+4093.4\ \text{W/m}^2,\quad
+    \text{residual }0.0000\%.
+  \]
+  Formulation from F84 ($q_{conv}=\varepsilon\sigma T_s^4+(T_s-T_{back})/R_{tot}$,
+  $\varepsilon=0.80$); $R_{tot}=0.305583$ from the REDEMPTION 1e schedule. \\
+
+  Channel map: convection is the plasma/flow input; conduction is the
+  through-TPS 5-ply stack; reradiation is outward hot-face radiation.
 \end{frame}
 
-\section{METHOD AND SETUP}
-% SOURCE: stellarorion_sparta.adb:651-684 (2-D cartesian background grid),
-% 2163-2181 (axisymmetric R,Z surface curve revolved by SPARTA),
-% stellarorion_physics.adb:2680-2700 (SG_Scaled_Element_Flux clamp),
-% 2824-3000 (TPS_Conduction, 1-D balance). Source citations F21, F83, F84.
 \begin{frame}{REDEMPTION 1d3: HEAT-FLUX DISCRETIZATION AND COUPLING}
   \small
   \textbf{Grid/mesh.} DSMC uses a 2-D Cartesian cell grid
@@ -144,28 +242,39 @@
     \qquad
     q_i=\varepsilon\sigma T_s^4+\frac{T_s-T_{\mathrm{back}}}{R_{\mathrm{tot}}}.
   \]
-  \textbf{What is not done.} No superposition, no heat-leak vector between
-  elements, and no lateral spreading between elements. DSMC supplies the local
-  scalar flux shape; $Q_{SG}$ sets the stagnation scale; the TPS model is 1-D
-  through the stack. Peak and heat-load reductions are reporting steps, not a
-  coupled lateral-diffusion solve.
+  \textbf{What is now done.} In-plane lateral conduction through the
+  structural ply is now solved (Lateral\_G, Lateral\_Src added to the surface
+  balance; both default to 0.0, which reduces bit-for-bit to the pre-existing
+  1-D through-thickness solve). \textbf{What is still not done.} No
+  superposition and no heat-leak vector between elements; DSMC supplies the
+  local scalar flux shape, $Q_{SG}$ sets the stagnation scale. Peak and
+  heat-load reductions are reporting steps, not a coupled
+  lateral-diffusion solve.
 \end{frame}
+
+\PlotFrame{REDEMPTION 1a: HEAT FLUX THROUGH THE COMPOSITE PLY}
+  {\MaxTextLines{2}%
+   Per-ply heat-flux distribution from the latest per-ply solve; source:
+   results/00\_reference/plots/tps\_per\_ply/ply\_heat\_flux\_distribution.png.}
+  {so_ply_heatflux_explainer}
+\PlotFrame{REDEMPTION 1b: CONVECTION TERM (Sutton--Graves)}
+  {\MaxTextLines{2}%
+   Recomputed with the corrected C\_SG = 1.7415e-4; the peak-element
+   annotation updates on each re-run. (F21, F83).}
+  {so_sutton_graves}
+\PlotFrame{REDEMPTION 1c: PLY STACK AND TEMPERATURE (IRVE-3 FTPS)}
+  {\MaxTextLines{2}%
+   Per-ply temperature field from the latest per-ply solve; source:
+   results/00\_reference/plots/tps\_per\_ply/ply\_stack\_temperature\_heatmap.png.}
+  {so_ply_stack_temperature}
+
 \PlotFrame{REDEMPTION 1f: OVERALL HEAT FLUX PICTURE}
   {\MaxTextLines{2}%
    Convection (Sutton-Graves) = reradiation + conduction through the TPS:
    266509.3 = 262415.9 + 4093.4 W/m$^2$, residual 0.0000\%
    ($\varepsilon=0.80$ stack-level, $R_{tot}=0.305583$ m$^2$K/W).}
   {heatflux_methodology}
-% SOURCE: thesis Table tab:tps_spec (chapter_03_methodology.tex). Complete
-% per-ply material and thermal-resistance specification.
-% BALANCE BASIS (corrected 2026-10-19): solved at the STACK-LEVEL epsilon
-% 0.80 (IRVE3_FTPS_EMISSIVITY, ada_pinn_wrapper.py:1526 =
-% stellarorion_types.ads:714) with R_tot = 0.305583 m^2*K/W, the sum of t/k
-% over the 7.131 mm 5-ply table below. The hot outer ply's per-ply epsilon
-% 0.75 (Rapisarda Table B.17) is a Nicalon SiC MATERIAL property listed in
-% that table; it is not the balance input. The previously quoted R_tot=0.25605
-% belongs to the superseded 6.35 mm flown IRVE-3 stack
-% (stellarorion_types.ads:760: net stack R 0.257250 -> 0.305583, +18.8%).
+
 \begin{frame}{REDEMPTION 1e: 5-PLY IRVE-3 FTPS SPECIFICATION (THESIS)}
   \scriptsize
   \resizebox{\textwidth}{!}{%
@@ -193,6 +302,55 @@
   flown IRVE-3 stack gave $R=0.25605$ m$^2$K/W and is NOT used here
   (stellarorion\_types.ads:760: net stack R $0.257250\to0.305583$, $+18.8\%$).}
 \end{frame}
+\begin{frame}{REDEMPTION 2: COST FUNCTION COMPLETE}
+  \MaxTextLines{2}%
+  The earlier cost spent 400 initial samples and mis-stated the objective;
+  the redefined cost matches the aerothermal dynamics and converges.
+\end{frame}
+
+\begin{frame}{REDEMPTION 2a: OBJECTIVE AND VARIABLES}
+  \small
+  \textbf{Cost (implemented, F84)}\\
+  $J = w_\beta\,(\beta_{\mathrm{calc}}/\beta_{ref}-1)^2 +
+  \sum_i w_i\cdot\{10^{15}\text{ if }y_i^{(\mathrm{pred})} > y_i^{(\mathrm{limit})}\}$\\
+  $\beta_{calc}$ is the design ballistic coefficient ($\beta_{ref}=23.288$, Coq-backed);
+  $w_\beta,w_i$ weights; $y_i^{(pred)}$ a predicted metric;
+  $y_i^{(limit)}$ its failure limit; hard-constraint penalty uses $\Lambda_j=10^6$:\\
+  $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x})$.\\
+  \vspace{0.1cm}
+  \textbf{Error-allowed gap:} no soft tolerance term is implemented; a violated
+  metric injects $10^{15}$ to bias the score so infeasible designs rank last.\\
+  \textbf{Design Space (full bounds); BO campaign (3 active)}\\
+  \begin{tabular}{@{}ll@{}}
+  \hline
+  $D$ nose & $[0.5,15.0]$ m\\
+  $\theta_c$ half cone & $[40,80]$ deg (campaign $[40,80]$, unchanged)\\
+  $R_N$ nose radius & $[0.01,1.0]$ m (campaign $[0.5,3.0]$)\\
+  $r_t$ toroid radius & $[0.01,0.5]$ m (campaign $[0.05,0.5]$)\\
+  $N_t$ toroid count & $[1,12]$\\
+  \hline
+  \end{tabular}
+\end{frame}
+\begin{frame}{REDEMPTION 2b: CONSTRAINTS AND OBJECTIVE LOOP}
+  \small
+  \textbf{Constraints (BO)}\
+  \begin{tabular}{@{}p{3.3cm}p{4.8cm}@{}}
+  backface $T$ & $T_{back}(\mathbf{x})-773\le 0$ K, penalty $10^6 |g|^2$\\
+  peak deceleration & $n_G-25g$ (penalty form)\\
+  structural $D$ & $D-15.0\le 0$\\
+  manufacturability & $N_t-12\le 0$\\
+  \end{tabular}
+  \vspace{0.2cm}
+  \textbf{Objective loop (stages in order):} CCD-15 screen first, then a
+  20-point LHS base design with 50 EI-driven BO steps (incumbent
+  $1.7654\to1.6051$, $-9.08\%$), then Kriging denoising. DSMC+PINN\_AUX stay
+  reserved as the expensive oracle. Hard gate: DSMC direct simulation
+  (no surrogate) on the optimum-shape candidate.
+\end{frame}
+\section{VERIFICATION}
+% SOURCE: results/99_shared/cfd_fields/mesh_statistics_smooth_step_1000.png
+% (latest CFD field export, step 1000 of the smooth series). SOP evidence item:
+% the mesh quality record is shown BEFORE any result slide.
 \begin{frame}{REDEMPTION 3a2: ONE VALIDATION POINT, REFERENCES ONLY}
   \small
   \textbf{Single DSMC anchor.} $h=51.8$ km and $V=3378$ m/s; this is the
@@ -208,15 +366,12 @@
   are not re-run as DSMC samples. Sampling uses the analytic chain above.
 \end{frame}
 
-\section{VERIFICATION}
-% SOURCE: results/99_shared/cfd_fields/mesh_statistics_smooth_step_1000.png
-% (latest CFD field export, step 1000 of the smooth series). SOP evidence item:
-% the mesh quality record is shown BEFORE any result slide.
 \PlotFrame{VERIFICATION: DSMC MESH STATISTICS}
   {\MaxTextLines{2}%
    What this is: mesh/grid quality evidence, not a result.
    Source: results/99\_shared/cfd\_fields/mesh\_statistics\_smooth\_step\_1000.png.}
   {so_mesh_statistics}
+
 % SOURCE: results/99_shared/cfd_fields/grid_mesh_map_smooth_00_reference_step_2200.png
 % (latest reference run, validated step-2200 state). SOP evidence item: the
 % resolved grid is shown before results.
@@ -226,39 +381,6 @@
    step-2200 state, not a result. Source: results/99\_shared/cfd\_fields/
    grid\_mesh\_map\_smooth\_00\_reference\_step\_2200.png.}
   {so_grid_mesh_map}
-% so_ccd_screen.png moved here from Current Implementation.
-% Design of experiments that answers the Redemption 3 sampling-order issue.
-% (source unchanged; stats unchanged).
-% SOURCE (orchestrator/middle code): CCD count F17; geometry bounds and runtime from
-% ada_pinn_wrapper.py._BOUNDS / Ada FFI launch (run.py) rather than a hard-coded sample.
-\PlotFrame{REDEMPTION 3b: DESIGN OF EXPERIMENTS -- THE CCD SCREEN}
-  {\MaxTextLines{2}%
-   Face-centred 15-point CCD over $k=3$ variables ($R_N$, $r_t$, $\theta_c$):
-   $2^3{=}8$ factorial, $2k{=}6$ axial, 1 centre. CCD supplies curvature and
-   corner/face coverage; LHS supplies the space-filling base for Kriging.}
-  {so_ccd_screen}
-% inserted between DoE sampling and the produced geometry grid:
-% state the optimization ordering explicitly.
-\PlotFrame{REDEMPTION 3c: OPTIMIZATION STAGE}
-  {\MaxTextLines{2}%
-   CCD gives the validated first candidate; the 20-point LHS base design and
-   50 BO improvement steps then optimize it (Bayesian plot follows).}
-  {so_bo_convergence}
-% moved next to the DoE/CCD slide: 70-evaluation Bayesian design plot.
-% Figure copied from CurrentThesisFinalReport/figures/bo_optimization_3d.png
-% because it is the readable, titled thesis version; it shows final best 1.6051.
-\PlotFrame{OPTIMIZATION DIAGNOSTIC: 70-EVAL BAYESIAN CAMPAIGN}
-  {\MaxTextLines{2}%
-   What this is: optimization search/convergence diagnostics, not DSMC validation.
-   Source: results/99\_shared/geometry/bo\_optimization\_3d.png.}
-  {so_bo_3d}
-% produced geometry grid selected from the official run: use the shipped render
-% (avoid generated typesetting; image is the source truth).
-\PlotFrame{DESIGN-SPACE RESULT: GEOMETRY GRID}
-  {\MaxTextLines{2}%
-   What this is: sampled geometry candidates, not a DSMC validation result.
-   Source: results/99\_shared/geometry/hiad\_geometry\_grid.png.}
-  {hiad_geometry_grid}
 
 \section{RESULTS: FIELD EVIDENCE}
 \PlotFrame{DSMC FIELD RESULT: THERMAL MAP}
@@ -281,6 +403,252 @@
    What this is: DSMC aerodynamic load history for the two skins, not optimization.
    Source: results/00\_reference/plots/validation\_pipeline/aerodynamic\_loads.png.}
   {so_performance_comparison}
+
+% Added at the owner's request: like-for-like table of the two pipeline runs
+% whose plots now exist under results/ -- Validation (00_reference) vs Result
+% (03_opt_geometry). Every number below is read from
+%   results/{00_reference,03_opt_geometry}/validation_pipeline_output/
+%     unified_comparison_table.csv            (metric rows)
+%     pipeline_results.json  denoise_results.*.r2_score   (Kriging rows)
+% Both runs share the identical trajectory point (alt 51.8 km, V 3378 m/s,
+% Mach 10.29, ISA), so these deltas are same-conditions comparisons and are
+% NOT the apples-to-oranges trajectory-integrated deltas the pipeline warns
+% about. No number is invented here; deltas are computed from the CSV pair.
+\begin{frame}{DSMC FIELD RESULT: VALIDATION VS. RESULT}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.05}
+  \begin{tabular}{@{}lrrr@{}}
+    \hline
+    \textbf{Metric (same trajectory point)} & \textbf{Validation} & \textbf{Result} & \textbf{$\Delta$} \\
+    & \textbf{00\_reference} & \textbf{03\_opt\_geometry} & \\
+    \hline
+    \multicolumn{4}{@{}l}{\textbf{Peak field heat flux [W/cm$^2$]}} \\
+    per-element avg, raw DSMC & 55.2002 & 57.5839 & $+4.3\%$ \\
+    per-element avg, Kriging denoised & 55.4380 & 57.0456 & $+2.9\%$ \\
+    per-element avg, PINN 300 s & 55.9287 & 59.2189 & $+5.9\%$ \\
+    per-element max, raw DSMC & 192.0170 & 178.8250 & $-6.9\%$ \\
+    \hline
+    \multicolumn{4}{@{}l}{\textbf{Whole-signal load}} \\
+    Total heat load $Q$ [J/cm$^2$] & 165.7160 & 165.7160 & $0.0\%$ \\
+    Peak deceleration [g] (PINN) & 16.5826 & 15.3838 & $-7.2\%$ \\
+    Drag coefficient $C_d$ (PINN) & 1.7687 & 1.6408 & $-7.2\%$ \\
+    \hline
+    \multicolumn{4}{@{}l}{\textbf{Kriging denoise $R^2$}} \\
+    Heat-flux avg / heat-flux max & 0.9787 / 0.7355 & 0.9851 / 0.9424 & $+0.0064$ / $+0.2069$ \\
+    \hline
+  \end{tabular}
+  \par{\scriptsize What this is: like-for-like Validation vs Result at the same
+  trajectory point (alt 51.8 km, $V=3378$ m/s, Mach 10.29, ISA), not the
+  trajectory-integrated flight deltas. Source:
+  results/00\_reference/validation\_pipeline\_output/ and
+  results/03\_opt\_geometry/validation\_pipeline\_output/
+  (unified\_comparison\_table.csv, pipeline\_results.json,
+  plots/aerodynamic\_loads.png).}
+\end{frame}
+\PlotFrame{DSMC FIELD RESULT: OPTIMIZED GRID MESH (step 1000)}
+  {\MaxTextLines{2}%
+   Optimized-run (03\_opt\_geometry) grid mesh at the 1000-step point.
+   Source: results/99\_shared/cfd\_fields/grid\_mesh\_map\_smooth\_03\_opt\_geometry\_step\_1000.png.}
+  {so_gridmesh}
+
+\section{OPTIMIZATION}
+
+\begin{frame}{REDEMPTION 3: DoE SAMPLING}
+  \MaxTextLines{2}%
+  Sampling reordered: run the 15-point CCD first, then score the remainder analytically
+  (CCD count F17; seed reproducibility F6), instead of pay-as-you-go.
+\end{frame}
+% Added before Redemption 3b at the owner request: state what the samples are
+% scored against, why this cuts simulation time, and what the single validation
+% reference is.
+% SOURCE: stellarorion_optimization.ads:493-497 and .adb:1766-1896 (analytic
+% J(x)); stellarorion_pinn_trajectory.ads:18-20; validation_pipeline.py:5080-5091
+% (references/trajectory).
+\begin{frame}{REDEMPTION 3a: ANALYTIC SAMPLING BASIS}
+  \small
+  \textbf{What samples are scored against.} A candidate
+  $x=(R_N,r_t,\theta_c)$ is first scored by the closed-form geometry/Sutton--Graves
+  chain in Ada/SPARK; a fresh DSMC solve is reserved for the selected candidate.\\
+  \textbf{Heat flux and load.}
+  \[
+    q_{SG}=C_{SG}\sqrt{\rho(h)/R_N}\,V^3,
+    \qquad
+    Q(x)=q_{SG}(R_N)\,\tau .
+  \]
+  \textbf{Geometry and ballistic terms.}
+  \[
+    R_{\max}=R_N+r_t,\qquad
+    A=\pi R_{\max}^2,\qquad
+    \beta_r=\frac{C_{d,ref}A_{ref}}{C_d(x)A(x)},\qquad
+    \beta_{dev}=(\beta_r-1)^2 .
+  \]
+  \textbf{Cost used for ranking.}
+  \[
+    J=Q/Q_t+0.5\,q/q_{ref}+0.5\,\beta_{dev}
+      +0.25\,C_d/C_{d,ref}+\Lambda\,\mathrm{Pen}.
+  \]
+  \textbf{Why faster:} one snapshot serves every sample, so DSMC+PINN\_AUX run only
+  after CCD/LHS/BO shortlist candidates.
+\end{frame}
+% Companion variable-definition notes for the analytic sampling equations above.
+\begin{frame}{REDEMPTION 3a1: VARIABLE DEFINITIONS (ANALYTIC SAMPLING)}
+  \footnotesize
+  \textbf{Heat flux and load terms.}
+  \begin{tabular}{@{}ll@{}}
+  $q_{SG}$ & Sutton--Graves convective flux at the hot face [W/m$^2$]\\
+  $C_{SG}$ & correlation constant $1.7415\times10^{-4}$ for Earth air (F21)\\
+  $\rho(h)$ & freestream density at altitude $h$ [kg/m$^3$] (ISA)\\
+  $V$ & flight speed [m/s] at the same snapshot\\
+  $R_N$ & nose radius [m]; $R_N$ sets the $1/\sqrt{R_N}$ scaling\\
+  $\tau$ & effective heating time [s]; $Q(x)=q_{SG}\,\tau$ (F84)\\
+  \end{tabular}\par
+  \vspace{0.1cm}
+  \textbf{Geometry and ballistic terms.}
+  \begin{tabular}{@{}ll@{}}
+  $r_t$ & toroid (tube) radius [m]\\
+  $R_{\max}$ & maximum outer radius $=R_N+r_t$ [m]\\
+  $A$ & frontal area $=\pi R_{\max}^2$ [m$^2$]\\
+  $C_d,\;C_{d,ref}$ & candidate drag coefficient and IRVE-3 reference value\\
+  $\beta_r$ & ballistic ratio $=(C_{d,ref}A_{ref})/(C_d(x)A(x))$\\
+  $\beta_{dev}$ & squared deviation $(\beta_r-1)^2$\\
+  \end{tabular}\par
+  \vspace{0.1cm}
+  \textbf{Cost and penalty terms.}
+  \begin{tabular}{@{}ll@{}}
+  $Q_t,\;q_{ref}$ & validation targets for total heat load and heat flux\\
+  $\Lambda$ & penalty weight (hard constraints)\\
+  $\mathrm{Pen}$ & quadratic envelope, nose and payload violation term\\
+  \end{tabular}
+\end{frame}
+\begin{frame}{PINN: HOW IT WORKS (DSMC $\to$ KRIGING $\to$ PINN)}
+  \small
+  \textbf{PINN.} A neural net whose loss is the PDE residual (Navier--Stokes,
+  energy) plus boundary/IC terms; no large labeled dataset is required -- sparse
+  anchors plus the physics suffice.\
+  \textbf{Kriging as denoiser.} DSMC gives noisy per-element flux; Kriging (GP)
+  interpolates/denoises those sparse samples into a smooth field, which becomes
+  the training anchor set for the PINN.\
+  \textbf{Data anchors.} Sparse $(x,r)$ points where the DSMC/Kriging field is
+  known; they pin the PDE solution to the correct magnitude/scale. Without them
+  the PINN solves the right equations but may land on a wrong-amplitude solution;
+  anchors cost little data and fix the scale.\\
+  \textbf{Data requirement.} PINN runs with DSMC-only anchors (no separate
+  training set); Kriging supplies the smooth target. Without any data it reduces
+  to a mesh-free PDE solver (less accurate); with DSMC anchors it is
+  data-assisted and trend-faithful.\
+\textbf{Pre-existing model.} \texttt{pinn\_accelerator.py} ships a DeepXDE
+  axisymmetric compressible Navier--Stokes PDE (continuity, momentum $x$/$y$,
+  energy) trained on SPARTA grid anchors -- data-assisted, not from scratch.\\
+  \textbf{Role here.} Overview/ranking along $120\rightarrow40$ km; final gate
+  remains direct DSMC on the selected optimum.
+\end{frame}
+
+\begin{frame}{REDEMPTION 3a3: PINN OVERVIEW ONLY, NETWORK NOT SHOWN}
+  \small
+  \textbf{Purpose here.} PINN is shown only as a trajectory-overview tool, not
+  as the optimizer's cost kernel and not as a neural-network diagram.\\
+  \textbf{What it gives.} From the single validated anchor it provides the trend
+  for heat flux, heat load, drag and $g$-load along the descent, so a geometry
+  family can be inspected before detailed DSMC verification.\\
+  \textbf{Corridor.} Owner-requested overview range is $140\rightarrow40$ km.
+  The current source-backed model implements $120\rightarrow40$ km
+  ($4300\rightarrow2700$ m/s); keep the source and slide consistent before final use.\\
+  \textbf{Downstream rule.} PINN is used for overview and candidate ranking only;
+  the final gate is still direct DSMC on the selected optimum.
+\end{frame}
+
+\begin{frame}{BAYESIAN OPTIMIZATION: BASICS}
+  \small
+  \begin{itemize}
+    \item \textbf{Variables (design space):} $R_N$ (nose radius), $r_{tor}$ (torus radius), $\theta_c$ (half-cone angle) -- 3 continuous inputs.
+    \item \textbf{Objective (cost $J$):} composite cost $J(\mathbf{x})$ = heat-load ratio + flux ratio + $\beta$-deviation + $C_d$ ratio + penalty. Minimize $J$.
+    \item \textbf{Surrogate (Kriging/GP):} fits a Gaussian process to observed $(\mathbf{x}, J)$ pairs; gives mean + uncertainty at any new point.
+    \item \textbf{Acquisition (EI):} Expected Improvement selects the next point where information gain is highest -- balances exploration vs. exploitation.
+    \item \textbf{Budget:} 20-point LHS base design + 50 EI-driven steps = 70 evaluations; each eval = one Ada FFI geometry + analytic heat-flux chain (no DSMC per step).
+    \item \textbf{Why not mass:} mass is not a term in $J$; cost weights heat load, flux, $\beta$ deviation, $C_d$ only.
+  \end{itemize}
+\end{frame}
+
+% so_ccd_screen.png moved here from Current Implementation.
+% Design of experiments that answers the Redemption 3 sampling-order issue.
+% (source unchanged; stats unchanged).
+% SOURCE (orchestrator/middle code): CCD count F17; geometry bounds and runtime from
+% ada_pinn_wrapper.py._BOUNDS / Ada FFI launch (run.py) rather than a hard-coded sample.
+\begin{frame}{ANALYTIC CHAIN: SAVE TIME, KEEP QUALITY}
+  \small
+  \begin{itemize}
+    \item \textbf{After the BO requirement is set:} each of the 70 evaluations runs the
+      analytic chain instead of a full DSMC solve -- orders of magnitude cheaper.
+    \item \textbf{Analytic (countable) quantities:} Sutton--Graves convective flux,
+      through-thickness conduction ($T_s \to T_{back}$ via $R_{tot}$), reradiation
+      ($\varepsilon\sigma T_s^4$), and the composite cost $J(\mathbf{x})$.
+    \item \textbf{DSMC is used only to validate:} the analytic flux shape is scaled by
+      $Q_{SG}$; DSMC supplies the stagnation scale and field evidence, not per-eval cost.
+    \item \textbf{Result:} 70 BO evaluations in minutes instead of weeks, with the same
+      aerothermal trend and a defensible optimum ($J$: 2.1626 $\to$ 1.6051).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{DoE STRATEGY: WHY CCD + LHS + BO}
+  \centering
+  \includegraphics[width=0.9\textwidth,height=0.4\textheight,keepaspectratio]{figures/so_ccd_screen.png}
+  \par\vspace{0.5em}
+  \small
+  \begin{itemize}
+    \item \textbf{CCD-15 (screen):} face-centered, 3 vars. Captures curvature + corners. Run first as validated candidate.
+    \item \textbf{LHS-20 (base):} space-filling. Feeds Kriging surrogate; fills gaps CCD leaves.
+    \item \textbf{BO 50 steps (refine):} EI-driven; spends budget where info gain is highest.
+    \item \textbf{Why both:} CCD alone misses space coverage; LHS alone misses curvature. Together: screen + surrogate + refine.
+  \end{itemize}
+\end{frame}
+
+\PlotFrame{DoE: LHS CUBE SAMPLING}
+% Caption trimmed to 2 RENDERED lines (measured with \prevgraf at \small over
+% \textwidth = 404.03pt, not guessed from the source line count) so that the
+% \MaxTextLines assertion stays honest about the house 1-2 line body budget.
+  {\MaxTextLines{2}%
+   LHS-20 space-filling base design in the 3-variable cube ($R_N$, $r_{tor}$, $\theta_c$).
+   CCD-15 covers corners/edges/centre; LHS-20 fills the rest for Kriging,
+   and BO refines within it.}
+  {so_lhs_cube}
+
+\PlotFrame{REDEMPTION 3b: DESIGN OF EXPERIMENTS -- THE CCD SCREEN}
+  {\MaxTextLines{2}%
+   Face-centred 15-point CCD over $k=3$ variables ($R_N$, $r_t$, $\theta_c$):
+   $2^3{=}8$ factorial, $2k{=}6$ axial, 1 centre. CCD supplies curvature and
+   corner/face coverage; LHS supplies the space-filling base for Kriging.}
+  {so_ccd_screen}
+
+% inserted between DoE sampling and the produced geometry grid:
+% state the optimization ordering explicitly.
+\PlotFrame{REDEMPTION 3c: OPTIMIZATION STAGE}
+  {\MaxTextLines{2}%
+   CCD gives the validated first candidate; the 20-point LHS base design and
+   50 BO improvement steps then optimize it (Bayesian plot follows).}
+  {so_bo_convergence}
+
+% moved next to the DoE/CCD slide: 70-evaluation Bayesian design plot.
+% Figure copied from CurrentThesisFinalReport/figures/bo_optimization_3d.png
+% because it is the readable, titled thesis version; it shows final best 1.6051.
+\PlotFrame{OPTIMIZATION DIAGNOSTIC: 70-EVAL BAYESIAN CAMPAIGN}
+% Caption trimmed to 2 RENDERED lines (measured with \prevgraf at \small over
+% \textwidth = 404.03pt, not guessed from the source line count) so that the
+% \MaxTextLines assertion stays honest about the house 1-2 line body budget.
+% The Source citation is folded into the body, not deleted: the house rule
+% requires every number to name the file it came from.
+  {\MaxTextLines{2}%
+   BO saturates after ~50 evals (cost 1.6051); later steps add no improvement.
+   Search diagnostic, not DSMC validation.
+   Source: results/99\_shared/geometry/bo\_optimization\_3d.png.}
+  {so_bo_3d}
+
+% produced geometry grid selected from the official run: use the shipped render
+% (avoid generated typesetting; image is the source truth).
+\PlotFrame{DESIGN-SPACE RESULT: GEOMETRY GRID}
+  {\MaxTextLines{2}%
+   What this is: sampled geometry candidates, not a DSMC validation result.
+   Source: results/99\_shared/geometry/hiad\_geometry\_grid.png.}
+  {hiad_geometry_grid}
 
 \section{VALIDATION}
 \PlotFrame{TPS RESULT: BACKFACE CHECK}
@@ -321,228 +689,129 @@
   the DSMC gate, then refresh the per-ply figures in a single commit.
 \end{frame}
 
-\section{BACKUP: DERIVATIONS}
-\begin{frame}{REDEMPTION 1: HEAT FLUX PROPERLY DEFINED (F84)}
-  \small
-  \textbf{Three terms, one balance (steady first-law surface balance, theory F84).}\\
-  \textbf{Convection:} $q_{\mathrm{conv}}=q_{SG}$ from Sutton--Graves at $R_N=0.55$ m,
-  normalized/clamped before the TPS.\\
-  \textbf{Conduction:} $q_{\mathrm{cond}}=(T_s-T_{\mathrm{back}})/R_{\mathrm{tot}}$,
-  Fourier through the 5-ply IRVE-3 FTPS.\\
-  \textbf{Reradiation:} $q_{\mathrm{rad}}=\varepsilon\sigma T_s^4$ to ambient
-  ($\varepsilon=0.80$ stack-level; the outer SiC ply's own $\varepsilon=0.75$
-  is a material property).\\
-  \textbf{Hot-face energy balance:} convection absorbed = reradiation + conduction:
-  \[
-  q_{\mathrm{conv}} = q_{\mathrm{rad}} + q_{\mathrm{cond}}
-  = \varepsilon\sigma T_s^4 + (T_s - T_{\mathrm{back}})/R_{\mathrm{tot}}
-  \]
-  Evaluated at peak: $266509.3 = 262415.9 + 4093.4$ W/m$^2$;
-  $T_s=1550.86$ K, $R_{\mathrm{tot}}=0.305583$ m$^2$K/W,
-  stack-level emissivity $\varepsilon=0.80$.\\
-  DSMC$\rightarrow$thermal is not superposition: DSMC supplies shape, $Q_{SG}$ scales, local balance solves.\\
-  \begin{tabular}{@{}lll@{}}
-  \textbf{Term} & \textbf{definition} & \textbf{slide}\\
-  \hline
-  Convection & Sutton--Graves $q_{SG}$ (clamped) & 1b\\
-  Conduction & through 5-ply IRVE-3 FTPS & 1a / 1c\\
-  Reradiation & hot face to ambient & (defined above)\\
-  \end{tabular}
-\end{frame}
-\begin{frame}{REDEMPTION 1d: GOVERNING EQUATIONS BY CHANNEL (F84, F83, F21)}
-  \small
-  \textbf{Convection (Sutton--Graves).}
-  \[
-    q_{SG}=C_{SG}\,\sqrt{\rho/R_N}\,V^3.
-  \]
-  Symbols: $q_{SG}$ [W/m$^2$] is the hot-face convective heat flux.
-  Variables: $C_{SG}=1.7415\times 10^{-4}$ (Earth air; NASA TR R-376 Table T1),
-  $\rho$ [kg/m$^3$] freestream density, $R_N=0.55$ [m] nose radius,
-  $V$ [m/s] velocity ($3378$ at $51.8$ km). The per-element field is normalised
-  $k_{\mathrm{e}}/k_{\mathrm{e,ref}}$ and clamped to $[0,1]$. (F21, F83) \\
+\section{ANSWER: OPTIMIZATION RESULT}
+% Added after the STATUS UPDATE frame at the owner's request: result page using
+% the final thesis 2x2 reference-vs-optimized topology and the DSMC-gated result.
+% Figure copied from CurrentThesisFinalReport/figures/optimization_comparison.png.
+% Numbers: chapter_04_results.tex, tab:bo_before_after, official run 2026-09-26.
 
-  \textbf{Conduction (through 5-ply IRVE-3 FTPS).}
-  \[
-    q_{cond}=(T_s-T_{back})/R_{tot},\qquad
-    R_{tot}=\sum_i \Delta x_i/k_i.
-  \]
-  Symbols: $q_{cond}$ [W/m$^2$] through the TPS; $T_s=1550.86$ K hot face,
-  $T_{back}=300$ K cold face; $\Delta x_i$ [m] ply thickness; $k_i$ [W/mK]
-  ply conductivity (Nicalon SiC, Pyrogel, Kapton); total
-  $R_{tot}=0.305583$ [m$^2$K/W], i.e. $\Sigma_i\Delta x_i/k_i$ over the
-  REDEMPTION 1e table.
-\end{frame}
-\begin{frame}{REDEMPTION 1d2: RERADIATION, BALANCE, AND CHANNEL MAP}
-  \small
-  \textbf{Reradiation.}
-  \[
-    q_{rad}=\varepsilon\,\sigma_{SB}\,T_s^4.
-  \]
-  Symbols: $q_{rad}$ [W/m$^2$] radiated outward; $\varepsilon=0.80$ stack-level
-  hot-face emissivity (Ada TPS\_Layup\_IRVE3); the outer Nicalon SiC ply's own
-  material $\varepsilon=0.75$ is listed in the REDEMPTION 1e table;
-  $\sigma_{SB}=5.670374\times10^{-8}$ [W/m$^2$K$^4$]; $T_s$ hot-face
-  temperature. \\
-
-  \textbf{Hot-face energy balance.} $q_{conv}=q_{rad}+q_{cond}$:
-  \[
-    266509.3=262415.9+4093.4\ \text{W/m}^2,\quad
-    \text{residual }0.0000\%.
-  \]
-  Formulation from F84 ($q_{conv}=\varepsilon\sigma T_s^4+(T_s-T_{back})/R_{tot}$,
-  $\varepsilon=0.80$); $R_{tot}=0.305583$ from the REDEMPTION 1e schedule. \\
-
-  Channel map: convection is the plasma/flow input; conduction is the
-  through-TPS 5-ply stack; reradiation is outward hot-face radiation.
-\end{frame}
-\PlotFrame{REDEMPTION 1a: HEAT FLUX THROUGH THE COMPOSITE PLY}
-  {\MaxTextLines{2}%
-   Per-ply heat-flux distribution from the latest per-ply solve; source:
-   results/00\_reference/plots/tps\_per\_ply/ply\_heat\_flux\_distribution.png.}
-  {so_ply_heatflux_explainer}
-\PlotFrame{REDEMPTION 1b: CONVECTION TERM (Sutton--Graves)}
-  {\MaxTextLines{2}%
-   Recomputed with the corrected C\_SG = 1.7415e-4; the peak-element
-   annotation updates on each re-run. (F21, F83).}
-  {so_sutton_graves}
-\PlotFrame{REDEMPTION 1c: PLY STACK AND TEMPERATURE (IRVE-3 FTPS)}
-  {\MaxTextLines{2}%
-   Per-ply temperature field from the latest per-ply solve; source:
-   results/00\_reference/plots/tps\_per\_ply/ply\_stack\_temperature\_heatmap.png.}
-  {so_ply_stack_temperature}
-\begin{frame}{REDEMPTION 2: COST FUNCTION COMPLETE}
-  \MaxTextLines{2}%
-  The earlier cost spent 400 initial samples and mis-stated the objective;
-  the redefined cost matches the aerothermal dynamics and converges.
-\end{frame}
-\begin{frame}{REDEMPTION 2a: OBJECTIVE AND VARIABLES}
-  \small
-  \textbf{Cost (implemented, F84)}\\
-  $J = w_\beta\,(\beta_{\mathrm{calc}}/\beta_{ref}-1)^2 +
-  \sum_i w_i\cdot\{10^{15}\text{ if }y_i^{(\mathrm{pred})} > y_i^{(\mathrm{limit})}\}$\\
-  $\beta_{calc}$ is the design ballistic coefficient ($\beta_{ref}=23.288$, Coq-backed);
-  $w_\beta,w_i$ weights; $y_i^{(pred)}$ a predicted metric;
-  $y_i^{(limit)}$ its failure limit; hard-constraint penalty uses $\Lambda_j=10^6$:\\
-  $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x})$.\\
-  \vspace{0.1cm}
-  \textbf{Error-allowed gap:} no soft tolerance term is implemented; a violated
-  metric injects $10^{15}$ to bias the score so infeasible designs rank last.\\
-  \textbf{Design Space (full bounds); BO campaign (3 active)}\\
-  \begin{tabular}{@{}ll@{}}
-  \hline
-  $D$ nose & $[0.5,15.0]$ m\\
-  $\theta_c$ half cone & $[40,80]$ deg (campaign $[40,80]$, unchanged)\\
-  $R_N$ nose radius & $[0.01,1.0]$ m (campaign $[0.5,3.0]$)\\
-  $r_t$ toroid radius & $[0.01,0.5]$ m (campaign $[0.05,0.5]$)\\
-  $N_t$ toroid count & $[1,12]$\\
-  mass & $[10,1000]$ kg\\
-  \hline
-  \end{tabular}
-\end{frame}
-\begin{frame}{REDEMPTION 2b: CONSTRAINTS AND OBJECTIVE LOOP}
-  \small
-  \textbf{Constraints (BO)}\
-  \begin{tabular}{@{}p{3.3cm}p{4.8cm}@{}}
-  backface $T$ & $T_{back}(\mathbf{x})-773\le 0$ K, penalty $10^6 |g|^2$\\
-  peak deceleration & $n_G-25g$ (penalty form)\\
-  structural $D$ & $D-15.0\le 0$\\
-  manufacturability & $N_t-12\le 0$\\
-  \end{tabular}
-  \vspace{0.2cm}
-  \textbf{Objective loop (stages in order):} CCD-15 screen first, then a
-  20-point LHS base design with 50 EI-driven BO steps (incumbent
-  $1.7654\to1.6051$, $-9.08\%$), then Kriging denoising. DSMC + PINN stay
-  reserved as the expensive oracle. Hard gate: DSMC direct simulation
-  (no surrogate) on the optimum-shape candidate.
-\end{frame}
-\begin{frame}{REDEMPTION 3: DoE SAMPLING}
-  \MaxTextLines{2}%
-  Sampling reordered: run the 15-point CCD first, then score the remainder analytically
-  (CCD count F17; seed reproducibility F6), instead of pay-as-you-go.
-\end{frame}
-% Added before Redemption 3b at the owner request: state what the samples are
-% scored against, why this cuts simulation time, and what the single validation
-% reference is.
-% SOURCE: stellarorion_optimization.ads:493-497 and .adb:1766-1896 (analytic
-% J(x)); stellarorion_pinn_trajectory.ads:18-20; validation_pipeline.py:5080-5091
-% (references/trajectory).
-\begin{frame}{REDEMPTION 3a: ANALYTIC SAMPLING BASIS}
-  \small
-  \textbf{What samples are scored against.} A candidate
-  $x=(R_N,r_t,\theta_c)$ is first scored by the closed-form geometry/Sutton--Graves
-  chain in Ada/SPARK; a fresh DSMC solve is reserved for the selected candidate.\\
-  \textbf{Heat flux and load.}
-  \[
-    q_{SG}=C_{SG}\sqrt{\rho(h)/R_N}\,V^3,
-    \qquad
-    Q(x)=q_{SG}(R_N)\,\tau .
-  \]
-  \textbf{Geometry and ballistic terms.}
-  \[
-    R_{\max}=R_N+r_t,\qquad
-    A=\pi R_{\max}^2,\qquad
-    \beta_r=\frac{C_{d,ref}A_{ref}}{C_d(x)A(x)},\qquad
-    \beta_{dev}=(\beta_r-1)^2 .
-  \]
-  \textbf{Cost used for ranking.}
-  \[
-    J=Q/Q_t+0.5\,q/q_{ref}+0.5\,\beta_{dev}
-      +0.25\,C_d/C_{d,ref}+\Lambda\,\mathrm{Pen}.
-  \]
-  \textbf{Why faster:} one snapshot serves every sample, so DSMC/PINN run only
-  after CCD/LHS/BO shortlist candidates.
-\end{frame}
-% Companion variable-definition notes for the analytic sampling equations above.
-\begin{frame}{REDEMPTION 3a1: VARIABLE DEFINITIONS (ANALYTIC SAMPLING)}
-  \footnotesize
-  \textbf{Heat flux and load terms.}
-  \begin{tabular}{@{}ll@{}}
-  $q_{SG}$ & Sutton--Graves convective flux at the hot face [W/m$^2$]\\
-  $C_{SG}$ & correlation constant $1.7415\times10^{-4}$ for Earth air (F21)\\
-  $\rho(h)$ & freestream density at altitude $h$ [kg/m$^3$] (ISA)\\
-  $V$ & flight speed [m/s] at the same snapshot\\
-  $R_N$ & nose radius [m]; $R_N$ sets the $1/\sqrt{R_N}$ scaling\\
-  $\tau$ & effective heating time [s]; $Q(x)=q_{SG}\,\tau$ (F84)\\
-  \end{tabular}\par
-  \vspace{0.1cm}
-  \textbf{Geometry and ballistic terms.}
-  \begin{tabular}{@{}ll@{}}
-  $r_t$ & toroid (tube) radius [m]\\
-  $R_{\max}$ & maximum outer radius $=R_N+r_t$ [m]\\
-  $A$ & frontal area $=\pi R_{\max}^2$ [m$^2$]\\
-  $C_d,\;C_{d,ref}$ & candidate drag coefficient and IRVE-3 reference value\\
-  $\beta_r$ & ballistic ratio $=(C_{d,ref}A_{ref})/(C_d(x)A(x))$\\
-  $\beta_{dev}$ & squared deviation $(\beta_r-1)^2$\\
-  \end{tabular}\par
-  \vspace{0.1cm}
-  \textbf{Cost and penalty terms.}
-  \begin{tabular}{@{}ll@{}}
-  $Q_t,\;q_{ref}$ & validation targets for total heat load and heat flux\\
-  $\Lambda$ & penalty weight (hard constraints)\\
-  $\mathrm{Pen}$ & quadratic envelope, nose and payload violation term\\
-  \end{tabular}
-\end{frame}
-\begin{frame}{REDEMPTION 3a3: PINN OVERVIEW ONLY, NETWORK NOT SHOWN}
-  \small
-  \textbf{Purpose here.} PINN is shown only as a trajectory-overview tool, not
-  as the optimizer's cost kernel and not as a neural-network diagram.\\
-  \textbf{What it gives.} From the single validated anchor it provides the trend
-  for heat flux, heat load, drag and $g$-load along the descent, so a geometry
-  family can be inspected before detailed DSMC verification.\\
-  \textbf{Corridor.} Owner-requested overview range is $140\rightarrow40$ km.
-  The current source-backed model implements $120\rightarrow40$ km
-  ($4300\rightarrow2700$ m/s); keep the source and slide consistent before final use.\\
-  \textbf{Downstream rule.} PINN is used for overview and candidate ranking only;
-  the final gate is still direct DSMC on the selected optimum.
-\end{frame}
 
 \section{CONTEXT}
-% so_literature_map.png <- literature_review_map.png. The outlined row is
-% labelled "This Work StellarOrion Pipeline" in the artwork itself.
-\PlotFrame{WHERE THIS WORK SITS}
+\PlotFrame{OPTIMIZATION COMPARISON: TOPOLOGY (2x2)}
   {\MaxTextLines{2}%
-   Coverage of the phenomena and methods this work draws on; the
-   StellarOrion pipeline is the outlined row.}
-  {so_literature_map}
+   Topology comparison of baseline vs. optimized geometry.
+   Source: results/99\_shared/geometry/optimization\_comparison.png.}
+  {so_optcomp}
+
+\PlotFrame{SURFACE PROFILE CHECK}
+  {\MaxTextLines{2}%
+   Surface profile check of the optimized geometry.
+   Source: results/99\_shared/geometry/surf\_profile\_check.png.}
+  {so_surfprofile}
+
+\begin{frame}{RESULT TABLE: BASELINE VS. OPTIMIZED}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.05}
+  \begin{tabular}{@{}lrrr@{}}
+    \hline
+    \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
+    \hline
+    \multicolumn{4}{@{}l}{\textbf{Geometry and closed-form surrogate}} \\
+    Nose radius $R_N$ & 1.5000 m & 2.9714 m & $+98.10\%$ \\
+    Torus radius $r_{tor}$ & 0.1350 m & 0.0885 m & $-34.47\%$ \\
+    Half-cone angle $\theta_c$ & $60.00^\circ$ & $40.15^\circ$ & $-33.09\%$ \\
+    Drag coefficient $C_d$ & 1.6073 & 1.5597 & $-2.96\%$ \\
+    Sutton--Graves heat flux & 15.36 W/cm$^2$ & 11.47 W/cm$^2$ & $-28.95\%$ \\
+    Total heat load $Q(\mathbf{x})$ & 219.10 J/cm$^2$ & 155.67 J/cm$^2$ & $-28.95\%$ \\
+    Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78\%$ \\
+    \hline
+    \multicolumn{4}{@{}l}{\textbf{DSMC (baseline run / latest gate re-simulation)}} \\
+    Drag coefficient $C_d$ & 1.7655 & 2.5294 & $+43.3\%$ \\
+    Total heat load $Q$ & 165.72 J/cm$^2$ & 77.93 J/cm$^2$ & $-53.0\%$ \\
+    Peak deceleration & 16.55 g & 14.01 g & $-15.3\%$ \\
+    Ballistic coefficient $\beta$ & 27.70 kg/m$^2$ & 10.06 kg/m$^2$ & $-63.7\%$ \\
+    Lift coefficient $C_l$ & $-0.5268$ & $-1.0767$ & $+104.4\%$ \\
+    \hline
+  \end{tabular}
+  \par{\scriptsize Source: Latest attempt; superseded run deleted 2026-10-14 (latest attempt retained).}
+\end{frame}
+
+% =====================================================================
+% NARRATION REVAMP: PLACEHOLDER SCAFFOLD
+% ---------------------------------------------------------------------
+% Added 2026-10-21 on the owner's directive. The target narration order
+% is written out in full in the NARRATION REVAMP comment block at the
+% top of this file.
+%
+% These frames carry NO content. Each one is a marker naming the block
+% it stands for, so the deck holds the narration skeleton before any
+% prose is written. The comment above each frame states the position
+% that frame must occupy in the final deck; once a frame is filled it
+% moves to that position as a cut-and-paste of one
+% \begin{frame}...\end{frame} block.
+%
+% House rules that still bind these frames: at most two lines of body
+% text, no bullet lists, no U+2014, every number cites its source file,
+% and frametitles stay short enough for the fixed-width frametitle band.
+% =====================================================================
+\section{NARRATION REVAMP: PLACEHOLDER SCAFFOLD}
+
+% [ Intro start ]
+% Target position: the opening of the deck, ahead of the OUTLINE frame.
+\begin{frame}{PLACEHOLDER 0: TITLE (INTRO)}
+  \small\textit{Intro block 0: title. Frame exists; narration pending.}
+\end{frame}
+% [ intro end ]
+
+% [ recall start ]
+% Target position: immediately after the OUTLINE frame.
+\begin{frame}{PLACEHOLDER 1: LATAR BELAKANG OVERVIEW}
+  \small\textit{Recall block 1: background overview. Narration pending.}
+\end{frame}
+
+% Target position: immediately after PLACEHOLDER 1.
+\begin{frame}{PLACEHOLDER 2: TUJUAN AND RESEARCH SCOPE}
+  \small\textit{Recall block 2: objective and scope limit. Narration pending.}
+\end{frame}
+
+% Target position: immediately after PLACEHOLDER 2.
+\begin{frame}{PLACEHOLDER 3: METHODOLOGY AND REASONING}
+  \small\textit{Recall block 3: methodology and its reasoning. Narration pending.}
+\end{frame}
+
+% Target position: around the existing PREVIOUS PROBLEM frame, which
+% already lists the three prior issues; this frame is the narration that
+% frames them.
+\begin{frame}{PLACEHOLDER 4: PREVIOUS ISSUES}
+  \small\textit{Recall block 4: previous issues. Narration pending.}
+\end{frame}
+% [ recall end ]
+
+% [ Current progress start ]
+% Target position: around the existing STATUS UPDATE frame, which
+% already carries the work-item percentages; this frame is the overall
+% progress narration and deliberately excludes the resolution detail.
+\begin{frame}{PLACEHOLDER 5: OVERALL PROGRESS}
+  \small\textit{Current progress block 5: overall progress. Narration pending.}
+\end{frame}
+% [ Current progress end ]
+
+% Target position: after the field-evidence and optimization blocks.
+\begin{frame}{PLACEHOLDER 6: ISSUE, RESOLUTION, UPDATE}
+  \small\textit{Current progress block 6: issue, attempt, update. Narration pending.}
+\end{frame}
+
+% The two required plots. The owner's note asks for the CFD case and the
+% optimized case to be stated in writing as well as plotted, so each
+% frame holds the reserved space plus the note on what the plot must
+% show. Neither uses \PlotFrame: no image exists yet, and the missing
+% image diagnostic would put a forbidden pattern into the built PDF.
+
+% [ Ending start ]
+% Target position: the last content frame of the deck.
+\begin{frame}{PLACEHOLDER 7: CONCLUSION}
+  \small\textit{Ending block: conclusion. Narration pending.}
+\end{frame}
+% [ Ending end ]
 
 \end{document}

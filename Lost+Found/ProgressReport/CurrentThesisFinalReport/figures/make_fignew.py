@@ -714,8 +714,8 @@ def fig_gate() -> None:
     print(f"    q_flight={q_flight}  q_analytic={q_analytic}  q_raw_dsmc={q_raw}  "
           f"q_target={q_target}  rapisarda_SG={q_sg}")
     if q_raw is not None and q_analytic:
-        print(f"    correction factor c = q_dsmc/q_analytic = {q_raw / q_analytic:.5f} "
-              f"(text reports 0.5006)")
+        print(f"    correction factor c (raw ratio) = q_dsmc/q_analytic = {q_raw / q_analytic:.5f} "
+              f"(thesis reports the clamped value c = 2.0)")
         print(f"    verdict: q_hybrid = {q_raw:.2f} <= Q_target = {q_target:.2f} -> "
               f"{'PASS' if q_raw <= q_target else 'FAIL'}")
 

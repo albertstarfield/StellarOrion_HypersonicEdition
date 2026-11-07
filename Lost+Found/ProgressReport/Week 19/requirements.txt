@@ -1,0 +1,3 @@
+easypptx==0.11.0
+crosshair-tool==0.0.111
+pillow==13.0.0

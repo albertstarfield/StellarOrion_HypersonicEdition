@@ -1,0 +1,15 @@
+{
+  "sop_clause": "13.3",
+  "basis": "generator source, not rendered pixels (A2)",
+  "figures": 393,
+  "status_counts": {
+    "ok": 355,
+    "no_generator": 38
+  },
+  "missing_counts": {
+    "no renderer names this figure": 38
+  },
+  "compliant_pct": 90.33,
+  "verdict": "NOT_MET",
+  "csv": "results/99_shared/sop/figure_checklist.csv"
+}

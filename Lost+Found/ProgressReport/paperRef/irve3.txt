@@ -1,0 +1,967 @@
+IRVE-3 Post-Flight Reconstruction
+Aaron D. Olds1 , Roger Beck2, David Bose3, and Joseph White4
+Analytical Mechanics Associates, Inc., Hampton, VA, 23666
+Karl Edquist5, Brian Hollis6, Michael Lindell7, and F.N. Cheatwood 8
+NASA Langley Research Center, Hampton, VA, 23681
+and
+Valerie Gsell9 and Ernest Bowden10
+Orbital Sciences Corporation, Wallops Island, VA, 23337
+
+The Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) was conducted from the NASA
+Wallops Flight Facility on July 23, 2012. Launched on a Black Brant XI sounding rocket, the
+IRVE-3 research vehicle achieved an apogee of 469 km, deployed and inflated a Hypersonic
+Inflatable Aerodynamic Decelerator (HIAD), re-entered the Earth’s atmosphere at Mach 10
+and achieved a peak deceleration of 20 g’s before descending to splashdown roughly 20
+minutes after launch. This paper presents the filtering methodology and results associated
+with the development of the Best Estimated Trajectory of the IRVE-3 flight test. The
+reconstructed trajectory is compared against project requirements and pre-flight
+predictions of entry state, aerodynamics, HIAD flexibility, and attitude control system
+performance.
+
+Nomenclature
+BET
+CA
+Cm
+Cmq
+CN
+Cp
+HIAD
+Kn
+M∞
+q∞
+α
+αT
+β
+γ
+
+1
+
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+
+Best Estimated Trajectory
+Axial force coefficient
+Pitch moment coefficient
+Pitch damping coefficient
+Normal force coefficient
+Surface pressure coefficient
+Hypersonic Inflatable Aerodynamic Decelerator
+Knudsen number
+Free-stream Mach number
+Free-stream dynamic pressure
+Angle of attack
+Total angle of attack
+Sideslip angle
+Ratio of specific heats
+
+Senior Project Engineer, 303 Butler Farm Rd, Hampton, VA, 23666, member AIAA
+Supervising Engineer, 1500 Perimeter Pkwy Suit 110, Huntsville, AL 35802, member AIAA.
+3
+Insert Job Title, Department Name, Address/Mail Stop, and AIAA Member Grade for third author.
+4
+Senior Project Engineer, 303 Butler Farm Rd, Hampton, VA, 23666,
+5
+Aerospace Engineer, Atmospheric Flight & Entry Systems Branch, MS 489, Senior Member .
+6
+Insert Job Title, Department Name, Address/Mail Stop, and AIAA Member Grade for fourth author (etc).
+7
+Insert Job Title, Department Name, Address/Mail Stop, and AIAA Member Grade for fourth author (etc).
+8
+Insert Job Title, Department Name, Address/Mail Stop, and AIAA Member Grade for fourth author (etc).
+9
+Insert Job Title, Department Name, Address/Mail Stop, and AIAA Member Grade for fourth author (etc).
+10
+Insert Job Title, Department Name, Address/Mail Stop, and AIAA Member Grade for fourth author (etc).
+1
+American Institute of Aeronautics and Astronautics
+2
+
+I. Introduction
+
+T
+
+he Inflatable Re-entry Vehicle Experiment (IRVE-3) is the second successful flight test of a Hypersonic
+Inflatable Aerodynamic Decelerator (HIAD) following the IRVE-II flight in August 20091,2. The two primary
+mission science objectives of the IRVE-3 experiment are to demonstrate re-entry survivability in the presence of at
+least 12 W/cm2 cold wall heat flux to verify the flexible thermal protection system design, and to demonstrate the
+effectiveness of generating lift with a HIAD from a radial CG offset to demonstrate the potential for guided entry
+applications. The successful accomplishment of both of these objectives is an important step in advancing the
+technologies necessary for future HIAD planetary entry applications 3. The test demonstrated the successful
+deployment, attitude control, and structural rigidity of a HIAD system, providing valuable data for future
+development. On-board and ground based sensor measurements are used to reconstruct the vehicle's trajectory,
+allowing detailed examination of the vehicle's aerodynamic, structural, and attitude control performance.
+The sensor suite installed on IRVE-3 for the purposes of trajectory reconstruction includes the GLN-MAC IMU,
+WASSP accelerometer, JAVAD GPS, and five nose cap pressure transducers. Four onboard cameras transmit HD
+video to capture details of aeroshell deployment and entry response. Ground based measurements include radar
+tracking from multiple ground stations as well as two Viper-Dart meterological sounding rockets. This selection of
+measurements provides limited redundancy in the event of sensor or telemetry failure and allows an accurate
+reconstruction of the IRVE-3 trajectory and atmospheric density profile.
+An Extended Kalman Filtering approach is used by NewSTEP 4 to generate a Best Estimated Trajectory (BET)
+from the available data sources that includes estimates of state uncertainty. The BET is used to assess compliance
+with project requirements and is compared against preflight simulations to determine the adequacy of current
+predictive tools and methods to capture the flight behavior of the HIAD entry system.
+
+II. Mission Description
+A. Overview
+IRVE-3 was launched on a three stage Black Brant XI sounding rocket from Wallops Island, VA at 7:01 am,
+July 23rd, 2012 on a suborbital trajectory with an apogee of 469 km. After upper stage burnout, the roll rate used
+for attitude stability during ascent was removed by a yo-yo despin mechanism prior to payload separation. A further
+reduction of attitude rate was achieved by the NASA Sounding Rocket Operations Contract Inertial Attitude Control
+System (NIACS) prior to separation of the nose cone protecting the stowed inflatable aeroshell. Near apogee, the
+restraint cover on the aeroshell was released and inflation commenced. Prior to entry interface, the NIACS
+reoriented IRVE-3 to the desired attitude, and the center of mass of the vehicle was mechanically offset from the
+centerline to generate an angle of attack during the experiment. At a navigated altitude of 88 km, pitch and yaw
+control were disabled to allow aerodynamic forces to govern angle of attack and sideslip, while roll control
+continued to hold a planet relative bank angle within ± 5° throughout the experiment. IRVE-3 entered the
+atmosphere at Mach 10, reaching a peak heat rate of 14 W/cm2 and peak deceleration of 20 g's. After the
+experiment concluded at a pre-defined Mach number of 0.7, the center of mass was mechanically translated back
+and forth to obtain the vehicle's angle of attack response.
+
+2
+American Institute of Aeronautics and Astronautics
+
+Figure 1: IRVE-3 Trajectory Overview
+
+B. Vehicle Description
+At launch, the maximum diameter of the IRVE-3 vehicle is 0.560 m and is set by the aft centerbody, consisting
+of NIACS and telemetry modules. The NIACS module includes the GLN-MAC IMU as well as 8 cold-gas Argon
+thrusters mounted to the payload skin to provide 3-axis attitude control. The aft centerbody is attached to the
+forward centerbody by an actuated rail system which allows a relative translation of ± 36 mm used to generate a
+radial CG offset for the entry experiment. This CG offset (CGO) mechanism transmits loads through Bellville
+washer stacks, resulting in small linear and angular deflections from entry loads. The 0.470 m diameter forward
+centerbody includes the HIAD N2 inflation system and also serves as the rigid nose of the IRVE-3 vehicle,
+containing 5 surface heat flux gauges integrated with pressure transducers. The inflation segment provides mounting
+points for the HIAD radial straps and is covered by the same flexible TPS that covers the inflatable aeroshell. The
+aeroshell is stowed for launch forward of the rigid nose in a cylindrical shape with diameter of 0.470 meters, and
+once inflated, attains the shape of a 3 m diameter, 60 deg half-angle sphere-cone.
+
+3
+American Institute of Aeronautics and Astronautics
+
+Figure 2: Reentry Vehicle Configurations
+C. On-Board Sensors
+1. GLN-MAC
+The GLN-MAC consists of an LN-200 IMU with three axis MEMS accelerometer and FOG gyros on a roll
+gimbaled platform to minimize gyro scale factor errors from the high roll rates used to stabilize the sounding
+rocket’s attitude during ascent. After the yo-yo despin, the GLN-MAC transitions from gimbaled to strap-down
+mode based on the NIACS control mode; the platform is inertially gimbaled in coarse control modes and transitions
+to the “caged” strap-down configuration for fine control modes.
+2. WAASP
+The WAASP accelerometer triad is rigidly mounted to the vehicle and provides 100Hz 3-axis accelerometer
+measurements. The WAASP accuracy specifications are similar to those of the GLN-MAC, and the acceleration
+measurements match closely with those from the GLN-MAC. Since reconstruction quality could not be substantially
+improved by including the WAASP measurements, this dataset was excluded from the trajectory reconstruction.
+3. Javad JNS100 GPS
+The Javad GPS receiver generates position and velocity solutions along with error estimates at a rate of 20 Hz
+for use in the loosely coupled reconstruction method utilized by NewSTEP. Additional data from individual satellite
+measurements is also transmitted, but is not directly used in the reconstruction.
+4. GE UNIK 5000 Pressure Transducers
+Five pressure transducers were installed in the rigid nose in a
+cross pattern biased to the windward direction by 6 deg to center the
+ports closer to the atmosphere relative velocity vector during entry.
+The installed sensors are shown in Figure 3. The sensors have a
+range of 0 to 5 psia, where peak dynamic pressure during entry is
+estimated to reach a maximum of 0.9 psia.
+D. Ground Stations
+1. Wallops Flight Facility
+Wallops flight facility provided a wide array of radar and
+antenna stations for tracking the data acquisition during the flight.
+Four radar stations denoted by number: 2, 3, 5, and 18 were used to
+4
+American Institute of Aeronautics and Astronautics
+
+Figure 3: Nose Cap Pressure Ports
+
+provide measurements of relative range azimuth and elevation. Four antennas were allocated to receive telemetry:
+MG1 (7.3 m North), MG2 (7.3 m South), 9m, and TOTS3 (7.9 m).
+2. Coquina Ground Station
+A single radar station, denoted as radar 11, and a 20 ft diameter mobile antenna located near Coquina, NC were
+utilized to provide coverage of the southerly portion of the 2σ entry corridor.
+
+III. Trajectory Reconstruction
+The Best Estimated Trajectory (BET) is a reconstruction of the vehicle’s six degree-of-freedom state time history
+based upon a blending of available data from onboard and ground based sensors. The BET is used as the definitive
+source of trajectory information used to assess vehicle performance and for flight dynamics model reconciliation.
+A. Methodology
+The primary tool utilized in the calculation of the BET was a statistical trajectory estimation program known as
+NewSTEP. NewSTEP is a Matlab-based tool that implements an iterative extended Kalman filter (IEKF) to compute
+an optimal 6-DOF trajectory estimate along with predicted error bounds based on the given measurement data and
+considering the modeled measure uncertainties. At its core the code is a generalization of the Statistical Trajectory
+Estimation Program (STEP) developed by NASA LaRC 5. STEP was used extensively in the 1960s-1980s on a wide
+variety of launch vehicle and entry vehicle flight projects.
+NewSTEP borrows heavily from the STEP formulation, but is coded entirely in Matlab in order to make use of
+its numerical integration and linear algebra routines as well as to facilitate modular updates. Extensive upgrades and
+enhancements to the original STEP implementation enable its use on IRVE-II6 as well as multiple other projects,
+among them, X-43A4, MSL/MEADS7, Ares I-X8, and PA-19. Enhancements to the code have included the addition
+of the IEKF capability, new measurement models, new optional output variables, updated methods for mapping the
+internal state covariance into output uncertainties, as well as other more subtle improvements to the underlying
+numerical code.
+An overview of the process for generating the BET is presented in Figure 4. NewSTEP is indicated in the solid
+gray outline at the core of the process showing the major elements of the tool. Forward and backward IEKF's are
+executed that, when merged using a Fraser-Potter smoothing algorithm, form optimal state estimates for each point
+based on the entire time history of input data. The final step in the process is to transform the internal state and
+covariance estimate into the desired output quantities and an estimate of their uncertainties.
+The IEKF is an industry standard processing algorithm for filtering and estimation—at a high level it amounts to
+a recursive weighted least-squares fit of the output to all the available input data. The input data consists of inertial
+data used to propagate the state and a set of periodic measurements that are a function of the system state variables.
+Starting at some initial condition an estimate of the vehicle state and covariance is propagated forward to the next
+measurement time by numerically integrating the non-linear equations of motion and linearized covariance
+propagation equations. The prediction step is completed computing an estimate of the measurement quantities at the
+current state prediction. The EKF correction step involves linearization of the measurement equations about the
+current state estimate, computation of the Kalman gain, and then an update to the current estimates based on the
+residuals between predicted and actual measurements. Because an iterative EKF is used, the linearization and
+correction is repeated until convergence, or a preset limit, prior to initializing the next prediction step.
+In the Kalman filter algorithm the contributions of the various inputs are weighted by their stated uncertainties—
+this means that the definition of inputs, and realistic uncertainties, are both critical to forming realistic trajectory
+outputs. In the Kalman filter the distributions of uncertain inputs, either process noise inputs in the equations of
+motion or measurement uncertainties, are assumed to be zero-mean and Gaussian. For the linear filter this results in
+the maximum-likelihood solution. In the case of the non-linear extended Kalman filter algorithm, violating this
+assumption may result in convergence issues or a sub-optimal solution. NewSTEP provides functionality for
+appending terms to the vehicle state vector and allowing the filter to estimate systematic error parameters to be
+removed from input quantities.
+The inputs and outputs to the estimation process are indicated in the dotted outlined boxes in Figure 4. An
+important element in all the inputs is the characterization of the expected measurement uncertainty and any
+5
+American Institute of Aeronautics and Astronautics
+
+systematic error parameters. The GLN-MAC is used as the primary source of inertial data for propagating the filter.
+Nose cap pressure measurements, day of flight atmospheric winds, pressure, and temperature are used as
+measurements as well as radar and GPS data. BET output quantities are computed in three coordinate frames aligned
+with the IMU in the aft centerbody, the forward centerbody, and the vehicle aeroshell. Relative deflection of the
+forward and aft segments of the centerbody are obtained from CG offset deck string-pot measurements. Relative
+deflection of the aeroshell and aft-centerbody are derived from flight video analysis.
+
+GLN-MAC
+Accelerations
+and Rates
+
+Day of Flight
+Atmosphere
+
+ATM Profile
+(vs Time)
+
+GPS Data
+Radar Data
+Nosecap Pressures
+
+Measurements
+
+Inertial Data
+
+New Step
+
+Pre-processing
+
+Initial
+Conditions
+
+Forward
+IEKF
+
+Mass
+Properties
+
+Backward
+IEKF
+
+Smoothing
+
+Flex Model
+
+Output Transformation
+
+BET
+Outputs &
+Uncertainties
+
+Figure 4: Flowchart of NewSTEP BET process
+For the IRVE-3 reconstruction, an incremental release strategy was employed to deliver trajectory estimates to
+analysts early in the post-flight analysis process, while progressively more accurate trajectory estimates were
+generated as more data sources were included. This process allows the contributions of complimentary sensors to be
+evaluated and the resulting state estimates and uncertainties to be checked for consistency. The estimates and
+comparisons generated as part of the BET development are shown in Table 1.
+
+Table 1. Incremental Generation of Final BET
+Data Sources
+Inertial Data
+(Accels+Rates)
+Atmosphere
+Inertial+GPS
+Atmosphere
+Inertial+GPS+Radar
+Atmosphere
+Inertial+GPS+Radar
++Nose Cap Pressures
+Atmosphere
+
+Trajectory
+Integrated Accels and Rates
+
+Evaluation
+Comparison with onboard NAV and GPS—
+assess implementation of inertial data
+
+IEKF—with GPS
+measurements
+IEKF—with Radar and GPS
+
+Understand impact of GPS aiding through
+vehicle kinematics
+Identify systematic errors in Radar
+measurements, compare with GPS trends
+Update to atmospheric density estimate
+
+IEKF—with Radar, GPS, and
+Pressure Measurements
+
+B. Data Sources
+1. Inertial Data
+Acceleration and rate data from the GLN-MAC LN200 were utilized to propagate the filter state as part of the
+prediction step in the forward and backward IEKF passes. Prior to incorporation into the filter, the data was
+preprocessed to improve data quality and transform it into a form suitable for NewSTEP inputs.
+6
+American Institute of Aeronautics and Astronautics
+
+The raw acceleration and rate data in the GLN-MAC gimbaled platform frame were transformed into the body
+frame for use by NewSTEP’s strapdown inertial equation. The measured resolver angle was used for this
+transformation. Additional transformations corresponded to rigid rotations to transform accelerations into the
+NewSTEP body frame.
+Dropouts or outliers in the acceleration and rate data were identified and corrected using cubic Hermite
+interpolation. For the IRVE-3 flight, the acceleration data was clean and no outlying points were identified that
+required removal. Two short, 0.05 second, dropouts were seen beginning around 743.7 seconds. After 752.5 seconds
+longer 0.5 to 1.5 second dropouts become more common, building to over 20 seconds before the signal is lost. The
+BET utilized for most of the post flight analysis was terminated at 750 seconds to avoid these periods, this is well
+after the primary experiment phase, however ongoing work may investigate extending this BET by utilizing the
+Coquina telemetry stream to fill in some of the gaps or by running the filter in a 3-DoF tracking mode through the
+gaps.
+The acceleration and rate data was smoothed at 20Hz using a frequency domain low-pass filter based on the
+routines in SIDPAC10 to reduce noise levels and quantization effects. The relatively high cutoff reduced the impact
+of quantization and noise effects but retained signal around discrete events seen in the trajectory.
+As the GLN-MAC transitions from its gimbaled mode to its strap down mode, it drives the platform to its zero
+position. When driven at high rate a spurious steady state acceleration signal is introduced into the y and z body axes
+that is not accounted for in the filter equations of motion; a transient oscillation was observed immediately following
+the platform stopping in its strap down orientation. The magnitude of most of the acceleration errors was small,
+however the largest duration event occurred during the coast prior to entry interface, this event is shown as an
+example in Figure 5—when uncorrected this input leads to an offset in vehicle velocity at entry interface.
+
+Figure 5: Example of acceleration inputs during transition to caged mode
+
+A window for each event was identified and removed from the filtered accelerations and rates based on the
+reported GLN-MAC status, six additional frames of data were removed at the end of each window. The resulting
+gaps in acceleration and rate data for the first two events (at 91 and 606 seconds, prior to entry interface) were filled
+via linear interpolation. The remaining 25 windows were of shorter duration and had little sustained acceleration
+error, but the disturbances occurred while there was significant vehicle dynamics. The underlying oscillation
+surrounding each window was not well captured by a linear trend—instead the filtered accelerations and rates in
+these windows were replaced with data filtered with a 2Hz cutoff to reject the disturbances while maintaining rigid
+body motion and the primary flex modes. A comparison of the preprocessed and raw inertial data is shown in Figure
+6.
+
+7
+American Institute of Aeronautics and Astronautics
+
+Figure 6: Preprocessing of GLNMAC acceleration inputs
+Comparisons of a deterministic trajectory computed using NewSTEP to propagate the inertial inputs with the
+onboard vehicle navigated attitude and the reported GPS position and velocity confirmed the correct implementation
+of the inertial inputs into the reconstruction. A small offset in navigated velocity was observed to build up during the
+pressure pulse, however this offset was well within the predicted GPS and inertial uncertainties.
+2. GPS Data
+The recorded GPS data was available at 20 Hz and no significant outliers were observed. The only significant
+dropouts occurred at the same time as the IMU dropouts. Because the filter in NewSTEP does not place restrictions
+on the timing of measurements being processed, it was unnecessary to interpolate data into gaps in the data stream.
+During the period of the BET, 600-750 seconds, the GPS receiver reported an excellent solution geometry with a
+Positional Dilution of Precision (PDOP), a measure of the impact of satellite geometry on GPS position uncertainty,
+of 1.5 for all times after 630 seconds and 10 satellites in the solution.
+The pre-flight estimate of GPS measurement uncertainty was increased to account for the reported position and
+velocity error estimates from the GPS unit as well as the observed noise in velocity signal during the pressure pulse.
+The new velocity error envelope peaks at 1 m/s, 3-sigma, during the pressure pulse.
+The initial GPS-aided trajectory estimates were observed to be sensitive to the time alignment of the GPS and
+inertial data streams. Initially the data was aligned based on the observed motion—this resulted in a blended
+trajectory that diverged significantly in attitude from the inertial only solution during the pressure pulse due to a
+timing difference in the GPS and IMU signals. The input data streams were originally aligned based on the observed
+time of vehicle first motion. Subsequently the measurement residuals inside the filter were used to define a constant
+timing offset that minimized the variance of the residuals and moved the mean closer to zero. The identified best-fit
+timing offset was to delay GPS signal by 0.0175 seconds.
+3. Radar Data
+Range, azimuth, and elevation data were collected from five radar stations located at two sites. Radars 2, 3, 4,
+and 18, were all located near the launch site denoted by "WFF" in Figure 19, and shared a similar look angle along
+the vehicle trajectory. Radar 11 was located with the Coquina telemetry antenna, also shown Figure 19, and had a
+side look angle. During much of the experiment phase, the launch site radars had low elevation angles (< 2 degrees)
+and the tracks were observed to be of lower quality. The larger uncertainties and regions of poor tracking meant that
+the radar observations did less to aid the trajectory during the experiment than the GPS. The radar primarily
+contributed as an alternate set of position measurements to support the assumption that the GPS data was not
+corrupted by significant systematic error sources.
+Figure 7 shows the range, azimuth, and elevation error between each radar track and the GPS measurement. The
+modeled radar uncertainties are shown as colored regions around each track error. The modeled uncertainties are not
+shown during periods where a given radar was excluded from the filter due to issues with the quality of the track.
+These regions were manually identified considering whether the track seemed physically consistent with expected
+vehicle dynamics and whether the errors were consistent with the expected uncertainties.
+
+8
+American Institute of Aeronautics and Astronautics
+
+After shifting the time by 0.07 seconds, the residual errors between the GPS and radar signals are all
+consistent with the modeled errors, Figure 7. Most of the track error appears in the form of a consistent bias that can
+be estimated and removed in NewSTEP. One exception noted to this is the azimuth signal for Radar 11. This radar
+was the southern radar and appeared to have more trouble tracking as the azimuth changed most rapidly and the
+vehicle was near apogee. The difficulty tracking during most of the experiment phase can also be seen.
+Experiment
+
+Figure 7: Radar error relative to GPS
+4. Nose Cap Pressure Port Data
+Five pressure ports on IRVE-3 measured the pressures on the vehicle nose cap. The locations measured are
+shown in Figure 3. Note that actual port location is offset from the centerline of each indicated plug. Pressure
+measurements can be processed as part of the BET to increase the ability to determine atmosphere relative
+quantities. Because of the lack of day-of-flight atmospheric measurements for IRVE-3, discussed below, the
+pressure ports provide the only opportunity to separate variation in the day of flight atmosphere from vehicle
+aerodynamic quantities.
+Every external measurement processed in NewSTEP requires not just the measured data and assumed
+uncertainties themselves, but also a measurement model that is part of the filter. This model is used to compute a
+predicted measurement based on the estimated state; the Jacobian capturing the sensitivity of the predicted
+measurements to changes in the state is also used in the calculation of the Kalman gain at each update step. The
+architecture for including forebody pressure measurements is based on that developed for MEADS 7; however, the
+actual implementation is specific to the vehicle configuration for IRVE-3
+9
+American Institute of Aeronautics and Astronautics
+
+The pressure measurement model for IRVE-3 takes the form of a CFD based pressure coefficient database. This
+CFD database is valid over the angle of attack range and sideslip required for the trajectory, but only includes Mach
+numbers above 5.3. In order to include pressure measurements further into the trajectory, and delay introducing a
+transient in the reconstruction until after peak dynamic pressure, the coefficient database is extrapolated based upon
+the pressure ratio behind a normal shock at Mach numbers down to Mach 3, Eq. (1) and (2).
+
+(1)
+
+(2)
+In order to reduce any sudden transient in the estimated state or uncertainties where the pressures are introduced
+into the filter, the measurement is “faded” in and out. This is accomplished by increasing the modeled measurement
+uncertainty at the end points of the pressure measurement and ramping the uncertainty to its modeled value over a
+1.2 second span; this progressively weights the measurement less as it is being removed from the BET. The pressure
+measurements are ramped in over 3 seconds due to the decreased relative accuracy at lower pressures.
+The measured pressures during the flight are shown in Figure 8. The pressure time history suggests a possible
+obstruction in port 5, closest to the vehicle nose, so it was not used for the BET analysis. For the remaining ports,
+the signal begins to rise off its floor at around 668 seconds, this corresponds to an altitude of approximately 75.6 km
+and represents the highest altitude at which there is pressure data in the filter—the pressure data is fully incorporated
+into the solution after 671 seconds or 67.6 km altitude.
+Nose Cap Pressure Measurements
+Nose Cap Pressure Measurements
+
+0.2
+
+Port
+
+1
+2
+3
+4
+5
+
+1
+
+0.5
+
+0
+660
+
+670
+
+680
+690
+Time (sec)
+
+700
+
+710
+
+Port
+
+Pressure (PSI)
+
+Pressure (PSI)
+
+1.5
+
+0.15
+
+0.1
+
+1
+2
+3
+4
+5
+
+0.05
+
+0
+660
+
+665
+670
+Time (sec)
+
+675
+
+Figure 8: Measured Nose Cap Pressures
+To incorporate the pressure port data into the Kalman filter, the total measurement uncertainties must include
+uncertainties in the pressure coefficient database as well as instrumentation uncertainty. The input uncertainty for
+NewSTEP is assumed to be Gaussian and is built up as the root-sum-square of several terms shown in Figure 9. The
+contributions due to transducer accuracy, noise, and quantization are functions of the full-scale reading and are thus
+constant over the trajectory with a higher relative contribution at lower pressures. The modeling error in the CFD is
+specified as a constant percentage error and thus tracks the shape of the measured pressure. Because the CFD model
+was built at discrete total angle of attack grid points, some uncertainty is introduced in the process of interpolating to
+angle of attack and sideslip. This interpolation error also increases below Mach 5.5 due to the approximate method
+used to extend the pressure coefficient database to Mach 3. The estimate of interpolation error was computed to
+bound the difference between CFD pressures evaluated at the actual port locations at discrete points along the
+IMU+GPS BET and values computed with the filter measurement model at the same conditions. The final two error
+sources are CFD derived estimates of pressure uncertainty due to deflection of the aeroshell and uncertainty in port
+10
+American Institute of Aeronautics and Astronautics
+
+locations. The location error term is greatest for Port 2 due to the steep pressure gradient on the leeside of the nose
+cap.
+
+Figure 9: Filter Uncertainty for Nose Cap pressures
+5. Atmosphere Model
+GRAM 201011 is used to provide a monthly mean atmosphere profile with uncertainties for the location of the
+IRVE-3 trajectory. Due to the lack of direct atmosphere measurements the GRAM profile was used directly as a
+measurement into the filter. In order for the outputs to track the GRAM input the measurement must be included at a
+relatively high data rate. The dense interrogation of the GRAM profile requires that the process noise driving the
+filter atmosphere states was tuned to eliminate any assumed correlation between measurement updates—this
+eliminates persistence effects that would artificially lower the output uncertainty when processing at a high data rate.
+The profile was converted into the time-based profile needed by NewSTEP, interpolating based on the GPS
+altitude to provide inputs at each of the desired output points. Where the equations of motion and atmosphere
+measurements are coupled due to the inclusion of pressure measurements, the atmosphere model was interpolated at
+the same calling rate as the nose-cap pressures.
+6. CG Offset Deck Deflection
+String pot measurements of bearing spring deformations provide a time history of tilt deformation of the CG
+Offset deck, seen in Figure 12. The Bellville washer stacks become fully compressed near peak dynamic pressure,
+limiting rotation at the joint to 0.1°.
+7. Flight Video
+Flight video is used in the reconstruction to provide an estimate of large-scale aeroshell rotation with respect to
+the aft-centerbody where the cameras are mounted. Two camera images were overlaid, one taken before the external
+pressure load started to build, and one taken at regular intervals during entry. The starboard camera was used for
+imaging and the strap closest to the starboard direction was used to assess the relative displacement between the two
+load conditions. In Figure 10, the strap in the peak load deformation state (marked in red) is shifted aft relative to
+the same strap in the unloaded state (marked in blue). Knowing the strap width and the location where the shift is
+measured relative to the centerbody-to-inflatable interface enabled the estimation of displacement and rotation of the
+aeroshell. The rotation is calculated as a rigid-body rotation of the inflatable aeroshell with respect to the forward
+centerbody as shown in Figure 11. Employing video motion tracking software to extend this approach, a continuous
+11
+American Institute of Aeronautics and Astronautics
+
+deflection curve shown in Figure 12 is generated, with CG Offset deflection removed from the observed aeroshell
+rotation.
+
+Figure 10. Overlaid video images at entry interface and peak pressure
+
+Figure 11. Rigid-body rotation of the inflatable aeroshell relative to the centerbody
+
+12
+American Institute of Aeronautics and Astronautics
+
+Figure 12. Measured CG offset deck rotation and estimated aeroshell pitch deflection with
+respect to the forward centerbody
+C. Results
+1. Heat Flux
+One of the primary science objectives of the IRVE-3 mission is to demonstrate TPS survivability at a cold wall
+(300 K) heat flux greater than 12 W/cm2. This represents a five-fold increase over IRVE-II heating and is an
+important milestone in flexible TPS technology development. While heat flux gauges were flown on the vehicle and
+returned high quality data, CFD was designated pre-flight as the method used for confirmation that re-entry heating
+met the 12 W/cm2 requirement. CFD runs are performed along the BET using the design OML geometry to
+determine the peak heat flux on the vehicle nose at each selected time point. The CFD solutions, along with 10%
+error bars to cover typical prediction uncertainty for these flow conditions, are plotted in Figure 13 and confirm that
+the peak heat flux obtained in flight does exceed the required value. Additionally, Figure 13 includes the preflight
+aeroheating indicator applied to the BET, with 3σ bounds representing the variation in heating conditions due to
+measurement and environmental uncertainties. The favorable comparison of the pre-flight aeroheating indicator
+with post-flight CFD verifies the pre-flight modeling approach near peak heating, while the small variation observed
+in the aeroheating indicator due to BET uncertainty provides confidence that the heat flux requirement is confirmed
+in the presence of reconstruction error.
+
+13
+American Institute of Aeronautics and Astronautics
+
+Figure 13. CFD heatflux solutions along the BET co-plotted against the reconstructed heat flux
+using the pre-flight aeroheating indicator
+2. Lift to Drag Ratio
+The second mission science objective of the IRVE-3 flight is to demonstrate the effectiveness of a radially offset
+center of gravity for generating lift with an inflatable aeroshell. This method of generating lift has been regularly
+employed on axisymmetric rigid entry vehicles to reduce entry acceleration and control landing location, but IRVE3 represents the first attempt to generate a designed lift vector with an inflatable aeroshell. The vehicle was designed
+to fly in a "lift-up" orientation, mechanically translating the aft-centerbody to generate a negative angle of attack and
+controlling body roll with cold-gas jets to target an Earth relative bank angle of 0 ± 5°.
+As seen in Figure 14, during the experiment phase, which lasts from entry interface until Mach 0.7, the vehicle
+begins at a trim angle of attack of -8° which grows with dynamic pressure to -16°, and diminishes to around -5°
+below Mach 1. The growth of angle of attack magnitude during the experiment is primarily due to a relative pitch
+deformation of the aeroshell with respect to the centerbody; this deformation effectively increases the radial CG
+offset relative to the aeroshell frame, thereby increasing the trim angle of attack magnitude. A trim sideslip angle
+ranging from -1° to 2° is also plotted in the figure, the likely result of slight asymmetries in the deployed aeroshell
+shape.
+
+14
+American Institute of Aeronautics and Astronautics
+
+The lift to drag ratio obtained during the
+experiment closely follows the trends of angle of
+attack time history, beginning near 0.1, growing to
+0.2 near peak dynamic pressure, and diminishing to
+a value oscillating around 0.06 at the end of the
+experiment phase, as shown in Figure 15. The drag
+normalized side force remains mostly below 0.05
+and follows the trends in sideslip angle. These
+results demonstrate that the effective lift vector of
+the vehicle remained close to the designed
+orientation throughout the experiment.
+In order to maintain a "lift-up" trajectory, the
+control system targets a navigated planet relative
+bank angle of zero, with an allowable bank angle
+tolerance during the experiment specified as ± 5°.
+Figure 16 includes the reconstructed bank angle
+time history, and shows that the bank angle was
+maintained within tolerances throughout the
+experiment. When the extra-credit CG translation
+maneuvers begin, the control system transitions to
+targeting an inertial roll rate of 0 deg/s in order to
+avoid large bank commands resulting from the
+velocity vector approaching vertical, where bank
+angle is undefined.
+
+Figure 14. Reconstructed Aerodynamic Angles
+
+Figure 15. Drag normalized lift and side force
+
+15
+American Institute of Aeronautics and Astronautics
+
+Figure 16. Reconstructed planet relative bank angle compared to control requirement
+
+3. Atmosphere Reconstruction
+Because of lack of any altitude correlation assumed for winds and temperature in the filter, the BET atmosphere
+is simply the GRAM model over much of the trajectory. The inclusion of pressure measurements did allow the EKF
+to estimate an adjustment to density during the period where those measurements were present in the filter, Figure
+17; however solution was not particularly sensitive to wind relative attitudes. Thus the point wise blending of
+pressure and GRAM solutions did little to improve the uncertainty or shift the mean of the GRAM wind model,
+Figure 18.
+The reconstructed density is shown in, Figure 17. The reconstructed atmosphere shows a reduction in density
+compared to the monthly mean at high altitudes, at lower altitudes the reconstruction indicates a higher density than
+predicted. The NewSTEP estimated density variation at high altitude is supported by an independent estimate of
+density based on simulation using the preflight aerodatabase. The density and pressure in the final reconstructed,
+BET atmosphere was extrapolated above 67 km, assuming a constant relative error on the GRAM nominal and
+letting the uncertainties revert to the GRAM percentages.
+The pressure based density profile also shows the discrete “density-hole” at 47km that was responsible for a
+discrete input seen in multiple independent vehicle instruments including GLN-MAC, the WASSP accelerometers,
+pressure ports 1-4 (not seen in port 5 which was assumed to be blocked), and the GPS velocity signal. The presence
+of this phenomenon in multiple independent instrumentation systems suggests a real event and not simply a bad data
+point. Several hypotheses to explain this event were evaluated; the best fit to the available data appears to be a
+relatively thin (~100m) layer with nearly 10% reduction in density. This behavior was not captured in the pre-flight
+modeling, however evidence of similar sudden density shears were noted in early Shuttle flights 12.
+
+16
+American Institute of Aeronautics and Astronautics
+
+The nose cap pressure measurements lead
+to relatively large uncertainties in angle of
+attack and sideslip when they are estimated
+directly; when included in the filter this
+manifests itself as an insensitivity of the
+predicted measurement to attitude and
+atmospheric winds relative to the measurement
+uncertainty levels. This is due to a
+combination of factors including the
+magnitude of the relative uncertainties due to
+modeling uncertainties, flexibility effects
+(including
+aeroshell
+and
+CG
+offset
+mechanism), instrumentation uncertainties,
+and the availability of only four ports. The
+relatively large uncertainties in the nose cap
+pressure contribution to angle of attack and
+sideslip, cause this contribution to have little
+weight relative to the GRAM predictions in the
+ultimate solution for attitude and winds, Figure
+18.
+
+Figure 17. Reconstructed Atmospheric Density
+
+IV. Pre-flight Simulation Comparisons
+Pre-flight entry trajectory predictions were
+simulated with the Program to Optimize
+Simulated Trajectories - II (POST-2)
+initialized from a set of 2000 dispersed Black
+Brant XI separation states generated by
+Wallops Flight Facility. The six degree-offreedom POST-2 simulation incorporates
+models for aerodynamics, mass properties,
+aeroshell structural dynamics, and attitude
+control, with associated uncertainties applied
+in a Monte Carlo process to determine
+probabilistic estimates of vehicle behavior.
+Results from preflight simulations were used
+to evaluate structural margins, predict the
+splashdown ellipse, predict loss of telemetry
+Figure 18. Reconstructed East Wind Speed
+line of sight, analyze attitude control behavior,
+and perform other critical analyses. Preflight
+analysis results were reported at the 2σ level
+(2.28 and 97.72 percentiles) to determine
+compliance with IRVE-3 project requirements. Comparison of the BET with pre-flight simulation results allows the
+adequacy of preflight models to be evaluated and identifies areas of HIAD modeling that could be improved.
+A. Entry State
+As seen in the trajectory comparison in Figure 19, the ascent vehicle achieved a shallower, farther downrange
+entry trajectory than nominal predictions. Figure 20 expresses elements of the reconstructed entry state as
+percentiles of pre-flight Monte Carlo distributions and shows that the entry state was within ± 2σ predictions.
+Attitude control achieved the desired attitude for entry and the trim conditions observed in flight closely matched
+those predicted near entry interface.
+
+17
+American Institute of Aeronautics and Astronautics
+
+Figure 19. BET trajectory (green) compared to nominal preflight trajectory (blue) and 2σ preflight landing ellipse
+
+Figure 20. Reconstructed entry states expressed as percentiles of pre-flight Monte Carlo
+distributions
+B. Aerodynamics
+The aerodynamics database used for pre-flight trajectory analysis was constructed across all flight regimes
+according to the methods used to obtain the data. The basic structure and data sources for the IRVE-3 database are
+similar to what was used for recent Mars lander simulations, such as Mars Science Laboratory 13 and Mars Phoenix.14
+18
+American Institute of Aeronautics and Astronautics
+
+The statics database (CA, CN, Cm) was arranged into flight regimes (Table 2and Figure 21) and requires as input the
+flight vehicle’s attitude (α and β) and either Knudsen number or Mach number, depending on the regime.
+The IRVE-3 rarefied aerodynamics data (transitional/free-molecular) were generated using the Direct Simulation
+Monte Carlo (DSMC) Analysis Code. 15 The Langley Aerothermodynamic Upwind Relaxation Algorithm16
+(LAURA) Navier-Stokes flowfield solver was used in the hypersonic continuum regime. LAURA was also used for
+continuum static aerodynamics prediction for previous IRVE flights and for all Mars capsules dating back to
+Pathfinder. Hypersonic LAURA solutions did not include afterbody effects since the aerodynamic contribution is
+negligibly small. In the supersonic/subsonic regime (M ∞ < 5), the statics were taken from IRVE-2 ballistic range
+data and Moonrise wind tunnel data. The inflated re-entry vehicle was predicted to be statically stable through the
+experiment. Supersonic/subsonic pitch damping data (C mq) were taken from IRVE ballistic range testing.
+
+Table 2. Flight Regimes for Static Aerodynamics Database
+Flight Regime
+Rarefied
+Hypersonic
+Supersonic
+Subsonic
+
+Range of Application
+0.001 < Kn < 100, 0 < T < 60
+5 < M > 10, 0 < T < 20
+1< M < 3.5, 0 < T < 20
+M = 0.16, 0 < T < 20
+
+Inputs
+Kn, , 
+M, , 
+M, , 
+M, , 
+
+Data Source
+DSMC15
+LAURA16
+IRVE-2 Ballistic Range
+Moonrise Wind Tunnel
+
+Figure 21. Anchor Points for the Static Aerodynamics Database (CA, CN, Cm,ref)
+The effects of aeroshell flexibility on IRVE-3 static aerodynamics were estimated with a simple cone-sharpening
+model that mimics the expected gross response of the test article under external pressure loading. The model applies
+deltas to the ideal rigid static coefficients assuming that the effective forebody cone angle decreases under loading:
+
+C(A,N,m),Flexible = C(A,N,m),Rigid + DC(A,N,m) , DC( A,N,m) = f (q¥ )
+
+(3)
+
+The delta magnitudes reach a maximum at peak dynamic pressure, which for IRVE-3 occurred at about M ∞ = 5.
+The general trend with decreasing cone angle is for axial force coefficient (C A) to decrease, and for normal force
+(CN) and pitching moment (Cm) coefficients to increase.
+Figure 22 compares reconstructed BET static aerodynamic coefficients in the aeroshell reference frame to the final
+pre-flight aerodatabase queried at the BET Mach number and angle of attack. The 3 uncertainties are included for
+19
+American Institute of Aeronautics and Astronautics
+
+both sets of data. The aerodatabase numbers include the effects of a reduced effective cone angle under pressure
+loading. The change in the effective aeroshell cone angle is shown to reflect deviations of the as-built inflated
+geometry from the ideal 60 deg cone angle used in the pre-flight analysis. The aerodatabase C A follows the
+reconstructed data well, especially for Mach numbers above 5. The database C A gradually deviates below the BET
+value with decreasing Mach numbers below 3.5, where IRVE ballistic range data were used. A larger aerodatabase
+uncertainty was specified at lower Mach numbers to reflect the inherently larger uncertainties in the ballistic range
+data. The nominal aerodatabase C A generally falls in between the BET 3 bounds for all Mach numbers shown.
+Below Mach 4, the database nominal tends to track closer to the -3 BET boundary. The aerodatabase 3 CA
+boundaries envelope the nominal BET value for all Mach numbers below 9.5.
+The CN and Cm,nose trends are similar in that the nominal database magnitudes match the data better for Mach
+numbers above 5 and are generally bounded by the BET 3 envelopes. The aerodatabase trends (C N and Cm,nose
+larger than BET magnitudes) are consistent with a modeled aeroshell cone angle that is effectively sharper than was
+actually experienced during flight. High-fidelity structural response calculations are being pursued to generate
+updated computational flowfield predictions and static coefficients. Results of that analysis will be presented at a
+later time.
+
+Figure 22. Reconstructed BET Static Aerodynamic Coefficients in the Aeroshell Frame Compared to the PreFlight Aerodatabase at the BET Angle of Attack: Angle of Attack and Change in Aeroshell Cone Angle, Axial
+Force, Normal Force, and Pitching Moment.
+
+C. Aeroshell Structural Deformation
+Aeroshell structural deformation was modeled in the pre-flight simulation as the superposition of two types of
+shape change: a relative tilt of an otherwise rigid aeroshell with respect to the centerbody and a cone angle
+sharpening deformation. The tilt deformation was modeled dynamically as a spherical spring damper between the
+aeroshell and the centerbody, located as shown in Figure 2, in order to capture structural modes for simulating
+20
+American Institute of Aeronautics and Astronautics
+
+attitude control response. All aerodynamic forces were assumed to act on the aeroshell in its frame of symmetry,
+neglecting the effects of the rigid nose not rotating with the bulk of the aeroshell. The mechanical properties of the
+aeroshell joint were derived from modal tests of the flight article, and resulted in an expected angular deflection
+estimate of 1.2°. Based upon analysis of flight video, the aeroshell is estimated to have deflected in the pitch axis by
+2.5° relative to the rigid nose, as shown in Figure 23. This level of deformation lies between 2 and 3σ from preflight
+analysis.
+In simulations, the aeroshell cone half-angle, nominally 60°, is reduced due to aerodynamic axial force as
+determined by FEA and ground based load tests. Corrections to the aeroshell aerodynamic coefficients are then
+applied based upon the modified cone angle. Due to the alignment of the cameras, an accurate estimate of cone
+angle reduction could not be obtained for comparisons to pre-flight predictions.
+
+Figure 23. Comparison of pre-flight aeroshell tilt deflection angle with flight video observations
+D. Angle of Attack
+Total angle of attack during entry was higher than nominal predictions, slightly above the 2σ level from preflight Monte Carlo analysis, as shown in Figure 24. While the modeling approach used to approximate aeroshell
+deformation provides close agreement with the flight aerodynamic coefficients, the observed trim angle of attack
+was not well predicted. Aeroshell deformation on the high side of predictions is certainly correlated with high angles
+of attack near peak dynamic pressure. Additionally, the reconstructed aerodynamics indicate a growth in radial CG
+offset in the aeroshell frame approximately 15% larger than the simplified deformation model predicts. Possible
+sources of error that could contribute to the observed differences are structural non-linearities, mass property
+uncertainties, the choice of effective joint location between the aeroshell and centerbody, limited measurements and
+simplifying assumptions used to obtain the relative aeroshell rotation angle in flight, and unmodeled aero-structural
+interactions. Future work has been proposed to more fully capture the aero-structural aspects relevant to HIAD
+flight.
+
+21
+American Institute of Aeronautics and Astronautics
+
+Figure 24. Comparison of BET wind relative total angle of attack to pre-flight Monte Carlo
+results during the experiment
+E. Vehicle Loads
+The peak acceleration loads on the centerbody in flight are bounded by 2σ predictions in all axes, as shown in
+Figure 25. Prior to flight, particular concern was focused on prediction of radial acceleration, which is primarily a
+function of aeroshell stiffness, a quantity not well known until late in the vehicle fabrication process. Lower
+aeroshell tilt stiffness results in larger angles of attack and an increased radial component of acceleration in the
+centerbody frame. The peak radial acceleration in flight measured 2.11 g, which provided a comfortable margin of
+safety over the 5.4 g structural limit.
+
+Figure 25. Comparison of pre-flight peak acceleration predictions with BET results
+F. Attitude Control
+The ACS performance met all mission goals for the IRVE3 flight. Initial rate damping for clean nose cone
+deploy was done within 1.5 seconds, and the nose cone release was clean. Filtering of vehicle structural modes was
+successful and no controller stability issues were experienced. The reorientation was accomplished with 20 seconds
+remaining before CG offset. The entry experiment was successful and the roll orientation was held to within the
+desired bounds. During entry, the ACS demonstrated a 50% thrust margin, and for the full science flight consumed
+50% of the available impulse.
+22
+American Institute of Aeronautics and Astronautics
+
+The goal of the roll control only maneuver was to hold the desired roll orientation, or bank angle, to within +/- 5
+degrees. Near peak dynamic pressure, the ACS roll jets fired with approximately a 50% duty cycle as shown in
+Figure 26. This effectively translates to a control authority margin of approximately 50% for the entry experiment.
+The maximum roll error during this time was just over 3 degrees; this error is navigated error sensed by the ACS,
+slightly different from absolute error due to sensor and misalignments and measurement errors.
+
+Figure 26. Roll control commands during the experiment window
+Figure 27 shows a comparison in fuel usage between IRVE-3 pre-flight analysis and post-flight data
+reconstruction. The results show that the flight fuel consumption lies within the ±2 sigma bounds of the Monte
+Carlo predictions from third stage separation to the end of experiment. During the rate damping phase prior to nose
+cone separation, the attitude control system required a relatively small amount of fuel. This is due to the wide
+uncertainty applied to vehicle rates at separation to envelope the worst case historical data on the Black-Brant XI
+sounding rocket which had previously experienced large precession angles near upper stage burnout. Reorientation
+to the entry attitude required a total impulse in-line with nominal predictions, as did the roll control phase during the
+experiment window. Pre-flight predictions had accounted for large roll moment uncertainties due to aeroshell
+asymmetry, however the aerodynamic roll moment developed by the test vehicle was in-line with the expected
+value. Overall, the vehicle completed the experiment with greater than 50% of available total impulse remaining.
+
+Figure 27. Comparison of attitude control fuel use to pre-flight predictions
+V. Conclusion
+Reconstruction of the IRVE-3 trajectory has been performed with a Kalman filtering approach using high quality
+telemetered data from the onboard IMU, GPS receiver, nose pressure ports, flight video, and CG offset deck
+measurements. Additionally, the GRAM 2010 atmosphere model is used to provide pseudo measurements of
+23
+American Institute of Aeronautics and Astronautics
+
+monthly atmosphere properties. Measurements planned for inclusion in the BET but later omitted consist of two
+meteorological rockets that launched but failed to return data and radar measurements that proved superfluous in the
+presence of continuous GPS measurements.
+The reconstructed trajectory confirms that both mission science objectives were met: cold wall heat flux
+exceeded 12/Wcm2 and the lift vector generated from a radially offset CG was well characterized. Additionally, the
+attitude control system achieved all requirements. Atmospheric density reconstruction was achieved by utilizing
+pressure port measurements and the results indicate substantial deviations from the nominal GRAM atmosphere
+model.
+
+Acknowledgments
+The preferred spelling of the word “acknowledgment” in American English is without the “e” after the “g.”
+Avoid expressions such as “One of us (S.B.A.) would like to thank…” Instead, write “F. A. Author thanks…”
+Sponsor and financial support acknowledgments are also to be listed in the “acknowledgments” section.
+
+References
+1
+
+R. Dillman et. al.,“Flight Performance of the Inflatable Re-entry Vehicle experiment II,” Interplanetary Probe
+Workshop, Barcelona, Spain, June 2010.
+2
+O'Keefe, S. and Bose D., "IRVE-II Post-Flight Trajectory Reconstruction", AIAA Atmospheric Flight Mechanics
+Conference, Toronto, Ontario Canada, August 2010.
+3
+Winski, R., Bose, D., Komar, D. R., Samareh, J., “Mission Applications of a HIAD for the Mars Southern
+Highlands”, IEEE/AIAA 2013 Aerospace Conference, Big Sky, MT, IEEE #2196 (submitted for publication).
+4
+Karlgaard, C. D., Tartabini, P. V., Martin, J. G., Blanchard, R. C., Kirsch, M., Toniolo, M. D., and Thornblom, M.
+N., “Statistical Estimation Methods for Trajectory Reconstruction: Application to Hyper-X,” NASA TM-2009215792, August 2009.
+5
+Wagner, W. E. and Serold, A. C., “Formulation on Statistical Trajectory Estimation Programs,” NASA CR-1482,
+January 1970.
+6
+Bose, D., et al, "Impact of Vehicle Flexibility on IRVE-II Flight Dynamics," AIAA Aerodynamic Decelerator
+Systems Technology Conference and Seminar, Dublin, Ireland, May 2011, AIAA 2011-2571.
+7
+Karlgaard, C D., Beck, R E., OKeefe, S A., Siemers, P., White, B., Engelund, W C., and Munk, M M., "Mars
+Entry Atmospheric Data System Modelling and Algorithm Development", 41st AIAA Thermophysics Conference,
+San Antonio, TX, June 2009.
+8
+Karlgaard, C. D., Beck, R. E., Starr, B. R., Derry, S. D., Brandon, J. M., and Olds, A. D., “Ares I-X Best Estimated
+Trajectory Analysis and Results,” JANNAF Paper 1961, 58th JANNAF Propulsion Meeting, April 2011.
+9
+Kutty, P,, Noonan, M., Karlgaard, C., Beck, R., “The Best Estimated Trajectory Analysis for Pad Abort One,” 49th
+AIAA Aerospace Sciences Meeting, Orlando, FL, Jan. 2011.
+10
+Klein, V., Morelli, E., “Aircraft System Identification: Theory and Practice”, AIAA Education Series, Reston,
+VA, 2006.
+11
+Leslie, F.W., Justus, C.G., "The NASA Marshall Space Flight Center Earth Global Reference Atmospheric
+Model-2010 Version", NASA/TM-2011-216467, June 2011
+12
+Findlay, J.T., Kelly, G.M., and Troutman, P.A., "FINAL REPORT: Shuttle Derived Atmospheric Density Model",
+NASA CR-171824, December 1984.
+13
+Dyakonov, A. A., Schoenenberger, M., and Van Norman, J. W., “Hypersonic and Supersonic Static
+Aerodynamics of Mars Science Laboratory Entry Vehicle,” AIAA Paper 2012-2999, 43rd AIAA Thermophysics
+Conference, New Orleans, LA, June 25-28, 2012.
+14
+Edquist, K. T., Desai, P. N., and Schoenenberger, M., “Aerodynamics for the Mars Phoenix Entry Capsule,”
+AIAA Paper 2008-7219, AIAA Guidance, Navigation, and Control Conference, Honolulu, HI, August 18-21 2008.
+15
+Lebeau, G. J., and Lumkin, F. E., “Application Highlights of the DSMC Analysis Code (DAC) Software for
+Simulating Rarefied Flows,” Computer Methods in Applied Mechanics and Engineering, Vol. 191, No. 6-7, pp. 595609, 2001.
+16
+Cheatwood, F. M. and Gnoffo, P. A., “User’s Manual for the Langley Aerothermodynamic Upwind Algorithm
+(LAURA),” NASA TM-4674, April 1996.
+
+24
+American Institute of Aeronautics and Astronautics
+
+

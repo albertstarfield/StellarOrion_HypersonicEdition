@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Typeset the seven governing equations of the DSMC CFD subsection.
+
+WHY: every slide of that subsection carries a companion slide with its
+governing equation, and no such picture exists in the thesis. Each equation
+is typeset with the mathtext of matplotlib into a picture of its own, taken
+verbatim from chapter 3 of the thesis, with the label it carries there
+printed under it. Under the equations sits a glossary of the symbols, so the
+reader can see what every variable of the formula means without leaving the
+slide.
+
+The script writes only into the figures folder of the deck. It runs with the
+interpreter of the thesis, because that is the interpreter that already holds
+matplotlib and the project virtual environment must not be polluted.
+
+Citations:
+    Matplotlib 3.11.2, https://matplotlib.org/stable/api/mathtext_api.html
+"""
+
+from __future__ import annotations
+
+import subprocess  # ruff: ignore[suspicious-subprocess-import]
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent.parent
+REPO = PROJECT.parents[2]
+#: A picture below this size in bytes was not written properly.
+MIN_PICTURE_BYTES = 5000
+FIGURES = PROJECT / "figures"
+VENV_PYTHON = REPO / "Lost+Found/ProgressReport/CurrentThesisFinalReport/.venv-pdf/bin/python"
+BACKUP_DIR = Path(__file__).resolve().parent / "backups"
+
+#: The field separator that passes a list through one command line argument.
+SEP = chr(30)
+
+#: (file name, lines of mathtext, source label of the thesis, glossary lines)
+EQUATIONS: list[tuple[str, list[str], str, list[str]]] = [
+    (
+        "thesis_equation_shape.png",
+        [
+            r"$R_n = \kappa\, X_1, \qquad \kappa = 0.3667$",
+            (
+                r"$R_{max} = X_1\cos\gamma + (2N_t - 1)\,X_2\cos\gamma + X_2,"
+                r" \qquad \gamma = \frac{\pi}{2} - X_3$"
+            ),
+        ],
+        "chapter 3, Eq. nose_ratio and Eq. rmax",
+        [
+            ("R_n = nose radius (m)   |   X_1 = body radius (m)   |   X_2 = torus radius (m)"
+            "   |   X_3 = half-cone angle (deg)"),
+            ("gamma = pi/2 - X_3 = cone angle (rad)   |   N_t = number of toroids"
+            "   |   R_max = outer radius (m)   |   kappa = 0.3667 nose ratio"),
+        ],
+    ),
+    (
+        "thesis_equation_setup.png",
+        [
+            (
+                r"$\frac{\partial f}{\partial t} + \mathbf{v}\cdot\nabla_{\mathbf{x}} f"
+                r" + \frac{\mathbf{F}}{m}\cdot\nabla_{\mathbf{v}} f"
+                r" = \left(\frac{\partial f}{\partial t}\right)_{coll}$"
+            ),
+            r"$\sigma = \pi d_{ref}^2 \left(\frac{g_{ref}}{g}\right)^{2(\omega - 0.5)}$",
+        ],
+        "chapter 3, the Boltzmann equation and the VSS cross-section",
+        [
+            ("f = velocity distribution of the gas   |   t = time (s)   |   x = position (m)"
+            "   |   v = molecular velocity (m/s)"),
+            ("F = force on a molecule (N)   |   m = molecular mass (kg)"
+            "   |   sigma = collision cross-section (m2)   |   omega = VSS viscosity index"),
+        ],
+    ),
+    (
+        "thesis_equation_mesh.png",
+        [
+            r"$Kn = \frac{\lambda}{L}$",
+            r"$\lambda = \frac{1}{\sqrt{2}\,\pi d^2 n}$",
+            r"$\Delta x < \lambda$",
+        ],
+        "chapter 3, the Knudsen number and the mean free path",
+        [
+            "Kn = Knudsen number   |   lambda = mean free path (m)   |   L = reference length (m)",
+            ("d = molecular diameter (m)   |   n = number density (m^-3)"
+            "   |   Delta x = cell width of the Cartesian grid (m)"),
+        ],
+    ),
+    (
+        "thesis_equation_convergence.png",
+        [
+            r"$\text{noise} \propto \frac{1}{\sqrt{N_{samples}}}$",
+            r"$\frac{|\Delta C_d|}{|C_d|} < 0.02 \quad\text{over consecutive windows}$",
+        ],
+        "chapter 3, statistical convergence monitoring",
+        [
+            ("N_samples = independent particle samples   |   C_d = drag coefficient"
+            "   |   window = 100 particle steps (stats_interval)"),
+            ("|Delta C_d| = change of the drag coefficient between windows"
+            "   |   criterion = under 2 percent   |   reached after 500 to 1100 steps"),
+        ],
+    ),
+    (
+        "thesis_equation_convection.png",
+        [
+            r"$\dot{q}_{stag} = C_{SG}\sqrt{\frac{\rho_\infty}{R_N}}\; V_\infty^3$",
+            r"$C_{SG} = 1.7415 \times 10^{-4}$",
+        ],
+        "chapter 3, the Sutton-Graves correlation",
+        [
+            ("q_stag = stagnation heat flux (W/m2)   |   C_SG = Sutton-Graves constant"
+            "   |   rho_inf = freestream density (kg/m3)"),
+            ("R_N = nose radius (m)   |   V_inf = freestream velocity (m/s)"
+            "   |   the flux scales with V cubed and falls with the root of R_N"),
+        ],
+    ),
+    (
+        "thesis_equation_conduction.png",
+        [
+            (
+                r"$\dot{q}_{wall} = \frac{T_{surf} - T_{back}}{R}"
+                r" + \epsilon\sigma\left(T_{surf}^4 - T_\infty^4\right)$"
+            ),
+            (
+                r"$T_{back} = T_{init} + \frac{\dot{q}\,\Delta t\, \eta_{lag}}"
+                r"{\rho_{TPS}\, C_{p,TPS}\, \delta_{TPS}}$"
+            ),
+        ],
+        "chapter 3, the thermal balance and the backface model",
+        [
+            ("q_wall = wall heat flux (W/m2)   |   T_surf = surface temperature (K)"
+            "   |   T_back = backface temperature (K)   |   R = stack resistance (m2 K/W)"),
+            ("epsilon = emissivity   |   sigma = 5.67e-8 (W/m2 K4)"
+            "   |   T_inf = freestream temperature (K)   |   T_init = initial temperature (K)"),
+            ("Delta t = time step (s)   |   eta_lag = thermal lag factor"
+            "   |   rho, C_p, delta = density, heat capacity and thickness of the TPS"),
+        ],
+    ),
+    (
+        "thesis_equation_radiation.png",
+        [
+            r"$\dot{q} = \epsilon\sigma T^4$",
+            r"$T_{surface} = \left(\frac{\dot{q}_{stag}}{\epsilon\sigma}\right)^{1/4}$",
+        ],
+        "chapter 3, radiative equilibrium",
+        [
+            ("q = radiated heat flux (W/m2)   |   epsilon = emissivity of the hot face"
+            "   |   sigma = 5.67e-8 (W/m2 K4)"),
+            ("T = absolute surface temperature (K)   |   q_stag = incoming stagnation flux"
+            "   |   the surface settles where radiation equals the incoming flux"),
+        ],
+    ),
+]
+
+DRIVER = r"""
+import sys
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+from matplotlib import pyplot as plt  # noqa: E402
+
+out_dir = Path(sys.argv[1])
+lines = sys.argv[2].split(chr(30))
+label = sys.argv[3]
+glossary = sys.argv[4].split(chr(30)) if sys.argv[4] else []
+
+plt.rcParams["mathtext.fontset"] = "dejavusans"
+figure, axis = plt.subplots(figsize=(7.6, 3.5), dpi=200)
+axis.axis("off")
+axis.set_xlim(0.0, 1.0)
+axis.set_ylim(0.0, 1.0)
+# WHY: the equations keep the upper band, the glossary of the symbols sits
+# under them and the source label closes the picture, so no block can land
+# on top of another whatever the count of equations is.
+count = len(lines)
+if count <= 2:
+    start, step = 0.88, 0.24
+else:
+    start, step = 0.90, 0.19
+for index, line in enumerate(lines):
+    axis.text(
+        0.5,
+        start - index * step,
+        line,
+        ha="center",
+        va="center",
+        fontsize=19,
+        color="#0A132C",
+    )
+for index, line in enumerate(glossary):
+    axis.text(
+        0.035,
+        0.44 - index * 0.105,
+        line,
+        ha="left",
+        va="center",
+        fontsize=10.5,
+        color="#334155",
+    )
+axis.text(
+    0.5,
+    0.06,
+    label,
+    ha="center",
+    va="center",
+    fontsize=11,
+    color="#475569",
+    style="italic",
+)
+figure.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+figure.savefig(out_dir, facecolor="white")
+"""
+
+
+def render(name: str, maths: list[str], label: str, glossary: list[str]) -> str:
+    """Render one equation picture and verify what it wrote.
+
+    Args:
+        name: The file name of the picture inside the figures folder.
+        maths: The lines of mathtext that form the equations.
+        label: The provenance label of the thesis printed under the picture.
+        glossary: The lines that say what every symbol of the equations means.
+
+    Returns:
+        A message describing what was written.
+
+    Raises:
+        SystemExit: When the render failed or the picture is too small.
+    """
+    target = FIGURES / name
+    if target.is_file():
+        backup = BACKUP_DIR / f"{name}.before"
+        _ = backup.write_bytes(target.read_bytes())
+    completed = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true]
+        [
+            str(VENV_PYTHON),
+            "-c",
+            DRIVER,
+            str(target),
+            SEP.join(maths),
+            label,
+            SEP.join(glossary),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        _ = sys.stdout.write(f"MISMATCH {name} failed: {completed.stderr.strip()[-1200:]}\n")
+        raise SystemExit(1)
+    if not target.is_file() or target.stat().st_size < MIN_PICTURE_BYTES:
+        _ = sys.stdout.write(f"MISMATCH {name} was not written\n")
+        raise SystemExit(1)
+    return f"typeset {name} ({target.stat().st_size} bytes)"
+
+
+def main() -> int:
+    """Render every equation picture and verify what was written.
+
+    Returns:
+        Zero when every picture was written, one when a render failed.
+
+    """
+    if not VENV_PYTHON.is_file():
+        _ = sys.stdout.write(f"MISMATCH the interpreter of the thesis is missing: {VENV_PYTHON}\n")
+        return 1
+    _ = FIGURES.mkdir(parents=True, exist_ok=True)
+    _ = BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        for name, maths, label, glossary in EQUATIONS:
+            _ = sys.stdout.write(render(name, maths, label, glossary) + "\n")
+    except SystemExit as error:
+        if error.code == 0:
+            return 0
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

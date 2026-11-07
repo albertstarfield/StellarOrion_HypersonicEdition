@@ -32,7 +32,7 @@ This research contributes the following to the field of hypersonic aerothermal a
 
     \item \textbf{Scalloping Effect Quantification:} First systematic DSMC-based characterization of the heating augmentation and recirculation patterns caused by the stacked toroid surface topology of HIADs.
 
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
 
     \item \textbf{Multi-Objective Optimization:} Automated simple-GA optimization of HIAD geometry, driven by a closed-form cost that combines total heat load, peak heat flux, ballistic coefficient and drag coefficient with envelope and payload penalties, and evaluated without a solver in the loop.
 \end{enumerate}
@@ -56,9 +56,9 @@ The current analysis uses the IRVE-3 Gen-1 TPS (Nextel/Pyrogel) as the baseline.
 The framework is readily extensible to Mars entry conditions by modifying the atmospheric composition (CO$_2$-dominated) and updating the gas model in SPARTA. The Sutton-Graves correlation would need to be replaced with the Mars-specific correlation of West and Brandis (2020), and the 5-species Earth air model would be replaced with a CO$_2$/N$_2$/Ar mixture model.
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
-% to produce the optimised body, so all PINN material is removed from this
+% to produce the optimized body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
 % is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
-% field) and the default optimiser is now a simple genetic algorithm; the
-% Bayesian-optimisation material has been removed from this thesis.
+% field) and the default optimizer is now a simple genetic algorithm; the
+% Bayesian-optimization material has been removed from this thesis.

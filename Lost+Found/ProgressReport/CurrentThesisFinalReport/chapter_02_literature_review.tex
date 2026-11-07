@@ -1135,16 +1135,16 @@ The Universal Approximation Theorem (Cybenko, 1989; Hornik et al., 1989) states 
 \noindent where $\mathbf{W}_i$ and $\mathbf{b}_i$ are the weight matrices and bias vectors, $\sigma(\cdot)$ is a nonlinear activation function (e.g., $\tanh$), and $L$ is the number of layers. The \textit{depth} (number of layers) and \textit{width} (neurons per layer) determine the network's expressive capacity.
 
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
-% to produce the optimised body, so all PINN material is removed from this
+% to produce the optimized body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
 % is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
-% field) and the default optimiser is now a simple genetic algorithm; the
-% Bayesian-optimisation material has been removed from this thesis.
+% field) and the default optimizer is now a simple genetic algorithm; the
+% Bayesian-optimization material has been removed from this thesis.
 
-\section{Parametric HIAD Geometry Modelling}
+\section{Parametric HIAD Geometry Modeling}
 
-The aerodynamic performance of a HIAD is governed by its inflated outer mold line (OML), which is constructed from a series of stacked toroidal bladders encapsulated by a flexible thermal protection system (TPS) skin. Unlike rigid aeroshells, the HIAD geometry is defined by a small set of continuous design variables, making it amenable to parametric modelling and gradient-free optimization. This section presents the mathematical framework for parametric HIAD geometry generation, following the formulation of Rapisarda \cite{rapisarda2023mdao}, which is itself a modified and optimized adaptation of the original IRVE-3 (Inflatable Reentry Vehicle Experiment 3) material configuration and structural layout \cite{dillman2015irve3, old2013irve3postflight}.
+The aerodynamic performance of a HIAD is governed by its inflated outer mold line (OML), which is constructed from a series of stacked toroidal bladders encapsulated by a flexible thermal protection system (TPS) skin. Unlike rigid aeroshells, the HIAD geometry is defined by a small set of continuous design variables, making it amenable to parametric modeling and gradient-free optimization. This section presents the mathematical framework for parametric HIAD geometry generation, following the formulation of Rapisarda \cite{rapisarda2023mdao}, which is itself a modified and optimized adaptation of the original IRVE-3 (Inflatable Reentry Vehicle Experiment 3) material configuration and structural layout \cite{dillman2015irve3, old2013irve3postflight}.
 
 \subsection{Design Variables and Constraints}
 
@@ -1228,10 +1228,10 @@ Rapisarda \cite{rapisarda2023mdao} subsequently developed a multidisciplinary de
 
 \begin{figure}[htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Meridional half-section of the HIAD bladder layout, generated from the validated geometry model. The orange curve is the nose-sphere shell arc above the symmetry axis. Six toroidal bladders T1 to T6 are drawn at their computed centres along the 60-degree cone generator, shown as a dashed line. The annotation box gives R N = 0.55 m, r tor = 0.135 m, theta c = 60 degrees, N t = 6, R max = 1.90 m and L body = 1.269 m. The aerodynamic skin aft of the nose tangent is omitted so that the bladder stack remains visible; there is no T7 shoulder torus.}}%
+    \BeginAccSupp{method=escape,ActualText={Meridional half-section of the HIAD bladder layout, generated from the validated geometry model. The orange curve is the nose-sphere shell arc above the symmetry axis. Six toroidal bladders T1 to T6 are drawn at their computed centres along the 60-degree cone generator, shown as a dashed line. The annotation box gives R N = 0.55 m, r tor = 0.135 m, theta c = 60 degrees, N t = 6, nominal R max = 1.90 m (1.8802 m in the meshed reference) and L body = 1.2694 m. The aerodynamic skin aft of the nose tangent is omitted so that the bladder stack remains visible; there is no T7 shoulder torus.}}%
 \includegraphics[width=0.85\textwidth]{figures/hiad_parametric_cross_section.png}%
 \EndAccSupp{}%
-    \caption{Meridional half-section of the six-torus HIAD bladder stack, generated from the validated geometry model used by the DSMC solver. The nose-sphere shell arc ($R_N = 0.55$~m) is shown together with the toroidal bladders ($r_{\text{tor}} = 0.135$~m) at their computed centres along the $\theta_c = 60^\circ$ cone ($N_t = 6$), giving an outer radius $R_{\max} = 1.90$~m and a body length $L_{\text{body}} = 1.269$~m. The aerodynamic skin aft of the nose tangent is omitted so that the bladder stack remains visible.}
+    \caption{Meridional half-section of the six-torus HIAD bladder stack, generated from the validated geometry model used by the DSMC solver. The nose-sphere shell arc ($R_N = 0.55$~m) is shown together with the toroidal bladders ($r_{\text{tor}} = 0.135$~m) at their computed centres along the $\theta_c = 60^\circ$ cone ($N_t = 6$), giving a nominal outer radius $R_{\max} = 1.90$~m (1.8802~m in the meshed reference geometry of Chapter~4) and a body length $L_{\text{body}} = 1.2694$~m. The aerodynamic skin aft of the nose tangent is omitted so that the bladder stack remains visible.}
     \label{fig:hiad_parametric_cross_section}
 \end{figure}
 
@@ -1355,7 +1355,7 @@ The literature review establishes the theoretical foundations across six pillars
     \item \textbf{Continuum CFD:} The Navier--Stokes equations and RANS turbulence modeling (SST $k$--$\omega$) form the classical approach for hypersonic simulation (Sections 2.6--2.7). However, these are valid only in the continuum regime ($Kn < 0.001$).
     
     \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is the appropriate tool for the transitional regime ($Kn \approx 0.03$) encountered during HIAD re-entry at 52~km altitude (Sections 2.8--2.11).
-    % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+    % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
     
     \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section 2.14).
     

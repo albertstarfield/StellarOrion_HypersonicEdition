@@ -1,0 +1,5 @@
+def get_slide_data() -> dict:
+    return {
+        'title': 'Boltzmann Transport Equation',
+        'content': '\n# Glossary: Boltzmann Transport Equation\n\nThe **Boltzmann Transport Equation** is a fundamental kinetic equation describing the statistical behavior of a thermodynamic system not in equilibrium:\n\n$$\\frac{\\partial f}{\\partial t} + \\mathbf{v} \\cdot \\nabla f + \\frac{\\mathbf{F}}{m} \\cdot \\nabla_{\\mathbf{v}} f = \\left(\\frac{\\partial f}{\\partial t}\\right)_{\\!\\text{coll}}$$\n\n### Context\nIt models the evolution of the molecular velocity distribution function $f(\\mathbf{x}, \\mathbf{v}, t)$ in 6-dimensional phase space, forming the theoretical foundation for Direct Simulation Monte Carlo (DSMC).\n\n<div style="margin-top: 1.5rem; text-align: right;">\n    <a href="#" class="back-btn" style="margin-bottom:0; background:rgba(99,102,241,0.15); border-color:rgba(99,102,241,0.3); color:#a5b4fc;" onclick="loadTheoremSlide(3)">Return to Boltzmann Step 1 &rarr;</a>\n</div>\n'
+    }

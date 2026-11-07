@@ -1,0 +1,468 @@
+DIGEST 20af3dbd7030886ee3d6f964fc5fefad
+Fada_pinn_wrapper_proof
+R1960:1974 Coq.Reals.Reals <> <> lib
+R1992:2009 Coq.Arith.PeanoNat <> <> lib
+R2027:2043 Coq.micromega.Lia <> <> lib
+R2061:2077 Coq.micromega.Lra <> <> lib
+sec 2247:2263 <> Cancel_Mul_Helper
+prf 2274:2283 <> cancel_mul
+R2300:2300 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 2294:2294 <> x:1
+binder 2296:2296 <> l:2
+R2309:2312 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2304:2307 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R2303:2303 ada_pinn_wrapper_proof <> l:2 var
+R2324:2326 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2314:2317 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2323:2323 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2313:2313 ada_pinn_wrapper_proof <> l:2 var
+R2319:2321 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2318:2318 ada_pinn_wrapper_proof <> x:1 var
+R2322:2322 ada_pinn_wrapper_proof <> l:2 var
+R2327:2327 ada_pinn_wrapper_proof <> x:1 var
+R2366:2369 Coq.Reals.Rdefinitions <> Rdiv def
+R2385:2395 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2385:2395 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2385:2395 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2409:2418 Coq.Reals.Raxioms <> Rmult_comm thm
+R2409:2418 Coq.Reals.Raxioms <> Rmult_comm thm
+R2409:2418 Coq.Reals.Raxioms <> Rmult_comm thm
+R2436:2446 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2436:2446 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2436:2446 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2460:2469 Coq.Reals.Raxioms <> Rmult_comm thm
+R2474:2475 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2460:2469 Coq.Reals.Raxioms <> Rmult_comm thm
+R2474:2475 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2460:2469 Coq.Reals.Raxioms <> Rmult_comm thm
+R2474:2475 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2492:2497 Coq.Reals.Raxioms <> Rinv_l thm
+R2492:2497 Coq.Reals.Raxioms <> Rinv_l thm
+R2492:2497 Coq.Reals.Raxioms <> Rinv_l thm
+R2517:2525 Coq.Reals.RIneq <> Rmult_1_r thm
+R2517:2525 Coq.Reals.RIneq <> Rmult_1_r thm
+R2517:2525 Coq.Reals.RIneq <> Rmult_1_r thm
+R2554:2570 ada_pinn_wrapper_proof Cancel_Mul_Helper <> sec
+prf 2580:2590 <> rdiv_nonneg
+binder 2601:2601 <> a:3
+binder 2603:2603 <> b:4
+R2612:2615 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2607:2610 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R2611:2611 ada_pinn_wrapper_proof <> a:3 var
+R2621:2624 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2617:2619 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2620:2620 ada_pinn_wrapper_proof <> b:4 var
+R2626:2629 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R2631:2633 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2630:2630 ada_pinn_wrapper_proof <> a:3 var
+R2634:2634 ada_pinn_wrapper_proof <> b:4 var
+R2682:2684 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2685:2686 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2700:2715 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R2682:2684 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2685:2686 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2700:2715 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R2737:2742 Coq.Reals.RIneq <> Rlt_le thm
+R2737:2742 Coq.Reals.RIneq <> Rlt_le thm
+R2762:2765 Coq.Reals.Rdefinitions <> Rdiv def
+R2774:2785 Coq.Reals.RIneq <> Rmult_le_pos thm
+R2774:2785 Coq.Reals.RIneq <> Rmult_le_pos thm
+def 3052:3058 <> lhs_raw
+R3086:3086 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3061:3070 <> perm_value:5
+binder 3072:3080 <> n_samples:6
+binder 3082:3082 <> u:7
+R3091:3091 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3096:3096 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3111:3114 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3107:3109 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3097:3106 ada_pinn_wrapper_proof <> perm_value:5 var
+R3110:3110 ada_pinn_wrapper_proof <> u:7 var
+R3115:3123 ada_pinn_wrapper_proof <> n_samples:6 var
+prf 3133:3145 <> lhs_raw_lower
+binder 3156:3165 <> perm_value:8
+binder 3167:3175 <> n_samples:9
+binder 3177:3177 <> u:10
+R3196:3199 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3184:3186 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3187:3195 ada_pinn_wrapper_proof <> n_samples:9 var
+R3215:3218 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3201:3204 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3205:3214 ada_pinn_wrapper_proof <> perm_value:8 var
+R3225:3228 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3220:3223 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3224:3224 ada_pinn_wrapper_proof <> u:10 var
+R3230:3233 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3234:3240 ada_pinn_wrapper_proof <> lhs_raw def
+R3242:3251 ada_pinn_wrapper_proof <> perm_value:8 var
+R3253:3261 ada_pinn_wrapper_proof <> n_samples:9 var
+R3263:3263 ada_pinn_wrapper_proof <> u:10 var
+R3324:3330 ada_pinn_wrapper_proof <> lhs_raw def
+R3341:3351 ada_pinn_wrapper_proof <> rdiv_nonneg thm
+R3341:3351 ada_pinn_wrapper_proof <> rdiv_nonneg thm
+prf 3389:3401 <> lhs_raw_upper
+binder 3412:3421 <> perm_value:11
+binder 3423:3431 <> n_samples:12
+binder 3433:3433 <> u:13
+R3452:3455 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3440:3442 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3443:3451 ada_pinn_wrapper_proof <> n_samples:12 var
+R3483:3486 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3466:3469 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3456:3465 ada_pinn_wrapper_proof <> perm_value:11 var
+R3479:3481 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R3470:3478 ada_pinn_wrapper_proof <> n_samples:12 var
+R3492:3498 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3488:3490 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3487:3487 ada_pinn_wrapper_proof <> u:13 var
+R3529:3531 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3499:3505 ada_pinn_wrapper_proof <> lhs_raw def
+R3507:3516 ada_pinn_wrapper_proof <> perm_value:11 var
+R3518:3526 ada_pinn_wrapper_proof <> n_samples:12 var
+R3528:3528 ada_pinn_wrapper_proof <> u:13 var
+R3593:3599 ada_pinn_wrapper_proof <> lhs_raw def
+R3627:3630 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3627:3630 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3698:3700 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3665:3668 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3697:3697 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3669:3669 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3684:3687 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3680:3682 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3711:3713 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3731:3740 ada_pinn_wrapper_proof <> cancel_mul thm
+R3698:3700 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3665:3668 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3697:3697 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3669:3669 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3684:3687 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3680:3682 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3711:3713 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3731:3740 ada_pinn_wrapper_proof <> cancel_mul thm
+R3764:3777 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+R3764:3777 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+R3832:3840 Coq.Reals.RIneq <> Rmult_1_r thm
+R3832:3840 Coq.Reals.RIneq <> Rmult_1_r thm
+R3832:3840 Coq.Reals.RIneq <> Rmult_1_r thm
+def 4104:4113 <> lhs_affine
+R4128:4128 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4116:4117 <> lo:14
+binder 4119:4120 <> hi:15
+binder 4122:4124 <> raw:16
+R4133:4133 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4140:4142 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R4138:4139 ada_pinn_wrapper_proof <> lo:14 var
+R4146:4149 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4157:4157 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4143:4145 ada_pinn_wrapper_proof <> raw:16 var
+R4152:4154 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4150:4151 ada_pinn_wrapper_proof <> hi:15 var
+R4155:4156 ada_pinn_wrapper_proof <> lo:14 var
+prf 4167:4182 <> lhs_affine_lower
+binder 4193:4194 <> lo:17
+binder 4196:4197 <> hi:18
+binder 4199:4208 <> perm_value:19
+binder 4210:4218 <> n_samples:20
+binder 4220:4220 <> u:21
+R4239:4242 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4227:4229 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4230:4238 ada_pinn_wrapper_proof <> n_samples:20 var
+R4258:4261 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4244:4247 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4248:4257 ada_pinn_wrapper_proof <> perm_value:19 var
+R4268:4271 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4263:4266 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4267:4267 ada_pinn_wrapper_proof <> u:21 var
+R4280:4286 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4274:4277 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4272:4273 ada_pinn_wrapper_proof <> lo:17 var
+R4278:4279 ada_pinn_wrapper_proof <> hi:18 var
+R4289:4292 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4287:4288 ada_pinn_wrapper_proof <> lo:17 var
+R4293:4302 ada_pinn_wrapper_proof <> lhs_affine def
+R4304:4305 ada_pinn_wrapper_proof <> lo:17 var
+R4307:4308 ada_pinn_wrapper_proof <> hi:18 var
+R4311:4317 ada_pinn_wrapper_proof <> lhs_raw def
+R4319:4328 ada_pinn_wrapper_proof <> perm_value:19 var
+R4330:4338 ada_pinn_wrapper_proof <> n_samples:20 var
+R4340:4340 ada_pinn_wrapper_proof <> u:21 var
+R4421:4424 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4425:4431 ada_pinn_wrapper_proof <> lhs_raw def
+R4471:4483 ada_pinn_wrapper_proof <> lhs_raw_lower thm
+R4421:4424 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4425:4431 ada_pinn_wrapper_proof <> lhs_raw def
+R4471:4483 ada_pinn_wrapper_proof <> lhs_raw_lower thm
+R4508:4517 ada_pinn_wrapper_proof <> lhs_affine def
+R4539:4543 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4551:4551 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4546:4548 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4539:4543 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4551:4551 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4546:4548 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4581:4584 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4615:4618 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4626:4626 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4585:4591 ada_pinn_wrapper_proof <> lhs_raw def
+R4621:4623 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4643:4654 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4581:4584 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4615:4618 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4626:4626 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4585:4591 ada_pinn_wrapper_proof <> lhs_raw def
+R4621:4623 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4643:4654 Coq.Reals.RIneq <> Rmult_le_pos thm
+prf 4689:4704 <> lhs_affine_upper
+binder 4715:4716 <> lo:22
+binder 4718:4719 <> hi:23
+binder 4721:4730 <> perm_value:24
+binder 4732:4740 <> n_samples:25
+binder 4742:4742 <> u:26
+R4761:4764 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4749:4751 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4752:4760 ada_pinn_wrapper_proof <> n_samples:25 var
+R4792:4795 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4775:4778 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4765:4774 ada_pinn_wrapper_proof <> perm_value:24 var
+R4788:4790 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4779:4787 ada_pinn_wrapper_proof <> n_samples:25 var
+R4801:4804 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4797:4799 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4796:4796 ada_pinn_wrapper_proof <> u:26 var
+R4813:4819 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4807:4810 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4805:4806 ada_pinn_wrapper_proof <> lo:22 var
+R4811:4812 ada_pinn_wrapper_proof <> hi:23 var
+R4869:4872 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4820:4829 ada_pinn_wrapper_proof <> lhs_affine def
+R4831:4832 ada_pinn_wrapper_proof <> lo:22 var
+R4834:4835 ada_pinn_wrapper_proof <> hi:23 var
+R4838:4844 ada_pinn_wrapper_proof <> lhs_raw def
+R4846:4855 ada_pinn_wrapper_proof <> perm_value:24 var
+R4857:4865 ada_pinn_wrapper_proof <> n_samples:25 var
+R4867:4867 ada_pinn_wrapper_proof <> u:26 var
+R4873:4874 ada_pinn_wrapper_proof <> hi:23 var
+R4983:4985 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4953:4959 ada_pinn_wrapper_proof <> lhs_raw def
+R5003:5015 ada_pinn_wrapper_proof <> lhs_raw_upper thm
+R4983:4985 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4953:4959 ada_pinn_wrapper_proof <> lhs_raw def
+R5003:5015 ada_pinn_wrapper_proof <> lhs_raw_upper thm
+R5040:5049 ada_pinn_wrapper_proof <> lhs_affine def
+R5111:5114 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5099:5102 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5110:5110 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5069:5075 ada_pinn_wrapper_proof <> lhs_raw def
+R5105:5107 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5116:5119 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5127:5127 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5122:5124 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5111:5114 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5099:5102 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5110:5110 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5069:5075 ada_pinn_wrapper_proof <> lhs_raw def
+R5105:5107 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5116:5119 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5127:5127 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5122:5124 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5141:5157 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R5173:5178 Coq.Reals.RIneq <> Rlt_le thm
+R5141:5157 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R5173:5178 Coq.Reals.RIneq <> Rlt_le thm
+R5206:5214 Coq.Reals.Raxioms <> Rmult_1_l thm
+R5206:5214 Coq.Reals.Raxioms <> Rmult_1_l thm
+R5206:5214 Coq.Reals.Raxioms <> Rmult_1_l thm
+R5244:5248 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5256:5256 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5251:5253 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5244:5248 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5256:5256 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5251:5253 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+prf 5286:5302 <> lhs_affine_bounds
+binder 5313:5314 <> lo:27
+binder 5316:5317 <> hi:28
+binder 5319:5328 <> perm_value:29
+binder 5330:5338 <> n_samples:30
+binder 5340:5340 <> u:31
+R5359:5362 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5347:5349 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5350:5358 ada_pinn_wrapper_proof <> n_samples:30 var
+R5378:5381 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5364:5367 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5368:5377 ada_pinn_wrapper_proof <> perm_value:29 var
+R5409:5415 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5392:5395 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5382:5391 ada_pinn_wrapper_proof <> perm_value:29 var
+R5405:5407 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5396:5404 ada_pinn_wrapper_proof <> n_samples:30 var
+R5422:5425 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5417:5420 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5421:5421 ada_pinn_wrapper_proof <> u:31 var
+R5431:5434 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5427:5429 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5426:5426 ada_pinn_wrapper_proof <> u:31 var
+R5443:5449 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5437:5440 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5435:5436 ada_pinn_wrapper_proof <> lo:27 var
+R5441:5442 ada_pinn_wrapper_proof <> hi:28 var
+R5505:5511 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R5452:5455 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5450:5451 ada_pinn_wrapper_proof <> lo:27 var
+R5456:5465 ada_pinn_wrapper_proof <> lhs_affine def
+R5467:5468 ada_pinn_wrapper_proof <> lo:27 var
+R5470:5471 ada_pinn_wrapper_proof <> hi:28 var
+R5474:5480 ada_pinn_wrapper_proof <> lhs_raw def
+R5482:5491 ada_pinn_wrapper_proof <> perm_value:29 var
+R5493:5501 ada_pinn_wrapper_proof <> n_samples:30 var
+R5503:5503 ada_pinn_wrapper_proof <> u:31 var
+R5561:5564 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5512:5521 ada_pinn_wrapper_proof <> lhs_affine def
+R5523:5524 ada_pinn_wrapper_proof <> lo:27 var
+R5526:5527 ada_pinn_wrapper_proof <> hi:28 var
+R5530:5536 ada_pinn_wrapper_proof <> lhs_raw def
+R5538:5547 ada_pinn_wrapper_proof <> perm_value:29 var
+R5549:5557 ada_pinn_wrapper_proof <> n_samples:30 var
+R5559:5559 ada_pinn_wrapper_proof <> u:31 var
+R5565:5566 ada_pinn_wrapper_proof <> hi:28 var
+R5655:5670 ada_pinn_wrapper_proof <> lhs_affine_lower thm
+R5655:5670 ada_pinn_wrapper_proof <> lhs_affine_lower thm
+R5695:5710 ada_pinn_wrapper_proof <> lhs_affine_upper thm
+R5695:5710 ada_pinn_wrapper_proof <> lhs_affine_upper thm
+def 5972:5981 <> stratum_of
+R5994:5997 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5991:5993 Coq.Init.Datatypes <> nat ind
+R5998:6000 Coq.Init.Datatypes <> nat ind
+binder 5984:5987 <> perm:32
+R6008:6010 Coq.Init.Datatypes <> nat ind
+binder 6004:6004 <> i:33
+R6015:6017 Coq.Init.Datatypes <> nat ind
+R6022:6025 ada_pinn_wrapper_proof <> perm:32 var
+R6027:6027 ada_pinn_wrapper_proof <> i:33 var
+sec 6324:6330 <> NatPart
+prf 6368:6386 <> stratum_of_in_range
+R6402:6404 Coq.Init.Datatypes <> nat ind
+binder 6398:6398 <> N:34
+R6418:6421 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6415:6417 Coq.Init.Datatypes <> nat ind
+R6422:6424 Coq.Init.Datatypes <> nat ind
+binder 6408:6411 <> perm:35
+R6432:6434 Coq.Init.Datatypes <> nat ind
+binder 6428:6428 <> i:36
+R6447:6450 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6442:6445 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6446:6446 ada_pinn_wrapper_proof <> N:34 var
+R6456:6459 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6452:6454 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R6451:6451 ada_pinn_wrapper_proof <> i:36 var
+R6455:6455 ada_pinn_wrapper_proof <> N:34 var
+R6460:6460 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6490:6497 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+binder 6468:6468 <> i:37
+R6476:6479 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6472:6474 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R6471:6471 ada_pinn_wrapper_proof <> i:37 var
+R6475:6475 ada_pinn_wrapper_proof <> N:34 var
+R6486:6488 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R6480:6483 ada_pinn_wrapper_proof <> perm:35 var
+R6485:6485 ada_pinn_wrapper_proof <> i:37 var
+R6489:6489 ada_pinn_wrapper_proof <> N:34 var
+R6515:6517 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R6498:6507 ada_pinn_wrapper_proof <> stratum_of def
+R6509:6512 ada_pinn_wrapper_proof <> perm:35 var
+R6514:6514 ada_pinn_wrapper_proof <> i:36 var
+R6518:6518 ada_pinn_wrapper_proof <> N:34 var
+R6566:6575 ada_pinn_wrapper_proof <> stratum_of def
+R6602:6604 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R6602:6604 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+prf 7030:7053 <> strata_pairwise_distinct
+binder 7064:7064 <> N:38
+binder 7066:7069 <> perm:39
+binder 7071:7071 <> i:40
+binder 7073:7073 <> j:41
+R7084:7087 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7080:7082 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7079:7079 ada_pinn_wrapper_proof <> i:40 var
+R7083:7083 ada_pinn_wrapper_proof <> N:38 var
+R7093:7096 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7089:7091 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7088:7088 ada_pinn_wrapper_proof <> j:41 var
+R7092:7092 ada_pinn_wrapper_proof <> N:38 var
+R7103:7109 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7098:7101 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R7097:7097 ada_pinn_wrapper_proof <> i:40 var
+R7102:7102 ada_pinn_wrapper_proof <> j:41 var
+R7110:7110 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7165:7172 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+binder 7118:7118 <> i:42
+binder 7120:7120 <> j:43
+R7128:7131 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7124:7126 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7123:7123 ada_pinn_wrapper_proof <> i:42 var
+R7127:7127 ada_pinn_wrapper_proof <> N:38 var
+R7137:7140 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7133:7135 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7132:7132 ada_pinn_wrapper_proof <> j:43 var
+R7136:7136 ada_pinn_wrapper_proof <> N:38 var
+R7156:7159 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7147:7149 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7141:7144 ada_pinn_wrapper_proof <> perm:39 var
+R7146:7146 ada_pinn_wrapper_proof <> i:42 var
+R7150:7153 ada_pinn_wrapper_proof <> perm:39 var
+R7155:7155 ada_pinn_wrapper_proof <> j:43 var
+R7161:7163 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7160:7160 ada_pinn_wrapper_proof <> i:42 var
+R7164:7164 ada_pinn_wrapper_proof <> j:43 var
+R7190:7193 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R7173:7182 ada_pinn_wrapper_proof <> stratum_of def
+R7184:7187 ada_pinn_wrapper_proof <> perm:39 var
+R7189:7189 ada_pinn_wrapper_proof <> i:40 var
+R7194:7203 ada_pinn_wrapper_proof <> stratum_of def
+R7205:7208 ada_pinn_wrapper_proof <> perm:39 var
+R7210:7210 ada_pinn_wrapper_proof <> j:41 var
+R7265:7274 ada_pinn_wrapper_proof <> stratum_of def
+R7308:7310 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7308:7310 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7362:7365 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R7362:7365 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+prf 7412:7436 <> strata_cover_each_stratum
+binder 7447:7447 <> N:44
+binder 7449:7452 <> perm:45
+binder 7454:7454 <> k:46
+R7466:7469 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7461:7464 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7465:7465 ada_pinn_wrapper_proof <> N:44 var
+R7475:7481 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7471:7473 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7470:7470 ada_pinn_wrapper_proof <> k:46 var
+R7474:7474 ada_pinn_wrapper_proof <> N:44 var
+R7482:7482 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7531:7538 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+binder 7490:7490 <> k:47
+R7498:7501 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7494:7496 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7493:7493 ada_pinn_wrapper_proof <> k:47 var
+R7497:7497 ada_pinn_wrapper_proof <> N:44 var
+R7502:7508 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7510:7511 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7509:7509 <> i:48
+R7517:7520 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7513:7515 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7512:7512 ada_pinn_wrapper_proof <> i:48 var
+R7516:7516 ada_pinn_wrapper_proof <> N:44 var
+R7527:7529 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7521:7524 ada_pinn_wrapper_proof <> perm:45 var
+R7526:7526 ada_pinn_wrapper_proof <> i:48 var
+R7530:7530 ada_pinn_wrapper_proof <> k:47 var
+R7539:7545 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7547:7548 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7546:7546 <> i:49
+R7554:7557 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7550:7552 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7549:7549 ada_pinn_wrapper_proof <> i:49 var
+R7553:7553 ada_pinn_wrapper_proof <> N:44 var
+R7575:7577 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7558:7567 ada_pinn_wrapper_proof <> stratum_of def
+R7569:7572 ada_pinn_wrapper_proof <> perm:45 var
+R7574:7574 ada_pinn_wrapper_proof <> i:49 var
+R7578:7578 ada_pinn_wrapper_proof <> k:46 var
+R7704:7713 ada_pinn_wrapper_proof <> stratum_of def
+R7741:7747 ada_pinn_wrapper_proof NatPart <> sec

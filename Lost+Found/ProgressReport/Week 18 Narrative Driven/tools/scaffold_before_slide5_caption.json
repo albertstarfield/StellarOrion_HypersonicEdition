@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "title": "Week 17 narrative scaffold",
+  "description": "Single source of truth for the Week 17 narration placeholder scaffold. This file replaced main.tex and preamble.tex, so the folder carries no LaTeX toolchain any more. The generator make_pptx.py reads this file and writes the PowerPoint deck.",
+  "owner_directive": "for the latest one, create placeholder for these. don't do anything or fill in anything yet",
+  "owner_structure_note": "The owner's block structure, ASCII transliterated. The original used U+2014 em dashes as block markers; this folder keeps the U+2014 count at zero, so the markers are written as bracketed words. The wording of the owner's items is unaltered.",
+  "owner_structure": [
+    "[ Intro start ]",
+    "0. title start",
+    "[ intro end ]",
+    "[ recall start ]",
+    "1. Latar belakang overview",
+    "2. Tujuan objective? (all and 2-3 points), Research Scope limit",
+    "3. Methodology (update or not?) (Graphical Framework flowchart) (and it's (each steps and methodology) definition) (Detailed methodology) (The reasoning too)",
+    "4. Previous issues",
+    "[ recall end ]",
+    "[ Current progress start ]",
+    "5. Overall Progress on the research? (Not the technical detail on the Resolution)",
+    "[ Current progress end ]",
+    "6. The progress issue and the resolution (the attempt) and the update (let's say DSMC, Narration)",
+    "[ Ending start ]",
+    "Conclusion (How close to the objective and does it answers the previous issue?)",
+    "[ Ending end ]",
+    "CFD (What's required?) and Optimized (What's required?) plot: (Lebih di tulisan), Reference find paper then show on the next or point 6"
+  ],
+  "sections": [
+    "INTRO",
+    "RECALL",
+    "CURRENT PROGRESS",
+    "REQUIRED VISUALS",
+    "ENDING"
+  ],
+  "frames": [
+    {
+      "id": "intro-title",
+      "section": "INTRO",
+      "title": "TITLE AND OPENING",
+      "body": "Intro block 0: title. Frame exists; narration pending.",
+      "target_position": "first content frame of the deck, ahead of the outline."
+    },
+    {
+      "id": "recall-latar-belakang",
+      "section": "RECALL",
+      "title": "BACKGROUND OVERVIEW",
+      "body": "- Rigid TPS is the standard entry solution, but its size is limited by the launch vehicle payload fairing, which caps the mass of the reentry vehicle.\n- Inflatable aerodynamic decelerators (IADs and HIADs) pack into a small volume and inflate before entry: their large surface area gives high drag at high altitude, where the air is thin and the heating is milder.\n- The flexible TPS (FTPS) is the thermal protection of the structure: an outer fabric, insulation layers and a gas barrier.",
+      "target_position": "immediately after the outline.",
+      "figure": {
+        "path": "figures/thesis_HIADsDeployed.png",
+        "caption": "HIADs when deployed: the inflated toroidal stack that replaces a rigid TPS on the vehicle.",
+        "source": "Source: CurrentThesisFinalReport/figures/HIADsDeployed.png, thesis Chapter I."
+      },
+      "note": "Filled from the thesis. The narration is taken from the thesis chapters named in the figure source line, and the graphic is imported from the thesis figure archive."
+    },
+    {
+      "id": "recall-tujuan-scope",
+      "section": "RECALL",
+      "title": "OBJECTIVE AND RESEARCH SCOPE",
+      "body": "- Objective: develop and validate an integrated computational framework for the aerothermal analysis and survivability optimization of a HIAD, based on the SPARTA DSMC solver and driven by a genetic algorithm.\n- Objectives: parametric geometry generation on the IRVE-3 baseline; DSMC aerothermal analysis in the transitional regime; Knudsen number field mapping; aerothermal load prediction validated against IRVE-3 flight data; survivability optimization over ballistic coefficient, total heat load, peak heat flux and drag.\n- Scope limit: the 6-toroid Rapisarda MDAO baseline treated as a rigid, fully inflated geometry; 2D axisymmetric and 3D cases; 5-species air with VSS collisions; DSMC valid for Kn > 0.01; Sutton-Graves with a 1D backface model (thermal lag 0.15); a GA from a Latin-hypercube initial population with an analytic cost function.",
+      "target_position": "immediately after PLACEHOLDER 1.",
+      "figure": {
+        "path": "figures/thesis_hiad_parametric_cross_section.png",
+        "caption": "Parametric cross-section of the 3.0 m HIAD: the stacked toroidal bladders T1 to T6, the shoulder torus T7, the nose sphere and the scalloped skin on the Rapisarda MDAO baseline.",
+        "source": "Source: CurrentThesisFinalReport/figures/hiad_parametric_cross_section.png, thesis Chapter II."
+      },
+      "note": "Filled from the thesis. The narration is taken from the thesis chapters named in the figure source line, and the graphic is imported from the thesis figure archive."
+    },
+    {
+      "id": "recall-methodology",
+      "section": "RECALL",
+      "title": "METHODOLOGY AND REASONING",
+      "body": "- Stage 1, parametric geometry: CadQuery 3D CAD of the scalloped and smooth baselines, varying toroid count, cone angle, nose radius and diameter.\n- Stage 2, DSMC setup: SPARTA at the trajectory point, 5-species air with VSS collisions, on a Cartesian grid finer than the mean free path.\n- Stage 3, particle simulation: SPARTA in Docker, millions of particles through advection, collisions and surface interactions.\n- Stage 4, survivability optimization: a genetic algorithm with tournament selection, crossover, mutation and elitism.\n- Stage 5, validation and analysis: grid independence, then validation against Sutton-Graves and the IRVE-3 flight data.\n- Reasoning: the scalloped surface is isolated against a smooth baseline under identical flight conditions, so any difference comes from the topology.",
+      "target_position": "immediately after PLACEHOLDER 2.",
+      "note": "Filled from the thesis. The narration is taken from the thesis chapters named in the figure source line, and the graphic is imported from the thesis figure archive.",
+      "figure": {
+        "path": "figures/thesis_software_pipeline.png",
+        "caption": "The StellarOrion engine pipeline: the geometry and the flight conditions feed the core engine, the SPARTA DSMC solver and the Ada/SPARK one-dimensional thermal solver, and the genetic algorithm writes the next geometry back.",
+        "source": "Source: CurrentThesisFinalReport/figures/software_pipeline.png, thesis Figure 3.3 (Chapter III)."
+      }
+    },
+    {
+      "id": "recall-methodology-setup",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE SIMULATION SETUP",
+      "body": "",
+      "target_position": "the slide right after the methodology, opening the explanation of how the simulation is run.",
+      "note": "The mesh of the SPARTA solver and the setup of the chain: the geometry, the grid, the solvers and the air model. The picture is the content of the slide and the words stand in the column beside it.",
+      "footer": "How the simulation is set up. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_grid_mesh_map_smooth.png",
+        "caption": "The SPARTA computational grid of the reference run, at the grid factor 0.7 that the grid-independence study selected.\nThe geometry: the parametric HIAD is a body of revolution carrying a toroidal stack, and the design vector is the body radius, the torus minor radius, the half-cone angle, the toroid count and the vehicle mass.\nThe grid: the solver runs on a two-dimensional Cartesian grid whose spacing is finer than the local mean free path, so the shock structure and the boundary layer gradients are resolved.\nThe chain: the geometry and the flight point feed the SPARTA solver in Docker and the Ada/SPARK one-dimensional layered thermal solver, and the genetic algorithm writes the next geometry back.\nThe air: the solver carries a five-species atmosphere with variable soft sphere collisions, so the shock layer dissociates and the wall is fully catalytic.",
+        "source": "Source: CurrentThesisFinalReport/figures/grid_mesh_map_smooth.png, thesis figure archive, the computational grid figure of chapter 04.",
+        "layout": "feature"
+      }
+    },
+    {
+      "id": "recall-methodology-mesh",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE GRID INDEPENDENCE",
+      "body": "",
+      "target_position": "the slide right after the setup, carrying the mesh evidence of the standard operating procedure.",
+      "note": "The three pieces of mesh evidence the CFD standard operating procedure asks for: the refinement levels, the tolerance and the caveat about the quantity that is compared.",
+      "figure": {
+        "path": "figures/thesis_sop_grid_independence.png",
+        "caption": "The grid-independence study of the SPARTA mesh: three refinement levels compared on the peak surface flux, with the mesh-quality gates of the Cartesian grid quoted as numbers.\nThe refinement: three levels were run at 70, 100 and 139 grid points, that is 4,900, 10,000 and 19,321 cells, carrying 0.60, 0.85 and 1.19 million particles.\nThe verdict: the finest pair moves the peak surface flux by 8.30 percent, inside the 10 percent tolerance the owner set on 2026-10-16.\nThe mesh quality: the grid is axis aligned, so the skewness is 0 and the orthogonal quality is 1 in every cell, and the aspect ratio of 3.56 is reported but not gated.\nThe caveat: the quantity is the peak surface kinetic-energy flux of the particle solver, a per-cell sampling maximum, and the levels carry different particle counts, so the measured change mixes discretisation with sampling.",
+        "source": "Source: CurrentThesisFinalReport/figures/sop_grid_independence.png, built from the run artefacts of stellarorion_program_proc/results/99_shared/sop by the CFD standard operating procedure.",
+        "layout": "feature"
+      },
+      "footer": "The mesh quality and the grid independence. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-convergence",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE SOLVER CONVERGENCE",
+      "body": "",
+      "target_position": "the slide right after the mesh evidence, carrying the convergence of the particle solver.",
+      "note": "The convergence evidence of the standard operating procedure: the residual history and the stationarity record of the particle retention.",
+      "figure": {
+        "path": "figures/thesis_convergence_residuals.png",
+        "caption": "The convergence history of the reference run: the normalised residuals of the drag coefficient, the lift coefficient and the per-element heat-flux average against the particle-time step.\nThe residuals: they fall by about three orders of magnitude over steps 100 to 2200, with the statistical scatter of a finite-sample particle estimator.\nThe stationarity: the particles still in the run keep a retention of 0.983 at step 400, and the stationarity indicator stays near 0.005.\nThe reading: the evidence is a stationarity record and not a monotone error bound, so the run is closed on the retention and the indicator and not on a residual threshold.",
+        "source": "Source: CurrentThesisFinalReport/figures/sop_grid_independence.png, rebuilt in this folder with a taller canvas so that the annotation block sits clear of the axis.",
+        "layout": "feature"
+      },
+      "footer": "The convergence and the stationarity of the run. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-convection",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE CONVECTION CHANNEL",
+      "body": "",
+      "target_position": "the slide right after the convergence, opening the three heat-flux channels.",
+      "note": "The convective channel: the correlation that carries the load, the magnitude it gives and the shape the particle solver contributes.",
+      "footer": "The first of the three heat-flux channels. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_sutton_graves_parametric.png",
+        "caption": "The Sutton-Graves correlation that carries the convective load of every candidate geometry.\nThe source: q = C_SG sqrt(rho/R_N) V^3, with C_SG = 1.7415e-4 for Earth air.\nThe magnitude: at the reference point of 3378 m/s it gives 1.536e5 W/m^2, that is 15.36 W/cm^2, for a 1.5 m nose radius.\nThe shape: the particle solver gives no absolute heat flux but the distribution over the surface, so its kinetic energy is kept only as a signal that ranks geometries against each other.\nThe nose radius: the optimiser evaluates the same correlation at the physical nose radius of the candidate, so the screening flux at the baseline is 25.36 W/cm^2.",
+        "source": "Source: sutton_graves_parametric.png from CurrentThesisFinalReport/figures, the correlation figure of chapter 03.",
+        "layout": "feature"
+      }
+    },
+    {
+      "id": "recall-methodology-conduction",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE CONDUCTION CHANNEL",
+      "body": "",
+      "target_position": "the slide right after the convection, opening the conduction.",
+      "note": "The conductive channel: the path through the layup, the resistance of the stack, the insulation and the lateral coupling.",
+      "footer": "The second of the three heat-flux channels. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_tps_ply_conduction.png",
+        "caption": "The through-thickness and per-ply thermal response of the FTPS layup at the final step: the temperature profiles of five surface elements of the reference run and the per-ply temperatures of the first element.\nThe path: the heat that enters the hot face is conducted inwards through the five-ply layup, one dimension along the stack, element by element.\nThe resistance: the stack resistance is the sum of the ply resistances, 0.3056 m^2K/W over the 3648 surface elements.\nThe insulation: most of the stack is the Pyrogel blanket, so the drop across the layup is large, the back face stays at 300 K and the hot face reaches 1327.2 K.\nThe lateral term: the in-plane coupling is closed with a lumped conductance between neighbouring elements, and it carries 0.0083 W/m^2, about six parts in a hundred million of the load.",
+        "source": "Source: CurrentThesisFinalReport/figures/tps_ply_conduction.png, thesis figure archive, the ply conduction figure of chapter 04.",
+        "layout": "feature"
+      }
+    },
+    {
+      "id": "recall-methodology-radiation",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE RE-RADIATION CHANNEL",
+      "body": "",
+      "target_position": "the slide right after the conduction, closing the heat-flux channels.",
+      "note": "The radiative channel: the grey body of the hot face, the balance with the conduction and the numbers of the reference run.",
+      "footer": "The third of the three heat-flux channels. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_tps_ply_stack_temperature.png",
+        "caption": "The temperature through the ply stack of the reference run, from the hot face to the back face, and the back-face temperature that the insulation holds.\nThe source: the hot face radiates to the freestream as a grey body, q = eps sigma T^4, with the emissivity of the outer Nicalon SiC ply at 0.75.\nThe balance: at the hot face the radiative and the conductive paths are the two ways the heat leaves, and together they balance the convective load that arrives.\nThe numbers: the reference run carries a convective load of 143,760 W/m^2, a reradiation of 140,399 W/m^2 and a conduction of 3,362 W/m^2.\nThe consequence: the reradiation takes almost the whole load, so the surface temperature is set by the radiative balance and the insulation sees very little of it.",
+        "source": "Source: CurrentThesisFinalReport/figures/tps_ply_stack_temperature.png, with the overlapping footnote band of the thesis figure cropped in this folder.",
+        "layout": "feature"
+      }
+    },
+    {
+      "id": "recall-flowchart",
+      "section": "RECALL",
+      "title": "GRAPHICAL FRAMEWORK: RESEARCH WORKFLOW",
+      "body": "",
+      "target_position": "right after the methodology frame.",
+      "note": "The graphical framework of the research workflow. The picture is the thesis flowchart regenerated from the thesis generator and cut into its two halves, because the whole portrait figure is unreadable on a landscape slide.",
+      "figure": {
+        "path": "figures/thesis_flowchart_halves.png",
+        "caption": "The research workflow of the thesis in its eleven stages, with the two decision loops that send the work back to the data retrieval stage and to the simulation stage.",
+        "source": "Source: thesis flowchart.png (regenerated), shown as two halves.",
+        "layout": "feature"
+      }
+    },
+    {
+      "id": "progress-overall",
+      "section": "RECALL",
+      "title": "OVERALL PROGRESS",
+      "body": "- Literature review: the aerothermodynamics of inflatable entry systems, the rarefied-flow regime above Mach 5 and the survivability criteria are collected and placed against the IRVE-3 baseline.\n- Finding and setting up the simulation: the parametric geometry, the SPARTA DSMC chain, the Ada/SPARK thermal solver and the genetic algorithm are set up and run end to end.\n- Starting the literature writing: the introduction, the literature review and the methodology chapters are written, and every figure of the thesis is drawn from the simulation results.\n- Simulation and documentation: the reference run, the design-of-experiments campaign and the validation gate are executed, and every number of the report is read back from the machine-readable results.\n- Revision, documentation and final report: the four earlier issues are closed, the figures and their provenance are reconciled with the thesis, and the week report and the thesis chapters are brought to their final state.",
+      "target_position": "right after the graphical framework slide, at the end of the methodology block and before the previous issues.",
+      "timeline": true,
+      "note": "The five milestones of the research, drawn as a horizontal timeline. The owner named the five phases; each phase carries one line of context taken from the thesis and the Week 17 report."
+    },
+    {
+      "id": "recall-previous-issues",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUES",
+      "body": "- The heat flux was never defined\n- The cost function was incomplete in the earlier run\n- The Bayesian search was not the right approach\n- The narration had to be written from scratch",
+      "target_position": "the list of the three previous issues, right before the three slides that elaborate them.",
+      "note": "The four issues of the earlier work, listed as pills. Each pill is elaborated on the slide that follows.",
+      "pill_list": true
+    },
+    {
+      "id": "recall-previous-issue-1",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUE 1: THE HEAT FLUX WAS UNDEFINED",
+      "body": "- The earlier assumption: one heat-flux channel was assumed, because convection, through-TPS conduction and reradiation were never separated.\n- The consequence: the hot-face temperature and the heat load followed from that one channel, so the TPS was never solved for.\n- The evidence: the per-element mean and the peak cell rank the smooth and the scalloped body differently, as the figure above shows.\n- The correction: one hot-face balance solved per element in Ada/SPARK, Sutton-Graves convection in, reradiation out and Fourier conduction through the five-ply layup, so the backface temperature follows from the same balance.",
+      "target_position": "the slide right after the list of the previous issues, opening the elaboration of the first issue.",
+      "cards_only": true,
+      "figure": {
+        "path": "figures/thesis_fignew_scalloped_vs_smooth_heatflux.png",
+        "caption": "Heat flux of the smooth and the scalloped body over the particle-time step, as the per-element mean and as the peak cell: the two candidate channels of the heat-flux definition, which do not rank the two bodies the same way.",
+        "source": "Source: CurrentThesisFinalReport/figures/fignew_scalloped_vs_smooth_heatflux.png, thesis figure archive."
+      },
+      "note": "What the first issue was. The narration is rephrased from the Week 16 redemption frames and the Week 17 summary of the three items, and the graphic is the thesis figure that shows the two channels.",
+      "footer": "The issue as it stood in the earlier work. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-previous-issue-2",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUE 2: THE COST FUNCTION INCOMPLETE",
+      "body": "- The earlier assumption: the cost function was incomplete, because the objective was mis-stated and the 400 initial samples were spent one by one.\n- The consequence: the shape the earlier run called optimized performed worse on the aerothermodynamics, so that gain could not be claimed.\n- The evidence: the direct simulation of that shape moved the ballistic coefficient and the heat load far from what the closed-form chain had reported.\n- The correction: the cost became the weighted sum of the heat load, the stagnation flux, the ballistic-coefficient deviation and the drag deficit, plus a penalty on the envelope and the payload, so no solver call is needed to score a design.",
+      "target_position": "the slide right after the elaboration of the first issue, opening the elaboration of the second issue.",
+      "cards_only": true,
+      "note": "What the second issue was. The narration is rephrased from the Week 16 redemption frames and the Week 17 summary of the three items.",
+      "footer": "The issue as it stood in the earlier work. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-previous-issue-3",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUE 3: THE BAYESIAN STEP WAS WRONG",
+      "body": "- The earlier assumption: the search was driven by an analytic model and a Bayesian expectation, so a surrogate of the model decided which candidate was worth simulating next.\n- The consequence: the acquisition step answered the question of the surrogate instead of the question of the design, and the surrogate had to be denoised before it could be used at all.\n- The evidence: the thesis removed the Bayesian-optimisation material and states that there is no central composite screen, no response surface, no surrogate and no acquisition step in the path.\n- The correction: the Latin hypercube seeds the genetic algorithm, every individual is scored with the closed-form cost, and the only high-fidelity runs are the validations of the pass-1 and the pass-2 winner.",
+      "target_position": "the slide right after the elaboration of the second issue, closing the block of the previous issues.",
+      "cards_only": true,
+      "note": "What the third issue was. The earlier search was driven by an analytic model and a Bayesian expectation over a surrogate; the thesis removed that material and the double pass genetic algorithm took its place.",
+      "footer": "The issue as it stood in the earlier work. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-previous-issue-4",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUE 4: THE NARRATION WAS MISSING",
+      "body": "- The earlier assumption: the standard CFD procedures and the supervisor's house style were carried into the slides as they stood, so every frame was a text frame and the words to say were never written down.\n- The consequence: the earlier decks hold no narration to carry over, so none of the spoken report could be ported into this one.\n- The evidence: the Week 14 deck carries 63 words in total, no speaker notes, and its content is two embedded videos with nine rasters, so there is no text there to port.\n- The correction: this first generation of presentation slides is authored from the verified state of the repository, one narration card per point, the owner blocks as the sections, and the thesis figures imported with their provenance.",
+      "target_position": "the slide right after the elaboration of the third issue, closing the block of the previous issues.",
+      "cards_only": true,
+      "note": "What the fourth issue was. The narration of this report is the first one that was written, and this slide is the first generation of presentation slides that carries it.",
+      "footer": "The issue as it stood in the earlier work. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "progress-issue-resolution",
+      "section": "CURRENT PROGRESS",
+      "title": "ISSUE, RESOLUTION AND UPDATE",
+      "body": "Current progress block 6: the progress issue, the resolution attempt, and the update (DSMC, narration). Narration pending.",
+      "target_position": "after the field-evidence and optimization material."
+    },
+    {
+      "id": "visual-cfd",
+      "section": "REQUIRED VISUALS",
+      "title": "REQUIRED PLOT: THE CFD CASE",
+      "body": "Required plot: the CFD case. State what it must show, then insert it.",
+      "target_position": "after the current-progress block, as the first of the owner's trailing visual requirements.",
+      "note": "No image is inserted yet. The slot states the requirement in words instead."
+    },
+    {
+      "id": "visual-optimized",
+      "section": "REQUIRED VISUALS",
+      "title": "REQUIRED PLOT: THE OPTIMIZED CASE",
+      "body": "Required plot: the optimized case. State what it must show, then insert it.",
+      "target_position": "immediately after PLACEHOLDER PLOT A.",
+      "note": "No image is inserted yet. The slot states the requirement in words instead."
+    },
+    {
+      "id": "visual-reference",
+      "section": "REQUIRED VISUALS",
+      "title": "REQUIRED REFERENCE: THE SOURCE PAPER",
+      "body": "Required reference: find the paper, then show it next or in block 6.",
+      "target_position": "immediately after PLACEHOLDER PLOT B.",
+      "note": "The paper is not chosen yet."
+    },
+    {
+      "id": "ending-conclusion",
+      "section": "ENDING",
+      "title": "CONCLUSION",
+      "body": "Ending block: conclusion. How close to the objective, and does it answer the previous issue? Narration pending.",
+      "target_position": "the last content frame of the deck."
+    }
+  ],
+  "palette": {
+    "Frost": "F2F7FE",
+    "Sky": "3F6FA8",
+    "Navy": "08132E",
+    "Gold": "FFC94D"
+  },
+  "palette_roles": {
+    "Frost": "the near white with a blue cast: the fill of every glass panel and the top of the sky",
+    "Sky": "the blue of the middle of the sky and the hairline of every glass panel",
+    "Navy": "the dark blue the sky ends in, and the ink of every headline and of the narration",
+    "Gold": "the yellow accent: the pill under the title and the warm end of the sparkle variation"
+  },
+  "identity": {
+    "judul": "Investigation of Surface Geometry Effects on the Aerothermodynamics of a HIAD on IRVE-3",
+    "penulis": "Wahyu Suryo Samudro",
+    "nim": "23624003",
+    "pembimbing_satu": "Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.",
+    "pembimbing_dua": "Yohanes Bimo Dwianto, S.T., M.T., Ph.D.",
+    "title": "StellarOrion Progress Report",
+    "subtitle": "Week 17 : Narrative Scaffold",
+    "author": "Wahyu Suryo Samudro",
+    "institute": [
+      "Magister Program in Aerospace Engineering",
+      "Faculty of Mechanical and Aerospace Engineering",
+      "Institut Teknologi Bandung"
+    ],
+    "date": "2026"
+  }
+}

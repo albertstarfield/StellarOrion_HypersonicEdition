@@ -12,9 +12,11 @@ PURPOSE
 AXIOMS
     A1. A plot file under ``results/`` is the program's own record of the run
         it names; reusing it verbatim cannot disagree with the thesis numbers.
-    A2. The tree has no grid-independence figure and no surface-pressure
-        distribution figure (verified by exhaustive listing); those two are
-        therefore placeholders and are labelled as such, never simulated.
+    A2. The tree HAS a grid-independence figure (results/grid_independence/
+    grid_independence_qoi.png) and a surface-pressure figure
+    (results/grid_independence/level_3/plots/surface_pressure_vs_axial.png);
+    both are reused directly in the thesis, so no placeholder is produced
+    for either.
     A3. A missing source file raises, so a plate can never silently contain an
         empty cell where a result should be.
     A4. ``grid_mesh_map_smooth_00_reference_step_<n>.png`` uses an underscore
@@ -323,23 +325,6 @@ def main() -> int:
         bottom=0.170, hspace=0.12,
     )
 
-    placeholder(
-        "placeholder_grid_independence.png",
-        "Grid-independence of the integrated heat load Q against refinement level",
-        ["results/grid_independence/level_1, level_2 and level_3 contain raw solver output only.",
-         "No plot of Q (or C_d) against refinement level exists anywhere in the results tree,",
-         "so the grid sensitivity claimed in Table 4.2 cannot be shown from an existing figure."],
-        figsize=(6.0, 2.3),
-    )
-
-    placeholder(
-        "placeholder_surface_pressure.png",
-        "Surface pressure distribution along the body meridian",
-        ["The results tree archives surface heat flux against x (vtu_heatflux_vs_x_step<n>.png)",
-         "and the field maps, but no plot of surface pressure against x at any step.",
-         "The pressure field is therefore described from Figure 4.2 only."],
-        figsize=(6.0, 2.3),
-    )
     return 0
 
 

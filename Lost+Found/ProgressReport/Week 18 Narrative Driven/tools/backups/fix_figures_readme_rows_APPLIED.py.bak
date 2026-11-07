@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Wahyu Suryo Samudro, Institut Teknologi Bandung.
+"""Repair the double pass row and list the four new equation pictures.
+
+WHY: an earlier patch merged the tail of the double pass row into the
+radiation row, so one row has two cells too few and the other has two cells
+too many. The four equation pictures of the optimization pipeline also have
+to be listed beside the seven that are already there.
+
+The script is a guarded replacement driver: it counts every anchor, refuses
+to write when a count does not match and leaves the file untouched on a
+failure.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent.parent
+FIGURES_README = PROJECT / "figures" / "README.md"
+BACKUP = Path(__file__).resolve().parent / "backups" / "figures_README_before_pipeline_equations.md"
+EM_DASH = "\u2014"
+#: How many equation rows the file must hold after the patch.
+EQUATION_PICTURE_COUNT = 11
+GLOSSARY = "Every symbol of the equations is named in a glossary printed under them."
+
+BROKEN_TAIL = (
+    "| `GOVERNING EQUATION: THE RADIATION` | `thesis_equation_radiation.png` | "
+    "Typeset in this folder | The equilibrium that sets the temperature of the hot "
+    "face of the vehicle. | `fignew_gate_comparison.png` | The three heat loads the "
+    "gate compares, against the acceptance threshold. Not included in the thesis "
+    "text. Every symbol of the equations is named in a glossary printed under "
+    "them. |"
+)
+RADIATION_ROW = (
+    "| `GOVERNING EQUATION: THE RADIATION` | `thesis_equation_radiation.png` | "
+    "Typeset in this folder | The equilibrium that sets the temperature of the hot "
+    f"face of the vehicle. {GLOSSARY} |"
+)
+GATE_TAIL = "| `METHODOLOGY: DOUBLE PASS AND THE GATE` | `thesis_fignew_gate_comparison.png` |"
+GATE_ROW = (
+    "| `METHODOLOGY: DOUBLE PASS AND THE GATE` | `thesis_fignew_gate_comparison.png` | "
+    "`fignew_gate_comparison.png` | The three heat loads the gate compares, against "
+    "the acceptance threshold. Not included in the thesis text. |"
+)
+NEW_ROWS = (
+    "| `GOVERNING EQUATION: THE DESIGN SPACE` | `thesis_equation_design_space.png` | "
+    "Typeset in this folder | The design vector and the three relations that map it "
+    f"to the geometry. {GLOSSARY} |\n"
+    "| `GOVERNING EQUATION: THE COST FUNCTION` | `thesis_equation_cost_function.png` | "
+    "Typeset in this folder | The composite cost of the search: four weighted terms, "
+    f"a penalty and the heat load. {GLOSSARY} |\n"
+    "| `GOVERNING EQUATION: THE GENETIC ALGORITHM` | `thesis_equation_ga.png` | "
+    "Typeset in this folder | The operators of the search and the stopping rule that "
+    f"ends it. {GLOSSARY} |\n"
+    "| `GOVERNING EQUATION: THE DOUBLE PASS` | `thesis_equation_double_pass.png` | "
+    "Typeset in this folder | The correction factor of the second pass and the cost "
+    f"it corrects. {GLOSSARY} |"
+)
+
+RULES: list[tuple[str, str, int]] = [
+    (BROKEN_TAIL, RADIATION_ROW, 1),
+    (GATE_TAIL, GATE_ROW + "\n" + NEW_ROWS, 1),
+]
+
+
+def main() -> int:
+    """Repair the two rows and add the four new ones.
+
+    Returns:
+        Zero when the file was rewritten, one when a guard refused.
+
+    """
+    text = FIGURES_README.read_text(encoding="utf-8")
+    problems: list[str] = []
+    for old, _new, expected in RULES:
+        found = text.count(old)
+        if found != expected:
+            problems.append(f"expected {expected} occurrence(s), found {found}: {old[:70]!r}")
+    if len(problems) != 0:
+        for problem in problems:
+            _ = sys.stdout.write(f"MISMATCH {problem}\n")
+        return 1
+    for old, new, _expected in RULES:
+        text = text.replace(old, new, 1)
+    if EM_DASH in text:
+        _ = sys.stdout.write("MISMATCH the file would carry an em dash\n")
+        return 1
+    if text.count("thesis_equation_") != EQUATION_PICTURE_COUNT:
+        _ = sys.stdout.write(
+            f"MISMATCH expected {EQUATION_PICTURE_COUNT} equation rows, "
+            f"found {text.count('thesis_equation_')}\n",
+        )
+        return 1
+    _ = BACKUP.parent.mkdir(parents=True, exist_ok=True)
+    _ = BACKUP.write_bytes(FIGURES_README.read_bytes())
+    _ = FIGURES_README.write_text(text, encoding="utf-8")
+    _ = sys.stdout.write("the double pass row is repaired and the four equations are listed\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

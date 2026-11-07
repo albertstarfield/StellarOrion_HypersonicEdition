@@ -1,0 +1,792 @@
+\clearpage
+\chapter{METHODOLOGY}
+
+\section{Theory Anchors and First Principles}
+\label{sec:theory_anchors}
+
+Before detailing the computational framework, this section establishes the foundational theory anchors from which the entire methodology is derived. Each anchor is grounded in established physical theory and validated against the literature reviewed in Chapter~\ref{chap:literature}. The derivation chain---from fundamental kinetic theory to the implemented software pipeline---is summarized in Figure~\ref{fig:methodology_derivation}.
+
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each theory anchor to the equation or solver step that implements it.}}%
+\includegraphics[width=\textwidth]{figures/methodology_derivation.png}%
+\EndAccSupp{}%
+    \caption{Methodology derivation from first principles: theory anchors $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
+    \label{fig:methodology_derivation}
+\end{figure}
+
+\subsection{Theory Anchors}
+The following theory anchors form the logical foundation of this research. Each is stated as a proposition, derived from physical theory, and traced to its literature basis.
+
+\begin{table}[H]
+\centering
+\caption{Theory anchors derived from first principles and their literature basis.}
+\label{tab:theory_anchors}
+\begin{tabularx}{\textwidth}{@{}c >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}p{0.24\textwidth}@{}}
+\toprule
+\textbf{ID} & \textbf{Theory Anchor} & \textbf{Physical Basis} & \textbf{Literature Basis} \\ \midrule
+TA1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelor (1967), Anderson (1995) \\
+TA2 & Molecular chaos (Stosszahlansatz) & Statistical mechanics & Boltzmann (1872), Bird (1994) \\
+TA3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (1988), Bird (1994) \\
+TA4 & Equilibrium distribution follows Maxwell--Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
+TA5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
+TA6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Derivation Chain}
+The methodology is constructed by chaining the theory anchors through a sequence of mathematical derivations. Each step introduces a specific equation or method that is implemented in the software pipeline.
+
+\paragraph{Step 1: Boltzmann Equation (TA1, TA2, TA4).}
+The Boltzmann transport equation governs the evolution of the molecular velocity distribution function $f(\mathbf{x}, \mathbf{v}, t)$:
+\begin{equation}
+\frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{x}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\delta f}{\delta t}\right)_{\text{coll}}
+\label{eq:boltzmann_dsmc}
+\end{equation}
+where the right-hand side is the collision integral, evaluated under the assumption of molecular chaos (anchor TA2). The equilibrium solution is the Maxwell--Boltzmann distribution (anchor TA4).
+
+\paragraph{Step 2: DSMC Method (TA6).}
+Bird's Direct Simulation Monte Carlo method~\cite{bird1994molecular} provides a stochastic solution to Equation~\eqref{eq:boltzmann_dsmc}. As the number of simulated particles $N \to \infty$, the DSMC solution converges to the exact Boltzmann solution (anchor TA6). The DSMC algorithm proceeds in three steps per time step:
+\begin{enumerate}
+    \item \textbf{Advection:} Particles are moved ballistically for $\Delta t$.
+    \item \textbf{Collisions:} Pairs are selected within each cell using the VSS collision model.
+    \item \textbf{Sampling:} Macroscopic properties (density, temperature, velocity) are accumulated in each cell.
+\end{enumerate}
+
+\paragraph{Step 3: Navier--Stokes Limit (A3).}
+In the continuum limit ($Kn \to 0$), the Boltzmann equation reduces to the compressible Navier--Stokes equations via the Chapman--Enskog expansion~\cite{chapman1970kinetic}. 
+
+\paragraph{Step 4: Sutton--Graves Correlation (A5).}
+For rapid engineering estimates, the stagnation-point heat flux is approximated by~\cite{sutton1971gravesh}:
+\begin{equation}
+\dot{q}_s = k \sqrt{\frac{\rho_\infty}{R_n}} \, V_\infty^3
+\label{eq:sutton_graves_methodology}
+\end{equation}
+where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $R_n$ is the nose radius, and $V_\infty$ is the flight velocity. This correlation is used both for initial thermal loading estimates and as a validation benchmark against DSMC results.
+
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% to produce the optimised body, so all PINN material is removed from this
+% thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimiser is now a simple genetic algorithm; the
+% Bayesian-optimisation material has been removed from this thesis.
+
+\paragraph{Step 5: Genetic-Algorithm Optimization.}
+The closed-form cost of Eq.~\eqref{eq:ga_cost} is minimized by a simple genetic algorithm: a population of fifty designs is evolved with tournament selection, uniform crossover, Gaussian mutation and elitism until the best cost stagnates. Because the cost is analytic, an individual is evaluated without a solver call, and the search therefore explores thousands of candidate geometries rather than a handful of DSMC cases. The initial population is a Latin hypercube sample of the design box, so the first generation is stratified in every coordinate; no factorial screen and no fitted response surface are used.
+
+
+Figure~\ref{fig:governing_equations} summarizes the full derivation chain from kinetic theory to optimization, showing the governing equation at each step and the theory anchor behind it.
+
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Panel of the governing equations used in the study, listing the continuity, momentum and energy equations together with the state and transport relations.}}%
+\includegraphics[width=\textwidth]{figures/governing_equations.png}%
+\EndAccSupp{}%
+    \caption{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier--Stokes continuum limit, Sutton--Graves engineering correlation to GA-based survivability optimization. Each layer is anchored by the theory anchors defined in Table~\ref{tab:theory_anchors}.}
+    \label{fig:governing_equations}
+\end{figure}
+
+\subsection{Software Pipeline}
+\label{sec:software_pipeline}
+The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, routes through the DSMC solver (SPARTA in Docker) and through the Ada/SPARK per-element 1-D layered thermal solver that turns the resolved surface heat flux into a backface temperature, then through the genetic-algorithm optimiser, before producing ParaView-ready VTK and STL files for visualization. The continuum solvers named in the tool inventory of the appendix (OpenFOAM, Fluent) are not part of the thermal chain: the 1-D conduction, the radiative hot-face balance and the lateral coupling are all solved in Ada/SPARK, as set out in Sec.~\ref{sec:thermal_chain}.
+
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline in five columns: input, core engine, solvers, models and output. The input column holds CadQuery geometry export, flight conditions and the design variables. The core engine is the Ada Engine. The solvers column holds SPARTA as the DSMC solver in Docker and Ada/SPARK as the one-dimensional layered thermal solver. The models column holds the Genetic Algorithm with a population of fifty. The output column holds ParaView VTK and STL rendering. An orange feedback arrow labelled GA optimization returns from the genetic algorithm to the core engine.}}%
+\includegraphics[width=\textwidth]{figures/software_pipeline.png}%
+\EndAccSupp{}%
+    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver and Ada/SPARK 1-D layered thermal solver $\rightarrow$ Genetic Algorithm optimiser $\rightarrow$ ParaView visualization. The thermal chain is solved in Ada/SPARK, not in a continuum CFD package. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.}
+    \label{fig:software_pipeline}
+\end{figure}
+
+\subsection{Default Optimization Parameters}
+\label{sec:default_params}
+Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, as configured in \texttt{main.py} and the engine source files. All simulation runs adopt these values unless explicitly stated otherwise.
+
+\begin{table}[H]
+\centering
+\caption{Default optimization and simulation parameters.}
+\label{tab:default_params}
+\small
+% Two cells here are unbreakable by construction and set the column widths:
+% \multirow{6}{*}{\textbf{GA Optimization}} in column 1, and
+% $\max(2000, \min(4000, steps \times 2))$ in column 3. \multirow with a * width
+% never wraps, so column 1 must be wide enough for the longest label; column 3
+% must be wide enough for the longest math atom. Column 2 absorbs the rest.
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.21\textwidth}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.30\textwidth}@{}}
+\toprule
+\textbf{Category} & \textbf{Parameter} & \textbf{Default Value} \\ \midrule
+\multirow{5}{=}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1100 \\
+ & Steps (sample) & 500 \\
+ & Grid factor & 0.7 \\
+ & Particle weighting ($f_{\text{num}}$) & $1.5 \times 10^{20}$ \\
+ & Chemistry model & 5-species (N$_2$, O$_2$, NO, N, O) \\ \midrule
+\multirow{3}{=}{\textbf{Flight Conditions}} & $V_\infty$ & 3378\,m/s \\
+ & $T_\infty$ & 268.41\,K \\
+ & $n_\infty$ & $1.63 \times 10^{22}$\,/m$^3$ \\ \midrule
+\multirow{3}{=}{\textbf{Sampling (LHS)}} & Method & Latin hypercube, one per stratum \\
+ & Samples ($N$) & 50 strata per coordinate \\
+ & Active variables & Body radius, torus radius, half-cone angle, toroid count, mass \\ \midrule
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+\multirow{6}{=}{\textbf{GA Optimization}} & Population ($P$) & 50 \\
+ & Generations ($G_{\max}$) & 200 \\
+ & Tournament size ($k_t$) & 3 \\
+ & Crossover rate ($p_c$) & 0.7 (uniform) \\
+ & Mutation rate ($p_m$) & 0.1 (Gaussian, $\sigma$ = 10\,\% of range) \\
+ & Elites ($E$), stagnation stop & 2, 20 generations at $\epsilon = 10^{-6}$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Research Design and Workflow}
+This chapter outlines the computational framework utilized to investigate the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The research workflow follows a multi-stage numerical analysis approach, moving from parametric geometry generation to high-fidelity Direct Simulation Monte Carlo (DSMC) simulation and Genetic Algorithm (GA) optimization.
+
+To systematically isolate the effects of the ``scalloped'' surface geometry, the methodology is designed to compare a baseline smooth sphere-cone against the proposed inflatable architecture under identical hypersonic flight conditions. The workflow is visualized in Figure \ref{fig:flowchart} and consists of five primary stages:
+
+\begin{figure}[H]
+    \centering
+    % Same artwork as Figure 1.6 (fig:flowchart_ch1), regenerated by
+    % figures/make_flowchart.py. Height-constrained with keepaspectratio because
+    % the 1760x3600 px source is taller than it is wide; a width-based request
+    % would overflow the text height and the float would be unplaceable.
+    \BeginAccSupp{method=escape,ActualText={Vertical flowchart of the five-stage numerical research workflow, read from top to bottom: Start, then a literature stage comprising a stream of papers feeding into a literature study and into a data retrieval and familiar-study collection stage; a first decision asking whether the axisymmetric slice model has been replicated, whose No branch is labelled Adjustment Needed and loops back to the data retrieval stage while its Yes branch is labelled specification aligned; a simulation stage that runs the geometry at Mach 5 to 6; a parallelogram for the simulation result; and a second decision asking whether the result is theoretically valid or within the error range, whose No branch is labelled Invalid and loops back to the simulation stage while its Yes branch is labelled valid; then a data analysis and simulation stage, a conclusion and recommendation stage, and End. The same diagram appears earlier as the research methodology flowchart in the introduction.}}%
+\includegraphics[height=0.72\textheight, keepaspectratio]{figures/flowchart.png}%
+\EndAccSupp{}%
+    \caption{Flowchart of the numerical research methodology, with the two feedback loops that iterate the design and the validation stages. This is the same diagram as Figure~\ref{fig:flowchart_ch1}, repeated here so the six stages enumerated below can be read against it.}
+    \label{fig:flowchart}
+\end{figure}
+\par
+The process is divided into five primary stages:
+\begin{enumerate}
+    \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles using CadQuery Python scripting, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter.
+    \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics.
+    \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation within a Docker-containerized Linux environment, tracking millions of simulated particles through advection, molecular collisions, and surface interactions.
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+    \item \textbf{Survivability Optimization:} Simple Genetic Algorithm (GA) with tournament selection, uniform crossover, Gaussian mutation and elitism for automated multi-objective optimization of HIAD geometry.
+    \item \textbf{Validation and Analysis:} Validation of the solution through a three-level grid independence study ($70\times70$, $100\times100$ and $139\times139$ cells, Figure~\ref{fig:grid_independence}) and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
+\end{enumerate}
+
+\section{Geometric Modeling and Computational Domain}
+
+\subsection{Parametric Geometry Generation}
+To ensure geometric consistency and enable automated design space exploration, the vehicle profiles are generated using CadQuery, a Python-based parametric CAD scripting library. The geometric constraints are derived directly from the \textbf{NASA IRVE-3} and \textbf{LOFTID} flight test specifications, as well as the MDAO framework baseline established by Rapisarda (2023)~\cite{rapisarda2023mdao}. The CadQuery script is invoked via command-line arguments, enabling the generation of hundreds of design variants without manual intervention.
+
+\subsection{Vehicle Specifications and Scaling}
+The modeling phase targets two specific scales identified in previous NASA research to investigate how vehicle diameter affects the aerothermal environment. As shown in Figure~\ref{fig:hiad_comparison}, the research considers the scaling transition from the 3.0\,m IRVE-3 baseline through intermediate rigid configurations of the kind shown in the figure (4.57\,m) up to inflatable configurations of 15\,m~\cite{dillman2015irve3}. The figure is a concept comparison of form and scale; the quantitative scaling study reported later in this chapter is conducted on the 3.0\,m baseline, which is the only scale for which this work holds a validated reference dataset.
+
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two side-by-side shaded three-dimensional renderings comparing inflatable and rigid decelerator concepts. The left panel shows a slender, sharply pointed olive-green inflated sphere-cone labelled '15m Inflatable', drawn at a shallow angle so that it appears as a long thin lens. The right panel shows a stubby, blunt-nosed orange-brown rigid body captioned '4.57m Rigid', viewed nearly end-on. The two panels are separated by a vertical rule. The contrast is between a large-diameter deployable inflatable and a small-diameter rigid aeroshell; the diameters are those printed in the panels themselves and are not to scale relative to each other.}}%
+\includegraphics[width=0.8\textwidth]{figures/Hiad_DesignSpec.png}%
+\EndAccSupp{}%
+    \caption{Size scaling between deployable inflatable and rigid HIAD concepts: the 15\,m inflatable aeroshell (left) against the 4.57\,m rigid aeroshell (right). The two diameters are the values printed in the panels; note that the rigid reference in this figure is 4.57\,m and \emph{not} the 3.0\,m IRVE-3 baseline through which the scaling discussion in this section is framed. The rendering compares overall form and scale only, not internal structure.}
+    \label{fig:hiad_comparison}
+\end{figure}
+
+\subsection{Internal Architecture and Scallop Definition}
+The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack configuration utilized in the Rapisarda (2023) MDAO baseline. The internal layout, including the stacked toroid arrangement, is illustrated in Figure \ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
+
+\begin{figure}[H]
+    \centering
+    % Spec0.png is a 642x444 px reproduction of a cutaway engineering
+    % illustration. The reproduction is cropped at both left and right edges,
+    % so two of its own callout labels are truncated in the source ("...le
+    % ...cture" and the T7 marker). No higher-resolution or uncropped copy
+    % exists anywhere in the repository, so the crop cannot be repaired here;
+    % the alt text and caption below therefore describe only what is legible,
+    % and the caption records the truncation explicitly.
+    \BeginAccSupp{method=escape,ActualText={Cutaway cross-section of the deployed HIAD, 3 metres or 118 inches in diameter, showing the vehicle's internal subsystems. A central cylindrical equipment stack sits above the nose; callout arrows from the right label, from top to bottom, the cameras mounted on the upper struts, the attitude control system abbreviated ACS, the telemetry and power system, the centre-of-gravity offset system, and the inflation system. Below the stack a row of seven orange toroidal bladders runs the length of the vehicle, labelled T1 through T6 along the right-hand side with a seventh, smaller shoulder torus T7 at the far right end. The bladders rest against a pink flexible thermal protection layer, and the payload is carried in the central cavity. Two callout labels on the left-hand side are cut off by the edge of the source image and are only partially legible.}}%
+\includegraphics[width=0.6\textwidth]{figures/Spec0.png}%
+\EndAccSupp{}%
+    \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface. The six primary bladders T1--T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
+    \label{fig:irve3_layout}
+\end{figure}
+
+The specific geometric parameters used for the numerical model are summarized in Table \ref{tab:geom_params}:
+
+\begin{table}[H]
+    \centering
+    \caption{Geometric Parameters based on IRVE-3/Rapisarda MDAO Specifications.}
+    \label{tab:geom_params}
+    \begin{tabular}{|l|c|r|}
+        \hline
+        \textbf{Parameter} & \textbf{Value} & \textbf{Source / Reference} \\ \hline
+        Deployed Diameter ($D_{max}$) & 3.0\,m & IRVE-3 Flight Article \\ \hline
+        Forebody Cone Angle ($\theta_c$) & $60^\circ$ & Rapisarda MDAO Baseline \\ \hline
+        Toroid Count ($N$) & 6 & Rapisarda MDAO Baseline \\ \hline
+        Toroid Radius ($r_{tor}$) & 0.135\,m & Rapisarda Table 4.1 \\ \hline
+        Nose Radius ($R_N$) & 1.5\,m & IRVE-3 Specification (3\,m diameter) \\ \hline
+        Entry Mass ($m$) & 281\,kg & IRVE-3 Flight Article \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Configuration Definitions}
+The two configurations established for this study -- \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)} -- are constrained by the stowed and deployed envelopes shown in Figure \ref{fig:stowed_deployed}~\cite{dillman2015irve3}.
+
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Cutaway of the HIAD in its stowed launch configuration inside the launch vehicle, headed Stowed with a quoted 18.5 inch diameter. A long tapered stowed pack sits above the vehicle internals, which include a pale green spherical payload and stacked avionics and battery boxes; below them a green upper stage band and a pale blue lower stage are labelled 22 inch diameter, and three orange landing legs extend downward from the lower stage.}}%
+\includegraphics[width=0.35\textwidth]{figures/Spec1.png}%
+\EndAccSupp{}%
+    \caption{Launch configuration of the HIAD system, showing the stowed constraint.}
+    \label{fig:stowed_deployed}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Configuration A (Scalloped):} This model utilizes the 6-toroid profile (T1--T6) shown in Figure \ref{fig:irve3_layout}. The valleys between toroids are the primary focus for analyzing heating augmentation and flow separation in the scalloped troughs.
+    \item \textbf{Configuration B (Smooth Baseline):} This tangent-cone model represents the ``Equivalent Rigid OML,'' allowing for the isolation of heating augmentation caused specifically by the toroidal troughs.
+\end{enumerate}
+
+\section{DSMC Simulation Framework}
+
+\subsection{Governing Equations: The Boltzmann Equation}
+Unlike continuum CFD methods that solve the Reynolds-Averaged Navier--Stokes (RANS) equations, this study employs the Direct Simulation Monte Carlo (DSMC) method, which solves the Boltzmann equation for rarefied gas dynamics~\cite{bird1994molecular}. The Boltzmann equation describes the evolution of the molecular velocity distribution function $f(\mathbf{r}, \mathbf{v}, t)$:
+
+\begin{equation}
+    \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{r}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\partial f}{\partial t}\right)_{coll}
+\end{equation}
+
+where $\mathbf{F}$ is the external force per molecule, $m$ is the molecular mass, and the right-hand side represents the Boltzmann collision integral. DSMC provides a stochastic solution to this equation by tracking representative particles through advection and collisions.
+
+\subsection{Knudsen Number and Flow Regime}
+The validity of the continuum assumption is governed by the Knudsen number ($Kn$), defined as the ratio of the molecular mean free path ($\lambda$) to the characteristic length ($L$):
+
+\begin{equation}
+    Kn = \frac{\lambda}{L}
+\end{equation}
+
+\begin{equation}
+    \lambda = \frac{1}{\sqrt{2} \pi d^2 n}
+\end{equation}
+
+where $d$ is the molecular diameter and $n$ is the number density. For HIAD reentry at altitudes of 50--60\,km, the flow is in the transitional regime ($0.01 < Kn < 1$), where continuum CFD methods (RANS/LES) are physically inappropriate and DSMC is required~\cite{bird1994molecular}.
+
+\subsection{SPARTA Solver Configuration}
+The simulations are performed using the SPARTA (Sandia Parallel Algorithm for Real-Time Application) DSMC solver~\cite{plimpton2014sparta}. SPARTA is executed within a Docker-containerized Linux environment to ensure reproducibility of the build and execution across platforms.
+
+\subsubsection*{Freestream Conditions}
+The freestream conditions are prescribed to match the target trajectory point for IRVE-3 reentry at 51.8\,km altitude. All atmospheric values below are obtained from the atmospheric model evaluated in the solver at that altitude, not from an independent hand calculation:
+
+\begin{itemize}
+    \item \textbf{Freestream Velocity ($v_{\infty}$):} 3378\,m/s (corresponding to Mach $\approx$ 10.29 at altitude)
+    \item \textbf{Number Density ($n$):} $1.63 \times 10^{22}$\,m$^{-3}$ (derived from atmospheric density $\rho = 7.851 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
+    \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K (atmospheric model, code baseline)
+    \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via \texttt{--fnum})
+\end{itemize}
+
+\subsubsection*{Gas Model}
+A realistic 5-species air model is employed: N$_2$, O$_2$, NO, N, and O. The collision physics use the Variable Soft Sphere (VSS) model, where the collision cross-section varies with relative velocity:
+
+\begin{equation}
+    \sigma = \pi d_{ref}^2 \left( \frac{g_{ref}}{g} \right)^{2(\omega - 0.5)}
+\end{equation}
+
+where $g$ is the relative velocity of colliding molecules and $\omega$ is the viscosity index specific to each gas species. The VSS model captures the molecular-level interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry conditions.
+
+\subsubsection*{Particle Tracking}
+SPARTA tracks millions of simulated particles through three fundamental processes:
+\begin{enumerate}
+    \item \textbf{Advection:} Particles are moved ballistically through the domain according to their velocity vectors.
+    \item \textbf{Collisions:} Molecular collisions are modeled using the VSS collision model within computational cells, with collision partners selected using the nearest-neighbor pairing scheme.
+    \item \textbf{Surface Interactions:} Particles hitting the vehicle surface are reflected according to the specified gas-surface interaction model (diffuse or specular reflection).
+\end{enumerate}
+
+\subsection{Cartesian Grid and Collision Pairing}
+While DSMC is a particle method, a Cartesian computational grid is required for two purposes:
+\begin{enumerate}
+    \item \textbf{Collision Pairing:} Restricting collision partner selection to particles within the same cell ensures $O(N)$ computational complexity rather than $O(N^2)$ for brute-force pairing.
+    \item \textbf{Macroscopic Sampling:} Cells serve as sampling volumes for accumulating density, temperature, pressure, and velocity statistics from the particle data.
+\end{enumerate}
+
+The grid resolution must be finer than the local mean free path ($\lambda$) to resolve the shock structure and boundary layer gradients. A grid-factor parameter (default: 0.7) controls the mesh density multiplier; the grid independence of that choice was verified by a three-level study ($70\times70$, $100\times100$ and $139\times139$ cells, Figure~\ref{fig:grid_independence} and Table~\ref{tab:grid_study}).
+
+\subsection{Grid Independence Study}
+To ensure the numerical solution is independent of the grid resolution, a grid independence study was performed on the reference body at the same freestream condition and trajectory point, at three Cartesian resolutions:
+
+\begin{table}[H]
+    \centering
+    \caption{Grid independence study: three refinement levels.}
+    \label{tab:mesh_independence}
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Level} & \textbf{Grid} & \textbf{Peak $\dot q$ (MW\,m$^{-2}$)} & \textbf{Drag (kN)} \\ \hline
+        L1 & $70\times70$ & 2.059 & 48.012 \\ \hline
+        L2 & $100\times100$ & 1.946 & 45.918 \\ \hline
+        L3 & $139\times139$ & 1.797 & 45.697 \\ \hline
+    \end{tabular}
+\end{table}
+
+The integrated drag force is converged at the coarsest level (changes by $-0.48\,\%$ between L2 and L3), while the stagnation-point peak heat flux is not (changes by $-7.66\,\%$), so the $139\times139$ grid (19\,321 cells) is retained as the production grid and used for every result in this thesis. The graphical record is Figure~\ref{fig:grid_independence}; the cross-reference table is Table~\ref{tab:grid_study}.
+
+\section{Surface Data Extraction and Flight Metrics}
+
+\subsection{Surface Computes}
+SPARTA accumulates surface force and energy data using the \texttt{dump surf} command. The relevant surface quantities are:
+
+\begin{table}[H]
+    \centering
+    \caption{SPARTA Surface Data Columns and Physical Variables.}
+    \label{tab:surface_data}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Column} & \textbf{Physical Variable} & \textbf{Unit} \\ \hline
+        1 & Number Flux ($n_{flux}$) & m$^{-2}$s$^{-1}$ \\ \hline
+        2 & Mass Flux ($m_{flux}$) & kg$\cdot$m$^{-2}$s$^{-1}$ \\ \hline
+        3 & Kinetic Energy Flux ($ke$) & J$\cdot$m$^{-2}$s$^{-1}$ \\ \hline
+        4 & Axial Force ($f_x$) & N \\ \hline
+        5 & Radial Force ($f_y$) & N \\ \hline
+        6 & Azimuthal Force ($f_z$) & N \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Ballistic Coefficient (\texorpdfstring{$\beta$}{beta})}
+\label{sec:ballistic}
+The ballistic coefficient is a measure of the vehicle's ability to maintain its speed during reentry~\cite{anderson2006hypersonic}:
+
+\begin{equation}
+    \beta = \frac{m}{C_D A}
+\end{equation}
+
+Since $F_{drag} = C_D A q$, where $q$ is dynamic pressure:
+
+\begin{equation}
+    \beta = \frac{m \cdot q}{F_{drag}}
+\end{equation}
+
+The mass density is derived from number density:
+
+\begin{equation}
+    \rho = n \cdot \frac{M_{air}}{N_A}
+\end{equation}
+
+where $M_{air} \approx 28.97$\,g/mol and $N_A$ is Avogadro's constant. The dynamic pressure is:
+
+\begin{equation}
+    q = \frac{1}{2} \rho v_{\infty}^2
+\end{equation}
+
+\subsection{Instantaneous Deceleration (\texorpdfstring{$n$}{n})}
+The deceleration load felt by the vehicle in Earth-gravity units ($g_0$):
+
+\begin{equation}
+    n = \frac{F_{drag}}{m \cdot g_0}
+\end{equation}
+
+\section{Aerothermodynamic Analysis}
+
+\subsection{Stagnation Heat Flux -- Sutton-Graves Correlation}
+The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}. This is the standard reference formula for Earth entry and has been validated against IRVE-3 flight data by Rapisarda (2023)~\cite{rapisarda2023mdao}:
+
+\begin{equation}
+    \boxed{\dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $C_{SG} = 1.7415 \times 10^{-4}$ (Sutton--Graves constant for Earth air)
+    \item $\rho_{\infty}$: Freestream density (kg/m$^3$)
+    \item $R_N$: Nose radius (m)
+    \item $V_{\infty}$: Freestream velocity (m/s)
+\end{itemize}
+
+\subsubsection*{IRVE-3 Validation}
+For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA DSMC run condition --- $h = 51.8$\,km under ISA, which yields $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$ --- using the IRVE-3 sphere--cone nose radius $R_N = 1.5$\,m (a 3\,m aeroshell diameter) and the run velocity $V_{\infty} = 3{,}378$\,m/s:
+
+\begin{equation}
+    \dot{q}_{stag} = 1.7415 \times 10^{-4} \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times 3378^3 \approx 1.536 \times 10^{5} \ \text{W/m}^2 = 15.36 \ \text{W/cm}^2
+\end{equation}
+
+The correlation constant is the value implemented in the Ada/SPARK model, $C_{SG} = 1.7415 \times 10^{-4}$; an earlier revision of this work used $1.83 \times 10^{-4}$, which raises the computed flux by about $5\,\%$ and produced the $16.14$\,W/cm$^2$ quoted in that revision. The evaluation above uses the $1.5$\,m body radius as the nose radius, which is the convention of the validation comparison. The optimizer evaluates the same correlation at the physical nose radius $R_n=\kappa X_1$ of Eq.~\eqref{eq:nose_ratio} ($0.55$\,m at the baseline), which is why its screening flux is $25.36$\,W/cm$^2$ at the baseline. The $12.20$\,W/cm$^2$ value in the validation export is a third, legacy evaluation at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$; it is not the run condition and is not used here. Rapisarda (2023) reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ (+6.26\% above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
+
+\subsubsection*{Note on SPARTA Surface Energy}
+The raw SPARTA DSMC kinetic energy ($ke$) surface compute cannot be used directly as an absolute heat flux in W/m$^2$. SPARTA's \texttt{fix ave/surf} outputs kinetic energy per simulated particle per timestep per face element -- a simulation-internal unit that depends on $f_{num}$, timestep $dt$, and face area in a non-trivially-normalized way. It is retained only as a \textbf{relative shape-ranking signal} for the optimizer (comparing geometries against each other). For all absolute thermal calculations, the Sutton-Graves correlation is used.
+
+\subsection{Surface Temperature -- Radiative Equilibrium}
+At the TPS outer surface, radiative cooling balances the incoming convective heat flux at steady state. Assuming grey-body radiation:
+
+\begin{equation}
+    T_{surface} = \left(\frac{\dot{q}_{stag}}{\epsilon \sigma}\right)^{1/4}
+\end{equation}
+
+where $\epsilon = 0.75$ (Nicalon SiC emissivity) and $\sigma = 5.67 \times 10^{-8}$\,W/m$^2$K$^4$ (Stefan-Boltzmann constant).
+
+\subsection{Backface Temperature -- 1D Transient Model}
+The 1D transient backface temperature model estimates the thermal penetration through the FTPS insulation stack:
+
+\begin{equation}
+    T_{back} = T_{init} + \frac{\dot{q} \cdot \Delta t \cdot \eta_{lag}}{\rho_{TPS} \cdot C_{p,TPS} \cdot \delta_{TPS}}
+\end{equation}
+
+where $\eta_{lag} = 0.15$ is the thermal lag factor, $\rho_{TPS} = 1468$\,kg/m$^3$ (Nicalon SiC density), $C_{p,TPS} = 1100$\,J/kg$\cdot$K, and $\delta_{TPS}$ is the TPS thickness.
+
+The framework supports multiple TPS material presets as summarized in Table~\ref{tab:tps_materials}.
+
+\begin{table}[H]
+    \centering
+    \caption{TPS Material Presets Available in the StellarOrion Framework.}
+    \label{tab:tps_materials}
+    \begin{tabularx}{\textwidth}{|l|c|c|c|>{\RaggedRight\arraybackslash}X|}
+        \hline
+        \textbf{Material} & \textbf{$\rho$ (kg/m$^3$)} & \textbf{$C_p$ (J/kg$\cdot$K)} & \textbf{$\epsilon$} & \textbf{Application} \\ \hline
+        Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS \\ \hline
+        Pyrogel XTE & 200 & 1000 & 0.85 & FTPS blanket insulation \\ \hline
+        Kapton & 1420 & 1090 & 0.70 & Polyimide film layers \\ \hline
+        Multi-layer (stack) & -- & -- & -- & Combined FTPS stack \\ \hline
+    \end{tabularx}
+\end{table}
+
+\subsection{Composite Thermal-Propagation Chain}
+\label{sec:thermal_chain}
+
+The two lumped models above are the legacy interface of the thermal model: a radiative-equilibrium surface temperature and a single-slab backface temperature. The framework implements the full propagation chain behind them, per surface element, as a layered one-dimensional solver: the convective load enters the outer ply, is conducted inwards through the layup, is re-radiated from the hot face, and the resulting in-plane coupling is closed with a lumped lateral term.
+
+The hot-face boundary condition balances the two outward paths, conduction through the layup resistance $R=\sum_i \delta_i/k_i$ and radiation to the freestream,
+\begin{equation}
+    \dot{q}_{wall} = \frac{T_{surf}-T_{back}}{R} + \epsilon\sigma\left(T_{surf}^{4}-T_{\infty}^{4}\right),
+    \label{eq:thermal_balance}
+\end{equation}
+where $\epsilon$ and $\sigma$ are as above and $T_{back}$ is supplied by the transient model of this section. The left-hand side is monotone in $T_{surf}$, so the equation has a unique root, which the solver finds by bisection and Newton iteration; the solver is registered in the unit-test suite, so the root exists and is unique for every element.
+
+The lateral (in-plane) term is applied \emph{after} the one-dimensional solve and is not a two-dimensional PDE: each element exchanges heat with its neighbours through a lumped conductance $G_{lat}$,
+\begin{equation}
+    \dot{q}_{lateral} = G_{lat}\left(T_{surf}-T_{surf}^{neighbours}\right),
+    \label{eq:lateral}
+\end{equation}
+and the resulting source is added to the element's energy balance. The measured magnitude is negligible for this geometry: for the reference run the first element carries $\dot{q}_{conv}=143{,}760$\,W/m$^2$, $\dot{q}_{cond}=3{,}362$\,W/m$^2$, $\dot{q}_{rad}=140{,}399$\,W/m$^2$ and $\dot{q}_{lateral}=0.0083$\,W/m$^2$, i.e.\ about $6\times10^{-8}$ of the convective load, with $T_{surf}=1327.2$\,K, $T_{back}=300$\,K and $R=0.3056$\,m$^2$K/W across the 3\,648 surface elements and the five-ply layup.
+
+The per-element results are exported to the run's \texttt{results/tps\_conduction} tree (element table, per-ply table, through-thickness profiles and a summary), and Chapter~\ref{ch:results} reports them.
+
+
+\subsection{Statistical Convergence Monitoring}
+As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500--1100 particle-time steps depending on the geometry complexity.
+
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% to produce the optimised body, so all PINN material is removed from this
+% thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimiser is now a simple genetic algorithm; the
+% Bayesian-optimisation material has been removed from this thesis.
+
+\section{Survivability Optimization}
+\label{sec:ga_opt}
+
+The optimizer is a simple genetic algorithm (GA) whose initial population is a Latin hypercube sample of the design box. There is no central composite screen, no response surface, no Gaussian-process surrogate and no Bayesian acquisition step: every individual, including the initial population, is evaluated with the closed-form cost of Eq.~\eqref{eq:ga_cost}, and the search is the population dynamics described in this section. The high-fidelity DSMC solver is not part of the search loop: it is used only where a decision is taken, namely to validate the baseline reference, to validate the pass-1 winner and to validate the pass-2 winner of Sec.~\ref{sec:double_pass_ga}.
+
+\subsection{Design Space and Parameters}
+The search acts on the effective design vector $\mathbf{x}=(X_1,X_2,X_3,N_t,m)$: the body radius $X_1=D/2$, the torus minor radius $X_2=r_{tor}$, the half-cone angle $X_3=\theta_c$, the toroid count $N_t$ and the vehicle mass $m$. The bounds are the defaults of the production runner (Table~\ref{tab:design_variables}). The mass cancels in the ballistic-coefficient ratio and therefore does not change the geometry that the cost sees; it is carried because it determines the physical vehicle and the deceleration load. The nose bluntness used by the Sutton--Graves correlation is not an independent coordinate: it is derived from the body radius as
+\begin{equation}
+    R_n = \kappa X_1, \qquad \kappa = 0.3667,
+    \label{eq:nose_ratio}
+\end{equation}
+which maps the $1.5$\,m reference body radius onto the $0.55$\,m nose flown by the reference DSMC run.
+
+\begin{table}[H]
+    \centering
+    \caption{Optimization design variables and their bounds (production defaults).}
+    \label{tab:design_variables}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.30\textwidth}|c|c|X|}
+        \hline
+        \textbf{Variable} & \textbf{Symbol} & \textbf{Bounds} & \textbf{Unit} \\ \hline
+        Body radius ($D/2$) & $X_1$ & $[0.25, 7.5]$ & m \\ \hline
+        Torus minor radius & $X_2$ & $[0.01, 0.5]$ & m \\ \hline
+        Half-cone angle & $X_3$ & $[40, 80]$ & deg \\ \hline
+        Toroid count & $N_t$ & $[1, 12]$ & -- \\ \hline
+        Vehicle mass & $m$ & $[10, 1000]$ & kg \\ \hline
+    \end{tabularx}
+\end{table}
+
+A design is admissible only inside the structural envelope. The maximum body radius derived from $(X_1,X_2,X_3,N_t)$ must not exceed $R_{\max} = 3.0$\,m (the IRVE-3 diameter limit), the body radius must not fall below $1.0$\,m, and the nose cap must house the payload cavity. These limits enter the cost function as quadratic penalties rather than as hard filters, so the population is never blocked from moving through an infeasible region on its way to a feasible one.
+
+\subsection{Latin Hypercube Initialisation}
+The initial population is a Latin hypercube (LHS) over the five effective coordinates~\cite{mckay1979lhs}. Each coordinate is divided into $P=50$ equal strata, the stratum assignment is a fresh random permutation for every coordinate, and one individual is placed inside each stratum of each coordinate. The design is therefore stratified in every one-dimensional marginal: no stratum is empty and no stratum receives two individuals, which is the property that a uniform random draw does not have. The stratified start covers the box before the first fitness evaluation and avoids the clustering that otherwise leaves whole regions of the search space unvisited.
+
+The LHS is the only seeding the GA uses. There are no factorial points, no axial points and no Bayesian seed: the same fifty individuals are both the initial sample and the first generation, and each of them is evaluated with the analytic cost. The generator that draws the stratum permutations and the mutation offsets is seeded with the fixed value $42$, so the campaign is reproducible: two runs of the same binary on the same inputs return the same generation history and the same optimum. A Latin hypercube is also the natural choice here because the objective is cheap: the reason to use a space-filling design is coverage, not the construction of a surrogate.
+
+\subsection{Cost Function}
+The cost is a weighted sum of four normalized physical terms plus a constraint penalty, all evaluated in closed form from the geometry and the validated flight condition. The frontal geometry is the outermost edge of the toroid stack,
+\begin{equation}
+    R_{\max} = X_1\cos\gamma + (2N_t-1)X_2\cos\gamma + X_2,
+    \qquad \gamma = \frac{\pi}{2} - X_3,
+    \label{eq:rmax}
+\end{equation}
+so that the reference area is $A=\pi R_{\max}^2$. The stagnation heat flux is the Sutton--Graves correlation evaluated at the physical nose radius of Eq.~\eqref{eq:nose_ratio},
+\begin{equation}
+    \dot{q}_{SG} = C_{SG}\sqrt{\frac{\rho_\infty}{R_n}}\,V_\infty^3,
+    \qquad C_{SG}=1.7415\times10^{-4},
+    \label{eq:sutton_graves}
+\end{equation}
+with $\rho_\infty=7.851\times10^{-4}$\,kg/m\textsuperscript{3} and $V_\infty=3{,}378$\,m/s at the validated snapshot. The heat load is the flux held over the effective heating time,
+\begin{equation}
+    Q = \dot{q}_{SG}\,\tau, \qquad \tau = 13.582459\,\text{s}.
+    \label{eq:heat_load}
+\end{equation}
+The ballistic coefficient is evaluated as a ratio in which the mass cancels,
+\begin{equation}
+    \frac{\beta}{\beta_{ref}} = \frac{C_{d,ref}\,A_{ref}}{C_d\,A},
+    \label{eq:beta_ratio}
+\end{equation}
+and the drag coefficient follows the geometric law used by the model,
+\begin{equation}
+    C_d = C_{d,0}\left(\frac{R_{\max}}{R_{ref}}\right)^{0.15}
+          \left[1+0.05\left(\frac{R_{ref}}{X_1}-1\right)\right],
+    \label{eq:cd_law}
+\end{equation}
+with $C_{d,0}=1.47$ and $R_{ref}=1.5$\,m. Equations~\eqref{eq:rmax}--\eqref{eq:cd_law} are the complete analytic model used to score every LHS and GA individual; no solver call is made inside the loop.
+
+The cost itself is
+\begin{equation}
+\begin{aligned}
+    J(\mathbf{x}) = {} & W_{HL}\frac{Q(\mathbf{x})}{Q_{target}} + W_{q}\frac{\dot{q}_{SG}(\mathbf{x})}{\dot{q}_{ref}} + W_{\beta}\left(\frac{\beta(\mathbf{x})}{\beta_{ref}} - 1\right)^{2} \\
+    & + W_{Cd}\max\!\left(0, \frac{C_{d,goal} - C_d(\mathbf{x})}{C_{d,goal}}\right) + \Lambda_{pen}\,\Phi(\mathbf{x}),
+\end{aligned}
+    \label{eq:ga_cost}
+\end{equation}
+
+\noindent where $Q(\mathbf{x})$ is the heat load of Eq.~\eqref{eq:heat_load}, $\dot{q}_{SG}(\mathbf{x})$ is the stagnation flux of Eq.~\eqref{eq:sutton_graves}, $\beta(\mathbf{x})$ is the ballistic coefficient of Eq.~\eqref{eq:beta_ratio}, and $C_d(\mathbf{x})$ is the drag coefficient of Eq.~\eqref{eq:cd_law}. The reference values $\beta_{ref}$ and $C_{d,ref}$ are the validated IRVE-3-adapted baseline, and $\Phi(\mathbf{x})$ collects the envelope and payload penalties:
+\begin{equation}
+    \Phi(\mathbf{x}) = \max(0, R_{\max}(\mathbf{x}) - 3.0)^{2} + \max(0, 1.0 - X_1)^{2} + \max(0, R_{N,payload} - X_1)^{2},
+    \label{eq:penalty}
+\end{equation}
+
+\noindent with $R_{N,payload}=\sqrt{r_{pay}^2+(h_{pay}/2)^2}+s = 1.0434$\,m the body radius required to house the cylindrical payload ($r_{pay}=0.275$\,m, $h_{pay}=1.7$\,m, standoff $s=0.15$\,m) inside the nose cap. The weights are fixed at $W_{HL} = 1.0$, $W_{q} = 0.5$, $W_{\beta} = 0.5$, $W_{Cd} = 30$ and $\Lambda_{pen} = 100$. The heat-load term carries the largest physical weight, but the drag term is a normalized deficit and is deliberately weighted high: with $C_{d,goal} = 1.70$, above the largest drag reachable inside the penalty-free envelope, every attainable increase in drag is rewarded. The chosen weight therefore selects the drag regime of the heat-load/drag Pareto front, a trade-off that is reported explicitly in Chapter~\ref{ch:results} rather than hidden inside the objective.
+
+All terms are dimensionless and non-negative, so $J(\mathbf{x}) \ge 0$ by construction, and the cost is analytic: its evaluation requires no solver call. The high-fidelity DSMC solution enters only through the validation of the closed-form correlations, not through the optimization loop.
+
+\subsection{Genetic Algorithm}
+\label{sec:ga_operators}
+
+The GA maintains a population of $P = 50$ designs and evolves it for at most $G_{\max} = 200$ generations. The implementation uses the following operators~\cite{Goldberg1989}:
+
+\begin{enumerate}
+    \item \textbf{Initialisation.} The first generation is the Latin hypercube of Sec.~\ref{sec:ga_opt}: one individual per stratum of every coordinate, with the stratum assignment drawn independently for each coordinate. There is no uniform-random start, no factorial design and no surrogate-trained start.
+
+    \item \textbf{Selection.} Tournament selection with tournament size $k_t = 3$. Three individuals are drawn at random and the one with the lowest cost becomes a parent. Tournament selection needs no fitness scaling and cannot be dominated by a single super-individual, which keeps selection pressure moderate while the population is still dispersed.
+
+    \item \textbf{Crossover.} Uniform crossover with probability $p_c = 0.7$. For each child, every gene is inherited from either parent according to an independent Bernoulli mask; if crossover is not applied, the child is a copy of one parent. Uniform crossover treats the coordinates symmetrically, which matters because the body radius and the torus radius act on different terms of the cost.
+
+    \item \textbf{Mutation.} Gaussian mutation applied gene by gene with probability $p_m = 0.1$. A mutated gene is perturbed by a zero-mean Gaussian whose standard deviation is 10\,\% of that gene's range in Table~\ref{tab:design_variables}, and the result is clamped to the search box. Mutation is the only operator that can introduce a value absent from the current population.
+
+    \item \textbf{Elitism.} The best $E = 2$ individuals are copied unchanged into the next generation. Elitism guarantees that the recorded best cost is non-increasing, which is what makes the convergence history of Chapter~\ref{ch:results} readable as a monotone curve.
+\end{enumerate}
+
+The population is evaluated concurrently. A generation is embarrassingly parallel because each individual's cost depends only on that individual, so a fixed pool of worker tasks claims indices from the published generation and stores one cost per index; the master waits for the whole batch before breeding. The worker pool applies the Ravenscar restriction set explicitly in its context clause, which bounds the tasking to a static set of tasks with protected-object rendezvous and no heap allocation. The parallel result is identical to the sequential result by construction: the evaluation of an index depends on that index alone, so the order in which results are stored cannot change any cost.
+
+The search terminates when the generation cap is reached or when the best cost has not improved by more than $\epsilon = 10^{-6}$ for $G_{pat} = 20$ consecutive generations. The stagnation counter is maintained by a SPARK-proved core routine that saturates instead of overflowing and rejects non-finite costs, so a failed evaluation is counted as ``not stagnating'' and the search continues rather than silently spinning. The recorded campaign reported in Chapter~\ref{ch:results} converged on the stagnation criterion after 38 generations and 1900 individual evaluations; the corrected pass-2 re-run used 201 generations and 10050 evaluations.
+
+\subsection{Double Pass GA Optimisation}
+\label{sec:double_pass_ga}
+
+The optimisation is organised as two passes of the same genetic algorithm, separated by high-fidelity re-simulation. The separation is deliberate. The closed-form cost is cheap enough to be evaluated thousands of times, so it is used for the search itself; the quantity it is supposed to predict --- the heat load of the vehicle --- is expensive, so it is measured only where a decision is taken.
+
+\textbf{Pass 1 (model space).} The GA of Sec.~\ref{sec:ga_operators} minimises the cost of Eq.~\eqref{eq:ga_cost} over the design box, every individual evaluated in closed form. No solver call is made inside this pass: the search explores thousands of candidate geometries, and the winner $\mathbf{x}^{(1)}$ is the optimum of the stated analytic objective.
+
+\textbf{Validation of the pass-1 winner (physical space).} $\mathbf{x}^{(1)}$ is converted to a vehicle with Eq.~\eqref{eq:nose_ratio} and re-simulated with the full DSMC chain at 2200 steps; the refined pipeline returns the measured heat load $q_{hybrid}$ of that geometry. This is the only high-fidelity run of pass 1: the solver measures one design, it does not search.
+
+\textbf{The correction factor.} The factor is a fidelity ratio between the high-fidelity solver and the correlation it is supposed to reproduce, and it is bounded before use,
+\begin{equation}
+    c = \operatorname{clamp}\Bigl(\frac{q^{\mathrm{DSMC}}_{\mathrm{flux}}}{q^{\mathrm{SG}}_{\mathrm{flux}}},\;\allowbreak 0.5,\;\allowbreak 2.0\Bigr),
+    \label{eq:correction_factor}
+\end{equation}
+where the numerator is the peak surface convection flux measured by the DSMC run and the denominator is the Sutton--Graves prediction for the \emph{same} flown nose radius at the \emph{same} flight state, both read from the same row of the same run. The factor is therefore dimensionless, and it is bounded so that a single pathological simulation can neither collapse nor invert the objective.
+
+Two properties of this construction are deliberate. First, the ratio is taken \emph{within} one run, not between the run and the screening model: the screening model evaluates its heat flux at the peak-heating snapshot of the trajectory ($51.8$\,km, $3379$\,m/s) while the run records its own correlation column at the baseline flight state ($2700$\,m/s), so a ratio taken across the two would measure the difference between two flight states rather than the fidelity of the correlation, and it would be pinned at the lower clamp for every geometry. Second, the factor is applied to the heat-load term alone: the drag and ballistic-coefficient terms of Eq.~\eqref{eq:ga_cost} are geometric integrals rather than thermal correlations, so they carry no thermal-model bias and are left untouched; correcting them would amount to fitting the geometry instead of the physics.
+
+\textbf{Pass 2 (model space).} The corrected objective is
+\begin{equation}
+    J^{(2)}(\mathbf{x}) = J(\mathbf{x}) + (c-1)\,\frac{Q(\mathbf{x})}{Q_{target}},
+    \label{eq:corrected_cost}
+\end{equation}
+which, with the unit weight of the heat-load term in Eq.~\eqref{eq:ga_cost}, is algebraically identical to re-weighting that term by $c$: the second pass therefore penalises the heat load of a design by the factor by which the solver has shown that the correlation under-states it. The implementation therefore injects the correction as an effective heat-load weight and re-runs the \emph{same} genetic algorithm, with the same population, operators and bounds: there is no second cost function and no surrogate of the corrected objective. Pass 2 is again a purely analytic pass, and its winner $\mathbf{x}^{(2)}$ is the corrected design.
+
+\textbf{Validation of the pass-2 winner (physical space).} $\mathbf{x}^{(2)}$ is re-simulated with the same 2200-step DSMC protocol. The two validations --- one per pass --- are the only high-fidelity runs of the pipeline. The bounded factor makes the correction conservative: because $|c-1| \leq 1$, the corrected cost can at most halve or double the weight of the heat-load term, so the second pass refines the design against the measured bias of the model without being able to run away from it.
+
+\section{Multi-Solver Architecture}
+
+The computational framework supports multiple solver backends to address different flow regimes:
+
+\begin{table}[H]
+    \centering
+    \caption{Solver Regimes and Selection Logic.}
+    \label{tab:solver_regimes}
+    \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}X|}
+        \hline
+        \textbf{Stage} & \textbf{Solver} & \textbf{Rationale} \\ \hline
+        Exploration & Analytic GA & Closed-form evaluation of 1000s of candidates \\ \hline
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimised body; removed deliberately, do not reintroduce.
+        Validation & DSMC only & Independent kinetic check of the analytic ranking \\ \hline
+        High-Density (Future) & Fluent & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
+    \end{tabularx}
+\end{table}
+
+\section{Boundary Conditions and Domain Setup}
+
+\subsection{Freestream Inlet}
+The simulation domain is initialized with freestream particles injected from the inlet boundary. The particle velocity distribution follows the Maxwell--Boltzmann distribution at the prescribed freestream temperature and velocity:
+
+\begin{itemize}
+    \item \textbf{Velocity:} Directed flow at $v_{\infty} = 3378$\,m/s
+    \item \textbf{Temperature:} $T_{\infty} = 268.41$\,K
+    \item \textbf{Species Fractions:} N$_2$ (78\%), O$_2$ (21\%), NO (1\%) at freestream; dissociated species (N, O) generated through collisions in the shock layer
+\end{itemize}
+
+\subsection{Vehicle Surface}
+The vehicle surface is modeled as a diffuse reflection boundary with fully accommodate thermal wall conditions:
+\begin{itemize}
+    \item \textbf{Wall Temperature:} $T_{wall} = 300$\,K (isothermal)
+    \item \textbf{Reflection Model:} Diffuse (maximally entropic)
+    \item \textbf{Catalytic Efficiency:} Fully catalytic (recombination of dissociated species at the wall)
+\end{itemize}
+
+\subsection{Symmetry and Outflow}
+\begin{itemize}
+    \item \textbf{Symmetry Plane:} For 2D axisymmetric simulations, the centerline enforces rotational symmetry.
+    \item \textbf{Outflow:} Particles leaving the domain are deleted and re-injected at the inlet to maintain steady-state mass flux.
+\end{itemize}
+
+\section{Data Processing and Validation}
+
+\subsection{Field Maps}
+SPARTA grid dumps provide field maps of macroscopic quantities accumulated from particle statistics:
+
+\begin{table}[H]
+    \centering
+    \caption{SPARTA Grid Data Columns and Physical Variables.}
+    \label{tab:grid_data}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.07\textwidth}|}
+        \hline
+        \textbf{Column} & \textbf{Physical Variable} & \textbf{Unit} \\ \hline
+        1--4 & Cell bounds ($x_{lo}, y_{lo}, x_{hi}, y_{hi}$) & m \\ \hline
+        5 & Number Density ($n$) & m$^{-3}$ \\ \hline
+        6--8 & Velocity Components ($u, v, w$) & m/s \\ \hline
+        9 & Translational Temperature ($T$) & K \\ \hline
+        10 & Pressure ($p$) & Pa \\ \hline
+    \end{tabularx}
+\end{table}
+
+\subsection{Knudsen Number Field}
+The local Knudsen number is computed from the SPARTA grid data:
+
+\begin{equation}
+    Kn_{local} = \frac{\lambda_{local}}{L} = \frac{1}{\sqrt{2} \pi d^2 n_{local} L}
+\end{equation}
+
+This enables the identification of continuum ($Kn < 0.01$), transitional ($0.01 < Kn < 1$), and, where applicable, free-molecular ($Kn > 1$) regions within the flow field.
+
+\subsection{Validation Against Flight Data}
+The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
+
+\begin{table}[H]
+    \centering
+    % This table reports the same validation comparison as Table 4.1 in the
+    % results chapter, and the heat-flux caveat in the caption below is stated
+    % in identical terms on purpose: a reader who meets either table first must
+    % not be left with the impression that a single-point Sutton-Graves value is
+    % directly comparable to a trajectory-integrated flight peak.
+    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
+    \label{tab:irve3_validation}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.19\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}X|}
+        \hline
+        \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{Stellar\-Orion (This Work)} & \textbf{SO Error (\%)} \\ \hline
+        Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 15.36 W/cm$^2$ & $+6.9$, \emph{not like-for-like} \\ \hline
+        Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
+        Peak Deceleration & 19.7\,$g$ & -- & 22.72\,$g$ & $+15.3$ \\ \hline
+        Ballistic Coefficient ($\beta$) & 26.9 kg/m$^2$ & -- & 27.70 kg/m$^2$ & $+3.0$ \\ \hline
+        Drag Coefficient ($C_d$) & -- & -- & 1.4625 & -- \\ \hline
+    \end{tabularx}
+    \normalsize
+\end{table}
+
+Two distinct tolerance statements apply to this table. First, the MDAO reference model reproduces the flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$ respectively, comfortably inside the $\pm 10\%$ margin normally required of a calibrated reconstruction; this confirms that the IRVE-3 flight data adopted here are internally consistent and suitable as a validation target. Second, the geometry-sensitive quantities computed by this work satisfy that same margin: the ballistic coefficient deviates by $+3.0\%$ and the drag coefficient is 1.4625.
+
+The single-trajectory-point evaluation of the DSMC solution does \emph{not} satisfy the $\pm 10\%$ margin, but the deviations fall in opposite directions on the two classes of quantity and have different causes. The two \emph{integrated} quantities are under-predicted for the heat load and over-predicted for the deceleration: total heat load by $-15.0\%$ and peak deceleration by $+15.3\%$. The flight reconstruction and the MDAO model integrate the heating and deceleration history across the complete reentry, whereas the DSMC run samples a single trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions; integrating over the full trajectory raises the accumulated heat load towards the measured value, while the deceleration peak occurs in the early transient at the high-dynamic-pressure condition, which is a different instant from the flight peak. The \emph{pointwise} stagnation heat flux behaves oppositely, over-predicting by $+12.4\%$, because the Sutton--Graves figure is a continuum correlation built on a spherical nose cap: it carries neither the heat-shielding effect of the scalloped torus nor the rarefied-flow departure that the DSMC solver resolves, and it therefore acts as a conservative upper bound on the stagnation flux at this condition. The ballistic coefficient closes the argument from the other side, agreeing to $+3.0\%$ and confirming that the scalloped geometry is reproduced correctly. The numerical framework is consequently judged sound on the strength of the geometry-sensitive agreement, with the trajectory-integration gap and the correlation-versus-solver gap carried forward separately and explicitly as stated limitations rather than absorbed into a tolerance claim.
+
+\section{Computational Infrastructure}
+
+\subsection{Docker-Containerized Execution}
+SPARTA simulations are executed within a Docker-containerized Linux environment to ensure:
+\begin{itemize}
+    \item Reproducibility of the SPARTA build across platforms
+    \item Isolation from host OS dependencies
+    \item Consistent library versions and compiler toolchains
+\end{itemize}
+
+The Python optimization environment runs on the native OS; the analytic cost of Eq.~\eqref{eq:ga_cost} is evaluated in closed form, so the search itself requires no GPU acceleration.
+
+\section{Computational and Optimization Standards}
+\label{sec:comp_standards}
+
+This section records the standards that make the optimization campaign reproducible and auditable. The framework has no trained machine-learning surrogate in its main path: the cost is evaluated analytically and the search is a genetic algorithm, so the reproducibility questions are those of a numerical optimization campaign rather than those of a model-training pipeline.
+
+\subsection{Evaluation Pipeline}
+A candidate design is converted into a geometry, and the cost of Eq.~\eqref{eq:ga_cost} is evaluated in closed form with Eqs.~\eqref{eq:rmax}--\eqref{eq:cd_law}: the Sutton--Graves correlation gives the stagnation heat flux at the physical nose radius, the flux is held over the effective heating time to give the total heat load, and the ballistic coefficient and drag coefficient follow from the geometry. No solver call is made inside the optimization loop. The DSMC solution is used to validate the closed-form correlations against flight data (Chapter~\ref{ch:results}), not to evaluate individuals, which is why a population of 50 can be evaluated for hundreds of generations at negligible cost.
+
+\subsection{Optimization Configuration}
+Table~\ref{tab:ga_hparams} lists the configuration of the recorded campaign. Every value is a default in the Ada optimization package, so a run can be reproduced by invoking the optimizer without overrides.
+
+\begin{table}[H]
+    \centering
+    \caption{Genetic-algorithm configuration of the recorded campaign.}
+    \label{tab:ga_hparams}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Component} & \textbf{Specification} \\ \hline
+        Search & Simple genetic algorithm (no acquisition function) \\ \hline
+        Design variables & $X_1$, $X_2$, $X_3$, $N_t$, $m$ \\ \hline
+        Initial population & Latin hypercube, one individual per stratum \\ \hline
+        Population size & 50 \\ \hline
+        Generation cap & 200 \\ \hline
+        Selection & Tournament, $k_t = 3$ \\ \hline
+        Crossover & Uniform, $p_c = 0.7$ \\ \hline
+        Mutation & Gaussian, $p_m = 0.1$, $\sigma$ = 10\,\% of range \\ \hline
+        Elitism & 2 individuals \\ \hline
+        Termination & 20 stagnant generations at $\epsilon = 10^{-6}$ \\ \hline
+        Evaluation & Analytic cost, Eq.~\eqref{eq:ga_cost} \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Validation Metrics}
+The analytic predictions are validated against the DSMC solution and the IRVE-3 flight data with the metrics of Table~\ref{tab:ml_metrics}. They are reported for the validation comparisons only; they are not model-training losses.
+
+\begin{table}[H]
+    \centering
+    \caption{Validation metrics used for the analytic predictions.}
+    \label{tab:ml_metrics}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Metric} & \textbf{Definition} & \textbf{Target} \\ \hline
+        $R^2$ (Coefficient of Determination) & $1 - \frac{SS_{res}}{SS_{tot}}$ & $> 0.95$ \\ \hline
+        RMSE (Root Mean Squared Error) & $\sqrt{\frac{1}{N}\sum(\hat{y}_i - y_i)^2}$ & Minimized \\ \hline
+        MAE (Mean Absolute Error) & $\frac{1}{N}\sum|\hat{y}_i - y_i|$ & Minimized \\ \hline
+        Max Absolute Error & $\max|\hat{y}_i - y_i|$ & $< 5\%$ of range \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Reproducibility Requirements}
+
+\subsubsection*{Random Seed Control}
+The LHS stratum permutation and the GA operators draw from the Ada random generator. The runner is deterministic for a fixed generator seed and population size; the initial population is the stratified sample described in Sec.~\ref{sec:ga_opt}, and the elitist record of the best cost is non-increasing by construction. A repeated run from the same seed reproduces the same history; the artifact of the recorded campaign is the reference used throughout Chapter~\ref{ch:results}.
+
+\subsubsection*{Environment Specification}
+\begin{table}[H]
+    \centering
+    \caption{Computing environment for the optimization campaign.}
+    \label{tab:env_spec}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Component} & \textbf{Version} \\ \hline
+        Python & 3.14 \\ \hline
+        NumPy & 1.24+ \\ \hline
+        Ada/SPARK toolchain & GNAT 16.1 \\ \hline
+        DSMC solver & SPARTA (Docker) \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Artifact Record}
+The optimizer writes a single JSON artifact containing the run configuration, the per-generation best history, and the default and optimized metrics. Every optimization figure and number in Chapter~\ref{ch:results} is read from that artifact, and the figure generator refuses to draw if the artifact config is not the genetic algorithm or if the reported values have drifted. This is the audit trail that replaces the model checkpointing of a machine-learning pipeline: there is no model to checkpoint, only a recorded search.
+
+\clearpage

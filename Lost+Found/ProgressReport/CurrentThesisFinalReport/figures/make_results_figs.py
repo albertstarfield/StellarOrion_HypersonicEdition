@@ -96,8 +96,17 @@ def fig_performance_comparison() -> None:
         RuntimeError propagated from make_fignew.save if the print-scale,
         tick-gap or 8 pt floor guard rejects the rendered figure.
     """
-    sm = mfn.read_csv(mfn.RESULTS / "validation_smooth" / "validation_timeseries.csv")
-    sc = mfn.read_csv(mfn.RESULTS / "validation_scalloped" / "validation_timeseries.csv")
+    sm_path = mfn.RESULTS / "validation_smooth" / "validation_timeseries.csv"
+    sc_path = mfn.RESULTS / "validation_scalloped" / "validation_timeseries.csv"
+    for _p in (sm_path, sc_path):
+        head = _p.read_text(encoding="utf-8", errors="replace")[:64]
+        if "git-lfs" in head or "version https://git-lfs" in head:
+            raise RuntimeError(
+                f"source CSV is a Git-LFS pointer, not data: {_p}; "
+                "install LFS and pull before regenerating this figure"
+            )
+    sm = mfn.read_csv(sm_path)
+    sc = mfn.read_csv(sc_path)
 
     def col(rows, key):
         return [float(r["step"]) for r in rows], [float(r[key]) for r in rows]

@@ -1,0 +1,870 @@
+{
+  "schema_version": 1,
+  "title": "Week 18 narrative scaffold",
+  "description": "Single source of truth for the Week 18 narration placeholder scaffold. This file replaced main.tex and preamble.tex, so the folder carries no LaTeX toolchain any more. The generator make_pptx.py reads this file and writes the PowerPoint deck.",
+  "owner_directive": "for the latest one, create placeholder for these. don't do anything or fill in anything yet",
+  "owner_structure_note": "The owner's block structure, ASCII transliterated. The original used U+2014 em dashes as block markers; this folder keeps the U+2014 count at zero, so the markers are written as bracketed words. The wording of the owner's items is unaltered.",
+  "owner_structure": [
+    "[ Intro start ]",
+    "0. title start",
+    "[ intro end ]",
+    "[ recall start ]",
+    "1. Latar belakang overview",
+    "2. Tujuan objective? (all and 2-3 points), Research Scope limit",
+    "3. Methodology (update or not?) (Graphical Framework flowchart) (and it's (each steps and methodology) definition) (Detailed methodology) (The reasoning too)",
+    "4. Previous issues",
+    "[ recall end ]",
+    "[ Current progress start ]",
+    "5. Overall Progress on the research? (Not the technical detail on the Resolution)",
+    "[ Current progress end ]",
+    "6. The progress issue and the resolution (the attempt) and the update (let's say DSMC, Narration)",
+    "[ Ending start ]",
+    "Conclusion (How close to the objective and does it answers the previous issue?)",
+    "[ Ending end ]",
+    "CFD (What's required?) and Optimized (What's required?) plot: (Lebih di tulisan), Reference find paper then show on the next or point 6"
+  ],
+  "sections": [
+    "RECALL",
+    "RESULTS",
+    "CURRENT PROGRESS",
+    "REQUIRED VISUALS",
+    "ENDING"
+  ],
+  "frames": [
+    {
+      "id": "recall-latar-belakang",
+      "section": "RECALL",
+      "title": "BACKGROUND OVERVIEW",
+      "body": "- Problem: a rigid TPS is capped by the fairing, so the entry mass is capped with it.\n- An inflatable decelerator packs small and inflates: large area, high drag, milder heating.\n- Trade: a larger envelope buys drag and pays heat, which is why the envelope is optimised.\n- Scope: this work treats the optimised geometry only, not the packing of the inflatable.",
+      "target_position": "immediately after the outline.",
+      "figure": {
+        "path": "figures/thesis_HIADsDeployed.png",
+        "caption": "HIADs when deployed: the inflated toroidal stack that replaces a rigid TPS on the vehicle.",
+        "source": "Source: CurrentThesisFinalReport/figures/HIADsDeployed.png, thesis Chapter I."
+      },
+      "note": "Filled from the thesis. The narration is taken from the thesis chapters named in the figure source line, and the graphic is imported from the thesis figure archive.",
+      "revision_note": "1. Bigger font or easier to read\n2. Problem is missing? (after Literature review analysis) [Rigid?] Pros and Cons (if we Geometry Increase it or Shrink it)\n\nOh and is it for optimized geometry (Is it Packable and inflatable? (Scope Elaborate, we only focus on optimized geometry on this slide))\n\n3. Scope",
+      "subsection": "Recall: The Problem"
+    },
+    {
+      "id": "recall-tujuan-scope",
+      "section": "RECALL",
+      "title": "OBJECTIVE AND RESEARCH SCOPE",
+      "body": "- Objective: quantify how the surface and envelope of a HIAD set its aerothermal load and its survivability.\n- Method: geometry generation, DSMC analysis, validation against IRVE-3, then optimisation of the envelope.\n- Rigid against inflatable: the rigid body is fairing limited, the inflatable trades packing volume for entry area.\n- Limit: the toroid baseline as a fully inflated rigid body, Earth air, Knudsen number above 0.01.",
+      "target_position": "immediately after PLACEHOLDER 1.",
+      "figure": {
+        "path": "figures/thesis_hiad_design_spec.png",
+        "caption": "The HIAD as an overview: the inflatable aeroshell against the rigid body it replaces, as the thesis draws it.",
+        "source": "Source: Hiad_DesignSpec.png from CurrentThesisFinalReport/figures, the vehicle specification drawing of Chapter III."
+      },
+      "note": "Filled from the thesis. The narration is taken from the thesis chapters named in the figure source line, and the graphic is imported from the thesis figure archive.",
+      "revision_note": "Definition Overlap. Rigid vs Inflatable (and also Dimension Difference we are not)  [Rigid vs Inflatable figures]\n\nObjective 1st : Let's not use SPARTA DSMC and Genetic Algorithm on technical on methodology and chapter II and Chapter III\n\nObjective (Rephrase it) (Without per variable optimized) (and - performance analysis)\n\n(How's the featurework going on the optimized geometry)",
+      "subsection": "Recall: The Objective"
+    },
+    {
+      "id": "recall-literature-themes",
+      "section": "RECALL",
+      "title": "LITERATURE: WHAT THE REVIEW COVERS",
+      "body": "- Hypersonic aerodynamics: continuum breakdown, shock layers and the rarefied regime above 50 km\n- Aerothermodynamics: Sutton-Graves and Fay-Riddell heating, and the IRVE-3 flight record\n- TPS technology: inflatable decelerators, HIAD and LOFTID, and their material generations\n- Geometry: scalloping, shock boundary layer interaction, recirculation and localised peak heating\n- Numerics: kinetic theory and the Boltzmann equation, then DSMC with VSS collisions",
+      "target_position": "after the objective and scope, before the methodology block, mirroring the order of the thesis.",
+      "note": "The five themes the literature chapter actually reviews, which the deck previously compressed into one picture.",
+      "footer": "The review themes behind the method. The narration stays editable in PowerPoint.",
+      "subsection": "Literature: The Review"
+    },
+    {
+      "id": "recall-literature-gap",
+      "section": "RECALL",
+      "title": "LITERATURE: THE GAP AND THE NOVELTY",
+      "body": "- Gap one: HIAD aerothermal work is mostly continuum CFD, invalid above 50 km where Kn exceeds 0.01\n- Gap two: design studies are manual parametric sweeps, with no geometry generation coupled to DSMC\n- Gap three: survivability is not optimised jointly on heat load, peak flux, ballistic coefficient and mass\n- Novelty: one pipeline coupling CadQuery geometry, SPARTA DSMC and a genetic algorithm on an analytic cost",
+      "target_position": "immediately after the review themes, so the gap is shown before the method answers it.",
+      "note": "The three gaps the thesis names and the single claim it makes against them.",
+      "footer": "The gap the thesis claims, stated before the method. The narration stays editable in PowerPoint.",
+      "subsection": "Literature: The Gap"
+    },
+    {
+      "id": "recall-methodology",
+      "section": "RECALL",
+      "title": "METHODOLOGY AND REASONING",
+      "subsection": "Methodology: Reasoning",
+      "body": "- Stage 1, geometry: CadQuery CAD of both skins\n- Stage 2, setup: SPARTA, 5-species air, VSS collisions\n- Stage 3, simulation: particles through advection, collisions, surfaces\n- Stage 4, validation: grid independence, Sutton-Graves, IRVE-3\n- Stage 5, optimization: a GA with tournament and elitism\n- Reasoning: scalloped skin against a smooth one, same condition",
+      "target_position": "immediately after PLACEHOLDER 2.",
+      "note": "Filled from the thesis. The narration is taken from the thesis chapters named in the figure source line, and the graphic is imported from the thesis figure archive.",
+      "revision_note": "Re:Design Figure Is not focused here\n\nStage Missing on the flowchart. Just use it manual.\n\nDuplkicates on Slide 5\n\nStage 5 and Stage 4 (swap)",
+      "figure": {
+        "path": "figures/thesis_stage_pipeline.png",
+        "caption": "The five stages of the work as they actually run: geometry, DSMC setup, simulation,\nvalidation and optimisation, with the genetic algorithm writing the next geometry back to stage 1.",
+        "source": "Source: drawn for this deck by tools/make_stage_pipeline_picture.py from the facts of the thesis pipeline, thesis Figure 3.3.",
+        "layout": "side_points"
+      }
+    },
+    {
+      "id": "recall-methodology-shape",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE SHAPE UNDER TEST",
+      "body": "- Nose arc tangent to the cone generator: R_N 0.55 m at a half-cone angle of 60 degrees\n- Six toroidal bladders T1 to T6 of radius 0.135 m march up the cone\n- The stack reaches R_max 1.90 m over a body length of 1.269 m\n- The skin aft of the nose tangent is omitted so that the stack stays visible",
+      "target_position": "the slide right after the optimization flowchart and before the simulation setup, showing the shape the method tests.",
+      "note": "The shape under test: the parametric half-section with its nose arc, its six toroidal bladders and the parameter box of the baseline.",
+      "revision_note": "This is for No man sky stuffFor Procedural Generation\n\nDisplay parameter math in the Shape against the How it will shaped (merge 7 and 8) No need seperation",
+      "figure": {
+        "path": "figures/thesis_hiad_parametric_cross_section.png",
+        "caption": "Meridional half-section of the HIAD: the nose arc tangent to the cone generator and the six toroidal bladders T1 to T6.",
+        "source": "Source: hiad_parametric_cross_section.png from CurrentThesisFinalReport/figures, written by figures/make_hiad_parametric_cross_section.py.",
+        "layout": "side_points"
+      },
+      "footer": "The shape the method tests. The narration stays editable in PowerPoint.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-equation-shape",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE SHAPE",
+      "body": "- Nose radius follows the body radius: R_n is 0.3667 times X_1\n- Constant: kappa is 0.3667, the IRVE-3 baseline nose radius 0.55 m over the body radius 1.5 m\n- R_max adds the body radius and the torus stack along the cone\n- The half-cone angle sets gamma: pi divided by two, minus X_3\n- Five variables move the whole geometry inside one design box",
+      "target_position": "the slide right after the step it governs, inside the same subsection.",
+      "note": "The governing equation of recall-methodology-shape: The two equations that turn the design vector into the geometry of the vehicle.",
+      "revision_note": "Kappa. It's missing citation source",
+      "figure": {
+        "path": "figures/thesis_equation_shape.png",
+        "caption": "The two equations that turn the design vector into the geometry of the vehicle.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: an axisymmetric body of revolution is fixed by five scalars, and each torus is a circular arc on the cone.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-setup",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE SIMULATION SETUP",
+      "body": "- One uniform Cartesian grid: 139 by 139 cells at grid factor 0.7, 19,321 cells in all.\n- The grid is finer than the local mean free path in the shock layer.\n- Body of revolution with a toroidal stack; five design variables.\n- Geometry and flight point feed SPARTA and the Ada/SPARK solver.",
+      "target_position": "the slide right after the methodology, opening the explanation of how the simulation is run.",
+      "note": "The mesh of the SPARTA solver and the setup of the chain: the geometry, the grid, the solvers and the air model. The picture is the content of the slide and the words stand in the column beside it.",
+      "revision_note": "Grid factor 0.7 but where's the cells total",
+      "footer": "How the simulation is set up. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_grid_mesh_map_smooth.png",
+        "caption": "The SPARTA grid of the reference run at grid factor 0.7, and the solver chain that feeds it.",
+        "source": "Source: CurrentThesisFinalReport/figures/grid_mesh_map_smooth.png, thesis figure archive, the computational grid figure of chapter 04.",
+        "layout": "side_points"
+      },
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-equation-setup",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE SOLVER",
+      "body": "- The Boltzmann equation governs the distribution function of the gas\n- Streaming and the force term balance the collision term\n- DSMC answers it statistically instead of solving it directly\n- The variable soft sphere cross-section sets how the particles scatter",
+      "target_position": "the slide right after the step it governs, inside the same subsection.",
+      "note": "The governing equation of recall-methodology-setup: The equation the particle solver answers, and the cross-section it scatters with.",
+      "revision_note": "Boltzmann How to explain it. Without Lattice but using No Time NTC\n\nNo Time Counter.\n\nOverview?\nWhat can we get from here? how can we derive it\n\nAlso df/dt (is Unsteady) (but why) Explain it.",
+      "figure": {
+        "path": "figures/thesis_equation_setup.png",
+        "caption": "The equation the particle solver answers, and the cross-section it scatters with.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: kinetic theory, a dilute gas with binary collisions and molecular chaos; the VSS law closes the cross-section.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-mesh",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE GRID INDEPENDENCE",
+      "body": "- Levels: four, 70x70, 100x100, 139x139 and 200x200 Cartesian cells on one geometry and condition\n- Peak flux: 2.059, 1.946, 1.797 and 1.536 MW per square metre\n- Flux steps: minus 5.49, minus 7.66 and minus 14.53 percent, growing as the grid refines\n- Drag: 48.012, 45.918, 45.697 and 44.064 kN, steps of minus 4.36, minus 0.48 and minus 3.57 percent\n- Verdict: non-monotone, so no Richardson limit and no converged value; the 139x139 production grid is kept as the conservative choice",
+      "target_position": "the slide right after the setup, carrying the mesh evidence of the standard operating procedure.",
+      "note": "The three pieces of mesh evidence the CFD standard operating procedure asks for: the refinement levels, the tolerance and the caveat about the quantity that is compared.",
+      "revision_note": "QoL ?",
+      "figure": {
+        "path": "figures/thesis_grid_independence_qoi.png",
+        "caption": "Four refinement levels of the same geometry and flight condition: peak heat flux left, drag right.\nBoth series fall faster as the grid refines, so neither can be extrapolated to a converged value.",
+        "source": "Source: CurrentThesisFinalReport/figures/grid_independence_qoi.png, the thesis four-level grid study of chapter 4, reused unchanged.",
+        "layout": "side_points"
+      },
+      "footer": "The mesh quality and the grid independence. The narration stays editable in PowerPoint.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-residuals",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE CONVERGENCE RESIDUALS",
+      "body": "- Residual: the normalised gap between a monitored quantity and its final-sample mean\n- Monitored: drag coefficient, lift coefficient and the per-element heat flux average\n- Fall: about three orders of magnitude between step 100 and step 2200\n- Scatter: the heat flux swings by a factor of two late in the run, so the trend is monotone and the samples are not",
+      "target_position": "immediately after the grid independence slide, so the refinement verdict and the solver convergence are read together.",
+      "note": "The residual history of the reference run, the evidence that the run reached a statistical steady state rather than a converged error bound.",
+      "footer": "The convergence evidence behind the grid study. The narration stays editable in PowerPoint.",
+      "subsection": "Methodology: DSMC CFD",
+      "figure": {
+        "path": "figures/thesis_convergence_residuals.png",
+        "caption": "Normalised residuals of the three monitored quantities against particle-time step.\nAll three fall about three orders of magnitude from step 100 to 2200, with residual scatter.",
+        "source": "Source: CurrentThesisFinalReport/figures/convergence_residuals_master_smooth.png, chapter 4 residual convergence, reused unchanged.",
+        "layout": "side_points"
+      }
+    },
+    {
+      "id": "recall-methodology-equation-mesh",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE MESH",
+      "body": "- Knudsen number is the mean free path divided by the length L\n- The mean free path is one over square root two, pi, d squared and n\n- The cell width must stay below the mean free path of the gas\n- That is why the reference grid is finer than the local spacing",
+      "target_position": "the slide right after the step it governs, inside the same subsection.",
+      "note": "The governing equation of recall-methodology-mesh: The relation that decides how small a cell of the grid may be.",
+      "figure": {
+        "path": "figures/thesis_equation_mesh.png",
+        "caption": "The relation that decides how small a cell of the grid may be.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: continuum validity is set by the Knudsen number, so a cell must be finer than the local mean free path.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-convergence",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE SOLVER CONVERGENCE",
+      "body": "- Normalised residuals of drag, lift and heat flux against the step.\n- They fall about three orders of magnitude over steps 100 to 2200.\n- Particle retention 0.983 at step 400; stationarity near 0.005.\n- Convergence is judged on retention and stationarity, not on a residual floor",
+      "target_position": "the slide right after the mesh evidence, carrying the convergence of the particle solver.",
+      "note": "The convergence evidence of the standard operating procedure: the residual history and the stationarity record of the particle retention.",
+      "revision_note": "Convergence might still happen",
+      "figure": {
+        "path": "figures/thesis_convergence_residuals.png",
+        "caption": "Normalised residuals of drag, lift and heat flux over the particle-time steps of the reference run.",
+        "source": "Source: CurrentThesisFinalReport/figures/sop_grid_independence.png, rebuilt in this folder with a taller canvas so that the annotation block sits clear of the axis.",
+        "layout": "side_points"
+      },
+      "footer": "The convergence and the stationarity of the run. The narration stays editable in PowerPoint.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-equation-convergence",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE CONVERGENCE",
+      "body": "- Statistical noise falls with the square root of the samples\n- SPARTA averages surface force and energy every hundred steps\n- Converged when drag and heat flux change by under two percent\n- The baseline runs reach it after 500 to 1100 particle steps",
+      "target_position": "the slide right after the step it governs, inside the same subsection.",
+      "note": "The governing equation of recall-methodology-convergence: The criterion that decides when a particle run is statistically converged.",
+      "figure": {
+        "path": "figures/thesis_equation_convergence.png",
+        "caption": "The criterion that decides when a particle run is statistically converged.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: the central limit theorem, so the Monte Carlo error falls as one over the square root of the sample count.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-convection",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE CONVECTION CHANNEL",
+      "body": "- q = C_SG sqrt(rho/R_N) V^3 with C_SG = 1.7415e-4 for Earth air.\n- At 3378 m/s and a 1.5 m nose radius it gives 15.36 W/cm^2.\n- The particle solver ranks geometries; it gives no absolute flux.\n- At the candidate nose radius the screening flux is 25.36 W/cm^2.",
+      "target_position": "the slide right after the convergence, opening the three heat-flux channels.",
+      "note": "The convective channel: the correlation that carries the load, the magnitude it gives and the shape the particle solver contributes.",
+      "footer": "The first of the three heat-flux channels. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_sutton_graves_parametric.png",
+        "caption": "The Sutton-Graves correlation that carries the convective load of every candidate geometry.",
+        "source": "Source: sutton_graves_parametric.png from CurrentThesisFinalReport/figures, the correlation figure of chapter 03.",
+        "layout": "side_points"
+      },
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-equation-convection",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE CONVECTION",
+      "body": "- Scaling: the flux grows with the cube of the velocity\n- Radius: it falls with the square root of the nose radius\n- Constant: 1.7415 times ten to the minus four, fitted for air\n- Reduction: a small Knudsen number turns Boltzmann into Navier-Stokes; its stagnation layer gives this shape\n- Empirical: a fit to the Fay-Riddell layer, Sutton and Graves, NASA TR R-376, 1971",
+      "target_position": "the slide right after the step it governs, inside the same subsection.",
+      "note": "The governing equation of recall-methodology-convection: The correlation that carries the convective load of every candidate.",
+      "revision_note": "Is this EMPIRICAL or analytical where is that Constant coming from\n\nalsoH is convective coefficient",
+      "figure": {
+        "path": "figures/thesis_equation_convection.png",
+        "caption": "The correlation that carries the convective load of every candidate.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: similarity of the stagnation-point boundary layer in a hypersonic stream.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-conduction",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE CONDUCTION CHANNEL",
+      "body": "- Heat enters the hot face and conducts through the five-ply layup.\n- Stack resistance 0.3056 m^2K/W over 3,648 surface elements.\n- Back face stays at 300 K while the hot face reaches 1327.2 K.\n- Lateral coupling carries 0.0083 W per square metre of the load.",
+      "target_position": "the slide right after the convection, opening the conduction.",
+      "note": "The conductive channel: the path through the layup, the resistance of the stack, the insulation and the lateral coupling.",
+      "footer": "The second of the three heat-flux channels. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_tps_ply_conduction.png",
+        "caption": "Through-thickness and per-ply temperature of the FTPS layup at the final step of the reference run.",
+        "source": "Source: CurrentThesisFinalReport/figures/tps_ply_conduction.png, thesis figure archive, the ply conduction figure of chapter 04.",
+        "layout": "side_points"
+      },
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-equation-conduction",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE CONDUCTION",
+      "body": "- The wall balance is conduction across the stack plus re-radiation\n- Radiation enters as eps sigma T^4, so the grey-body term grows with the fourth power\n- R is the sum of the ply resistances, 0.3056 m^2 K per watt\n- The backface model raises the temperature with its thermal lag\n- The chain runs one dimension along the stack, element by element",
+      "target_position": "the slide right after the step it governs, inside the same subsection.",
+      "note": "The governing equation of recall-methodology-conduction: The balance that splits the arriving heat between the stack and the surface.",
+      "revision_note": "Conduction and Radiation ? T^4??",
+      "figure": {
+        "path": "figures/thesis_equation_conduction.png",
+        "caption": "The balance that splits the arriving heat between the stack and the surface.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: conservation of energy in one dimension, with a lumped backface and constant ply properties.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-tps-materials",
+      "section": "RECALL",
+      "title": "METHODOLOGY: TPS MATERIAL PRESETS",
+      "subsection": "Methodology: DSMC CFD",
+      "body": "- Range: k spans 0.02 to 0.50 W/m K across the six presets\n- Stack: the five-ply layup closes at R = 0.3056 m2K/W\n- This work: Nicalon SiC outer ply, eps 0.75, k 0.20, delta 0.0254 m\n- Presets: SiC, PICAX, LOFTID, Kapton, Pyrogel, Multi",
+      "target_position": "the slide after the TPS of both bodies, where the material presets are listed.",
+      "note": "The TPS material presets of appendix.tex, drawn as a table: six presets, seven columns, the preset this work uses tinted.",
+      "figure": {
+        "path": "figures/thesis_tps_presets_table.png",
+        "caption": "The six TPS material presets of appendix.tex, tab:tps: Preset, Material, rho, c_p, k, epsilon, delta.\nThe SiC row, the preset this work uses, is tinted.",
+        "source": "Source: CurrentThesisFinalReport/appendix.tex, tab:tps (TPS material presets available in StellarOrion).",
+        "layout": "side_points"
+      },
+      "footer": "The material presets of the TPS. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-radiation",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE RE-RADIATION CHANNEL",
+      "body": "- The hot face radiates as a grey body, q = eps sigma T^4, eps 0.75.\n- A convective load of 143,760 W/m^2 arrives at the surface.\n- Reradiation takes 140,399 W/m^2, conduction only 3,362 W/m^2.\n- So the surface temperature is set by the radiative balance.",
+      "target_position": "the slide right after the conduction, closing the heat-flux channels.",
+      "note": "The radiative channel: the grey body of the hot face, the balance with the conduction and the numbers of the reference run.",
+      "footer": "The third of the three heat-flux channels. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_tps_ply_stack_temperature.png",
+        "caption": "Temperature through the five-ply stack, hot face to back face, of the reference run.",
+        "source": "Source: CurrentThesisFinalReport/figures/tps_ply_stack_temperature.png, with the overlapping footnote band of the thesis figure cropped in this folder.",
+        "layout": "side_points"
+      },
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-equation-radiation",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE RADIATION",
+      "body": "- A grey body radiates q = eps sigma T to the fourth power\n- The emissivity of the outer Nicalon SiC ply is 0.75\n- Equilibrium divides the incoming flux by eps sigma and takes the root\n- The surface temperature is therefore set by the radiation alone",
+      "target_position": "the slide right after the step it governs, inside the same subsection.",
+      "note": "The governing equation of recall-methodology-radiation: The equilibrium that sets the temperature of the hot face of the vehicle.",
+      "figure": {
+        "path": "figures/thesis_equation_radiation.png",
+        "caption": "The equilibrium that sets the temperature of the hot face of the vehicle.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: Stefan-Boltzmann radiation from a grey, diffuse, opaque surface in view of space, in steady balance.",
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-validation",
+      "section": "RECALL",
+      "title": "METHODOLOGY: VALIDATION AGAINST FLIGHT DATA",
+      "body": "- The table sets the IRVE-3 flight, the published MDAO reference and this run side by side.\n- Ballistic coefficient agrees to +3.0%, inside the plus or minus 10% margin.\n- Heat load sits at -15.0% and peak deceleration at +15.3%.\n- The heat-flux row is a Sutton-Graves correlation, not like-for-like with the flight peak.",
+      "target_position": "the slide after the governing equation of the re-radiation, closing the seven DSMC channels with the validation table.",
+      "note": "Validation against IRVE-3 flight data and the Rapisarda (2023) MDAO reconstruction, the table tab:irve3_validation of chapter 3. The two paragraphs under the table in the thesis state the tolerance argument: the geometry-sensitive quantities sit inside the plus or minus 10 percent margin, and the integrated quantities differ because this single DSMC run samples one trajectory point while the flight column integrates the whole reentry.",
+      "revision_note": "Slide 22 to 19 This is fragmented",
+      "footer": "Validation against the flight data. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_irve3_validation_table.png",
+        "caption": "IRVE-3 validation metrics: flight data, the published MDAO reference and this work, with the error of this run in the last column.",
+        "source": "Source: drawn from Table tab:irve3_validation of CurrentThesisFinalReport/chapter_03_methodology.tex, which cites NASA2013TP4012 and rapisarda2023mdao.",
+        "layout": "side_points"
+      },
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-validation-plots",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE VALIDATION PLOTS",
+      "body": "- The bar chart reads the three charted scalars of the table against the flight column.\n- The DSMC run samples one trajectory point: 51.8 km, Mach 10.29, 3,378 m/s.\n- The flight column integrates the whole reentry, so the two gaps are integration gaps.\n- Under the bars sits the IRVE-3 trajectory record the flight column comes from.",
+      "target_position": "the slide right after the validation table, reading the same three scalars as bars over the reference trajectory record.",
+      "note": "The same comparison as bars: heat load, peak deceleration and ballistic coefficient, each drawn from the numbers of the table so the slide cannot contradict it. The lower half is the IRVE-3 reference trajectory record of the thesis, its clipped header band cropped, because that record is the source of the flight column.",
+      "footer": "The table as bars over the flight record. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_validation_comparison.png",
+        "caption": "This work against the IRVE-3 flight column for the three scalars both sides report, above the reference trajectory record of heat rate and Mach against altitude.",
+        "source": "Source: bars drawn by tools/make_validation_pictures.py from Table tab:irve3_validation; record from CurrentThesisFinalReport/figures/heatRate_HIAD2015_IRVE3.png with its clipped header band cropped.",
+        "layout": "side_points"
+      },
+      "subsection": "Methodology: DSMC CFD"
+    },
+    {
+      "id": "recall-methodology-optimization",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE OPTIMIZATION FLOWCHART",
+      "body": "- Twelve stage validation pipeline, with the geometry loop under it.\n- Loop: design space, cost function, DSMC re-simulation, accept test.\n- A rejection resamples the design space; an accepted geometry is kept.\n- The stages run from flight parameters to the export of fields and plots.\n- These twelve steps are the five stages of slide 5 at build detail, not a second pipeline.",
+      "target_position": "the slide right after the re-radiation, carrying the pipeline and its optimization loop.",
+      "note": "The twelve stage validation pipeline of the engine and the geometry optimization loop that closes it, taken from the thesis figure without modification.",
+      "figure": {
+        "path": "figures/thesis_optimization_flowchart.png",
+        "caption": "The twelve stage validation pipeline of the engine, with the geometry optimization loop that feeds the next geometry back.",
+        "source": "Source: fignew_pipeline.png from CurrentThesisFinalReport/figures, the validation pipeline and optimization loop figure.",
+        "layout": "side_points"
+      },
+      "footer": "The pipeline and the optimization loop. The narration stays editable in PowerPoint.",
+      "subsection": "Methodology: Optimization Pipeline"
+    },
+    {
+      "id": "recall-methodology-pipeline-space",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE DESIGN SPACE",
+      "subsection": "Methodology: Optimization Pipeline",
+      "body": "- Five design variables: body radius, torus radius, cone angle, toroid count, mass\n- The box holds the 6-toroid Rapisarda baseline: 1.5 m, 0.135 m, 60 degrees\n- A Latin hypercube of 50 individuals seeds one per stratum of every coordinate\n- No random start, no factorial design and no surrogate-trained start",
+      "target_position": "the slide after the optimization flowchart, opening the pipeline subsection.",
+      "note": "The box the search runs in and the Latin hypercube that seeds it.",
+      "figure": {
+        "path": "figures/thesis_hiad_design_sensitivity.png",
+        "caption": "The five design variables of the HIAD and the way they set the geometry of the vehicle.",
+        "source": "Source: hiad_design_sensitivity.png from CurrentThesisFinalReport/figures, the design variable sensitivity figure of Chapter III.",
+        "layout": "side_points"
+      },
+      "footer": "How the search space is defined. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-pipeline-seed",
+      "section": "RECALL",
+      "title": "METHODOLOGY: LHS INITIAL POPULATION",
+      "subsection": "Methodology: Optimization Pipeline",
+      "body": "- Fifty individuals, one per stratum of every coordinate: the Latin property\n- Seeded in Ada: Reset(42), Fisher-Yates strata, one draw per gene, 594 draws\n- Re-running the runner on seed 42 reproduces the recorded generation-0 winner\n- That winner is member 24 of the 50, so these are the campaign's own designs",
+      "target_position": "the slide after the design space, where the Latin hypercube seed is claimed.",
+      "note": "The Latin hypercube seed of the design space, drawn: fifty individuals regenerated by the Ada seeding path and tied back to the recorded campaign.",
+      "figure": {
+        "path": "figures/thesis_lhs_initial_population.png",
+        "caption": "The fifty starting designs: one individual in every stratum of R_N, r_tor and half_cone, with the generation-0 winner marked in both projections.",
+        "source": "Source: tools/data/lhs_population_seed42_pop50.jsonl from dump_lhs.adb (seed 42, population 50); the generation-0 winner reproduces history[0] of hiad_optimization_results.json bit for bit.",
+        "layout": "side_points"
+      },
+      "footer": "The initial population of the genetic algorithm. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-equation-pipeline-space",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE DESIGN SPACE",
+      "body": "- The design vector holds five variables: X1, X2, X3, Nt and the mass\n- X1 is the body radius, X2 the torus radius and X3 the half-cone angle\n- The nose radius follows the body radius through the ratio kappa, 0.3667\n- The box holds the 6-toroid Rapisarda baseline: 1.5 m, 0.135 m, 60 degrees",
+      "target_position": "the slide right after the design space, carrying its design vector.",
+      "note": "The design vector of the search and the three relations that map it to the geometry of the vehicle.",
+      "figure": {
+        "path": "figures/thesis_equation_design_space.png",
+        "caption": "The design vector and the relations that turn it into the geometry of the vehicle.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: five scalars fix the geometry; mass cancels in the ballistic ratio and the nose radius is derived.",
+      "subsection": "Methodology: Optimization Pipeline"
+    },
+    {
+      "id": "recall-methodology-pipeline-cost",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE COST FUNCTION",
+      "subsection": "Methodology: Optimization Pipeline",
+      "body": "- The cost is analytic: evaluating it needs no solver call\n- Four dimensionless terms: heat load, stagnation flux, ballistic coefficient, drag\n- All terms are non-negative, so the cost is at least zero by construction\n- The weight on the drag term selects the regime of the heat-load and drag trade",
+      "target_position": "the slide after the design space, carrying the cost of a design.",
+      "note": "The objective that every candidate is scored against, and its recorded convergence.",
+      "figure": {
+        "path": "figures/thesis_ga_convergence.png",
+        "caption": "The recorded convergence of the composite cost of the genetic algorithm over 38 generations.",
+        "source": "Source: ga_convergence.png from CurrentThesisFinalReport/figures, drawn by figures/make_ga_figures.py from the recorded campaign.",
+        "layout": "side_points"
+      },
+      "footer": "How a design is scored. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-equation-pipeline-cost",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE COST FUNCTION",
+      "body": "- The cost is a weighted sum of four dimensionless terms\n- Heat load: W_HL times Q over Q_target is the first and heaviest objective\n- Stagnation flux enters through q over q_ref\n- The ballistic coefficient is squared against its reference, drag one sided\n- A penalty term pushes the design back inside the limits of the box",
+      "target_position": "the slide right after the cost function, carrying its equation.",
+      "note": "The composite cost the search minimises: four weighted terms and a penalty on the geometry.",
+      "revision_note": "Where'sthe objective Total Heat Load Objective",
+      "figure": {
+        "path": "figures/thesis_equation_cost_function.png",
+        "caption": "The composite cost of the genetic algorithm: four weighted terms, a penalty and the heat load.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: weighted-sum scalarisation of four dimensionless objectives, evaluated at one fixed exposure time.",
+      "subsection": "Methodology: Optimization Pipeline"
+    },
+    {
+      "id": "recall-methodology-pipeline-ga",
+      "section": "RECALL",
+      "title": "METHODOLOGY: THE GENETIC ALGORITHM",
+      "subsection": "Methodology: Optimization Pipeline",
+      "body": "- Population of 50 designs evolved for at most 200 generations\n- Tournament selection k = 3, uniform crossover 0.7, Gaussian mutation 0.1\n- Elitism copies the best two unchanged, so the best cost never rises\n- The campaign stopped on stagnation after 38 generations, 1900 evaluations",
+      "target_position": "the slide after the cost function, carrying the operators of the search.",
+      "note": "The operators that breed the population and the path the recorded campaign took.",
+      "figure": {
+        "path": "figures/thesis_ga_design_trajectory.png",
+        "caption": "The path of the generation-best design through the design box, coloured by generation.",
+        "source": "Source: ga_design_trajectory.png from CurrentThesisFinalReport/figures, drawn by figures/make_ga_figures.py from the recorded campaign.",
+        "layout": "side_points"
+      },
+      "footer": "How the population evolves. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-equation-pipeline-ga",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE GENETIC ALGORITHM",
+      "body": "- A population of 50 designs runs for at most 200 generations\n- Tournament: three designs drawn at random, the cheapest one wins\n- So k_t sets the selection pressure: 3 is mild, a larger k is harsher\n- Crossover is applied with 0.7, mutation with 0.1 on every gene\n- It stops when the best cost stops improving by 1e-6 over 20 generations",
+      "target_position": "the slide right after the genetic algorithm, carrying its parameters.",
+      "note": "The operators of the search and the stagnation rule that ends it.",
+      "revision_note": "Tournament Selection kt (3)\n\nGive definition (parameter and can be more optimized space in here)",
+      "figure": {
+        "path": "figures/thesis_equation_ga.png",
+        "caption": "The operators and the stopping rule that govern the recorded campaign.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: a bounded, closed-form objective, so the search needs no solver call and can afford fifty by two hundred.",
+      "subsection": "Methodology: Optimization Pipeline"
+    },
+    {
+      "id": "recall-methodology-equation-pipeline-gate",
+      "section": "RECALL",
+      "title": "GOVERNING EQUATION: THE DOUBLE PASS",
+      "body": "- Pass 1 searches in closed form and re-simulates only its own winner\n- The factor c is the solver flux over the Sutton-Graves flux of that run\n- It is clamped between 0.5 and 2.0 so one bad run cannot invert the cost\n- Pass 2 re-runs the same algorithm with the heat load weighted by c",
+      "target_position": "the slide right after the double pass, carrying its correction.",
+      "note": "The correction factor that ties the second pass back to the solver, and the cost it corrects.",
+      "figure": {
+        "path": "figures/thesis_equation_double_pass.png",
+        "caption": "The correction factor of the second pass and the corrected cost it produces.",
+        "source": "Source: typeset from chapter 3 of the thesis by tools/make_equation_pictures.py.",
+        "layout": "side_points"
+      },
+      "footer": "Fundamental: the fidelity ratio is taken within one run, and only the thermal term of the cost carries that bias.",
+      "subsection": "Methodology: Optimization Pipeline"
+    },
+    {
+      "id": "recall-methodology-flow-field",
+      "section": "RESULTS",
+      "title": "RESULTS: FIELDS OF BOTH BODIES",
+      "subsection": "Results: DSMC CFD",
+      "body": "- Left: the pass-2 body as a surface map of surf_2200.vtu, coloured by heat flux\n- Right: the four volume fields of the validation reference body, smooth skin, 19321 child cells\n- Condition: reference run M 7.53, T 267.85 K, V about 2472 m/s; the in-panel legend is superseded\n- Caveat: no volume dump exists for the optimised run, so its field here is surface loading only",
+      "target_position": "the slide after the double-pass governing equation, where the reference volume fields and the optimised body surface loading are shown together.",
+      "note": "Both bodies on one plate: the four volume field panels of the validation reference run beside the surface heat flux of the pass-2 optimised body, with the correction of the condition legend the reference panels carry inside them.",
+      "figure": {
+        "path": "figures/thesis_flow_field_and_surface_map.png",
+        "caption": "Left, the pass-2 optimised body: surface heat flux of every cell at step 2200, drawn as a meridional profile because the body is a surface of revolution.\nRight, the validation reference body: temperature, pressure, Mach number and velocity of the meridional volume slice, smooth skin.",
+        "source": "Source: stellarorion_program_proc/results/validation_optimized_round2/paraview/surf_2200.vtu (pass-2 surface) and the four Chapter 4 field maps, composed by tools/make_flow_field_surface_plate.py.",
+        "layout": "side_points"
+      },
+      "footer": "The flow field of the reference run and the surface loading of the optimised body. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-topologies",
+      "section": "RESULTS",
+      "title": "RESULTS: THE FLOWN TOPOLOGIES",
+      "subsection": "Results: DSMC CFD",
+      "body": "- Both flown bodies are 1.269 m long; only the outer envelope changes\n- Shoulder differs by 50.4 mm, which is 1.8802 minus 1.8298 m; the thesis caption's 54.2 mm is an open erratum\n- Surface load 1972.7 against 1978.1 J/cm2, minus 0.27 percent\n- Area-averaged flux 575,839 against 565,865 W/m2, plus 1.76 percent; peak minus 2.01 percent\n- Gate pass 1 grew to 1.597 m and failed at 175.580, pass 2 shrank to 0.803 m and passed at 117.526",
+      "target_position": "the slide after the flow field, where the geometries that flew are compared before the numbers.",
+      "note": "The flown meridional half-sections of the four trees and the shoulder zoom, with the per-tree table of length, radius, heat load and gate verdict.",
+      "revision_note": "Topology comparison and Performance Analysis",
+      "figure": {
+        "path": "figures/thesis_topology_deck_plate.png",
+        "caption": "The flown meridional half-sections on the left, the shoulder envelope zoom at the top right,\nand the per-tree table of length, envelope radius, gate heat load and verdict below it.",
+        "source": "Source: re-drawn for this deck by tools/make_topology_deck_picture.py from results/<tree>/HIAD_custom.surf, the thesis fig:topology_comparison values.",
+        "layout": "side_points"
+      },
+      "footer": "The geometries that flew. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-drag-gate",
+      "section": "RESULTS",
+      "title": "RESULTS: DRAG AND THE GATE",
+      "subsection": "Results: DSMC CFD",
+      "body": "- Three recorded DSMC runs, 2200 particle-time steps each, 22 samples apiece\n- Drag settles near 45.6 kN reference, 63.8 kN pass-1, 14.4 kN pass-2\n- Peak deceleration follows the same order: 22.7 g, 32.3 g and 8.4 g\n- Topology: pass-1 is the 1.597 m body, pass-2 the 0.803 m body, both on the 3.0 m path\n- Caveat: pass-2 is a 6.0 m body on the 3.0 m path, so part of its drop is that mismatch",
+      "target_position": "the slide after the topologies, where the force the flow produces is read against the gate.",
+      "note": "Drag and deceleration of the three runs: the reference, the rejected first pass and the accepted second pass, against the heat-load target.",
+      "revision_note": "Topology Is missing",
+      "figure": {
+        "path": "figures/thesis_ref_vs_opt_dsmc_comparison.png",
+        "caption": "Drag force and peak deceleration of the three recorded DSMC runs, beside the heat-load panel that decides the gate.",
+        "source": "Source: CurrentThesisFinalReport/figures/ref_vs_opt_dsmc_comparison.png, from each run's own validation_timeseries.csv, as used in chapter_04_gate.tex.",
+        "layout": "side_points"
+      },
+      "footer": "The force side of the DSMC results. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "recall-methodology-tps-thermal",
+      "section": "RESULTS",
+      "title": "RESULTS: TPS OF BOTH BODIES",
+      "subsection": "Results: TPS Response",
+      "body": "- Result: six panels of the program's own TPS output, reference top, optimised bottom\n- Both trees flown at the same condition: 52.07 km, 3101 m/s, step 2200\n- Mean surface temperature rises 801.35 K to 830.03 K, peak unchanged at 1430.25 K\n- About 87 per cent of the incoming heat re-radiates in both; the balance closes under 2e-4",
+      "target_position": "the slide after the drag panel, where the thermal cost of the change is read.",
+      "note": "The thermal response of the reference and of the optimised topology: the ply stack temperature, the per-ply flux and the surface energy balance of both bodies.",
+      "revision_note": "Methodology and Result Don't fuse it like that bruh",
+      "figure": {
+        "path": "figures/thesis_tps_reference_vs_optimized_wide.png",
+        "caption": "Six panels of the program's own TPS output: the ply stack temperature, the per-ply heat flux and the\nsurface energy balance across, reference along the top row and the optimised topology along the bottom.",
+        "source": "Source: results/plots/<tree>/tps_per_ply/ of the TPS conduction run at step 2200, re-laid by tools/make_tps_wide_picture.py, thesis fig:tps_reuse.",
+        "layout": "side_points"
+      },
+      "footer": "The thermal cost of the topological change. The narration stays editable in PowerPoint."
+    },
+    {
+      "id": "results-pressure-force",
+      "section": "RESULTS",
+      "title": "RESULTS: PRESSURE AND FORCE",
+      "body": "- Field: pressure in pascals on a meridional slice, from zero to about 15000\n- Shape: the elevated band follows the windward face along the stacked tori\n- Force: 45,613 N of axial drag, coefficient 0.4414 on the aeroshell disc area\n- Caveat: a meridional cut cannot show circumferential periodicity, so no periodic peak is claimed",
+      "target_position": "after the TPS result, closing the surface evidence of the reference body before the required visuals.",
+      "note": "The pressure field and the integrated force it produces, the mechanical half of the surface evidence.",
+      "footer": "Pressure and the force it integrates to. The narration stays editable in PowerPoint.",
+      "subsection": "Results: DSMC CFD",
+      "figure": {
+        "path": "figures/thesis_pressure_map.png",
+        "caption": "Pressure on the smooth-skinned reference body, meridional slice at the step-2200 dump.\nThe elevated band tracks the windward face; the cut cannot show toroid periodicity.",
+        "source": "Source: CurrentThesisFinalReport/figures/pressure_map_smooth_M0_A0.png, chapter 4 pressure distribution, reused unchanged.",
+        "layout": "side_points"
+      }
+    },
+    {
+      "id": "results-knudsen-regime",
+      "section": "RESULTS",
+      "title": "RESULTS: THE KNUDSEN REGIME MAP",
+      "body": "- Field: local Knudsen number as filled cell tiles, from 1e-5 to 1.15e-2\n- Meaning: transitional to near-continuum across the shock layer, with no free-molecular region\n- Basis: mean free path over the length L, which is why DSMC is valid where continuum CFD is not\n- Caution: the free-stream Kn of this panel stays below one, so it is not evidence of free-molecular flow",
+      "target_position": "after the pressure result, as the regime evidence that justifies the solver choice.",
+      "note": "The Knudsen field of the reference run, the picture that says which solver the flow regime actually needs.",
+      "footer": "The regime map behind the method. The narration stays editable in PowerPoint.",
+      "subsection": "Results: DSMC CFD",
+      "figure": {
+        "path": "figures/thesis_knudsen_map.png",
+        "caption": "Local Knudsen number on the reference body, drawn as filled cell tiles at the step-2200 dump.\nThe flow is transitional to near-continuum and never free-molecular at this condition.",
+        "source": "Source: CurrentThesisFinalReport/figures/knudsen_map_smooth.png, chapter 4 Knudsen field, reused unchanged.",
+        "layout": "side_points"
+      }
+    },
+    {
+      "id": "progress-overall",
+      "section": "RECALL",
+      "title": "OVERALL PROGRESS",
+      "body": "- Literature review: the aerothermodynamics of inflatable entry systems, the rarefied-flow regime above Mach 5 and the survivability criteria are collected and placed against the IRVE-3 baseline.\n- Finding and setting up the simulation: the parametric geometry, the SPARTA DSMC chain, the Ada/SPARK thermal solver and the genetic algorithm are set up and run end to end.\n- Starting the literature writing: the introduction, the literature review and the methodology chapters are written, and every figure of the thesis is drawn from the simulation results.\n- Simulation and documentation: the reference run, the design-of-experiments campaign and the validation gate are executed, and every number of the report is read back from the machine-readable results.\n- Revision, documentation and final report: the four earlier issues are closed, the figures and their provenance are reconciled with the thesis, and the week report and the thesis chapters are brought to their final state.",
+      "target_position": "right after the graphical framework slide, at the end of the methodology block and before the previous issues.",
+      "timeline": true,
+      "note": "The five milestones of the research, drawn as a horizontal timeline. The owner named the five phases; each phase carries one line of context taken from the thesis and the Week 18 report.",
+      "subsection": "Progress: Where The Work Stands"
+    },
+    {
+      "id": "progress-thesis-document",
+      "section": "RECALL",
+      "title": "THESIS PROGRESS: THE DOCUMENT AS IT STANDS",
+      "body": "- Length: 197 pages, five chapters with front matter and appendices\n- Chapter 4 closed: fields, topologies, drag and the thermal stack\n- Chapter 5 closed: the conclusion and the recommendations\n- Build: compiled 27 October 2026 from the LaTeX sources",
+      "target_position": "between the overall progress frame and the previous issues, where the state of the document is reported.",
+      "note": "The thesis as it stands: the compiled cover and six pages taken from the same built file, so the claim that the document is written is backed by the document itself.",
+      "figure": {
+        "path": "figures/thesis_progress_plate.png",
+        "caption": "The thesis as it stands: the compiled cover above, and below it six pages from the same file,\nrunning from the abstract through Chapter 1, 3 and 4 to Chapter 5 and the two-pass table.",
+        "source": "Source: CurrentThesisFinalReport/main.pdf, 197 pages, compiled 27 October 2026, pages 1, 3, 29, 99, 133, 156 and 172.",
+        "layout": "side_points"
+      },
+      "subsection": "Progress: The Document"
+    },
+    {
+      "id": "recall-previous-issues",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUES",
+      "body": "- The Bayesian search was not the right approach\n- The narration had to be written from scratch",
+      "target_position": "the list of the three previous issues, right before the three slides that elaborate them.",
+      "note": "The four issues of the earlier work, listed as pills. Each pill is elaborated on the slide that follows.",
+      "pill_list": true,
+      "subsection": "Issues: The Register"
+    },
+    {
+      "id": "recall-previous-issue-1",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUE 1: THE BAYESIAN STEP WAS WRONG",
+      "body": "- The earlier assumption: the search was driven by an analytic model and a Bayesian expectation, so a surrogate of the model decided which candidate was worth simulating next.\n- The consequence: the acquisition step answered the question of the surrogate instead of the question of the design, and the surrogate had to be denoised before it could be used at all.\n- The evidence: the thesis removed the Bayesian-optimisation material and states that there is no central composite screen, no response surface, no surrogate and no acquisition step in the path.\n- The correction: the Latin hypercube seeds the genetic algorithm, every individual is scored with the closed-form cost, and the only high-fidelity runs are the validations of the pass-1 and the pass-2 winner.",
+      "target_position": "the slide right after the elaboration of the second issue, closing the block of the previous issues.",
+      "cards_only": true,
+      "note": "What the third issue was. The earlier search was driven by an analytic model and a Bayesian expectation over a surrogate; the thesis removed that material and the double pass genetic algorithm took its place.",
+      "footer": "The issue as it stood in the earlier work. The narration stays editable in PowerPoint.",
+      "subsection": "Issues: Issue 1"
+    },
+    {
+      "id": "recall-previous-issue-2",
+      "section": "RECALL",
+      "title": "PREVIOUS ISSUE 2: THE NARRATION WAS MISSING",
+      "body": "- The earlier assumption: the standard CFD procedures and the supervisor's house style were carried into the slides as they stood, so every frame was a text frame and the words to say were never written down.\n- The consequence: the earlier decks hold no narration to carry over, so none of the spoken report could be ported into this one.\n- The evidence: the Week 14 deck carries 63 words in total, no speaker notes, and its content is two embedded videos with nine rasters, so there is no text there to port.\n- The correction: this first generation of presentation slides is authored from the verified state of the repository, one narration card per point, the owner blocks as the sections, and the thesis figures imported with their provenance.",
+      "target_position": "the slide right after the elaboration of the third issue, closing the block of the previous issues.",
+      "cards_only": true,
+      "note": "What the fourth issue was. The narration of this report is the first one that was written, and this slide is the first generation of presentation slides that carries it.",
+      "footer": "The issue as it stood in the earlier work. The narration stays editable in PowerPoint.",
+      "subsection": "Issues: Issue 2"
+    },
+    {
+      "id": "recall-issue-check-1",
+      "section": "RECALL",
+      "title": "DOES THAT SOLVE ISSUE 1?",
+      "body": "- Claim: the acquisition step and the surrogate behind it are gone, so the search is a plain genetic algorithm over a closed-form cost\n- Evidence: no acquisition function and no Gaussian process remain in the thesis, and the recorded campaign is a population of fifty run for 38 generations\n- Verdict: yes for the method, because the cost is now evaluated directly, so nothing is left to acquire or to denoise\n- Residual: the cost is still a screening model, so the DSMC re-simulation of each pass winner remains the only physical check",
+      "target_position": "the slide right after the second previous issue, where the first resolution is judged.",
+      "note": "Whether the removal of the Bayesian step actually answers the first previous issue, with the evidence and the residual limit.",
+      "footer": "The first previous issue, checked against the thesis as it stands. The narration stays editable in PowerPoint.",
+      "cards_only": true,
+      "subsection": "Issues: Check 1"
+    },
+    {
+      "id": "recall-issue-check-2",
+      "section": "RECALL",
+      "title": "DOES THAT SOLVE ISSUE 2?",
+      "body": "- Claim: every frame now carries the words to say, written for this deck instead of carried over from older ones\n- Evidence: the Week 14 deck holds 63 words in total, while every frame here holds a body of points and a speaker note\n- Verdict: yes for the narration, because the words now exist in the file and stay editable in PowerPoint\n- Residual: written is not rehearsed, so the delivery and the timing of the report stay outside the deck",
+      "target_position": "the slide right after the first check, where the second resolution is judged.",
+      "note": "Whether the written narration actually answers the second previous issue, with the evidence and the residual limit.",
+      "footer": "The second previous issue, checked against the deck as it stands. The narration stays editable in PowerPoint.",
+      "cards_only": true,
+      "subsection": "Issues: Check 2"
+    },
+    {
+      "id": "progress-issue-resolution",
+      "section": "CURRENT PROGRESS",
+      "title": "ISSUE, RESOLUTION AND UPDATE",
+      "body": "- Issue: two inherited problems, a Bayesian acquisition step over a surrogate, and narration that did not exist\n- Resolution: the acquisition and the surrogate are gone, so the search is a plain GA over a closed-form cost\n- Update: every frame now carries its own written words, held in the file and editable in PowerPoint\n- Open: the cost is still a screening model, so the two DSMC re-simulations remain the only physical check",
+      "target_position": "after the field-evidence and optimization material, summarising the two issues and their resolution.",
+      "note": "The two inherited issues, what was done about each, and the limit that stays open, on one band of cards.",
+      "footer": "The issues, the resolution and the update. The narration stays editable in PowerPoint.",
+      "cards_only": true,
+      "subsection": "Progress: The Resolution"
+    },
+    {
+      "id": "visual-cfd",
+      "section": "REQUIRED VISUALS",
+      "title": "REQUIRED PLOT: THE CFD CASE",
+      "body": "- Heat flux: red curve on the left axis, watts per square centimetre, along the meridian from nose to aft face\n- Temperature: blue dashed on the right axis, kelvin, with the SiC limit of 1673 K as a red dotted line\n- Steps: three sampling points of the reference run, 100, 1000 and 2200, so the settling of the profile shows\n- Shape: the shoulder carries the maximum and the aft face the minimum, which is why the shoulder is the case",
+      "target_position": "the first of the trailing visual requirements, after the current-progress block.",
+      "note": "The CFD plot the owner required: heat flux and surface temperature along the meridian at three sampling steps.",
+      "footer": "The required CFD plot of the reference case. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_heatflux_vs_x_panel.png",
+        "caption": "Surface heat flux (red, left axis, W/cm2) and surface temperature (blue dashed, right axis, K) against axial position.\nSteps 100, 1000 and 2200 of the reference run; the red dotted line is the SiC limit of 1673 K.",
+        "source": "Source: CurrentThesisFinalReport/figures/heatflux_vs_x_panel.png, Chapter 4, reused from results/00_reference/plots/; provenance band cropped.",
+        "layout": "side_points"
+      },
+      "subsection": "Visual: The CFD Case"
+    },
+    {
+      "id": "visual-optimized",
+      "section": "REQUIRED VISUALS",
+      "title": "REQUIRED PLOT: THE OPTIMIZED CASE",
+      "body": "- Views: four azimuth views of the same body in the round, reference baseline on the top row and optimised below\n- Size: both bodies 1.2694 m long, maximum radius 1.8802 m reference against 1.8298 m optimised\n- Colour: axial position along the body, so the shoulder and the aft face can be found in every view\n- Caveat: the cost printed inside the panels is the round-one run, not the composite cost of the thesis",
+      "target_position": "immediately after the CFD plot, as the second of the trailing visual requirements.",
+      "note": "The optimised case in three dimensions, the view the thesis calls its only three-dimensional view of the bodies.",
+      "footer": "The required optimised plot, reference against optimised. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_geometry_views_plate.png",
+        "caption": "Four azimuth views at true aspect: reference baseline on the top row, optimised below.\nBoth bodies 1.2694 m long; the panel cost belongs to the round-one run, not the composite cost.",
+        "source": "Source: results/99_shared/geometry/*_3d_4views.png, re-tiled square by tools/make_geometry_views_plate.py; the thesis plate stretched them with imshow aspect auto.",
+        "layout": "side_points"
+      },
+      "subsection": "Visual: The Optimized Case"
+    },
+    {
+      "id": "visual-reference",
+      "section": "REQUIRED VISUALS",
+      "title": "REQUIRED REFERENCE: THE SOURCE PAPER",
+      "body": "- Rows: five, Rapisarda 2023, Rapisarda 2024, Masciarelli and Cassis 2021, Schwartzentruber 2018, and this work\n- Columns: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, survivability, multi-solver pipeline\n- Reading: a filled cell is full coverage, an empty cell is not covered, the same as the key under the map\n- Position: this work fills every one of the five columns and no other row does, which is the gap the thesis claims",
+      "target_position": "immediately after the optimised plot, closing the trailing visual requirements.",
+      "note": "The source papers of the thesis on one matrix, with this work the only row that covers every column.",
+      "footer": "The required reference, the studies this work rests on. The narration stays editable in PowerPoint.",
+      "figure": {
+        "path": "figures/thesis_literature_review_map.png",
+        "caption": "Literature review coverage matrix: the Rapisarda 2023 baseline and this work against five capabilities.\nA filled cell is full coverage; the dashed red outline is this work, the only row full across all five.",
+        "source": "Source: CurrentThesisFinalReport/figures/literature_review_map.png, Chapter 2, fig:literature_review_map; banner title cropped.",
+        "layout": "side_points"
+      },
+      "subsection": "Visual: The Source Paper"
+    },
+    {
+      "id": "ending-thesis-conclusions",
+      "section": "ENDING",
+      "title": "THESIS CONCLUSIONS: WHAT WAS FOUND",
+      "body": "- Validation: Fay-Riddell 13.83 against 14.36 W/cm2, minus 3.7 percent; Sutton-Graves 15.36, plus 6.9 percent\n- Scalloping: peak flux 15.2 percent above the smooth body, element average 4.0 percent above\n- Regime: the Knudsen field spans transitional to near-continuum at 51.8 km, so DSMC is the right tool\n- Grid: drag converged by the third level, peak flux did not, so 139x139 stays the conservative choice\n- Optimisation: cost down 9.19 percent, drag coefficient up 2.14 percent, screening heat load up 5.96 percent",
+      "target_position": "opening the ending block, before the revision log, so the thesis findings come before the week's bookkeeping.",
+      "note": "The findings of the thesis itself, which the deck previously left out of its ending.",
+      "footer": "What the thesis concluded. The narration stays editable in PowerPoint.",
+      "subsection": "Closing: The Findings"
+    },
+    {
+      "id": "ending-thesis-contributions",
+      "section": "ENDING",
+      "title": "THESIS CONTRIBUTIONS",
+      "body": "- Framework: an end-to-end DSMC-HIAD chain from parametric geometry to survivability optimisation\n- Scalloping: the first systematic DSMC characterisation of toroid heating and recirculation\n- Optimisation: an automated genetic algorithm on a closed-form cost, with no solver in the loop\n- Evidence: every number in the work is read back from machine-readable run artefacts",
+      "target_position": "after the findings, before the future work, as the claim the findings support.",
+      "note": "The three contributions the thesis claims, plus the evidence discipline behind them.",
+      "footer": "What the thesis claims as new. The narration stays editable in PowerPoint.",
+      "subsection": "Closing: The Contributions"
+    },
+    {
+      "id": "ending-thesis-future-work",
+      "section": "ENDING",
+      "title": "THESIS FUTURE WORK",
+      "body": "- Trajectory: extend the single 51.8 km point to a full re-entry trajectory\n- Three dimensions: run at non-zero angle of attack to capture asymmetric heating and side force\n- Structure: couple the DSMC loads to a finite element model, since the body is rigid today\n- Materials: assess Gen-2 SiC and Gen-3 TPS margins under the predicted scalloped profiles\n- Mars: swap the air model for CO2 and N2 with argon, and the West and Brandis correlation",
+      "target_position": "closing the ending block, immediately before the revision log.",
+      "note": "The five directions the thesis names for future work, in its own order.",
+      "footer": "Where the work goes next. The narration stays editable in PowerPoint.",
+      "subsection": "Closing: The Future Work"
+    },
+    {
+      "id": "ending-conclusion",
+      "section": "ENDING",
+      "title": "REVISION LOG: WHAT CHANGED THIS WEEK",
+      "body": "The Bayesian acquisition is gone, so the search is a plain genetic algorithm over a closed-form cost with nothing left to denoise. The narration now exists on every frame, written for this deck rather than carried over. What remains open is the screening cost: the two DSMC re-simulations stay the only physical check. Both previous issues are therefore answered, and the limit is stated rather than hidden.",
+      "target_position": "the last content frame of the deck.",
+      "note": "The resolution of the two previous issues, judged together: what is closed and what remains open.",
+      "footer": "The revision log of this week's work. The narration stays editable in PowerPoint.",
+      "subsection": "Closing: The Revision Log"
+    },
+    {
+      "id": "ending-citations",
+      "section": "ENDING",
+      "title": "CITATIONS",
+      "body": "- Flight data: Lau et al., IRVE-3 Post-Flight Data and Reconstruction, NASA/TP-2013-4012, NASA Langley, 2013\n- MDAO reference: Rapisarda, C., Multidisciplinary Design Analysis and Optimisation of Inflatable Stacked Toroid Decelerators, MSc thesis, TU Delft, 2023\n- Sampling: McKay, Beckman and Conover, A comparison of three methods for selecting values of input variables, Technometrics 21(2), 1979\n- Geometry and tools: Dillman, IRVE-3 Project Overview and Instrumentation, NASA LaRC, 2015; SPARTA DSMC, Sandia; Ada/SPARK, AdaCore; python-pptx 1.0.2",
+      "target_position": "the slide after the conclusion, where the sources of the report are listed.",
+      "note": "The four groups of sources the report rests on: the flight data, the MDAO reference, the sampling method and the tools.",
+      "footer": "The full bibliography is ref.bib of the thesis. The narration stays editable in PowerPoint.",
+      "cards_only": true,
+      "subsection": "Closing: References"
+    },
+    {
+      "id": "ending-thank-you",
+      "section": "ENDING",
+      "title": "THANK YOU",
+      "body": "Thank you for the attention. Questions are welcome.",
+      "target_position": "the last slide of the deck.",
+      "note": "The closing slide of the report.",
+      "footer": "The end of the progress report. The narration stays editable in PowerPoint.",
+      "subsection": "Closing"
+    }
+  ],
+  "palette": {
+    "Frost": "F2F7FE",
+    "Sky": "3F6FA8",
+    "Navy": "08132E",
+    "Gold": "FFC94D"
+  },
+  "palette_roles": {
+    "Frost": "the near white with a blue cast: the fill of every glass panel and the top of the sky",
+    "Sky": "the blue of the middle of the sky and the hairline of every glass panel",
+    "Navy": "the dark blue the sky ends in, and the ink of every headline and of the narration",
+    "Gold": "the yellow accent: the pill under the title and the warm end of the sparkle variation"
+  },
+  "identity": {
+    "judul": "Aerothermodynamics Optimization of HIAD IRVE-3 Geometry using DSMC and Genetic Algorithm",
+    "penulis": "Wahyu Suryo Samudro",
+    "nim": "23624003",
+    "pembimbing_satu": "Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.",
+    "pembimbing_dua": "Yohanes Bimo Dwianto, S.T., M.T., Ph.D.",
+    "title": "StellarOrion Progress Report",
+    "subtitle": "Week 18: Progress Report",
+    "author": "Wahyu Suryo Samudro",
+    "institute": [
+      "Magister Program in Aerospace Engineering",
+      "Faculty of Mechanical and Aerospace Engineering",
+      "Institut Teknologi Bandung"
+    ],
+    "date": "27 October 2026"
+  }
+}

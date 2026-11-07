@@ -1762,5 +1762,47 @@
     "error_message": "",
     "timestamp": 1791860960.970933,
     "checked_by": "HEAD"
+  },
+  "https://coq.inria.fr/doc/V8.18.0/refman/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1792023888.442655,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#float": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1792161222.571407,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/getpass.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1792161223.2755342,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/shutil.html#shutil.which": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1792161226.291269,
+    "checked_by": "HEAD"
+  },
+  "https://ntrs.nasa.gov/citations/19770009539": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1792161227.49141,
+    "checked_by": "HEAD"
+  },
+  "https://github.com/bettinigni/pymsis": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1792161228.2529862,
+    "checked_by": "HEAD"
   }
 }

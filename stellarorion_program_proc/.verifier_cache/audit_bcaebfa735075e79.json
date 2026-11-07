@@ -1,0 +1,317 @@
+{
+  "cache_key": "bcaebfa735075e79",
+  "violations": [
+    {
+      "severity": "CRITICAL",
+      "category": "ADA_NOT_DOMINANT",
+      "filepath": "run.py",
+      "line": 1,
+      "message": "CRITICAL \u2014 GitHub Linguist byte analysis: Ada is NOT dominant. 33.2% Ada vs 41.9% Python. Ada = formal verification + deterministic + compile-time safety. Non-Ada dominant = quality NOT assured. MAL-CRITICAL. JUSTIFIED_EXCLUSION: Python is required for agentic coding and coherency infrastructure (LLM tool chain, WebView UI, build verification). These cannot be implemented in Ada. Ada covers core GNC logic with formal verification. Non-Ada presence is an architectural necessity, not a quality defect. Composition: Python: 41.9% (2.6 MB) | Ada: 33.2% (2.1 MB) | Rocq Prover: 7.5% (479.0 KB) | Markdown: 7.3% (463.5 KB) | JSON: 4.4% (278.3 KB) | HTML: 1.9% (121.6 KB) | TypeScript: 1.3% (84.0 KB) | TeX: 1.3% (82.1 KB) | CSS: 0.6% (40.6 KB) | Shell: 0.3% (21.6 KB) | JavaScript: 0.3% (19.3 KB) | C: 0.0% (479 B)",
+      "standard": "Ada RM, DO-178C, ECSS-E-ST-40C, MAL-SCORING, GitHub-Linguist",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "APA7_NO_REFERENCES",
+      "filepath": "run.py",
+      "line": 1039,
+      "message": "Function '_phase2c_generate_media_and_sync' has no APA7 References: section.",
+      "standard": "APA 7th Edition Publication Manual (2020)",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "APA7_NO_REFERENCES",
+      "filepath": "run.py",
+      "line": 1167,
+      "message": "Function '_sync_media_into_canonical_tree' has no APA7 References: section.",
+      "standard": "APA 7th Edition Publication Manual (2020)",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "APA7_NO_REFERENCES",
+      "filepath": "run.py",
+      "line": 1198,
+      "message": "Function '_copy_media' has no APA7 References: section.",
+      "standard": "APA 7th Edition Publication Manual (2020)",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "APA7_NO_REFERENCES",
+      "filepath": "run.py",
+      "line": 1337,
+      "message": "Function '_write_results_readme' has no APA7 References: section.",
+      "standard": "APA 7th Edition Publication Manual (2020)",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SMT_LOGIC_VERIFICATION",
+      "filepath": "run.py",
+      "line": 1372,
+      "message": "z3+cvc5+alt-ergo: Variable 'run' can be 0 at division point in '_write_results_readme'.  Solvers confirmed: z3, cvc5.",
+      "standard": "SMT-LIB 2.6, z3+cvc5+alt-ergo, CWE-682",
+      "code_snippet": "",
+      "solvers": [
+        "z3",
+        "cvc5"
+      ],
+      "counterexample": "[Counterexample] Division by zero: 'run' can be 0 in _write_results_readme():\n  denom_1372_16 = 0\n[Counterexample-cvc5] Division by zero: 'run' can be 0:\n  run = 0"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SMT_LOGIC_VERIFICATION",
+      "filepath": "run.py",
+      "line": 1372,
+      "message": "z3+cvc5+alt-ergo: Variable 'run' can be 0 at division point in '_write_results_readme'.  Solvers confirmed: z3, cvc5.",
+      "standard": "SMT-LIB 2.6, z3+cvc5+alt-ergo, CWE-682",
+      "code_snippet": "",
+      "solvers": [
+        "z3",
+        "cvc5"
+      ],
+      "counterexample": "[Counterexample] Division by zero: 'run' can be 0 in _write_results_readme():\n  denom_1372_16 = 0\n[Counterexample-cvc5] Division by zero: 'run' can be 0:\n  run = 0"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SMT_LOGIC_VERIFICATION",
+      "filepath": "run.py",
+      "line": 1374,
+      "message": "z3+cvc5+alt-ergo: Variable 'run' can be 0 at division point in '_write_results_readme'.  Solvers confirmed: z3, cvc5.",
+      "standard": "SMT-LIB 2.6, z3+cvc5+alt-ergo, CWE-682",
+      "code_snippet": "",
+      "solvers": [
+        "z3",
+        "cvc5"
+      ],
+      "counterexample": "[Counterexample] Division by zero: 'run' can be 0 in _write_results_readme():\n  denom_1374_20 = 0\n[Counterexample-cvc5] Division by zero: 'run' can be 0:\n  run = 0"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SMT_LOGIC_VERIFICATION",
+      "filepath": "run.py",
+      "line": 1374,
+      "message": "z3+cvc5+alt-ergo: Variable 'run' can be 0 at division point in '_write_results_readme'.  Solvers confirmed: z3, cvc5.",
+      "standard": "SMT-LIB 2.6, z3+cvc5+alt-ergo, CWE-682",
+      "code_snippet": "",
+      "solvers": [
+        "z3",
+        "cvc5"
+      ],
+      "counterexample": "[Counterexample] Division by zero: 'run' can be 0 in _write_results_readme():\n  denom_1374_20 = 0\n[Counterexample-cvc5] Division by zero: 'run' can be 0:\n  run = 0"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SMT_LOGIC_VERIFICATION",
+      "filepath": "run.py",
+      "line": 1383,
+      "message": "z3+cvc5+alt-ergo: Variable 'c' can be 0 at division point in '_write_results_readme'.  Solvers confirmed: z3, cvc5.",
+      "standard": "SMT-LIB 2.6, z3+cvc5+alt-ergo, CWE-682",
+      "code_snippet": "",
+      "solvers": [
+        "z3",
+        "cvc5"
+      ],
+      "counterexample": "[Counterexample] Division by zero: 'c' can be 0 in _write_results_readme():\n  denom_1383_32 = 0\n[Counterexample-cvc5] Division by zero: 'c' can be 0:\n  c = 0"
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "APA7_NO_REFERENCES",
+      "filepath": "run.py",
+      "line": 2245,
+      "message": "Function '_run_per_ply_trees' has no APA7 References: section.",
+      "standard": "APA 7th Edition Publication Manual (2020)",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "APA7_NO_REFERENCES",
+      "filepath": "run.py",
+      "line": 2293,
+      "message": "Function '_print_plot_status' has no APA7 References: section.",
+      "standard": "APA 7th Edition Publication Manual (2020)",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 1079,
+      "message": "External call 'os.makedirs' (Directory creation) can raise FileExistsError, OSError but function '_phase2c_generate_media_and_sync' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "SOFTLOCK_RISK",
+      "filepath": "run.py",
+      "line": 1087,
+      "message": "subprocess.run() without timeout \u2014 if the child process deadlocks or hangs, this thread will block forever. Add timeout= parameter (e.g., timeout=300).",
+      "standard": "CERT FIO47-C, CWE-835: Loop with Unreachable Exit Condition",
+      "code_snippet": "result = subprocess.run(",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 1087,
+      "message": "External call 'subprocess.run' (External process execution) can raise CalledProcessError, FileNotFoundError, TimeoutExpired, OSError but function '_phase2c_generate_media_and_sync' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 1087,
+      "message": "External call 'subprocess.run' (External process execution) can raise CalledProcessError, FileNotFoundError, TimeoutExpired, OSError but function '_run_media' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 1147,
+      "message": "External call 'os.makedirs' (Directory creation) can raise FileExistsError, OSError but function '_phase2c_generate_media_and_sync' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXCEPTION_MISSING",
+      "filepath": "run.py",
+      "line": 1185,
+      "message": "Unreachable code after Return at line 1183 \u2014 this code will never execute. Remove it or fix the control flow.",
+      "standard": "MISRA C:2012 Rule 2.2, CWE-561: Dead Code",
+      "code_snippet": "derived_names = {",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "SILENT_FAILURE",
+      "filepath": "run.py",
+      "line": 1245,
+      "message": "Empty except block with 'pass' \u2014 exceptions are silently swallowed. Add logging or re-raise to prevent silent failures.",
+      "standard": "CWE-390, MISRA C:2012 Rule 2.2, DO-178C \u00a76.3.3",
+      "code_snippet": "except OSError:",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 2275,
+      "message": "External call 'os.makedirs' (Directory creation) can raise FileExistsError, OSError but function '_run_per_ply_trees' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "SOFTLOCK_RISK",
+      "filepath": "run.py",
+      "line": 2282,
+      "message": "subprocess.run() without timeout \u2014 if the child process deadlocks or hangs, this thread will block forever. Add timeout= parameter (e.g., timeout=300).",
+      "standard": "CERT FIO47-C, CWE-835: Loop with Unreachable Exit Condition",
+      "code_snippet": "subprocess.run(solve_cmd, cwd=script_dir, check=True)",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 2282,
+      "message": "External call 'subprocess.run' (External process execution) can raise CalledProcessError, FileNotFoundError, TimeoutExpired, OSError but function '_run_per_ply_trees' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 2284,
+      "message": "External call 'os.makedirs' (Directory creation) can raise FileExistsError, OSError but function '_run_per_ply_trees' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "SOFTLOCK_RISK",
+      "filepath": "run.py",
+      "line": 2289,
+      "message": "subprocess.run() without timeout \u2014 if the child process deadlocks or hangs, this thread will block forever. Add timeout= parameter (e.g., timeout=300).",
+      "standard": "CERT FIO47-C, CWE-835: Loop with Unreachable Exit Condition",
+      "code_snippet": "subprocess.run(plot_cmd, cwd=script_dir, check=True)",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "EXTERNAL_CALL_UNHANDLED",
+      "filepath": "run.py",
+      "line": 2289,
+      "message": "External call 'subprocess.run' (External process execution) can raise CalledProcessError, FileNotFoundError, TimeoutExpired, OSError but function '_run_per_ply_trees' has NO try/except block.  Unhandled external failure = crash on receiving end.",
+      "standard": "CWE-252, CWE-755, CERT ERR",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "VIRTUAL_ENV_UNBUILT",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/vendor/tts_kokoro_component/venv",
+      "line": 1,
+      "message": "NOTICE: Kokoro TTS venv directory at 'vendor/tts_kokoro_component/venv' does not exist. Orchestrator will construct venv during Stage 0.5 setup.",
+      "standard": "DO-178C Tool Qualification / ISO 25010 Environment",
+      "code_snippet": "Unbuilt venv: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/vendor/tts_kokoro_component/venv",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "VIRTUAL_ENV_UNBUILT",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv/om",
+      "line": 1,
+      "message": "NOTICE: OPAM Coq env directory at 'venv/om' does not exist. Orchestrator will construct venv during Stage 0.5 setup.",
+      "standard": "DO-178C Tool Qualification / ISO 25010 Environment",
+      "code_snippet": "Unbuilt venv: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv/om",
+      "solvers": [],
+      "counterexample": ""
+    }
+  ]
+}
