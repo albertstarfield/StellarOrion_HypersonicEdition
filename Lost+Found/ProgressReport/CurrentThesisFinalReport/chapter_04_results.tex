@@ -338,7 +338,7 @@ Figure~\ref{fig:ga_trajectory} traces the generation-best design through the des
 The path has a clear physical reading. The optimizer reduces the body radius from $1.5$ to $1.3359$\,m, increases the torus radius from $0.135$ to $0.1796$\,m, and reduces the half-cone angle from $60^\circ$ to $58.61^\circ$. The smaller body radius shrinks the physical nose radius from $0.55$ to $0.4898$\,m, and because Sutton--Graves scales as $1/\sqrt{R_n}$ the stagnation flux rises by $+5.96\,\%$; the drag coefficient rises by $+2.14\,\%$, which is the reward the objective pays for.
 
 \subsection{Pass-1 Outcome and the Gate}
-The pass-1 candidate does not survive the high-fidelity check: its DSMC heat load is $175.580$\,J/cm\textsuperscript{2} against the $165.716$\,J/cm\textsuperscript{2} target. The correction factor, the second pass and the validated outcome are reported in Sec.~\ref{sec:hybrid_gate}; Table~\ref{tab:ga_two_pass} summarizes both passes.
+The pass-1 candidate does not survive the gate check: its gate heat load is $175.580$\,J/cm\textsuperscript{2} against the $165.716$\,J/cm\textsuperscript{2} target. The correction factor, the second pass and the validated outcome are reported in Sec.~\ref{sec:hybrid_gate}; Table~\ref{tab:ga_two_pass} summarizes both passes.
 
 \subsection{Interpretation of the Trade-Off}
 The first pass's result is a $+2.14\,\%$ gain in drag coefficient bought with a +5.96\,\% rise in the screening heat load, for a $9.19\,\%$ reduction in composite cost. The gain is not free: it is bought by a smaller body ($D = 2.6719$\,m against the IRVE-3 $3.0$\,m) and a blunter nose ($R_n = 0.4898$\,m against $0.55$\,m), which is exactly the direction the drag-reward term of $J(\mathbf{x})$ pays for.

@@ -300,7 +300,7 @@ While DSMC is a particle method, a Cartesian computational grid is required for 
     \item \textbf{Macroscopic Sampling:} Cells serve as sampling volumes for accumulating density, temperature, pressure, and velocity statistics from the particle data.
 \end{enumerate}
 
-The grid resolution must be finer than the local mean free path ($\lambda$) to resolve the shock structure and boundary layer gradients. A grid-factor parameter (default: 0.7) controls the mesh density multiplier; the grid independence of that choice was verified by a four-level study ($70\times70$, $100\times100$, $139\times139$ and $200\times200$ cells, Figure~\ref{fig:grid_independence} and Table~\ref{tab:grid_study}).
+The grid resolution must be finer than the local mean free path ($\lambda$) to resolve the shock structure and boundary layer gradients. A grid-factor parameter (default: 0.7) controls the mesh density multiplier; the sensitivity to that choice was assessed by a four-level study ($70\times70$, $100\times100$, $139\times139$ and $200\times200$ cells, Figure~\ref{fig:grid_independence} and Table~\ref{tab:grid_study}).
 
 \subsection{Grid Independence Study}
 To ensure the numerical solution is independent of the grid resolution, a grid independence study was performed on the reference body at the same freestream condition and trajectory point, at four Cartesian resolutions:
@@ -319,7 +319,7 @@ To ensure the numerical solution is independent of the grid resolution, a grid i
     \end{tabular}
 \end{table}
 
-Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4), with growing successive differences in both. The $139\times139$ grid (19\,321 cells) is retained as the production grid on cost grounds, not because convergence has been demonstrated. The graphical record is Figure~\ref{fig:grid_independence}; the cross-reference table is Table~\ref{tab:grid_study}.
+Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4), with successive differences that grow in the heat-flux series and do not shrink in the drag series. The $139\times139$ grid (19\,321 cells) is retained as the production grid on cost grounds, not because convergence has been demonstrated. The graphical record is Figure~\ref{fig:grid_independence}; the cross-reference table is Table~\ref{tab:grid_study}.
 
 \section{Surface Data Extraction and Flight Metrics}
 

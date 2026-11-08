@@ -11,26 +11,31 @@ The gate executes five legs as a post-optimization stage:
     \item \textbf{DSMC leg.} The selected winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless}} at its geometry, writing to a dedicated results directory. The reference dataset used for the baseline comparison is never overwritten.
     \item \textbf{Refinement leg.} The validation pipeline is executed on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and it records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
-    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q^{\mathrm{DSMC}}_{\mathrm{flux}}/\allowbreak q^{\mathrm{SG}}_{\mathrm{flux}},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is formed from the run's own peak surface convection flux and the Sutton--Graves prediction for the same flown nose radius at the same flight state, and it is applied to the heat-load term of $J(\mathbf{x})$: the corrected objective is $J^{(2)}(\mathbf{x}) = J(\mathbf{x}) + (c-1)\,Q(\mathbf{x})/Q_{target}$, which the implementation realizes as an effective heat-load weight of $c$. The same genetic algorithm is then re-run with that weight --- in closed form, with no solver call --- producing the corrected design of Sec.~\ref{sec:double_pass_ga}.
+    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q^{\mathrm{DSMC}}_{\mathrm{flux}}/\allowbreak q^{\mathrm{SG}}_{\mathrm{flux}},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is formed from the run's own peak surface convection flux and the Sutton--Graves prediction for the same flown nose radius at the gate's baseline correlation
+state ($V_\infty = 2700$\,m/s), and it is applied to the heat-load term of $J(\mathbf{x})$: the corrected objective is $J^{(2)}(\mathbf{x}) = J(\mathbf{x}) + (c-1)\,Q(\mathbf{x})/Q_{target}$, which the implementation realizes as an effective heat-load weight of $c$. The same genetic algorithm is then re-run with that weight --- in closed form, with no solver call --- producing the corrected design of Sec.~\ref{sec:double_pass_ga}.
 \end{enumerate}
 
 \subsection{Final DSMC Verification}
 The gate was exercised on the pass-1 optimum of this campaign: $R_N = 1.3359$\,m, $r_{tor} = 0.1796$\,m,
 $\theta_c = 58.61^\circ$, physical nose radius $0.4898$\,m, six toroids, scalloped skin. The run used
 2200 DSMC steps and the in-process PINN\_AUX leg, and its record is
-\texttt{results/validation\_optimized}. It returned
+\texttt{results/validation\_optimized}. The gate's heat-load metric is analytic: the
+Sutton--Graves stagnation flux at the flown physical nose radius at the gate's baseline
+correlation state ($V_\infty = 2700$\,m/s), held for the fixed $13.582$\,s heating window. It is not the surface-integrated
+DSMC load; the DSMC leg supplies the peak surface flux used for the correction ratio and the
+drag and deceleration values. Evaluated on that geometry, the metric returned
 \begin{equation}
     q_{hybrid} = 175.580\ \text{J/cm}^2 \;>\; Q_{target} = 165.716\ \text{J/cm}^2,
     \label{eq:gate_fail}
 \end{equation}
 so the pass-1 heat-load verdict is a \emph{fail}, by $5.95\,\%$ of the target. The analytic
 screening model had predicted $364.87$\,J/cm\textsuperscript{2} for the same geometry, so the model
-over-predicts the solver's heat load by $2.08$; the discrepancy is the quantity the correction
-factor is built from.
+over-predicts the gate metric by $2.08$; the correction factor itself is built from the
+peak-flux fidelity ratio in the next paragraph, not from this heat-load ratio.
 
 The correction is formed inside that same run, from the run's own peak surface convection flux
 ($1\,688\,940$ W/m\textsuperscript{2}) and the Sutton--Graves prediction for the same flown nose radius
-at the same flight state ($129\,293.3$ W/m\textsuperscript{2}). The raw ratio is $13.0629$, and
+on the gate's baseline correlation state ($129\,293.3$ W/m\textsuperscript{2}). The raw ratio is $13.0629$, and
 $c = \operatorname{clamp}(\cdot, 0.5, 2.0) = 2.0$ sits at the upper bound. The second pass
 therefore runs the same genetic algorithm with an effective heat-load weight of $c = 2.0$, and the
 resulting vehicle $R_N = 3.0000$\,m (physical $D = 6.0000$\,m, nose $1.1000$\,m, torus
@@ -47,14 +52,14 @@ deceleration is $8.357$ g against the reference's $22.720$ g.
 \begin{table}[htbp]
     \centering
     \caption{Two-pass outcome of the recorded GA campaign (2026-10-21): the pass-1 candidate and its
-    DSMC verdict, the bounded correction factor, and the pass-2 candidate and its DSMC verdict.}
+    gate verdict, the bounded correction factor, and the pass-2 candidate and its gate verdict.}
     \label{tab:ga_two_pass}
     \begin{tabularx}{\textwidth}{Xrr}
         \toprule
         \textbf{Quantity} & \textbf{Value} & \textbf{Reference} \\
         \midrule
         Pass-1 body radius $X_1$ (m) & 1.3359 & 1.5000 \\
-        Pass-1 DSMC heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 175.580 & 165.716 \\
+        Pass-1 gate heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 175.580 & 165.716 \\
         Pass-1 gate verdict & \emph{fail} & $q_{hybrid} \leq Q_{target}$ \\
         Correction factor $c$ (clamped from the raw flux ratio 13.0629) & 2.0 & $[0.5, 2.0]$ \\
         Pass-2 body radius $X_1$ (m) & 3.0000 & 1.5000 \\
@@ -62,7 +67,7 @@ deceleration is $8.357$ g against the reference's $22.720$ g.
         Pass-2 physical nose radius $R_n$ (m) & 1.1000 & 0.5500 \\
         Pass-2 torus radius $X_2$ (m) & 0.0500 & 0.1350 \\
         Pass-2 half-cone angle $X_3$ (deg) & 45.9656 & 60.00 \\
-        Pass-2 DSMC heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 117.526 & 165.716 \\
+        Pass-2 gate heat load $q_{hybrid}$ (J/cm\textsuperscript{2}) & 117.526 & 165.716 \\
         Pass-2 gate verdict & \emph{pass} & $q_{hybrid} \leq Q_{target}$ \\
         Pass-2 recorded drag coefficient $C_d$ & 2.7813 & 1.76551 \\
         Pass-2 peak deceleration (g) & 8.357 & 22.720 \\
@@ -108,7 +113,7 @@ Figure~\ref{fig:ref_vs_opt_dsmc} places the three DSMC runs of this work on the 
     \label{fig:ref_vs_opt_dsmc}
 \end{figure}
 
-The heat-load panel is the gate decision in one picture: the reference sits exactly on the target because it is the calibration case, the pass-1 candidate closes above it, and the pass-2 candidate closes well below it. The other three panels show that the three runs are not variations of one another along a single axis. The pass-1 candidate is the highest-drag, highest-deceleration configuration of the three, the pass-2 candidate the lowest of the three in both drag and deceleration, and the reference between them. The pass-2 design is a $6.0$\,m body presented on the reference's $3.0$\,m flight path, and the trajectory-geometry self-consistency of that pairing, together with the surface area actually flown, is stated as an open item in the next subsection rather than folded into the verdict.
+The heat-load panel is the gate decision in one picture: the reference sits exactly on the target because it is the calibration case, the pass-1 candidate closes above it, and the pass-2 candidate closes well below it. The other three panels show that the three runs are not variations of one another along a single axis. The pass-1 candidate is the highest-drag, highest-deceleration configuration of the three, the pass-2 candidate the lowest of the three in both drag and deceleration, and the reference between them. The pass-2 design is a $6.0$\,m body evaluated at its own trajectory state ($52.061$\,km, $692.9$\,m/s, Mach $2.11$, $q = 182.6$\,Pa), not at the reference state ($52.069$\,km, $3101$\,m/s, Mach $9.46$, $q = 3655$\,Pa); the two heat loads therefore span different freestream conditions, and the trajectory-geometry self-consistency of the pairing, together with the surface area actually flown, is stated as an open item in the next subsection rather than folded into the verdict.
 
 \subsection{Interpretation and Limitations}
-The gate was executed on the geometry of Table~\ref{tab:ga_before_after}, and its verdict on that geometry is a fail: the pass-1 candidate carries $175.580$\,J/cm\textsuperscript{{2}} against the $165.716$\,J/cm\textsuperscript{{2}} target. The design that the gate does admit is the pass-2 geometry of Table~\ref{tab:ga_two_pass}, a $6.0000$\,m diameter body, which passes the same gate at $117.526$\,J/cm\textsuperscript{{2}}. The pipeline therefore does what it is meant to do: the first analytic pass proposes a design the solver rejects, the solver's own flux ratio sets the correction, and the second analytic pass proposes a design the solver accepts. What the gate does not establish is a flight-qualified vehicle: every candidate is flown on the reference's matched trajectory, so the trajectory-geometry self-consistency of a $6.0000$\,m body on a $3.0$\,m body's flight path remains open, and it is stated as such rather than absorbed into the result. The pass-2 geometry is also boundary-limited: the body radius sits at the analytic box ceiling and the torus radius at its floor, so it is the best design the stated search box admits rather than an interior optimum.
+The gate was executed on the geometry of Table~\ref{tab:ga_before_after}, and its verdict on that geometry is a fail: the pass-1 candidate carries $175.580$\,J/cm\textsuperscript{{2}} against the $165.716$\,J/cm\textsuperscript{{2}} target. The design that the gate does admit is the pass-2 geometry of Table~\ref{tab:ga_two_pass}, a $6.0000$\,m diameter body, which meets the same numeric target at its own trajectory state at $117.526$\,J/cm\textsuperscript{{2}}. The pipeline therefore does what it is meant to do: the first analytic pass proposes a design the solver rejects, the solver's own flux ratio sets the correction, and the second analytic pass proposes a design the solver accepts. What the gate does not establish is a flight-qualified vehicle: the candidates are not evaluated at a common freestream state, so the trajectory-geometry self-consistency of a $6.0000$\,m body remains open, and it is stated as such rather than absorbed into the result. The pass-2 geometry is also boundary-limited: the body radius sits at the analytic box ceiling and the torus radius at its floor, so it is the best design the stated search box admits rather than an interior optimum.
