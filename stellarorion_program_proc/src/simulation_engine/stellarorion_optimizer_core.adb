@@ -472,4 +472,23 @@ package body StellarOrion_Optimizer_Core with SPARK_Mode => On is
       Converged := (Required > 0) and then (Stag_Count >= Required);
    end Update_Stagnation;
 
+   --  ----------------------------------------------------------------
+   --  Decel_Penalty
+   --
+   --  WHY this shape: the excess is taken with Float'Max rather than an
+   --  if-expression so that the value is a single non-negative Float and
+   --  the square can be bounded by the prover without case analysis.
+   --  WHY the caller clamps: the precondition is part of the contract; the
+   --  optimiser raises when the trajectory model returns a value above
+   --  the 1.0E4 g ceiling, so the check cannot silently wrap.
+   -- ----------------------------------------------------------------
+   function Decel_Penalty
+     (G : Float;
+      Limit : Float) return Float
+   is
+      Excess : constant Float := Float'Max (0.0, G - Limit);
+   begin
+      return Excess * Excess;
+   end Decel_Penalty;
+
 end StellarOrion_Optimizer_Core;

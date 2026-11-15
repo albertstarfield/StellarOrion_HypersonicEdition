@@ -1,0 +1,161 @@
+\chapter{INTRODUCTION}
+\section{Background}
+\label{ch:background}
+In the era of space exploration, technological innovation has consistently served as a primary driver for advancing humanity's frontiers. A persistent challenge in space missions involves ensuring the safe return of spacecraft and payloads to Earth or other celestial bodies with atmospheres. During atmospheric reentry, vehicles traveling at hypersonic speeds encounter extreme aerodynamic heating, which can lead to catastrophic failure if not properly managed. To protect these vehicles from such extreme temperatures, a thermal protection system (TPS) is required.
+\par
+For generations, rigid TPS have been the standard solution for Earth reentry, such as Reusable TPS, Structurally Integrated TPS, Hot Structures, and Ablators~\cite{TPS-stateofIndustryNASA}. However, the size of a rigid heat shield is limited by the launch vehicle's payload fairing, which in turn restricts the size and mass of the reentry vehicle. This limitation poses a challenge for future missions that require the landing of large payloads and flexibility in backup strategies, such as human missions to Mars or the return of large assets from space.
+
+\par
+To address this challenge, deployable entry systems termed inflatable aerodynamic decelerators (IADs) have been developed and are now recognized as non-integrated, flexible TPS~\cite{DiNonnoLOFTID}. These IADs, also known as hypersonic inflatable aerodynamic decelerators (HIADs), are lightweight structures that can be compactly packed during launch and then inflated to substantial sizes before entering the atmosphere. The substantial surface area of an IAD enables significant aerodynamic drag, facilitating the deceleration of large masses at altitudes where the air is less dense and the heating is less severe.
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Rendering of a fully deployed 3.0 m inflatable hypersonic aerodynamic decelerator: a stack of inflated toroidal rings forming a blunt sphere-cone aeroshell.}}%
+\includegraphics[width=0.5\textwidth]{figures/HIADsDeployed.png}%
+\EndAccSupp{}%
+    \caption{HIADs when deployed}
+    \label{fig:Hiaddeployed}
+\end{figure}
+
+\par
+The development of IADs requires an approach that combines aerodynamics, structural mechanics, and materials science. A key component of an IAD is the flexible thermal protection system (FTPS), which is responsible for protecting the inflatable structure from the intense heat of reentry. The FTPS is a multi-layered system that typically consists of an outer fabric, insulation layers, and a gas barrier~\cite{Guo2011Polyimide}. The design and analysis of the FTPS requires accurate modeling of the aerothermal loads and the material response.
+
+\begin{figure}[H]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Diagram of one inflatable aerodynamic decelerator layer: an inflatable toroidal ring with its gas pressure, fabric restraint layers and load-carrying tapes indicated by callout labels.}}%
+\includegraphics[width=0.25\textwidth]{figures/IADsLayer.png}%
+\EndAccSupp{}%
+    \caption{IADs Layer Example}
+    \label{fig:Hiadlayer}
+\end{figure}
+
+\section{Problem Statement}
+The successful design and operation of an IAD depend on the ability to accurately predict and manage the complex aerothermodynamic environment and the fluid-structure interaction (FSI) phenomena that occur during atmospheric reentry. The flexibility of the IAD structure and the FTPS adds a layer of complexity to the analysis that is not present in traditional rigid heat shields. The deformation of the IAD under aerodynamic loads can affect the flow field and the heat transfer to the vehicle, which in turn can affect the structural response.
+
+At hypersonic speeds ($Ma > 5$) and high altitudes ($> 50$ km), the atmospheric density is sufficiently low that the continuum assumption underlying traditional Computational Fluid Dynamics (CFD) begins to break down. The Knudsen number ($Kn$), which characterizes the degree of rarefaction, increases to values where the Navier--Stokes equations are no longer valid. In this transitional regime, particle-based methods such as Direct Simulation Monte Carlo (DSMC) are required to accurately capture the gas dynamics~\cite{bird1994molecular}.
+
+Enhancing the survivability of the HIAD through optimization involves balancing drag performance, peak heating, ballistic coefficient, and structural mass. An automated multi-stage computational framework is required to efficiently explore a high-dimensional design space. Existing parametric CFD approaches are too computationally prohibitive for the thousands of design evaluations needed.
+
+Therefore, there is a critical need for an integrated computational framework that: (1) employs DSMC-based rarefied gas dynamics to accurately predict aerothermal loads in the transitional regime, (2) incorporates automated parametric geometry generation for design space exploration, and (3) applies population-based genetic-algorithm optimization to efficiently identify optimal HIAD configurations.
+
+\section{Research Objective}
+This study aims to develop and validate a computational framework for the aerodynamic analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), utilizing the SPARTA DSMC solver and integrating an enhanced genetic algorithm.
+
+The specific objectives are:
+\begin{enumerate}
+    \item \textbf{Parametric Geometry Generation:} To develop an automated 3D CAD pipeline using CadQuery for generating HIAD profiles based on IRVE-3 specifications, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter for design space exploration.
+
+    \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing the Boltzmann-level molecular collisions and transport phenomena in the transitional flow regime ($0.01 < Kn < 1$) relevant to HIAD reentry at 50--60 km altitude.
+
+    \item \textbf{Knudsen Number Field Mapping:} To analyze the spatial distribution of the Knudsen number across the HIAD surface and surrounding flow field, identifying continuum ($Kn < 0.01$), transitional ($0.01 < Kn < 1$), and, where applicable, free-molecular ($Kn > 1$) regions to characterize the flow physics governing aerothermal loads.
+
+    \item \textbf{Aerothermal Load Prediction:} To determine the surface distributions of heat flux ($\dot{q}$), pressure, and shear stress using the Sutton-Graves stagnation-point correlation and SPARTA surface compute quantities, with validation against IRVE-3 flight data.
+
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+
+    \item \textbf{Survivability Optimization:} To implement a simple Genetic Algorithm (GA) with tournament selection, uniform crossover, Gaussian mutation and elitism for automated optimization of HIAD geometry, targeting ballistic coefficient, total heat load, peak heat flux and drag performance.
+\end{enumerate}
+
+\section{Research Gap}
+Several lacunarities exist in the current state of HIAD aerothermal analysis as identified by the literature review.
+\begin{itemize}
+    \item \textbf{Rarefied Regime Limitation:} Existing HIAD aerothermal studies predominantly rely on continuum CFD (RANS/LES), which is physically inappropriate for the transitional flow regime ($Kn > 0.01$) encountered at reentry altitudes above 50 km. Particle-based DSMC methods have not been systematically applied to HIAD geometry optimization.
+
+    \item The technical meaning is:\textbf{Automated Design Space Exploration:} necessitates manual parametric sweeps with individual CFD runs, rendering high-dimensional design optimization (6+ parameters) impractical. There is no integrated framework that couples automated geometry generation with DSMC simulation and genetic-algorithm optimization.
+
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+
+    \item \textbf{Multi-Objective Survivability Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations using a population genetic algorithm on a closed-form aerothermal cost has not been demonstrated.
+\end{itemize}
+
+\section{Novelty and Contributions}
+This study contributes to the field of hypersonic aerothermodynamic analysis and HIAD design.
+
+\begin{enumerate}
+    \item \textbf{First Integrated DSMC-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), and genetic-algorithm optimization in a unified pipeline for HIAD survivability analysis.
+
+    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the transitional flow regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50 km, enabling physically correct aerothermal load prediction for inflatable decelerators.
+
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+
+    \item \textbf{Multi-Objective Genetic-Algorithm Optimization:} The simultaneous optimization of ballistic coefficient, total heat load, peak heat flux and drag performance with a population GA on an analytic cost demonstrates a computationally efficient approach to HIAD design that would be infeasible with direct DSMC-in-the-loop simulation alone.
+\end{enumerate}
+
+\section{Scope and Limitations}
+
+This research project aims to address the aerothermal properties and survivability enhancement of the Flexible Thermal Protection System (FTPS) under computational resource constraints. The study's scope includes examining the system's performance while adhering to specific boundaries and limitations.
+
+\begin{enumerate}
+    \item \textbf{Geometric Representation:} The HIAD structure is modeled using parametric 3D CAD generation via CadQuery (Python scripting). The 6-toroid stack configuration based on the Rapisarda (2023) MDAO baseline is the primary geometry, with the option to vary toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as a rigid, fully-inflated geometry to isolate the impact of surface topology on the flow field.
+
+    \item \textbf{Dimensionality:} The investigation supports both 2D axisymmetric (via \texttt{--slice-angle}) and full 3D simulations. The 2D axisymmetric mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry, enabling higher particle resolution within computational memory limits. Full 3D simulations are available for off-axis conditions.
+
+    \item \textbf{Numerical Framework:} The gas dynamics are governed by the Boltzmann equation, solved using the Direct Simulation Monte Carlo (DSMC) method as implemented in the SPARTA (Sandia Parallel Algorithm for Real-Time Application) solver~\cite{plimpton2014sparta}. DSMC is valid for rarefied and transitional flows where the continuum assumption fails ($Kn > 0.01$).
+
+    \item \textbf{Gas Model:} A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics is employed. This captures the molecular-level interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry conditions.
+
+    \item \textbf{Grid and Collision Pairing:} While DSMC is a particle method, a Cartesian computational grid is required to restrict collision pairing to $O(N)$ complexity (within cells) and to provide sampling volumes for macroscopic property accumulation. The grid resolution must be finer than the local mean free path ($\lambda$). A grid-factor of 0.7, assessed by a four-level grid independence study (70$\times$70, 100$\times$100, 139$\times$139 and 200$\times$200 cells, Figure~\ref{fig:grid_independence}), is used as the default. The reference run advances with a particle time step of $1\times10^{-6}$\,s for 2200 steps and tracks approximately $1.39\times10^{6}$ simulated particles, of which about $1.19\times10^{6}$ remain at the final step.
+
+    \item \textbf{Thermal Analysis:} Surface heat flux is estimated using the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh}, validated against IRVE-3 flight data. The 1D transient backface temperature model assumes a thermal lag factor ($\eta_{lag} = 0.15$) through the FTPS insulation stack. SPARTA surface kinetic energy quantities are retained as relative shape-ranking signals for the optimizer, not as absolute heat flux values.
+
+    \item \textbf{Optimization:} The Genetic Algorithm explores the design space from a Latin-hypercube initial population, with an analytic cost function as the evaluator and no surrogate or acquisition step.
+\end{enumerate}
+
+\section{Methodology Overview}
+The study employs a multi-stage computational framework to analyze the aerothermal performance and optimize the survivability of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The framework integrates automated parametric geometry generation, DSMC-based rarefied gas dynamics simulation, and Genetic Algorithm optimization. The methodology is designed to compare a smooth rigid sphere-cone baseline against the scalloped inflatable architecture under identical hypersonic flight conditions. The workflow is illustrated in Figure~\ref{fig:flowchart_ch1}.
+
+\begin{figure}[htbp]
+    \centering
+    % flowchart.png is a tall vertical workflow diagram (1760x3600 px,
+    % aspect ratio 0.489). Sizing it by width alone at 0.5\textwidth would give
+    % a ~1000 pt tall image, far beyond the ~600 pt text height, and the float
+    % would be unplaceable ("Float too large for page"). The height is
+    % constrained instead and keepaspectratio derives the width. The 0.80 factor
+    % leaves room for the caption beneath it on the same page.
+    % Regenerated by figures/make_flowchart.py.
+    \BeginAccSupp{method=escape,ActualText={Vertical flowchart of the numerical research workflow, read from top to bottom: Start, then a literature stage comprising a survey of various papers feeding into a literature study and into a data retrieval and familiar-study collection stage (which also replicates the axisymmetric slice model and adjusts if replication fails); a simulation stage that runs the geometry at Mach 10.29, the solver's configured run condition; a parallelogram for the simulation result; a single validation decision asking whether the result is theoretically valid or within the error range, whose No branch is labelled Invalid and loops back to the simulation stage while its Yes branch is labelled valid; then a survivability optimization stage using a genetic algorithm, a data analysis and simulation stage, a conclusion and recommendation stage, and End.}}%
+\includegraphics[height=0.80\textheight, keepaspectratio]{figures/flowchart.png}%
+\EndAccSupp{}%
+    \caption{Research methodology flowchart. The single validation decision carries a feedback loop: an invalid or out-of-range result returns to the simulation stage, and the optimization stage follows that validation gate before the post-optimization data-analysis stage. This is the overview only; the twelve-stage validation run, the DSMC-gated optimization loop and the correction-factor double pass are expanded in Figure~\ref{fig:optimization_flowchart}.}
+    \label{fig:flowchart_ch1}
+\end{figure}
+
+\subsection*{a. Literature Study}
+The initial stage involves a comprehensive literature review of hypersonic aerothermodynamics, rarefied gas dynamics, DSMC methodology, and HIAD design principles. Key topics include the Boltzmann equation, the Direct Simulation Monte Carlo method (~\cite{bird1994molecular}), the Sutton-Graves heating correlation, and the IRVE-3/LOFTID flight experiment results. This establishes the theoretical foundation for the computational framework.
+
+\subsection*{b. Parametric Geometry Generation}
+The 3D CAD models for the HIAD are produced through the application of CadQuery, a Python-based parametric CAD scripting library. The specified geometric parameters, including the aeroshell diameter, forebody cone angle, toroid count, toroid radius, and nose radius, are defined as input parameters for automated generation, resulting in the creation of numerous design variants. These variants are then exported into STL files for SPARTA ingestion.
+
+\subsection*{c. DSMC Simulation}
+The SPARTA solver executes the DSMC simulation within a Docker-containerized Linux environment. The simulation domain is initialized with freestream conditions matching the target trajectory point ($v = 3378$ m/s, $\rho = 7.851 \times 10^{-4}$ kg/m$^3$, $T = 268.41$ K at 51.8 km altitude, from the atmospheric model built into the solver). SPARTA tracks millions of simulated particles, modeling their advection, collisions (VSS model), and surface interactions. Surface computes accumulate force (drag, lift) and energy (heat flux) data, while grid dumps provide field maps of density, temperature, pressure, velocity, and Knudsen number.
+
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% to produce the optimized body, so all PINN material is removed from this
+% thesis deliberately. Do not reintroduce it.
+% NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
+% is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
+% field) and the default optimizer is now a simple genetic algorithm; the
+% Bayesian-optimization material has been removed from this thesis.
+
+\subsection*{d. Survivability Optimization}
+The Genetic Algorithm (GA) optimizes the HIAD geometry through two iterative passes, beginning with a Latin hypercube sample of the design box. The first generation is stratified across all coordinates without employing a factorial screen or response surface. Each candidate is assessed using a closed-form cost derived from the Sutton-Graves correlation, geometric drag law, and ballistic coefficient ratio, avoiding the need for a solver. The solution from the first pass is re-simulated using DSMC, and the measured-to-predicted peak-flux ratio sets a bounded correction factor, which is injected as an effective heat-load weight. The same GA is re-run analytically with the corrected cost, thus reserving SPARTA simulations for reference validation and the two passes for search. The cost function balances total heat load, peak heat flux, ballistic coefficient, and drag coefficient against user-defined reference values, with quadratic penalties for envelope and payload violations.
+
+\subsection*{e. Validation and Analysis}
+The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics are peak heat flux (14.36\,W/cm$^2$ flight, 13.83\,W/cm$^2$ from the MDAO Fay--Riddell reference, and 15.36\,W/cm$^2$ from the Sutton-Graves correlation evaluated at the present DSMC run condition), total heat load (195.06\,J/cm$^2$ flight, 195.17\,J/cm$^2$ from the MDAO reference, and 165.72\,J/cm$^2$ from the gate's single-state Sutton--Graves estimate), and peak deceleration (19.7\,$g$ flight against 22.72\,$g$ from this work). The single-point Sutton--Graves gate estimate under-predicts the flight-integrated heat load by $15.0\%$ because it holds one trajectory state rather than the entry history, while the DSMC deceleration peak over-predicts by $15.3\%$ because it occurs in the early transient at the high-dynamic-pressure condition; the correlation-based stagnation flux is $+6.9\%$ above the flight value and is a scale comparison, not a solver-resolved error. All deviations are quantified in Chapter IV. Both pass winners are re-simulated in SPARTA; the analytic gate metric (Sutton--Graves stagnation flux held for the fixed $13.582$\,s window) fails the pass-1 candidate at 175.580\,J/cm$^2$ and passes the pass-2 candidate at its own trajectory state at 117.526\,J/cm$^2$.
+
+\section{Thesis Outline}
+The thesis is structured with distinct chapters, each serving a specific function in the academic process.
+
+\textbf{CHAPTER I} This chapter contains the research background, problem statement, research objectives, scope of study, methodology overview, and the systematic thesis outline. This section provides an initial overview regarding the rationale for conducting the research, the specific goals to be achieved, and the limitations of the research scope.
+
+\textbf{CHAPTER II} This chapter contains the theoretical framework and literature review supporting this research. It discusses the fundamental concepts of hypersonic aerothermodynamics, the Boltzmann equation and DSMC methodology, the Sutton-Graves heating correlation and genetic algorithm optimization. This chapter also reviews relevant previous studies including IRVE-3 and LOFTID flight experiments.
+
+\textbf{CHAPTER III} This chapter details the research methodology, covering the automated parametric geometry generation using CadQuery, the SPARTA DSMC simulation configuration, the Genetic Algorithm optimization pipeline, and the validation procedures against flight data. It describes the complete computational framework from geometry input to optimized design output.
+
+\textbf{CHAPTER IV} This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework. It covers the baseline IRVE-3 geometry configuration, aerothermal surface distributions, flow field characteristics, validation against flight data, and a comparative analysis with prior Newtonian-panel-based approaches highlighting the methodological advances of the present DSMC framework.
+
+\textbf{CHAPTER V} This chapter contains the summary of research findings derived from the data analysis and optimization results. It presents the final conclusions regarding the aerothermal performance and survivability optimization of the scalloped HIAD and provides recommendations for future researchers and aerospace engineers.
+
+\section*{Chapter Summary}
+This chapter establishes the research context by outlining the background on hypersonic inflatable aerodynamic decelerators (HIADs), highlighting the necessity for accurate aerothermal analysis in the transitional flow regime. The work's novelty is demonstrated through the first DSMC-optimization framework for HIAD design, which addresses the three key research gaps identified in rarefied regime modeling, automated design space exploration, and multi-objective survivability optimization.
+
+This research is confined to the IRVE-3 baseline configuration, 2D axisymmetric and 3D simulations, 5-species air chemistry, and the Sutton-Graves heating correlation. The subsequent chapter provides the theoretical foundations and literature review supporting the computational methodology described in this work.

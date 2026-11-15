@@ -709,6 +709,30 @@ package StellarOrion_Optimization is
     Payload_Height_M    : constant Float := 1.7;
     Payload_Standoff_M  : constant Float := 0.15;  --  TPS + structure wall
 
+    --  G-load (deceleration) constraint.
+    --
+    --  n(x) = q_dyn * Cd(x) * A(x) / (m * g0) at the snapshot state, and the
+    --  design is penalised for exceeding G_Load_Limit.
+    --
+    --  Limit provenance: the Orion structural limit ORION_MAX_G = 25 g
+    --  (stellarorion_orion.ads:72, "g-loads <= 25 g").  IRVE-3 flew a peak of
+    --  19.7 g (stellarorion_postprocessing.ads:35, IRVE3_PEAK_DECEL_G), so
+    --  25 g leaves 5.3 g of headroom over the demonstrated flight value while
+    --  still excluding designs the trajectory model would reject.
+    --
+    --  Mass provenance: IRVE-3 flight mass 281.0 kg
+    --  (stellarorion_pinn_trajectory.ads:62 IRVE3_MASS_KG;
+    --   stellarorion_reports.adb:123).  The GA holds Mass_Kg fixed at the
+    --  same 281.0 kg (stellarorion_optimization.adb:3906), so the analytic
+    --  cost and the flown vehicle use one mass, not two.
+    --
+    --  WHY the term is NOT a hard filter: the same reason as the other
+    --  penalties (spec AXIOM W1/W2) -- a population must be able to move
+    --  through an infeasible region, and a finite quadratic keeps J(x)
+    --  continuous for the GA's tournament selection.
+    HIAD_Mass_Kg        : constant Float := 281.0;
+    G_Load_Limit        : constant Float := 25.0;
+
     --  Snapshot flight condition for the cost-function heat-flux term.
     --  Same single-point condition as the validated DSMC run (step 2200)
     --  and hiad_optimizer.py (_ALTITUDE_KM, _VELOCITY_MS).
@@ -978,7 +1002,8 @@ package StellarOrion_Optimization is
        Beta_Dev        : Float := 0.0;  --  (beta(x)/beta_ref - 1)^2
        Cd_Ratio        : Float := 0.0;  --  Cd(x)/Cd_ref
        Cd_Deficit      : Float := 0.0;  --  max(0,(Cd_Goal-Cd(x))/Cd_Goal)
-       Penalty         : Float := 0.0;  --  envelope + TPS + payload
+       Penalty         : Float := 0.0;  --  envelope + TPS + payload + g-load
+       G_Load          : Float := 0.0;  --  n(x) at the snapshot state [g]
        Total           : Float := 0.0;  --  J(x) = weighted sum
        Heat_Load_Jcm2  : Float := 0.0;  --  Q(x) absolute [J/cm^2]
     end record;
@@ -1060,7 +1085,7 @@ package StellarOrion_Optimization is
     --  PRIMARY OBJECTIVE: lowest Total Heat Load. Secondary terms keep
     --  peak flux, ballistic coefficient, and Cd near their validated
     --  reference values; quadratic penalties enforce the envelope,
-    --  TPS, and payload-size constraints:
+    --  TPS, payload-size, and g-load constraints:
     --
     --    J(x) = W_Heat_Load * [Q(x) / Q_target]            (heat load)
     --         + W_Flux      * [q(x) / q_ref]               (peak flux)
@@ -1068,7 +1093,8 @@ package StellarOrion_Optimization is
     --         + W_Cd        * [max(0,(Cd_Goal - Cd(x))/Cd_Goal)] (drag REWARD)
     --         + Lambda_Pen  * [ max(0, R_max - 3.0)^2       (envelope)
     --                          + max(0, 1.0 - R_N)^2        (TPS min)
-    --                          + max(0, R_pay_min - R_N)^2  (payload) ]
+    --                          + max(0, R_pay_min - R_N)^2  (payload)
+    --                          + max(0, n(x) - 25)^2 ]      (g-load)
     --
     --  where (ALL reference values are loaded DYNAMICALLY via
     --  Set_Validation_Refs from unified_comparison_data.json):

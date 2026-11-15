@@ -619,4 +619,40 @@ package StellarOrion_Optimizer_Core with SPARK_Mode => On is
                    and Tol <= 1.0E30,
           Post => (if Required = 0 then not Converged);
 
+   --  ----------------------------------------------------------------
+   --  Decel_Penalty
+   --
+   --  AXIOMS
+   --    G1. Deceleration is non-negative and, for this vehicle class,
+   --        below 1.0E4 g (the widest physically possible case is a
+   --        gram-scale probe inside a dense atmosphere; the IRVE-3
+   --        class sits two orders below this ceiling).
+   --    G2. The limit is strictly positive: a zero limit would make the
+   --        constraint "n <= 0", which no entry vehicle satisfies, and
+   --        a negative limit is meaningless.
+   --  OVERFLOW PROOF
+   --    excess = max(0, n - limit) in [0, 1.0E4]; excess^2 <= 1.0E8,
+   --    seven orders below Float'Last.  The post bound is therefore
+   --    dischargeable without any assumption on the caller.
+   --  THEORIES
+   --    T1. p = 0 exactly when n <= limit (the feasible set).
+   --    T2. p is monotone non-decreasing in n above the limit.
+   --  APPLICATIONS
+   --    The g-load term of the HIAD composite cost J(x).  It lives here,
+   --    in the SPARK core, rather than in the (SPARK_Mode => Off)
+   --    optimiser body, so that the non-negativity and bound are
+   --    machine-proved instead of argued.
+   --  CITATIONS
+   --    [Nocedal06] Sec 17.1 — quadratic penalty functions.
+   --    [OrionAnalysis] ORION_MAX_G = 25 g (stellarorion_orion.ads:72).
+   -- ----------------------------------------------------------------
+   function Decel_Penalty
+     (G : Float;
+      Limit : Float) return Float
+     with Global => null,
+          Pre  => G >= 0.0 and G <= 1.0E4
+                  and Limit >= 1.0E-3 and Limit <= 1.0E4,
+          Post => Decel_Penalty'Result >= 0.0
+                  and Decel_Penalty'Result <= 1.0E8;
+
 end StellarOrion_Optimizer_Core;

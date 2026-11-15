@@ -3094,7 +3094,15 @@ package body StellarOrion_Optimization is
          Pen_N  : constant Float := Max (0.0, Nose_Radius_Limit - X(1)) ** 2;
          Pen_P  : constant Float :=
            Max (0.0, Payload_Nose_Radius_Min - X(1)) ** 2;
-         Penalty : constant Float := Lambda_Pen * (Pen_R + Pen_N + Pen_P);
+         --  Term 5b: g-load (deceleration) constraint.
+         --  These are VARIABLES, not constants: n(x) divides by the CORRECTED
+         --  drag coefficient, which the DSMC residual above may change, so the
+         --  penalty cannot be frozen in the declarative part.
+         Q_Dyn_Now  : Float;
+         Drag_N_Now : Float;
+         G_Now      : Float;
+         Pen_G      : Float;
+         Penalty    : Float;
          --  Weighted sum: the heat-load term keeps the largest single
          --  weight (primary objective, ads AXIOM W2) while the drag
          --  term rewards a HIGHER drag coefficient (AXIOM W3).
@@ -3168,6 +3176,29 @@ package body StellarOrion_Optimization is
          --  maximises Cd.  Normalised and bounded in [0,1] so
          --  J(x) >= 0 still holds by construction.
          Cd_Deficit := Max (0.0, (Cd_Goal - Cd_Cal) / Cd_Goal);
+         --  Term 5b: g-load (deceleration) penalty at the snapshot state.
+         --    n(x) = q_dyn * Cd(x) * A(x) / (m * g0),   q_dyn = 0.5*rho*V^2
+         --  The divisor mass and the drag force are checked against the
+         --  AXIOMS of Deceleration_G_Load (F in [0, 1e18] N, m in [1e-3, 1e7] kg)
+         --  instead of assuming them: rho and V arrive as runtime data.
+         Q_Dyn_Now  := 0.5 * Rho * Snapshot_Vel_Ms ** 2;
+         Drag_N_Now := Q_Dyn_Now * Cd_Cal * A;
+         if Drag_N_Now < 0.0 or else Drag_N_Now > 1.0e18 then
+            raise Constraint_Error
+              with "HIAD_Cost_Components: drag force outside [0, 1e18] N";
+         end if;
+         G_Now  := Deceleration_G_Load (Drag_N_Now, HIAD_Mass_Kg);
+         --  AXIOM G1 of Decel_Penalty: the ceiling is 1.0E4 g.  Enforced here
+         --  so the SPARK precondition is discharged by a real check, not by an
+         --  assumption about the trajectory model.
+         if G_Now > 1.0E4 then
+            raise Constraint_Error
+              with "HIAD_Cost_Components: deceleration above 1.0E4 g ceiling";
+         end if;
+         Pen_G  := StellarOrion_Optimizer_Core.Decel_Penalty
+                     (G_Now, G_Load_Limit);
+         Penalty := Lambda_Pen * (Pen_R + Pen_N + Pen_P + Pen_G);
+
          --  The heat-load weight is the double pass GA's round-2 injection
          --  point: W_Heat_Load + (c - 1) reproduces
          --  J_round2 = J + (c-1)*heat_load_ratio exactly (W_Heat_Load = 1.0).
@@ -3190,6 +3221,7 @@ package body StellarOrion_Optimization is
                  Cd_Ratio        => Cd_R,
                  Cd_Deficit      => Cd_Deficit,
                  Penalty         => Penalty,
+                 G_Load          => G_Now,
                  Total           => Total,
                  Heat_Load_Jcm2  => Q_Cal);
       end;

@@ -1,0 +1,8 @@
+# Compiled prover artifacts — reproducible from the .v / .lean sources.
+*.vo
+*.vos
+*.vok
+*.glob
+*.aux
+.lia.cache/
+*.nra.cache
