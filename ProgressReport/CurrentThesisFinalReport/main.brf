@@ -1,24 +1,24 @@
-\backcite {AndersonHypersonic}{{xiii}{(document)}{Doc-Start}}
-\backcite {AndersonHypersonic}{{xiii}{(document)}{Doc-Start}}
-\backcite {AndersonHypersonic}{{xv}{(document)}{Doc-Start}}
+\backcite {AndersonHypersonic}{{xiv}{(document)}{Doc-Start}}
+\backcite {AndersonHypersonic}{{xiv}{(document)}{Doc-Start}}
+\backcite {AndersonHypersonic}{{xvi}{(document)}{Doc-Start}}
 \backcite {TPS-stateofIndustryNASA}{{1}{1.1}{section.1.1}}
 \backcite {DiNonnoLOFTID}{{1}{1.1}{section.1.1}}
-\backcite {Guo2011Polyimide}{{2}{1.1}{figure.caption.9}}
+\backcite {Guo2011Polyimide}{{2}{1.1}{figure.caption.10}}
 \backcite {bird1994molecular}{{3}{1.2}{section.1.2}}
 \backcite {plimpton2014sparta}{{6}{3}{Item.11}}
 \backcite {sutton1971gravesh}{{6}{6}{Item.14}}
-\backcite {bird1994molecular}{{7}{1.7}{figure.caption.11}}
-\backcite {rapisarda2023mdao}{{9}{1.7}{figure.caption.11}}
+\backcite {bird1994molecular}{{7}{1.7}{figure.caption.12}}
+\backcite {rapisarda2023mdao}{{9}{1.7}{figure.caption.12}}
 \backcite {AndersonHypersonic}{{14}{2.2}{section.2.2}}
 \backcite {AndersonHypersonic}{{15}{2.2.1}{subsection.2.2.1}}
 \backcite {AndersonHypersonic}{{16}{2.2.2}{subsection.2.2.2}}
-\backcite {AndersonHypersonic}{{17}{2.2}{figure.caption.13}}
+\backcite {AndersonHypersonic}{{17}{2.2}{figure.caption.14}}
 \backcite {AndersonHypersonic}{{18}{2.2.3}{subsection.2.2.3}}
 \backcite {AndersonHypersonic}{{19}{2.3}{section.2.3}}
 \backcite {AndersonHypersonic}{{19}{2.3}{section.2.3}}
 \backcite {AndersonHypersonic}{{20}{2.3.1}{subsection.2.3.1}}
 \backcite {AndersonHypersonic}{{22}{2.3.2}{subsection.2.3.2}}
-\backcite {AndersonHypersonic}{{23}{2.4}{figure.caption.15}}
+\backcite {AndersonHypersonic}{{23}{2.4}{figure.caption.16}}
 \backcite {AndersonHypersonic}{{23}{2.3.3}{subsection.2.3.3}}
 \backcite {aerospace9120800BluntBodyTheory}{{24}{2.3.3}{equation.2.12}}
 \backcite {TPS-stateofIndustryNASA}{{25}{2.4}{section.2.4}}
@@ -53,7 +53,7 @@
 \backcite {menter1994SST}{{46}{2.7}{section.2.7}}
 \backcite {versteeg2007cfd}{{46}{2.7}{section.2.7}}
 \backcite {AndersonHypersonic}{{46}{2.8}{section.2.8}}
-\backcite {AndersonHypersonic}{{47}{2.16}{figure.caption.28}}
+\backcite {AndersonHypersonic}{{47}{2.16}{figure.caption.29}}
 \backcite {AndersonHypersonic}{{47}{2.8.1}{equation.2.34}}
 \backcite {AndersonHypersonic}{{49}{2.8.2}{equation.2.37}}
 \backcite {AndersonHypersonic}{{50}{2.8.3}{subsection.2.8.3}}
@@ -64,7 +64,7 @@
 \backcite {bird1994molecular}{{55}{2.10.4}{subsection.2.10.4}}
 \backcite {bird1994molecular}{{57}{2.10.4}{equation.2.51}}
 \backcite {bird1994molecular}{{57}{2.10.5}{equation.2.52}}
-\backcite {bird1994molecular}{{58}{2.11}{table.caption.33}}
+\backcite {bird1994molecular}{{58}{2.11}{table.caption.34}}
 \backcite {rapisarda2023mdao}{{60}{2.14}{section.2.14}}
 \backcite {dillman2015irve3, old2013irve3postflight}{{60}{2.14}{section.2.14}}
 \backcite {rapisarda2023mdao}{{61}{2.14.2}{subsection.2.14.2}}
@@ -111,8 +111,8 @@
 \backcite {mos2006lowdensity}{{121}{4.12.2}{subsection.4.12.2}}
 \backcite {guo2019hypersonic}{{121}{4.12.3}{subsection.4.12.3}}
 \backcite {AndersonHypersonic}{{121}{4.12.4}{subsection.4.12.4}}
-\backcite {roache1998verification}{{143}{4.25}{figure.caption.87}}
-\backcite {celik2008procedure}{{143}{4.25}{figure.caption.87}}
+\backcite {roache1998verification}{{143}{4.25}{figure.caption.88}}
+\backcite {celik2008procedure}{{143}{4.25}{figure.caption.88}}
 \backcite {rapisarda2023mdao}{{144}{4.16}{section.4.16}}
 \backcite {rapisarda2023mdao}{{144}{4.16.1}{subsection.4.16.1}}
 \backcite {AndersonHypersonic}{{145}{4.16.1}{subsection.4.16.1}}
@@ -128,7 +128,7 @@
 \backcite {bird1994molecular, plimpton2014sparta}{{149}{5.2.3}{subsection.5.2.3}}
 \backcite {AndersonHypersonic}{{150}{5.2.6}{subsection.5.2.6}}
 \backcite {Guidotti2024EFESTO2}{{152}{5.4.4}{subsection.5.4.4}}
-\backcite {*}{{153}{5.4.5}{section*.90}}
+\backcite {*}{{153}{5.4.5}{section*.91}}
 \backcite {spark2014language}{{168}{B.3.1}{subsection.B.3.1}}
 \backcite {sparktools2024gnatprove}{{168}{B.3.1}{subsection.B.3.1}}
 \backcite {sutton1971gravesh}{{172}{D.1}{section.D.1}}
