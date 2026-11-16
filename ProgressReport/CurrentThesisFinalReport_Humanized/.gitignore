@@ -1,0 +1,36 @@
+# Verification temp renders and helper scripts.
+# Session policy: these are per-cycle artifacts and are NEVER committed.
+# Background autosave sweeps untracked files, so they must be ignored here.
+citefix_*.png
+figchk_*.png
+lsfix_*.png
+lscont_*.png
+# Every per-cycle page render, whatever this cycle happened to call it.
+# One pattern replaces the earlier read_p*/readfix_/read_cycle* trio so a new
+# prefix cannot slip through: an hourly autosave sweeps untracked files, so a
+# render committed once is a render tracked forever.
+read*.png
+crop_*.png
+sweep_*.png
+spot_*.png
+r1fix_*.png
+r2_v_*.png
+fix_t_*.png
+cut150_*.png
+cap_lof*
+.figcheck_tmp/
+.tmp_figchk/
+find_dsmc_sentence.py
+verify_lsfix_split.py
+figchk_verify.py
+audit_bands.py
+audit_crop.py
+audit_dash.py
+audit_gaps.py
+audit_geometry.py
+audit_lib.py
+audit_margins.py
+audit_slant.py
+audit_slant2.py
+audit_table2.py
+audit_render.py

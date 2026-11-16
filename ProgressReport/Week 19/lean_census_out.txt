@@ -1,0 +1,6 @@
+proofs/emissivity_census.lean:18:2: error: Tactic `native_decide` evaluated that the proposition
+  survivors 700 900 = [768]
+is false
+proofs/emissivity_census.lean:22:2: error: Tactic `native_decide` evaluated that the proposition
+  (survivors 700 900).length = 1
+is false

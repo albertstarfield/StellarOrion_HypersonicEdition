@@ -1,0 +1,3 @@
+'ConductivityVsSource.conduction_vanishes_on_flat_profile' depends on axioms: [propext]
+'ConductivityVsSource.temperature_dependent_coefficient_still_vanishes' depends on axioms: [propext]
+'ConductivityVsSource.no_coefficient_turns_a_conductivity_into_a_source' depends on axioms: [propext]

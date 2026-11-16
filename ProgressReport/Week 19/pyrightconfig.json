@@ -1,0 +1,7 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "include": ["tools", "make_pptx.py"],
+  "exclude": ["**/obj", "**/__pycache__"],
+  "reportMissingImports": "error"
+}

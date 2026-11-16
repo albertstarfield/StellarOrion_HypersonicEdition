@@ -1,0 +1,5 @@
+'ExponentBudget.equal_apparent_exponent_iff_gradient_scales_linearly' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'ExponentBudget.only_unit_gradient_hides_the_channel' depends on axioms: [propext, Quot.sound]
+'ExponentBudget.exponent_cannot_change_the_carrier' depends on axioms: [propext]

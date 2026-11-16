@@ -1,0 +1,1041 @@
+\appendix
+
+\chapter{StellarOrion Physical Constants and Code Reference}
+\label{app:code_constants}
+
+This appendix documents the physical constants and default parameters used in the StellarOrion simulation engine (\texttt{\seqsplit{stellarorion\_program\_proc}}), providing full traceability between the thesis equations and the Ada/SPARK implementation.
+
+\section{Fundamental Physical Constants}
+\label{sec:fundamental_constants}
+
+Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\seqsplit{stellarorion\_types.ads}}, which are used throughout the aerothermodynamic calculations presented in this thesis.
+
+\begin{table}[H]
+\centering
+\caption{Fundamental physical constants used in StellarOrion (from \texttt{stellarorion\_types.ads}).}
+\label{tab:constants}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
+\hline
+Stefan--Boltzmann & $\sigma_B$ & $5.670374419 \times 10^{-8}$ & W\,m$^{-2}$\,K$^{-4}$ \\
+Boltzmann & $k_B$ & $1.380649 \times 10^{-23}$ & J\,K$^{-1}$ \\
+Avogadro & $N_A$ & $6.02214076 \times 10^{23}$ & mol$^{-1}$ \\
+Standard gravity & $g_0$ & $9.80665$ & m\,s$^{-2}$ \\
+Molar mass of air & $M_{\text{air}}$ & $28.97 \times 10^{-3}$ & kg\,mol$^{-1}$ \\
+Specific gas constant (air) & $R_{\text{air}}$ & $287.058$ & J\,kg$^{-1}$\,K$^{-1}$ \\
+Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & --- \\
+Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
+Prandtl number (air) & $\text{Pr}$ & $0.71$ & --- \\
+Sutherland constant & $S$ & $110.4$ & K \\
+Sutton--Graves coefficient & $C_{SG}$ & $1.7415 \times 10^{-4}$ & W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ \\
+Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa\,s \\
+Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
+Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}$ \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Material Survivability Limits}
+\label{sec:survivability_limits}
+
+Table~\ref{tab:survivability} lists the material failure thresholds used by the \texttt{Is\_Survivable} predicate in \texttt{\seqsplit{stellarorion\_physics.ads}} to determine whether a given flight condition exceeds TPS or structural limits.
+
+\begin{table}[H]
+\centering
+\caption{Material survivability limits enforced by StellarOrion.}
+\label{tab:survivability}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Parameter} & \textbf{Value} & \textbf{Source} \\
+\hline
+SiC maximum temperature & 1673\,K & Material datasheet / Rapisarda (2023) Sec.\ 4.3 \\
+Kapton maximum temperature & 773\,K & DuPont Kapton HN datasheet \\
+Maximum g-load & 25\,$g$ & Rapisarda (2023) Sec.\ 5.4 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Default Vehicle Geometry (IRVE-3 Baseline)}
+\label{sec:vehicle_geometry}
+
+Table~\ref{tab:geometry} presents the default HIAD geometry parameters corresponding to the IRVE-3 flight configuration as implemented in the StellarOrion engine.
+
+\begin{table}[H]
+\centering
+\caption{Default HIAD geometry parameters (IRVE-3 MDAO baseline from Rapisarda, 2023).}
+\label{tab:geometry}
+\begin{tabular}{lll}
+\hline
+\textbf{Parameter} & \textbf{Symbol} & \textbf{Value} \\
+\hline
+Aeroshell diameter & $D$ & 3.0\,m \\
+Cone half-angle & $\theta_c$ & 60\textdegree \\
+Nose radius & $R_N$ & 1.5\,m \\
+Number of toroids & $N_{\text{tor}}$ & 6 \\
+Toroid radius & $r_{\text{tor}}$ & 0.135\,m \\
+Outer toroid radius & $r_{\text{out}}$ & 0.1016\,m \\
+Vehicle mass & $m$ & 281\,kg \\
+Payload height & $h_{\text{pay}}$ & 1.70\,m \\
+Slice angle & $\phi$ & 360\textdegree \\
+Nose profile & --- & Smooth \\
+Skin type & --- & Smooth \\
+Scallop points & $N_{\text{sc}}$ & 8 \\
+Scallop amplitude & $\delta_{\text{sc}}$ & 0.030\,m \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Default Flight Conditions}
+\label{sec:flight_conditions}
+
+Table~\ref{tab:flight} lists the freestream conditions used as the baseline simulation point, corresponding to an altitude of 51.8\,km during IRVE-3 reentry.
+
+\begin{table}[H]
+\centering
+\caption{Default freestream flight conditions at 51.8\,km altitude.}
+\label{tab:flight}
+\begin{tabular}{lll}
+\hline
+\textbf{Parameter} & \textbf{Symbol} & \textbf{Value} \\
+\hline
+Mach number & $M_\infty$ & 10.29 \\
+Altitude & $h$ & 51.8\,km \\
+Freestream velocity & $V_\infty$ & 3378\,m/s \\
+Freestream density & $\rho_\infty$ & $7.851 \times 10^{-4}$\,kg/m$^3$ \\
+Freestream temperature & $T_\infty$ & 268.41\,K \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Thermal Protection System (TPS) Presets}
+\label{sec:tps_presets}
+
+The StellarOrion engine includes several predefined TPS material presets for thermal analysis. Table~\ref{tab:tps} summarizes the available configurations.
+
+\begin{table}[H]
+\centering
+\caption{TPS material presets available in StellarOrion.}
+\label{tab:tps}
+\begin{tabularx}{\textwidth}{l l c c c c c X}
+\hline
+\textbf{Preset} & \textbf{Material} & $\rho$ (kg/m$^3$) & $c_p$ (J/kg\,K) & $k$ (W/m\,K) & $\varepsilon$ & $\delta$ (m) \\
+\hline
+SiC & Nicalon SiC & 1468 & 1100 & 0.20 & 0.75 & 0.0254 \\
+PICA\textsubscript{X} & Phenolic carbon & 320 & 1500 & 0.50 & 0.85 & 0.040 \\
+LOFTID & Nextel/Pyrogel & 300 & 1200 & 0.15 & 0.80 & 0.050 \\
+Kapton & Polyimide film & 1420 & 1090 & 0.12 & 0.70 & 0.005 \\
+Pyrogel & Aerogel insul.\ & 200 & 1000 & 0.02 & 0.85 & 0.025 \\
+Multi & Layer composite & 650 & 1050 & 0.10 & 0.80 & 0.040 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Computational Chemistry Modes}
+\label{sec:chemistry_modes}
+
+Table~\ref{tab:chemistry} documents the gas-phase chemistry models available in the simulation framework.
+
+\begin{table}[H]
+\centering
+\caption{Chemistry modes implemented in StellarOrion.}
+\label{tab:chemistry}
+\begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Mode} & \textbf{Species} & \textbf{Application} \\
+\hline
+5-Species Earth & N$_2$, O$_2$, NO, N, O & Earth entry (default) \\
+11-Species Earth & N$_2$, O$_2$, NO, N, O, N$^+$, O$^+$, NO$^+$, N$_2^+$, O$_2^+$, e$^-$ & High-enthalpy Earth entry with ionization \\
+Mars & CO$_2$, CO, N$_2$, O$_2$, NO, C, O, N, CN, CO$^+$, N$_2^+$ & Mars entry \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Solver Backends}
+\label{sec:solver_backends}
+
+Table~\ref{tab:solvers} lists the computational solver backends supported by the framework.
+
+\begin{table}[H]
+\centering
+\caption{Solver backends in StellarOrion.}
+\label{tab:solvers}
+\begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Solver} & \textbf{Type} & \textbf{Description} \\
+\hline
+SPARTA & DSMC & Primary rarefied gas dynamics solver (Sandia) \\
+OpenFOAM & CFD (RANS) & Continuum flow solver for low-altitude conditions \\
+PyFluent & CFD (ANSYS) & Commercial CFD interface for parametric studies \\
+PyANSYS & CFD (Mechanical) & Structural finite element analysis interface \\
+\hline
+\end{tabularx}
+\end{table}
+
+\chapter{StellarOrion Code Architecture Overview}
+\label{app:code_architecture}
+
+\section{Module Structure}
+
+The StellarOrion simulation engine is implemented in Ada/SPARK and organized into the following key packages:
+
+\begin{itemize}
+    \item \texttt{\seqsplit{stellarorion\_types.ads}} -- Physical constants, type definitions, vehicle and flight parameter records
+    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}} -- Aerothermodynamic calculations (mean free path, Knudsen number, Sutton--Graves heat flux, Fay--Riddell correlation, radiative equilibrium, ballistic coefficient, g-load, trajectory profiling)
+    \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
+    \item \texttt{\seqsplit{stellarorion\_simulation.ads/adb}} -- SPARTA DSMC simulation driver and Docker integration
+    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with Latin-hypercube seeding
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+    \item \texttt{\seqsplit{stellarorion\_calibration.ads/adb}} -- Automated calibration against IRVE-3 flight data
+\end{itemize}
+
+\section{CLI Modes}
+
+The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{\seqsplit{--compareCalibrate}}, \texttt{--optimize}, \texttt{--trajectory}, and others. Refer to the StellarOrion README for complete CLI documentation.
+
+\section{Formal Verification Status}
+\label{app:formal_verification}
+
+\subsection{Methodology}
+The analytical correlations, geometry construction, flight-metric computation, and optimization objective functions of Chapters 2 and 3 are implemented in Ada/SPARK~\cite{spark2014language} and discharged with GNATprove~\cite{sparktools2024gnatprove} at proof level~4.\allowbreak{} The proof gate is a single reproducible command:
+\begin{verbatim}
+cd stellarorion_program_proc && ./scripts/prove.sh 4 --report=all
+\end{verbatim}
+which regenerates the data-representation information, deduplicates the representation JSON artifacts, and then runs \texttt{gnatprove -{}-level=4 -j0}. Running the gate requires no manual intervention and produces a machine-readable summary at \texttt{obj/gnatprove/gnatprove.out}.
+
+\subsection{Results}
+The verified run analyzes 747 checks: 687 are discharged by the prover (92\,\% of all analyzed checks) and the remaining 60 by flow analysis, with no unproved check. The flow-analysis total comprises 12 data-dependency, 15 initialization and 33 termination checks. The per-category breakdown is given in Table~\ref{tab:proof_summary}.
+
+\begin{table}[H]
+    \centering
+    \caption{GNATprove level-4 discharge summary for the official run of 2026-10-21.}
+    \label{tab:proof_summary}
+    \begin{tabularx}{\textwidth}{l r r r r X}
+        \toprule
+        \textbf{Check category} & \textbf{Total} & \textbf{Proved by prover} & \textbf{Proved by flow} & \textbf{Unproved} \\
+        \midrule
+        Run-time checks & 357 & 357 & 0 & 0 \\
+        Assertions & 224 & 224 & 0 & 0 \\
+        Functional contracts & 106 & 106 & 0 & 0 \\
+        Data dependencies & 12 & 0 & 12 & 0 \\
+        Initialization & 15 & 0 & 15 & 0 \\
+        Termination & 33 & 0 & 33 & 0 \\
+        \midrule
+        \textbf{Total} & \textbf{747} & \textbf{687} & \textbf{60} & \textbf{0} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Interpretation and Limitations}
+No check is left unproved in this run. The residual post-processing obligations that the earlier 2026-09-27 run left open --- floating-point overflow and array-index checks in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} --- are now discharged as well, so the gate reports no proof failure anywhere in the analyzed units.
+
+It is equally important to state what the gate does \emph{not} cover. GNATprove analyzes the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 1,900 evaluations of the first optimization pass reported in Figure~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions are formally proven.
+
+This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. The defensible statement is the one in Table~\ref{tab:proof_summary}: every check in the analyzed Ada/SPARK units is discharged, and the residual risk is not a proof failure but the scope boundary --- the Python optimization driver remains outside GNATprove.
+
+\chapter{IRVE-3 Validation Data Summary}
+\label{app:validation_data}
+
+\section{Peak Aerothermal Loads}
+
+Table~\ref{tab:validation_full} provides the complete validation comparison between the IRVE-3 post-flight reconstruction data, the MDAO reference model, and the StellarOrion framework predictions.
+
+\begin{table}[H]
+\centering
+\caption{Complete IRVE-3 validation comparison (peak values).}
+\label{tab:validation_full}
+\small
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|}
+\hline
+\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{Stellar\-Orion (This Work)} & \textbf{SO Error (\%)} \\
+\hline
+Peak heat flux ($\dot{q}$) & 14.36~W/cm\textsuperscript{2} & 13.83~W/cm\textsuperscript{2} & 15.36~W/cm\textsuperscript{2} & $+6.9$ \\
+Total heat load ($Q$) & 195.06~J/cm\textsuperscript{2} & 195.17~J/cm\textsuperscript{2} & 165.72~J/cm\textsuperscript{2} & $-15.0$ \\
+Peak deceleration & 19.7\,$g$ & -- & 22.72\,$g$ & $+15.3$ \\
+Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & -- & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
+Drag coefficient ($C_d$) & -- & -- & 1.4625 & -- \\
+Aeroshell diameter & 3.0\,m & 3.0\,m & 3.0\,m & 0 \\
+Toroid count & 6 & 6 & 6 & 0 \\
+Toroid radius & 0.135\,m & 0.135\,m & 0.135\,m & 0 \\
+\hline
+\end{tabularx}
+\normalsize
+\caption*{Flight data from NASA TP-2013-4012 and Rapisarda (2023) Table 4.10; MDAO values are the Fay--Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid-factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton--Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
+\end{table}
+
+\section{Grid Independence Study Results}
+
+Table~\ref{tab:grid_study} summarizes the grid independence study. Four Cartesian resolutions were run on the reference body at the same freestream condition and trajectory point: $70\times70$ (4\,900 cells), $100\times100$ (10\,000 cells), $139\times139$ (19\,321 cells, the production grid) and $200\times200$ (40\,000 cells). Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4). The production grid is therefore the $139\times139$ level on cost grounds, and Figure~\ref{fig:grid_independence} is the graphical record of the same campaign.
+
+\begin{table}[H]
+\centering
+\caption{Grid independence study: surface quantities across four refinement levels.}
+\label{tab:grid_study}
+\begin{tabular}{ccccc}
+\hline
+\textbf{Level} & \textbf{Grid} & \textbf{Cells} & \textbf{Peak $\dot q$ (MW\,m$^{-2}$)} & \textbf{Drag (kN)} \\
+\hline
+L1 & $70\times70$ & 4\,900 & 2.059 & 48.012 \\
+L2 & $100\times100$ & 10\,000 & 1.946 & 45.918 \\
+L3 & $139\times139$ & 19\,321 & 1.797 & 45.697 \\
+L4 & $200\times200$ & 40\,000 & 1.536 & 44.064 \\
+\hline
+\end{tabular}
+\caption*{Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4), with successive differences that grow in the heat-flux series and do not shrink in the drag series. L3 is the production grid used for every result in this thesis on cost grounds. Values are read from the per-level \texttt{case.json} records; the graphical record is Figure~\ref{fig:grid_independence}.}
+\end{table}
+
+\chapter{Mathematical Derivation Details}
+\label{app:derivations}
+
+\section{Sutton--Graves Heat Flux Derivation}
+
+The Sutton--Graves stagnation-point convective heat flux correlation~\cite{sutton1971gravesh} is given by:
+\begin{equation}
+    \dot{q} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \, V_\infty^3
+    \label{eq:sg_derivation}
+\end{equation}
+
+\noindent where $C_{SG} = 1.7415 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
+
+\subsection{Dimensional Verification}
+
+Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ from ISA at 51.8\,km, $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s):
+\begin{align}
+    \dot{q} &= 1.7415 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
+    &= 1.7415 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
+    &= 1.7415 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
+    &\approx 1.536 \times 10^{5} \text{ W/m}^2 = 15.36 \text{ W/cm}^2
+    \label{eq:sg_baseline}
+\end{align}
+
+\noindent This single-point value is $+6.9\%$ relative to the $14.36$\,W/cm$^2$ flight measurement and $+0.7\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. An earlier revision of this appendix used the coefficient $1.83 \times 10^{-4}$ and reported $16.14$\,W/cm$^2$ for the same condition, about $5\%$ higher than the implemented value; that variant is superseded.
+
+\section{Mean Free Path and Knudsen Number}
+
+The mean free path for a gas of hard-sphere molecules is~\cite{bird1994molecular}:
+\begin{equation}
+    \lambda = \frac{1}{\sqrt{2} \, \pi \, d^2 \, n}
+    \label{eq:mfp_derivation}
+\end{equation}
+
+\noindent where $d = 3.7 \times 10^{-10}$\,m is the molecular diameter and $n$ is the number density. The Knudsen number is then:
+\begin{equation}
+    Kn = \frac{\lambda}{L}
+    \label{eq:kn_derivation}
+\end{equation}
+
+\noindent where $L$ is the characteristic length (aeroshell diameter, $D = 3.0$\,m).
+
+\section{Fay--Riddell Stagnation-Point Heat Transfer}
+
+The Fay--Riddell equation~\cite{fay1958stagnation} provides the theoretically rigorous stagnation-point heat flux for a reacting, dissociated boundary layer:
+\begin{equation}
+    \dot{q}_s = 0.763 \, \text{Pr}^{-0.6} \, (\rho_e \mu_e)^{0.4} \, (\rho_w \mu_w)^{0.1} \, \sqrt{\left(\frac{du_e}{dx}\right)_s} \, (h_s - h_w)
+    \label{eq:fay_riddell}
+\end{equation}
+
+\noindent Unlike the Sutton--Graves correlation, the Fay--Riddell formulation accounts for the actual shock layer structure, chemical non-equilibrium, and catalytic wall effects, making it more physically accurate for HIAD geometries.
+
+\section{Verified Fundamental Identities (LEAN / Rocq)}
+
+The following identities are the closed-form results that the thesis quotes. Each was
+verified numerically in LEAN and, where a symbolic proof is possible, in Rocq.
+
+\subsection{Sutton--Graves stagnation heat flux}
+\begin{equation}
+    \begin{split}
+    \dot{q}_{\text{SG}} &= C_{SG}\sqrt{\frac{\rho_\infty}{R_N}}\,V_\infty^3 \\
+    &= 1.7415\times10^{-4}\sqrt{\frac{7.851\times10^{-4}}{1.5}}\,(3378)^3 \\
+    &\approx 1.5357\times10^{5}\ \mathrm{W\,m^{-2}} = 15.36\ \mathrm{W\,cm^{-2}}
+    \end{split}
+\end{equation}
+
+\subsection{Geometric crest bound}
+\begin{equation}
+    \left(\frac{\dot q_{\text{crest}}}{\dot q_{\text{smooth}}}\right)_{\text{geometric bound}}
+    = \sqrt{\frac{R_N}{r_{\text{tor}}}}
+    = \sqrt{\frac{1.5}{0.135}}
+    = \frac{10}{3} \approx 3.333
+\end{equation}
+
+\subsection{Nose-radius ratio}
+\begin{equation}
+    \kappa = \frac{R_n}{R_N} = \frac{0.55}{1.5} = \frac{11}{30} \approx 0.3667
+\end{equation}
+
+\chapter{Derivation of the Governing Equations}
+\label{app:governing_derivations}
+
+The equations used in Chapter~\ref{ch:methodology} are not independent assumptions; they are successive consequences of a single molecular postulate, taken one level of approximation at a time. This appendix derives them in that order. Nothing is quoted as given except the postulates of Sec.~\ref{app:postulates} and the values of the physical constants; every equation used downstream is obtained by an explicit operation on the one before it, and the point at which an approximation enters is named at the moment it is made.
+
+\section{The Order of the Derivation}
+\label{app:order}
+
+Table~\ref{tab:app_chain} is the map. The left column is the level of description, the middle column the operation that carries the derivation to the next level, and the right column the equation of Chapter~\ref{ch:methodology} that the level finally produces.
+
+\begin{table}[H]
+\centering
+\caption{The derivation chain of this appendix. Each row is obtained from the row above by the operation named in the middle column.}
+\label{tab:app_chain}
+\begin{tabularx}{\textwidth}{@{}c >{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.24\textwidth}@{}}
+\toprule
+\textbf{Level} & \textbf{Description} & \textbf{Operation to the next level} & \textbf{Result} \\
+\midrule
+0 & Postulates & Liouville's theorem on $N$ molecules & $N$-body phase-space density \\
+1 & Kinetic & integration over $N-1$ molecules, molecular chaos & Boltzmann equation, Eq.~\eqref{eq:boltzmann_dsmc} \\
+2 & Moments & multiply by $m$, $m\mathbf{v}$, $\tfrac12 m v^2$ and integrate & exact conservation laws \\
+3 & Continuum & Reynolds transport theorem, Cauchy's stress theorem & Cauchy momentum and energy equations \\
+4 & Closure & Newtonian and Fourier constitutive laws & compressible Navier--Stokes system \\
+5 & Scaling & nondimensionalisation & Knudsen number, Eq.~\eqref{eq:knudsen} \\
+6 & Perturbation & Chapman--Enskog expansion in $Kn$ & transport coefficients $\mu$, $\kappa$ \\
+7 & Stochastic & operator splitting, no-time-counter sampling & DSMC algorithm over the Boltzmann equation \\
+8 & Surface & Planck integration, Fourier conduction & Eqs.~\eqref{eq:thermal_balance}--\eqref{eq:lateral} \\
+9 & Correlation & boundary-layer similarity, cold-wall limit & Sutton--Graves, Eq.~\eqref{eq:sutton_graves} \\
+10 & Flight & Newton's second law on the vehicle & $\beta$ and $n$, Eq.~\eqref{eq:beta_ratio} \\
+11 & Objective & normalisation of the physical responses & cost $J$, Eq.~\eqref{eq:ga_cost} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Postulates}
+\label{app:postulates}
+
+The derivation rests on five statements. The first two are the molecular hypothesis, the third is the statistical assumption that makes the kinetic description tractable, and the last two are the thermodynamic and continuum statements that are shown, rather than assumed, at Levels 3 and 6.
+
+\begin{description}
+    \item[P1 --- Discreteness.] A gas is a collection of $N$ identical molecules of mass $m$, each with a position $\mathbf{x}_i$ and a velocity $\mathbf{v}_i$. The number of molecules in a cubic metre is the number density $n$, and the mass density is $\rho = mn$.
+    \item[P2 --- Short-ranged pair interaction.] The potential energy of the gas is a sum of pair potentials $\phi(r)$ that decay faster than $r^{-2}$, so that a molecule interacts with at most one other molecule at a time (a binary collision), and the collision is elastic: mass, momentum and kinetic energy are conserved in it.
+    \item[P3 --- Molecular chaos (Stosszahlansatz).] The two-molecule distribution function factorises into the product of one-molecule functions for molecules that are about to collide. The assumption is not a consequence of P1 and P2; it is the statistical premise of the kinetic level, and it is the premise that the H-theorem spends~\cite{chapman1970kinetic}.
+    \item[P4 --- Local thermodynamic equilibrium.] The distribution function relaxes, on a length scale of a few mean free paths, to the Maxwellian of the local macroscopic velocity and temperature. This premise is what allows a single temperature field $T(\mathbf{x},t)$ to be spoken of at all.
+    \item[P5 --- Continuum.] The macroscopic fields are differentiable, which requires the mean free path to be small compared with the scale over which the fields change. This premise is a theorem about the limit $Kn \to 0$ rather than an assumption, and Sec.~\ref{app:kn} derives the condition under which it holds.
+\end{description}
+
+\section{Level 1: From Liouville to Boltzmann}
+\label{app:boltzmann}
+
+\subsection{The \texorpdfstring{$N$}{N}-body density and Liouville's theorem}
+
+Assemble the $6N$ coordinates into a single phase-space vector $\Gamma = (\mathbf{x}_1,\mathbf{v}_1,\dots,\mathbf{x}_N,\mathbf{v}_N)$ and let $f^{(N)}(\Gamma,t)$ be the probability density of finding the gas in a volume element $\mathrm{d}\Gamma$ at time $t$. Probability is conserved along the flow, so the continuity equation of the $6N$-dimensional space holds:
+\begin{equation}
+    \frac{\partial f^{(N)}}{\partial t} + \nabla_\Gamma \cdot \left(f^{(N)}\dot{\Gamma}\right) = 0 .
+    \label{eq:app_liouville_continuity}
+\end{equation}
+The microscopic motion is Hamiltonian, $\dot{\mathbf{x}}_i = \mathbf{v}_i$ and $m\dot{\mathbf{v}}_i = \mathbf{F}_i$, with $\mathbf{F}_i = -\nabla_{\mathbf{x}_i}\sum_{j\neq i}\phi(|\mathbf{x}_i-\mathbf{x}_j|) + \mathbf{F}^{\mathrm{ext}}_i$. The phase-space velocity $\dot{\Gamma}$ is therefore divergence-free,
+\begin{equation}
+    \nabla_\Gamma \cdot \dot{\Gamma} = \sum_{i=1}^{N}\left(\frac{\partial \dot{\mathbf{x}}_i}{\partial \mathbf{x}_i} + \frac{\partial \dot{\mathbf{v}}_i}{\partial \mathbf{v}_i}\right) = 0 ,
+    \label{eq:app_divergence_free}
+\end{equation}
+because the first term of each bracket vanishes identically and the second vanishes by $m\dot{\mathbf{v}}_i = -\nabla_{\mathbf{x}_i}\Phi$ with $\Phi$ independent of the velocities. Substituting \eqref{eq:app_divergence_free} into \eqref{eq:app_liouville_continuity} gives Liouville's theorem in its streaming form,
+\begin{equation}
+    \frac{\partial f^{(N)}}{\partial t} + \sum_{i=1}^{N}\left(\mathbf{v}_i\cdot\nabla_{\mathbf{x}_i} + \frac{\mathbf{F}_i}{m}\cdot\nabla_{\mathbf{v}_i}\right) f^{(N)} = 0 .
+    \label{eq:app_liouville}
+\end{equation}
+Equation~\eqref{eq:app_liouville} is exact. It contains everything about the gas and is therefore useless as it stands: it is a partial differential equation in $6N$ variables~\cite{cercignani1988}.
+
+\subsection{Reduction to one molecule}
+
+The observable of interest involves one molecule, so integrate \eqref{eq:app_liouville} over the coordinates of molecules $2$ to $N$ and divide by $N$. Writing $\mathrm{d}z_i = \mathrm{d}\mathbf{x}_i\,\mathrm{d}\mathbf{v}_i$ and $f_1(z_1,t) = N\int f^{(N)}\prod_{i=2}^{N}\mathrm{d}z_i$ for the one-molecule distribution, the streaming terms for $i \ge 2$ integrate to zero at infinity, and what survives is
+\begin{equation}
+    \frac{\partial f_1}{\partial t} + \mathbf{v}_1\cdot\nabla_{\mathbf{x}_1} f_1 + \frac{\mathbf{F}^{\mathrm{ext}}_1}{m}\cdot\nabla_{\mathbf{v}_1} f_1
+    = \frac{N-1}{m}\int \mathbf{F}_{12}\cdot\nabla_{\mathbf{v}_1} f_2(z_1,z_2,t)\,\mathrm{d}z_2 .
+    \label{eq:app_bbgky1}
+\end{equation}
+The right-hand side of \eqref{eq:app_bbgky1} involves the two-molecule distribution $f_2$; the same procedure applied to $f_2$ would introduce $f_3$, and so on through the BBGKY hierarchy. The hierarchy is exact and it never closes. Closing it is the one genuine assumption of the kinetic level.
+
+\subsection{The closure and the collision integral}
+
+Apply P3: for molecules that are approaching one another, $f_2(z_1,z_2,t) = f_1(z_1,t)f_1(z_2,t)$. Evaluating the right-hand side of \eqref{eq:app_bbgky1} with this product, transforming the velocity-space divergence to a surface integral and converting the surface integral over the collision cylinder into an integral over the scattering solid angle gives the Boltzmann equation,
+\begin{equation}
+    \frac{\partial f}{\partial t} + \mathbf{v}\cdot\nabla_{\mathbf{x}} f + \frac{\mathbf{F}}{m}\cdot\nabla_{\mathbf{v}} f
+    = \iint \Bigl[f(\mathbf{v}')f(\mathbf{v}_1') - f(\mathbf{v})f(\mathbf{v}_1)\Bigr]\, g\,\sigma(g,\Omega)\,\mathrm{d}\Omega\,\mathrm{d}^3\mathbf{v}_1 ,
+    \label{eq:app_boltzmann}
+\end{equation}
+where $f \equiv f_1$, $g = |\mathbf{v}-\mathbf{v}_1|$ is the relative speed, $\sigma$ the differential cross-section, and $(\mathbf{v},\mathbf{v}_1) \mapsto (\mathbf{v}',\mathbf{v}_1')$ is the elastic collision map. Equation~\eqref{eq:app_boltzmann} is Eq.~\eqref{eq:boltzmann_dsmc} of Chapter~\ref{ch:methodology}, written there with the collision term abbreviated as $(\delta f/\delta t)_{\mathrm{coll}}$~\cite{boltzmann1872,cercignani1988}.
+
+Three properties of the collision term are used repeatedly below and they follow directly from P2. First, the collision map is its own inverse, so the transformation $(\mathbf{v},\mathbf{v}_1)\mapsto(\mathbf{v}',\mathbf{v}_1')$ has unit Jacobian and can be applied to the integral without changing its value. Second, $g' = g$ for an elastic collision. Third, the map conserves the five quantities $1$, $\mathbf{v}$ and $v^2$ in the sense that $\psi + \psi_1 = \psi' + \psi_1'$ for $\psi \in \{m, m\mathbf{v}, \tfrac12 m v^2\}$.
+
+\subsection{Equilibrium}
+
+A distribution is stationary and spatially uniform when the collision term vanishes. By the second law of thermodynamics the gas relaxes towards such a state, and the proof is Boltzmann's H-theorem: multiplying \eqref{eq:app_boltzmann} by $\ln f$, integrating over velocity and using the three properties above gives
+\begin{equation}
+    \frac{\mathrm{d}H}{\mathrm{d}t} = -\frac{1}{4}\iiint \bigl(\ln f' + \ln f_1' - \ln f - \ln f_1\bigr)\bigl(f'f_1' - ff_1\bigr)\,g\,\sigma\,\mathrm{d}\Omega\,\mathrm{d}^3\mathbf{v}\,\mathrm{d}^3\mathbf{v}_1 \le 0 ,
+    \label{eq:app_htheorem}
+\end{equation}
+with $H = \int f\ln f\,\mathrm{d}^3\mathbf{v}$, because $(a-b)(\ln a - \ln b) \ge 0$~\cite{cercignani1988}. Equality holds if and only if $f'f_1' = ff_1$, that is, if and only if $\ln f$ is a linear combination of the collisional invariants,
+\begin{equation}
+    \ln f = \alpha + \boldsymbol{\beta}\cdot\mathbf{v} + \gamma v^2
+    \quad\Longrightarrow\quad
+    f = n\left(\frac{m}{2\pi kT}\right)^{3/2}\exp\!\left(-\frac{m|\mathbf{v}-\mathbf{u}|^2}{2kT}\right) ,
+    \label{eq:app_maxwellian}
+\end{equation}
+where the five constants are fixed by $\rho$, $\rho\mathbf{u}$ and the internal energy. Equation~\eqref{eq:app_maxwellian} is the Maxwell--Boltzmann distribution, and premise P4 asserts that \eqref{eq:app_maxwellian} is reached locally, with $n$, $\mathbf{u}$ and $T$ promoted to fields.
+
+\section{Level 2: Exact Conservation Laws as Moments}
+\label{app:moments}
+
+\subsection{The moment operation and the invariance lemma}
+
+For any function $\psi(\mathbf{v})$, define the moment $\langle\psi\rangle = \int \psi f\,\mathrm{d}^3\mathbf{v}$. Multiplying \eqref{eq:app_boltzmann} by $\psi$ and integrating over velocity gives
+\begin{equation}
+    \frac{\partial (n\langle\psi\rangle)}{\partial t} + \nabla_{\mathbf{x}}\cdot\left(n\langle \mathbf{v}\psi\rangle\right) - \frac{n}{m}\left\langle \mathbf{F}\cdot\nabla_{\mathbf{v}}\psi\right\rangle
+    = \int \psi \left(\frac{\delta f}{\delta t}\right)_{\mathrm{coll}}\mathrm{d}^3\mathbf{v} .
+    \label{eq:app_transfer}
+\end{equation}
+Symmetrising the collision integral over the four velocity arguments, the right-hand side of \eqref{eq:app_transfer} equals
+\begin{equation}
+    \frac{1}{4}\iiint \bigl(\psi + \psi_1 - \psi' - \psi_1'\bigr)\bigl(f'f_1' - ff_1\bigr)g\,\sigma\,\mathrm{d}\Omega\,\mathrm{d}^3\mathbf{v}\,\mathrm{d}^3\mathbf{v}_1 ,
+    \label{eq:app_symmetrised}
+\end{equation}
+which vanishes identically for the five collisional invariants $\psi = m$, $m\mathbf{v}$, $\tfrac12 m v^2$. This is the microscopic reason conservation laws exist: they are the moments whose collision integral is zero, and the symmetrisation that exhibits it is Maxwell's~\cite{chapman1970kinetic}. Five equations follow, and no more.
+
+\subsection{Zeroth moment: continuity}
+
+With $\psi = m$ the right-hand side of \eqref{eq:app_transfer} vanishes and $\langle \mathbf{v}\rangle = \mathbf{u}$, so
+\begin{equation}
+    \frac{\partial \rho}{\partial t} + \nabla\cdot(\rho\mathbf{u}) = 0 ,
+    \qquad \rho = mn .
+    \label{eq:app_continuity}
+\end{equation}
+
+\subsection{First moment: momentum}
+
+With $\psi = m\mathbf{v}$, and with a body force per unit mass $\mathbf{g} = \mathbf{F}/m$, Eq.~\eqref{eq:app_transfer} gives
+\begin{equation}
+    \frac{\partial(\rho u_i)}{\partial t} + \frac{\partial}{\partial x_j}\left(\rho\langle v_i v_j\rangle\right) = \rho g_i .
+    \label{eq:app_momentum_raw}
+\end{equation}
+The second moment does not close because $\langle v_iv_j\rangle$ is not a function of the five conserved moments. Decompose the velocity into its mean and its peculiar part, $\mathbf{v} = \mathbf{u} + \mathbf{c}$ with $\langle\mathbf{c}\rangle = 0$, and define the pressure and the viscous stress as the trace and the deviator of the second moment of $\mathbf{c}$:
+\begin{equation}
+    p = \frac{m}{3}\int c^2 f\,\mathrm{d}^3\mathbf{v} = \frac{1}{3}\rho\langle c^2\rangle ,
+    \qquad
+    \tau_{ij} = -m\int\left(c_ic_j - \tfrac{1}{3}c^2\delta_{ij}\right)f\,\mathrm{d}^3\mathbf{v} .
+    \label{eq:app_stress_defs}
+\end{equation}
+Then $m\langle v_iv_j\rangle = \rho u_iu_j + p\delta_{ij} - \tau_{ij}$, and \eqref{eq:app_momentum_raw} becomes
+\begin{equation}
+    \frac{\partial(\rho u_i)}{\partial t} + \frac{\partial(\rho u_iu_j)}{\partial x_j}
+    = -\frac{\partial p}{\partial x_i} + \frac{\partial \tau_{ij}}{\partial x_j} + \rho g_i .
+    \label{eq:app_momentum}
+\end{equation}
+Using \eqref{eq:app_continuity}, the left-hand side may be written $\rho\,\mathrm{D}u_i/\mathrm{D}t$, so \eqref{eq:app_momentum} is Newton's second law for a fluid element with the pressure gradient and the divergence of the viscous stress as the surface forces. The Cauchy stress implied by \eqref{eq:app_stress_defs} is $\sigma_{ij} = -p\delta_{ij} + \tau_{ij}$; this identification is the bridge to Level 3.
+
+\subsection{Second moment: total energy}
+
+With $\psi = \tfrac12 m v^2$,
+\begin{equation}
+    \frac{\partial}{\partial t}\left[\rho\left(e + \tfrac12 u^2\right)\right]
+    + \frac{\partial}{\partial x_j}\left[\rho u_j\left(e + \tfrac12 u^2\right)\right]
+    = -\frac{\partial(pu_j)}{\partial x_j} + \frac{\partial(\tau_{ij}u_i)}{\partial x_j} - \frac{\partial q_j}{\partial x_j} + \rho g_iu_i ,
+    \label{eq:app_total_energy}
+\end{equation}
+where the internal energy per unit mass and the heat flux vector are the remaining moments of $\mathbf{c}$,
+\begin{equation}
+    \rho e = \frac{m}{2}\int c^2f\,\mathrm{d}^3\mathbf{v} = \frac{3}{2}p ,
+    \qquad
+    q_j = \frac{m}{2}\int c^2c_jf\,\mathrm{d}^3\mathbf{v} .
+    \label{eq:app_energy_defs}
+\end{equation}
+The first of these is the caloric equation of state for a monatomic gas and it follows from the definition of $p$ alone: internal energy is $\tfrac32$ times the pressure, with no free constant.
+
+\subsection{Mechanical energy and the internal-energy equation}
+
+Multiply \eqref{eq:app_momentum} by $u_i$ and sum over $i$. The result is the mechanical-energy balance,
+\begin{equation}
+    \frac{\partial}{\partial t}\left(\tfrac12\rho u^2\right) + \frac{\partial}{\partial x_j}\left(\tfrac12\rho u^2u_j\right)
+    = -u_j\frac{\partial p}{\partial x_j} + u_i\frac{\partial\tau_{ij}}{\partial x_j} + \rho g_iu_i .
+    \label{eq:app_mech}
+\end{equation}
+Subtracting \eqref{eq:app_mech} from \eqref{eq:app_total_energy}, and using the product rule in the form $u_j\partial p/\partial x_j = \partial(pu_j)/\partial x_j - p\,\partial u_j/\partial x_j$, all of the body-force, pressure-work and stress-work terms of the two equations cancel in pairs except two, leaving
+\begin{equation}
+    \rho\frac{\mathrm{D}e}{\mathrm{D}t} = -p\,\nabla\cdot\mathbf{u} + \tau_{ij}\frac{\partial u_i}{\partial x_j} - \nabla\cdot\mathbf{q} .
+    \label{eq:app_internal_energy}
+\end{equation}
+The three terms on the right of \eqref{eq:app_internal_energy} are, in order, the reversible work of compression, the irreversible work of viscous friction, and the divergence of the heat flux. Equation~\eqref{eq:app_internal_energy} is the first law of thermodynamics written for a material element, and the fact that it came out of the moment hierarchy rather than being postulated is the content of Level 2.
+
+\subsection{The closure problem, stated rather than hidden}
+
+Equations~\eqref{eq:app_continuity}, \eqref{eq:app_momentum} and \eqref{eq:app_internal_energy} are five scalar equations in the five conserved moments $\rho$, $\rho\mathbf{u}$ and $e$. They also contain, as unknowns, the nine components of $\tau_{ij}$, the three components of $q_i$ and the pressure $p$: thirteen unknowns in five equations. The moment hierarchy does not close, and no manipulation of the Boltzmann equation will make it close, because each moment equation introduces the next moment. Two independent closures are needed, and the thesis uses both:
+\begin{enumerate}
+    \item a \emph{constitutive} closure, in which $\tau$ and $\mathbf{q}$ are expressed as gradients of the primitive fields (Levels 3 and 4, valid as $Kn\to 0$), and
+    \item a \emph{stochastic} closure, in which the distribution function itself is represented by simulation particles and the moments are sampled from them (Level 7, valid for all $Kn$).
+\end{enumerate}
+The choice between them is made by the Knudsen number of Sec.~\ref{app:kn}, not by preference.
+
+\section{Level 3: The Continuum Formulation}
+\label{app:continuum}
+
+Level 2 delivered the conservation laws for a gas described by a distribution function. The same laws are traditionally obtained from the axioms of continuum mechanics, and it is worth showing that the two routes agree, because the continuum route is the one that supplies the constitutive framework of Level 4.
+
+\subsection{Reynolds transport theorem}
+
+Let $V(t)$ be a material volume, one that moves with the fluid, and let $\varphi(\mathbf{x},t)$ be any field per unit volume. Then
+\begin{equation}
+    \frac{\mathrm{d}}{\mathrm{d}t}\int_{V(t)}\varphi\,\mathrm{d}V = \int_{V(t)}\left[\frac{\partial\varphi}{\partial t} + \nabla\cdot(\varphi\mathbf{u})\right]\mathrm{d}V .
+    \label{eq:app_rtt}
+\end{equation}
+To prove \eqref{eq:app_rtt}, map the integral back to a fixed reference configuration $\mathbf{X}$ with Jacobian $J = \det(\partial\mathbf{x}/\partial\mathbf{X})$ and use the identity $\mathrm{d}J/\mathrm{d}t = J\,\nabla\cdot\mathbf{u}$, which follows from $\mathrm{d}(\det A)/\mathrm{d}t = \det A\,\operatorname{tr}(A^{-1}\dot{A})$ applied to $A = \partial\mathbf{x}/\partial\mathbf{X}$~\cite{white2006viscous}. Then
+$\frac{\mathrm{d}}{\mathrm{d}t}\int_{V_0}\varphi J\,\mathrm{d}V_0 = \int_{V_0}(\dot\varphi + \varphi\nabla\cdot\mathbf{u})J\,\mathrm{d}V_0$, and transforming back gives \eqref{eq:app_rtt}.
+
+\subsection{Cauchy's stress theorem}
+
+The force exerted by the material outside a surface element on the material inside is assumed to depend on the element only through its outward normal, $\mathbf{t}(\mathbf{n})$, and to be additive over a partition of the surface (Newton's third law in the form of Euler's cut principle). Under these two assumptions Cauchy's theorem states that $\mathbf{t}$ is linear in $\mathbf{n}$, so there exists a second-order tensor $\sigma$ with
+\begin{equation}
+    \mathbf{t}(\mathbf{n}) = \sigma\cdot\mathbf{n} .
+    \label{eq:app_cauchy}
+\end{equation}
+The proof is the tetrahedron argument~\cite{white2006viscous}: apply the momentum balance to a tetrahedron whose three faces are parallel to the coordinate planes and whose inclined face has normal $\mathbf{n}$, let the size shrink, and the volume terms vanish faster than the surface terms, leaving $\mathbf{t}(\mathbf{n}) = n_1\mathbf{t}(\mathbf{e}_1) + n_2\mathbf{t}(\mathbf{e}_2) + n_3\mathbf{t}(\mathbf{e}_3)$. Applying the angular-momentum balance to the same element gives the symmetry $\sigma_{ij} = \sigma_{ji}$ in the absence of body couples.
+
+\subsection{Cauchy's equations of motion}
+
+Apply \eqref{eq:app_rtt} and \eqref{eq:app_cauchy} to mass, momentum and energy over a material volume, and use the divergence theorem to convert the surface integrals. For an arbitrary volume the integrands must vanish, giving the local forms
+\begin{align}
+    \frac{\partial\rho}{\partial t} + \nabla\cdot(\rho\mathbf{u}) &= 0 , \label{eq:app_cauchy_mass}\\
+    \rho\frac{\mathrm{D}u_i}{\mathrm{D}t} &= \frac{\partial\sigma_{ij}}{\partial x_j} + \rho g_i , \label{eq:app_cauchy_momentum}\\
+    \rho\frac{\mathrm{D}}{\mathrm{D}t}\left(e + \tfrac12 u^2\right) &= \frac{\partial(\sigma_{ij}u_i)}{\partial x_j} - \nabla\cdot\mathbf{q} + \rho g_iu_i . \label{eq:app_cauchy_energy}
+\end{align}
+Substituting $\sigma_{ij} = -p\delta_{ij} + \tau_{ij}$ into \eqref{eq:app_cauchy_momentum} reproduces \eqref{eq:app_momentum} exactly, and \eqref{eq:app_cauchy_energy} reproduces \eqref{eq:app_total_energy}. The kinetic-theory route and the continuum route agree identically, which is the statement that the macroscopic fields of Level 2 \emph{are} the continuum fields of Level 3.
+
+\section{Level 4: Constitutive Closure and the Navier--Stokes System}
+\label{app:closure}
+
+Equations~\eqref{eq:app_cauchy_mass}--\eqref{eq:app_cauchy_energy} become a solvable system only when $\sigma$ and $\mathbf{q}$ are expressed in terms of the primitive fields. Two postulates do this, and both are statements about the deviation from local equilibrium: they are the first-order terms of an expansion in the gradients of the fields, which is why they are the natural companions of the $Kn \to 0$ limit derived in Sec.~\ref{app:kn}.
+
+\subsection{Newtonian stress and the Stokes hypothesis}
+
+Assume that the viscous stress is linear in the velocity gradient, that it vanishes when the velocity field is a rigid rotation (objectivity, or frame indifference), and that the fluid is isotropic. The most general such tensor is
+\begin{equation}
+    \tau_{ij} = 2\mu\,\dot{e}_{ij} + \lambda\,(\nabla\cdot\mathbf{u})\,\delta_{ij} ,
+    \qquad
+    \dot{e}_{ij} = \frac{1}{2}\left(\frac{\partial u_i}{\partial x_j} + \frac{\partial u_j}{\partial x_i}\right) ,
+    \label{eq:app_newtonian}
+\end{equation}
+with $\mu$ the dynamic viscosity and $\lambda$ the second viscosity. The trace of \eqref{eq:app_newtonian} is the viscous contribution to the mean normal stress, and the Stokes hypothesis sets it to zero, $\lambda = -\tfrac23\mu$, on the argument that a purely dilational motion of a monatomic gas at low density generates no dissipative normal stress to first order in the Knudsen number. Substituting \eqref{eq:app_newtonian} into \eqref{eq:app_momentum} gives the compressible Navier--Stokes equations,
+\begin{equation}
+    \rho\frac{\mathrm{D}\mathbf{u}}{\mathrm{D}t} = -\nabla p + \nabla\cdot\left[\mu\left(\nabla\mathbf{u} + (\nabla\mathbf{u})^{\mathsf T}\right)\right] - \frac{2}{3}\nabla(\mu\,\nabla\cdot\mathbf{u}) + \rho\mathbf{g} .
+    \label{eq:app_ns}
+\end{equation}
+Equation~\eqref{eq:app_ns} is the form solved by every continuum solver named in this thesis~\cite{white2006viscous,AndersonHypersonic}, and it is also the limit that the DSMC solution must approach when the Knudsen number is small; Sec.~\ref{app:ce} derives the coefficients that appear in it.
+
+\subsection{Fourier's law and the temperature-form energy equation}
+
+Assume in the same way that the heat flux is linear in the temperature gradient and isotropic, and that it vanishes when the temperature is uniform:
+\begin{equation}
+    \mathbf{q} = -\kappa\,\nabla T , \qquad \kappa \ge 0 .
+    \label{eq:app_fourier}
+\end{equation}
+The sign of $\kappa$ is fixed by the second law, since the entropy production of a fluid with \eqref{eq:app_fourier} and \eqref{eq:app_newtonian} is
+\begin{equation}
+    \dot{s}_{\mathrm{gen}} = \frac{1}{T}\left(\tau_{ij}\frac{\partial u_i}{\partial x_j} + \frac{\kappa}{T}|\nabla T|^2\right) \ge 0 ,
+    \label{eq:app_entropy}
+\end{equation}
+which requires $\mu\ge0$ and $\kappa\ge0$. Substituting \eqref{eq:app_newtonian} and \eqref{eq:app_fourier} into \eqref{eq:app_internal_energy} gives the temperature-form energy equation,
+\begin{equation}
+    \rho c_v\frac{\mathrm{D}T}{\mathrm{D}t} = -p\,\nabla\cdot\mathbf{u} + \Phi + \nabla\cdot(\kappa\nabla T) ,
+    \qquad
+    \Phi = \tau_{ij}\frac{\partial u_i}{\partial x_j} \ge 0 ,
+    \label{eq:app_energy_T}
+\end{equation}
+where $\Phi$ is the viscous dissipation function. The non-negativity of $\Phi$ is not an assumption: it follows from \eqref{eq:app_newtonian} by contracting the deviatoric stress with the deviatoric rate of strain, which is a sum of squares.
+
+\subsection{Thermodynamic closure}
+
+Two state relations complete the system. The thermal equation of state follows from the definition of pressure in \eqref{eq:app_stress_defs} evaluated on the Maxwellian \eqref{eq:app_maxwellian}, since $\langle c^2\rangle = 3kT/m$ for that distribution:
+\begin{equation}
+    p = \frac{1}{3}\rho\langle c^2\rangle = \rho\frac{k}{m}T \equiv \rho RT ,
+    \qquad R = \frac{k}{m} .
+    \label{eq:app_eos}
+\end{equation}
+The caloric equation for a gas with constant specific heats follows from $e = c_vT$ together with the definition of enthalpy, $h = e + p/\rho$, and \eqref{eq:app_eos}:
+\begin{equation}
+    h = c_vT + RT = c_pT
+    \quad\Longrightarrow\quad
+    c_p - c_v = R ,
+    \qquad
+    \gamma = \frac{c_p}{c_v} .
+    \label{eq:app_cp_cv}
+\end{equation}
+For the monatomic case, \eqref{eq:app_energy_defs} gives $e = \tfrac32 RT$, hence $c_v = \tfrac32R$ and $\gamma = 5/3$; for the diatomic air of this study $\gamma = 1.4$ and $c_v = R/(\gamma-1)$.
+
+\subsection{The closed system}
+
+Collecting \eqref{eq:app_continuity}, \eqref{eq:app_ns}, \eqref{eq:app_energy_T}, \eqref{eq:app_eos} and \eqref{eq:app_cp_cv} gives the system that the continuum description of a compressible gas consists of: five field equations for $\rho$, $\mathbf{u}$ and $T$, with $\mu(T)$ and $\kappa(T)$ as the only material inputs. The derivation has consumed P1, P2, P4 and P5; the one premise still unquantified is P5 itself, and quantifying it is the purpose of the next section.
+
+\section{Level 5: The Knudsen Number and the Limit of Validity}
+\label{app:kn}
+
+\subsection{Nondimensionalisation of the Boltzmann equation}
+
+Choose a length $L$ over which the macroscopic fields vary by order unity, a speed $V$, and the corresponding time $L/V$, and scale $\mathbf{x} = L\mathbf{x}^*$, $\mathbf{v} = V\mathbf{v}^*$, $t = (L/V)t^*$, $f = (n/V^3)f^*$. The collision integral scales as $n\sigma V$ times $f^{*2}$, so \eqref{eq:app_boltzmann} becomes, in the scaled variables and dropping the asterisks,
+\begin{equation}
+    \frac{\partial f}{\partial t} + \mathbf{v}\cdot\nabla_{\mathbf{x}}f + \frac{\mathbf{F}}{m}\cdot\nabla_{\mathbf{v}}f
+    = \frac{1}{Kn}\left(\frac{\delta f}{\delta t}\right)_{\mathrm{coll}} ,
+    \qquad
+    Kn = \frac{\lambda}{L} ,
+    \label{eq:app_kn_dimensionless}
+\end{equation}
+where $\lambda = 1/(n\sigma_0)$ is the mean free path and $\sigma_0$ a characteristic collision cross-section. Equation~\eqref{eq:app_kn_dimensionless} is the central result of the section: the Knudsen number is not a correlation or a convention, it is the coefficient that multiplies the collision operator once the equation is written in dimensionless form. Every statement about flow regimes follows from the size of that coefficient.
+
+\subsection{The mean free path}
+
+For hard spheres of diameter $d$, a molecule sweeps a collision cylinder of cross-section $\pi d^2$ at the mean relative speed of the encounter. The mean relative speed of two molecules drawn from a Maxwellian is $\sqrt{2}$ times the mean molecular speed, $\langle g\rangle = \sqrt{2}\,\bar{c}$ with $\bar{c} = \sqrt{8kT/(\pi m)}$, because the relative velocity is the difference of two independent Maxwellian velocities and its variance is the sum of the two variances. The collision frequency of one molecule is therefore $\nu = n\pi d^2\langle g\rangle = \sqrt{2}\,n\pi d^2\bar{c}$, and the mean free path is the distance travelled between collisions divided by the number of collisions,
+\begin{equation}
+    \lambda = \frac{\bar{c}}{\nu} = \frac{1}{\sqrt{2}\,\pi d^2 n} .
+    \label{eq:app_mfp}
+\end{equation}
+The $\sqrt2$ is worth isolating: it is the factor by which the mean relative speed exceeds the mean speed, and dropping it overestimates the mean free path by $41\,\%$. For air at the $51.8$\,km condition used throughout this thesis, $\rho_\infty = 7.851\times10^{-4}$\,kg\,m$^{-3}$ gives $n = \rho_\infty/m_{\mathrm{air}} = 1.632\times10^{22}$\,m$^{-3}$, and with an effective hard-sphere diameter $d = 3.7\times10^{-10}$\,m Eq.~\eqref{eq:app_mfp} gives $\lambda = 1.007\times10^{-4}$\,m; with the aeroshell diameter $L = 3.0$\,m this is $Kn = 3.36\times10^{-5}$, and with the $0.1$\,m shock-standoff scale it is $Kn = 1.01\times10^{-3}$.
+
+\subsection{The regime map}
+
+Three limits of \eqref{eq:app_kn_dimensionless} follow:
+\begin{itemize}
+    \item $Kn \to 0$ with the collision term dominant: the distribution is the local Maxwellian \eqref{eq:app_maxwellian} to zeroth order, and the five moment equations of Sec.~\ref{app:moments} close with $\tau = 0$ and $\mathbf{q} = 0$. This is the Euler system.
+    \item $Kn \ll 1$ with the first correction retained: the distribution departs from the Maxwellian by a term of order $Kn$, $\tau$ and $\mathbf{q}$ become the gradient expressions \eqref{eq:app_newtonian} and \eqref{eq:app_fourier}, and the result is the Navier--Stokes system of Sec.~\ref{app:closure}. Sec.~\ref{app:ce} carries out the expansion and supplies $\mu$ and $\kappa$.
+    \item $Kn \gtrsim 0.1$: no truncation of the expansion is defensible, the continuum closure fails, and the distribution function itself must be solved for. This is the regime of the DSMC method of Sec.~\ref{app:dsmc}.
+\end{itemize}
+The threshold used in this thesis, $Kn < 0.01$ for the acceptance of a continuum description, is the standard engineering bound~\cite{tsien1946,bird1994molecular} and sits an order of magnitude below the value at which the first-order correction stops being small. At the trajectory condition of this study $Kn = 3.36\times10^{-5}$, three orders of magnitude below the threshold, so the Euler and Navier--Stokes limits are both available; the DSMC solutions are used not because the continuum fails, but because the thesis requires the shock-layer structure and the surface flux at a fidelity that the correlations do not provide.
+
+\section{Level 6: The Chapman--Enskog Expansion}
+\label{app:ce}
+
+Level 5 asserted that the $\tau$ and $\mathbf{q}$ of the Navier--Stokes system are the first-order terms of an expansion in $Kn$. This section derives them, because the derivation is what fixes the temperature dependence of $\mu$ and $\kappa$, and that temperature dependence is an input to the DSMC collision model of Sec.~\ref{app:vss}.
+
+\subsection{The expansion and its solvability condition}
+
+Write $f = f^{(0)}\left(1 + Kn\,\phi^{(1)} + O(Kn^2)\right)$~\cite{chapman1970kinetic} with $f^{(0)}$ the local Maxwellian \eqref{eq:app_maxwellian}. Substituting into \eqref{eq:app_kn_dimensionless} and collecting powers of $Kn$ gives, at zeroth order, $\mathcal{C}[f^{(0)}] = 0$, which is satisfied identically by the Maxwellian, and at first order the linear integral equation
+\begin{equation}
+    \frac{\partial f^{(0)}}{\partial t} + \mathbf{v}\cdot\nabla_{\mathbf{x}}f^{(0)}
+    = f^{(0)}\,\mathcal{L}[\phi^{(1)}] ,
+    \label{eq:app_ce_first}
+\end{equation}
+where $\mathcal{L}$ is the linearised collision operator, self-adjoint with respect to the weight $f^{(0)}$. Because $\mathcal{L}$ has the five collisional invariants as a null space, \eqref{eq:app_ce_first} has a solution only if its left-hand side is orthogonal to each of them. Evaluating that orthogonality with the Euler equations substituted for the time derivatives of $n$, $\mathbf{u}$ and $T$ gives exactly the five conditions that the Euler solution must satisfy, which is the internal consistency check of the expansion, and it fixes the arbitrary additive part of $\phi^{(1)}$ to the same five-parameter family.
+
+\subsection{The transport coefficients}
+
+The solution of \eqref{eq:app_ce_first} is expanded in Sonine polynomials and substituted into the definitions \eqref{eq:app_stress_defs} and \eqref{eq:app_energy_defs}. The stress and heat-flux integrals then collapse to the gradient forms \eqref{eq:app_newtonian} and \eqref{eq:app_fourier}, with the coefficients
+\begin{equation}
+    \mu = \frac{5}{16}\,\frac{\sqrt{\pi mkT}}{\pi d^2\,\Omega^{(1,1)*}} ,
+    \qquad
+    \kappa = \frac{15}{4}\,\frac{k}{m}\,\mu ,
+    \label{eq:app_mu_kappa}
+\end{equation}
+for a hard-sphere gas of diameter $d$, where $\Omega^{(1,1)*}$ is the reduced collision integral of Chapman and Cowling, equal to unity for hard spheres. The ratio of the two coefficients is the Prandtl number,
+\begin{equation}
+    Pr = \frac{c_p\mu}{\kappa} = \frac{\tfrac52 R\,\mu}{(15/4)(k/m)\mu} = \frac{2}{3} ,
+    \label{eq:app_prandtl}
+\end{equation}
+using $c_p = \tfrac52 R$ for a monatomic gas and $Rm = k$. For polyatomic gases the Eucken correction replaces \eqref{eq:app_prandtl} by a value near $0.7$; the $\tfrac23$ is the kinetic-theory value and it is the one implied by the hard-sphere collision model.
+
+Two consequences of \eqref{eq:app_mu_kappa} are used downstream. First, $\mu \propto \sqrt{T}$ for hard spheres, and the empirical power law $\mu \propto T^{\omega}$ with $\omega \approx 0.74$--$0.77$ for air is the generalisation used by the variable-soft-sphere model. Second, the coefficients are properties of the collision model alone: once $\mu(T)$ is specified, $\kappa$ and $Pr$ follow, and the DSMC simulation and the continuum solver are using the same gas.
+
+\section{Level 7: DSMC as a Solution of the Boltzmann Equation}
+\label{app:dsmc}
+
+\subsection{Operator splitting and convergence}
+
+Write \eqref{eq:app_boltzmann} as $\partial_tf = \mathcal{T}[f] + \mathcal{C}[f]$, with $\mathcal{T}$ the streaming operator and $\mathcal{C}$ the collision operator, and advance one time step by the symmetric splitting
+\begin{equation}
+    f(t+\Delta t) = e^{\mathcal{C}\Delta t/2}\,e^{\mathcal{T}\Delta t}\,e^{\mathcal{C}\Delta t/2}f(t) + O(\Delta t^3) .
+    \label{eq:app_splitting}
+\end{equation}
+The first factor is the collision step, in which particles are paired within a cell and their velocities replaced by post-collision values; the second is the free-flight step, in which every particle moves ballistically; the third is a second collision step. The splitting is the formal justification of the DSMC algorithm~\cite{bird1994molecular}, and it is also the source of its two discretisation errors: $\Delta t$ must be small compared with the mean collision time and the cell size small compared with the mean free path, or the two factors of \eqref{eq:app_splitting} no longer approximate the operators they stand for. Convergence of the method to the solution of \eqref{eq:app_boltzmann} as the number of particles grows is proved by Wagner~\cite{wagner1992}, who shows that the sequence of measures generated by the algorithm converges to the solution of the Boltzmann equation in the limit of infinitely many particles and vanishing time step.
+
+\subsection{The variable soft sphere cross-section}
+\label{app:vss}
+
+The hard-sphere model of \eqref{eq:app_mu_kappa} gives $\mu\propto\sqrt{T}$. Real air is better described by $\mu\propto T^{\omega}$, and the variable-soft-sphere model reproduces that exponent by making the cross-section a function of the relative speed. From the kinetic estimate $\mu \sim \tfrac13\rho\bar{c}\lambda$ with $\lambda = 1/(\sqrt2\,n\sigma)$ and $\bar{c}\propto T^{1/2}$,
+\begin{equation}
+    \mu \propto \frac{T^{1/2}}{\sigma}
+    \quad\Longrightarrow\quad
+    \sigma \propto T^{1/2-\omega} \propto g^{\,1-2\omega} ,
+    \label{eq:app_sigma_scaling}
+\end{equation}
+using $g \propto T^{1/2}$. The VSS cross-section that realises \eqref{eq:app_sigma_scaling} is~\cite{bird1981vss}
+\begin{equation}
+    \sigma = \pi d_{\mathrm{ref}}^2\left(\frac{g_{\mathrm{ref}}}{g}\right)^{2(\omega-1/2)} ,
+    \label{eq:app_vss}
+\end{equation}
+which reduces to the hard-sphere cross-section when $\omega = \tfrac12$. The exponent $2(\omega-\tfrac12)$ is therefore not a free parameter: it is fixed by the viscosity exponent of the gas, and $\omega = 0.5$ recovers the elastic-sphere gas exactly.
+
+\subsection{The no-time-counter collision count}
+\label{app:ntc}
+
+The collision step of \eqref{eq:app_splitting} must select a number of collision pairs per cell per time step that reproduces the physical collision rate. The expected number of collisions suffered by $N$ simulated particles in a cell of volume $V_c$ over $\Delta t$ is
+\begin{equation}
+    N_{\mathrm{coll}} = \frac{1}{2}\,\frac{N^2F_N}{V_c}\,\bigl\langle\sigma_T g\bigr\rangle\,\Delta t ,
+    \label{eq:app_ncoll}
+\end{equation}
+where $F_N$ is the number of real molecules represented by one simulated particle and $\sigma_T$ the total cross-section. Equation~\eqref{eq:app_ncoll} cannot be evaluated directly because $\langle\sigma_T g\rangle$ is the very quantity being simulated. The no-time-counter method of Bird replaces it by an upper bound~\cite{bird1994molecular}: it selects
+\begin{equation}
+    N_{\mathrm{select}} = \frac{1}{2}\,\frac{N^2F_N}{V_c}\,\bigl(\sigma_T g\bigr)_{\max}\,\Delta t
+    \label{eq:app_nselect}
+\end{equation}
+candidate pairs, and accepts each candidate with probability $\sigma_T(g)g\,/\,(\sigma_T g)_{\max}$. The expected number of accepted collisions is then
+\begin{equation}
+    \bigl\langle N_{\mathrm{accepted}}\bigr\rangle = N_{\mathrm{select}}\,\frac{\langle\sigma_T g\rangle}{(\sigma_T g)_{\max}} = \frac{1}{2}\frac{N^2F_N}{V_c}\langle\sigma_T g\rangle\Delta t = N_{\mathrm{coll}} ,
+    \label{eq:app_ntc_identity}
+\end{equation}
+so the rejection sampling is exact in expectation and the only bias it introduces is statistical. The identity \eqref{eq:app_ntc_identity} is the reason the algorithm is called no-time-counter: the collision rate is carried by the selection count rather than by a running timer per particle.
+
+\section{Level 8: Surface Energy Balance}
+\label{app:surface}
+
+The levels so far describe the gas. The thermal model of Chapter~\ref{ch:methodology} couples that gas to a solid, and the coupling consists of two statements: what the surface radiates, and what it conducts.
+
+\subsection{Planck's law and the Stefan--Boltzmann constant}
+
+A black surface at temperature $T$ emits, per unit area into the hemisphere, the flux obtained by integrating Planck's spectral radiance against the cosine of the emission angle:
+\begin{equation}
+    q = \int_0^\infty\!\!\int_{\mathrm{hemisphere}} B_\nu(T)\cos\theta\,\mathrm{d}\Omega\,\mathrm{d}\nu
+    = \pi\int_0^\infty B_\nu(T)\,\mathrm{d}\nu ,
+    \qquad
+    \int_{\mathrm{hemisphere}}\cos\theta\,\mathrm{d}\Omega = \pi ,
+    \label{eq:app_planck_setup}
+\end{equation}
+with $B_\nu = 2h\nu^3c^{-2}\left(e^{h\nu/kT}-1\right)^{-1}$~\cite{planck1901}. Substituting $x = h\nu/kT$,
+\begin{equation}
+    q = \frac{2\pi h}{c^2}\left(\frac{kT}{h}\right)^{4}\int_0^\infty\frac{x^3}{e^x-1}\,\mathrm{d}x .
+    \label{eq:app_planck_integral}
+\end{equation}
+The integral is evaluated by expanding the denominator, $\left(e^x-1\right)^{-1} = \sum_{n\ge1}e^{-nx}$, and integrating term by term:
+\begin{equation}
+    \int_0^\infty\frac{x^3}{e^x-1}\,\mathrm{d}x = \sum_{n=1}^{\infty}\frac{6}{n^4} = 6\,\zeta(4) = \frac{\pi^4}{15} ,
+    \label{eq:app_zeta4}
+\end{equation}
+so that
+\begin{equation}
+    q = \sigma T^4 ,
+    \qquad
+    \sigma = \frac{2\pi^5k^4}{15h^3c^2} = 5.670374419\times10^{-8}\ \mathrm{W\,m^{-2}K^{-4}} ,
+    \label{eq:app_stefan}
+\end{equation}
+with $\zeta(4) = \pi^4/90$ the Riemann zeta value. The constant in \eqref{eq:app_stefan} is not measured: with the 2019 SI values $k = 1.380649\times10^{-23}$\,J\,K$^{-1}$, $h = 6.62607015\times10^{-34}$\,J\,s and $c = 299792458$\,m\,s$^{-1}$, expression \eqref{eq:app_stefan} evaluates to $5.670374419184\times10^{-8}$, which agrees with the CODATA value $5.670374419\times10^{-8}$ in its first ten significant figures, the difference of $3.3\times10^{-11}$ relative being the rounding of the published constant. For a grey surface of emissivity $\epsilon$ the emitted flux is $\epsilon\sigma T^4$.
+
+\subsection{Radiative equilibrium of the hot face}
+
+At the outer surface, the convective flux delivered by the gas is balanced by radiation to the environment and by conduction into the layup. If conduction is neglected, which is the conservative assumption for the hot-face temperature, the balance is $\epsilon\sigma T_{\mathrm{surf}}^4 = \dot{q}_{\mathrm{conv}}$, whose unique positive root is
+\begin{equation}
+    T_{\mathrm{surf}} = \left(\frac{\dot{q}_{\mathrm{stag}}}{\epsilon\sigma}\right)^{1/4} .
+    \label{eq:app_tsurf}
+\end{equation}
+The function $T\mapsto\epsilon\sigma T^4$ is strictly increasing on $T>0$, so \eqref{eq:app_tsurf} is the unique solution of the balance for any positive flux. With the IRVE-3 flexible-TPS emissivity $\epsilon = 0.80$ carried by the thermal runs, \eqref{eq:app_tsurf} gives $T_{\mathrm{surf}} = 1356.4$\,K at the validation flux $1.5357\times10^5$\,W\,m$^{-2}$, and $1436.5$\,K at the flux of the reference thermal-protection solve, $\dot{q}_{SG} = 1.93154\times10^5$\,W\,m$^{-2}$. The solve itself reports $T_{\mathrm{surf}} = 1430.25$\,K, which is $6.2$\,K below its radiative-equilibrium value, and \eqref{eq:app_thermal_balance} accounts for the gap: at that temperature the element radiates $\epsilon\sigma T^4 = 1.8982\times10^5$\,W\,m$^{-2}$ and conducts $(1430.25-300)/0.3056 = 3.70\times10^3$\,W\,m$^{-2}$ through the layup, and the two sum to $1.9352\times10^5$\,W\,m$^{-2}$, equal to the imposed flux to $+0.19\%$. The same closure test at $\epsilon = 0.75$ misses by $-5.95\%$ and at $\epsilon = 0.85$ by $+6.33\%$, so the test also identifies which emissivity the run actually used, and that is not the value the Nicalon SiC preset carries.
+
+\subsection{Transient conduction through the layup}
+
+Inside the solid the energy equation \eqref{eq:app_energy_T} with no flow reduces to Fourier's equation,
+\begin{equation}
+    \rho c_p\frac{\partial T}{\partial t} = \nabla\cdot(\kappa\nabla T) ,
+    \label{eq:app_heat}
+\end{equation}
+and in one dimension through a stack of thickness $\delta$ with an imposed flux at the hot face and an adiabatic back face it has no elementary closed form. Two limits bracket the behaviour. For a semi-infinite solid at uniform initial temperature with a step flux applied at $t=0$, the surface temperature rises as
+\begin{equation}
+    T(0,t) - T_0 = \frac{2\dot{q}}{\sqrt{\pi\rho c_p\kappa}}\sqrt{t} ,
+    \label{eq:app_semi_infinite}
+\end{equation}
+which follows from the similarity variable $\eta = x/\sqrt{4\alpha t}$ with $\alpha = \kappa/(\rho c_p)$; the penetration depth at which the disturbance has decayed to $1/e$ of its surface value is $\delta_p = \sqrt{4\alpha t}$. For a slab of finite thickness with an adiabatic back face and a Biot number small enough that the interior is nearly isothermal, the lumped capacitance of \eqref{eq:app_heat} integrated over the thickness gives instead
+\begin{equation}
+    T_{\mathrm{back}} = T_{\mathrm{init}} + \frac{\dot{q}\,\Delta t}{\rho_{\mathrm{TPS}}c_{p,\mathrm{TPS}}\,\delta_{\mathrm{TPS}}} ,
+    \label{eq:app_lumped}
+\end{equation}
+which is the statement that all of the incident energy is stored in the slab.
+
+\subsection{The lag factor and the composite chain}
+
+Equation~\eqref{eq:app_lumped} is exact only in the limit $\delta_p \gg \delta$, in which the whole thickness has been penetrated. For the few-millimetre layup of this study the penetration depth during the heating pulse is comparable to the thickness, so the back face responds to a fraction of the incident flux rather than to all of it. The transient model of Chapter~\ref{ch:methodology} represents that fraction by a single lag factor $\eta_{\mathrm{lag}}$, defined so that
+\begin{equation}
+    T_{\mathrm{back}} = T_{\mathrm{init}} + \frac{\dot{q}\,\Delta t\,\eta_{\mathrm{lag}}}{\rho_{\mathrm{TPS}}c_{p,\mathrm{TPS}}\,\delta_{\mathrm{TPS}}} ,
+    \qquad \eta_{\mathrm{lag}} = 0.15 ,
+    \label{eq:app_lag}
+\end{equation}
+which is the form used in the thesis. The factor is not a property of the material but of the ratio $\delta_p/\delta$ over the heating pulse: it is the ratio of the energy actually stored in the slab after time $\Delta t$ to the energy that would have been stored if the whole thickness had come to the surface temperature, and it therefore decreases as the pulse shortens or the thickness grows. With the reference values $\rho_{\mathrm{TPS}} = 1468$\,kg\,m$^{-3}$, $c_{p,\mathrm{TPS}} = 1100$\,J\,kg$^{-1}$K$^{-1}$ and $\delta_{\mathrm{TPS}} = 7.106$\,mm, the group multiplying the flux in \eqref{eq:app_lag} is $8.715\times10^{-5}$\,K\,m$^{2}$\,J$^{-1}$, so the $1.93154\times10^5$\,W\,m$^{-2}$ flux of the reference element raises the back face at $2.53$\,K per second with $\eta_{\mathrm{lag}} = 0.15$, and would raise it at $16.83$\,K per second if the whole thickness responded instantaneously. The ratio of the two, $0.15$, is the lag factor itself.
+
+The two surface statements combine into the per-element balance used by the solver. The hot face conducts into the layup with resistance $R = \sum_i\delta_i/\kappa_i$ and radiates to the environment, so the flux delivered by the gas is
+\begin{equation}
+    \dot{q}_{\mathrm{wall}} = \frac{T_{\mathrm{surf}} - T_{\mathrm{back}}}{R} + \epsilon\sigma\left(T_{\mathrm{surf}}^4 - T_\infty^4\right) ,
+    \label{eq:app_thermal_balance}
+\end{equation}
+which is Eq.~\eqref{eq:thermal_balance} of Chapter~\ref{ch:methodology}. The left-hand side is monotone increasing in $T_{\mathrm{surf}}$ because both terms on the right are monotone increasing, so \eqref{eq:app_thermal_balance} has exactly one root; the solver finds it by bisection and Newton iteration. The lateral coupling between neighbouring elements is applied afterwards as a lumped conductance,
+\begin{equation}
+    \dot{q}_{\mathrm{lateral}} = G_{\mathrm{lat}}\left(T_{\mathrm{surf}} - T_{\mathrm{surf}}^{\mathrm{neighbour}}\right) ,
+    \label{eq:app_lateral}
+\end{equation}
+which is Eq.~\eqref{eq:lateral}, and it is applied after the radiative solve on each element rather than inside it, so the two contributions are additive to first order. The conductance $G_{\mathrm{lat}}$ is the sum of the element-to-element sheet conductances $g_{ij}$ of the surface mesh, with units W\,K$^{-1}$, and is assembled from the same shell description that supplies the through-thickness resistance $R$.
+
+\section{Level 9: The Aerothermal Correlations}
+\label{app:correlations}
+
+\subsection{The stagnation-point boundary layer}
+
+The Fay--Riddell solution of the reacting laminar boundary layer at a stagnation point~\cite{fay1958stagnation} gives the convective flux in terms of the edge properties of the flow and the wall enthalpy:
+\begin{equation}
+    \dot{q}_s = 0.763\,Pr^{-0.6}\left(\rho_e\mu_e\right)^{0.4}\left(\rho_w\mu_w\right)^{0.1}\sqrt{\beta}\,\left(h_s - h_w\right) ,
+    \label{eq:app_fr}
+\end{equation}
+with $\beta = \left.\mathrm{d}u_e/\mathrm{d}x\right|_{s}$ the velocity gradient at the stagnation point. The numerical coefficient arises from the similarity solution with binary diffusion and a constant Prandtl number: it is the wall gradient of the self-similar enthalpy profile, and the exponent $-0.6$ is the Prandtl-number dependence of that gradient. The velocity gradient itself follows from the momentum equation evaluated at the stagnation point of a blunt body of nose radius $R_N$,
+\begin{equation}
+    \beta = \frac{1}{R_N}\sqrt{\frac{2\left(p_e - p_w\right)}{\rho_e}} \approx \frac{1}{R_N}\sqrt{\frac{2p_e}{\rho_e}} ,
+    \label{eq:app_beta_s}
+\end{equation}
+the second form holding when the wall pressure is negligible against the post-shock pressure, which is the case at the conditions of this study.
+
+\subsection{Reduction to the Sutton--Graves form}
+
+Substituting \eqref{eq:app_beta_s} into \eqref{eq:app_fr} and collecting the dependence on the three variables that distinguish one trajectory point from another gives
+\begin{equation}
+    \dot{q}_s \propto \left(\rho_e\mu_e\right)^{0.4}\left(\rho_w\mu_w\right)^{0.1}\left(\rho_e\right)^{-1/4}R_N^{-1/2}\left(h_s - h_w\right) .
+    \label{eq:app_fr_scaled}
+\end{equation}
+Three assumptions now reduce \eqref{eq:app_fr_scaled} to a form in the freestream variables alone. First, the shock density ratio is nearly constant over the flight envelope, so $\rho_e \propto \rho_\infty$. Second, the wall is cold relative to the post-shock state, $h_w \ll h_s$, and the total enthalpy is dominated by the kinetic energy, $h_s \approx \tfrac12V_\infty^2$. Third, the wall viscosity and density enter only through the weak power $(0.1)$. With these,
+\begin{equation}
+    \dot{q}_s \propto \rho_\infty^{\,0.4-0.25}\,R_N^{-1/2}\,V_\infty^{2} \times \left(\rho_w\mu_w\right)^{0.1}\mu_e^{0.4}
+    \;\longrightarrow\;
+    \dot{q}_s = C_{SG}\sqrt{\frac{\rho_\infty}{R_N}}\,V_\infty^{3} ,
+    \label{eq:app_sg_reduction}
+\end{equation}
+where the last step uses $\mu_e \propto T_e^{\omega}$ with $T_e \propto V_\infty^2$, so that $\mu_e^{0.4} \propto V_\infty^{0.8\omega} \approx V_\infty^{0.6}$ for $\omega = 0.75$, which combines with the explicit $V_\infty^2$ of the cold-wall enthalpy to give the cubic. Equation~\eqref{eq:app_sg_reduction} is the Sutton--Graves correlation~\cite{sutton1971gravesh}, Eq.~\eqref{eq:sutton_graves} of Chapter~\ref{ch:methodology}, and the exponents $1/2$, $-1/2$ and $3$ are its derivable content.
+
+The constant $C_{SG}$ is not derivable in closed form: it absorbs the similarity coefficient $0.763$, the numerical factors of $\beta$, the density ratio and the viscosity law, and it is obtained by fitting \eqref{eq:app_sg_reduction} to the Fay--Riddell or equilibrium-air solutions over the flight envelope. For Earth air the fitted value is $C_{SG} = 1.7415\times10^{-4}$ in SI units, and it is dimensional,
+\begin{equation}
+    \left[C_{SG}\right] = \mathrm{kg}^{1/2}\,\mathrm{m}^{-1} :
+    \qquad
+    \mathrm{kg}^{1/2}\,\mathrm{m}^{-1}\times\left(\mathrm{kg}\,\mathrm{m}^{-3}\,/\,\mathrm{m}\right)^{1/2}\times\mathrm{m}^3\mathrm{s}^{-3} = \mathrm{kg}\,\mathrm{s}^{-3} = \mathrm{W\,m^{-2}} ,
+    \label{eq:app_sg_units}
+\end{equation}
+so the correlation is not invariant under a change of unit system and must not be used with densities in g/cm$^3$ or radii in centimetres. Section~\ref{app:machine} records a machine-checked proof of the exponent arithmetic in \eqref{eq:app_sg_units}.
+
+\subsection{The correlation at the validation condition}
+
+At the $51.8$\,km IRVE-3 condition, $\rho_\infty = 7.851\times10^{-4}$\,kg\,m$^{-3}$, $R_N = 1.5$\,m and $V_\infty = 3378$\,m\,s$^{-1}$:
+\begin{equation}
+\begin{aligned}
+    \dot{q}_{stag} &= 1.7415\times10^{-4}\sqrt{\frac{7.851\times10^{-4}}{1.5}}\left(3378\right)^{3} \\
+    &= 1.5357\times10^{5}\ \mathrm{W\,m^{-2}} = 15.36\ \mathrm{W\,cm^{-2}} ,
+\end{aligned}
+    \label{eq:app_sg_number}
+\end{equation}
+which is the value quoted in Chapter~\ref{ch:methodology} and is consistent with the trajectory-integrated Sutton--Graves peak reported for IRVE-3~\cite{rapisarda2023mdao}. The same correlation evaluated at the physical nose radius of the optimised geometry, $R_n = \kappa X_1$ of Eq.~\eqref{eq:nose_ratio}, gives the screening flux of $25.36$\,W\,cm$^{-2}$; the difference between the two is the nose radius alone, and it is the reason the thesis distinguishes the validation flux from the screening flux.
+
+\section{Level 10: Flight Metrics}
+\label{app:flight}
+
+\subsection{Drag, ballistic coefficient and deceleration}
+
+The aerodynamic force on the vehicle is $D = \tfrac12\rho_\infty V^2C_DA = \dot{q}C_DA$ with $\dot{q}$ the dynamic pressure, and the ballistic coefficient is defined as the mass divided by the drag area,
+\begin{equation}
+    \beta = \frac{m}{C_DA} .
+    \label{eq:app_beta}
+\end{equation}
+Writing $\beta$ as a ratio to the reference value eliminates the mass and the reference area, leaving
+\begin{equation}
+    \frac{\beta}{\beta_{\mathrm{ref}}} = \frac{C_{d,\mathrm{ref}}\,A_{\mathrm{ref}}}{C_d\,A} ,
+    \label{eq:app_beta_ratio}
+\end{equation}
+which is Eq.~\eqref{eq:beta_ratio} of Chapter~\ref{ch:methodology}. The deceleration follows from Newton's second law, $n = D/(mg_0)$, and substituting \eqref{eq:app_beta} gives the result that deceleration depends on the trajectory variable and the ballistic coefficient alone:
+\begin{equation}
+    n = \frac{\dot{q}C_DA}{mg_0} = \frac{\dot{q}}{\beta g_0} .
+    \label{eq:app_gl}
+\end{equation}
+Equation~\eqref{eq:app_gl} is the reason $\beta$ is the trajectory similarity parameter~\cite{AndersonHypersonic}: two vehicles with the same $\beta$ at the same $\dot{q}$ decelerate identically, whatever their individual masses and areas. Section~\ref{app:machine} records the algebraic identity \eqref{eq:app_gl} as a machine-checked theorem.
+
+\section{Level 11: The Optimisation Objective}
+\label{app:objective}
+
+The four responses derived above are the physical quantities the design must trade. An objective is a scalar that encodes that trade, and it is constructed in three steps: normalise each response so that it is dimensionless and of order unity over the design box, attach a weight that expresses the relative importance of the response, and penalise designs that leave the feasible envelope.
+
+\subsection{Normalisation}
+
+Heat load and peak flux are normalised by their reference values, giving $Q/Q_{\mathrm{target}}$ and $\dot{q}_{SG}/\dot{q}_{\mathrm{ref}}$, both of which are unity at the reference design and dimensionless. The ballistic coefficient enters as a two-sided requirement, since a trajectory match is a target rather than a bound, and a deviation in either direction is equally unacceptable; the appropriate dimensionless measure is the square of the relative deviation,
+\begin{equation}
+    \left(\frac{\beta}{\beta_{\mathrm{ref}}} - 1\right)^{2} \ge 0 ,
+    \label{eq:app_beta_term}
+\end{equation}
+which is smooth, vanishes exactly at $\beta = \beta_{\mathrm{ref}}$, and grows quadratically on both sides. The drag coefficient enters as a one-sided requirement, since more drag is always acceptable and less is not, so it enters as the hinge
+\begin{equation}
+    \max\!\left(0, \frac{C_{d,\mathrm{goal}} - C_d}{C_{d,\mathrm{goal}}}\right) \ge 0 ,
+    \label{eq:app_cd_term}
+\end{equation}
+which is zero once $C_d \ge C_{d,\mathrm{goal}}$ and linear below it. The asymmetry between \eqref{eq:app_beta_term} and \eqref{eq:app_cd_term} is deliberate and is the reason the two terms are not of the same functional form: a ballistic coefficient can be too large, a drag coefficient cannot.
+
+\subsection{The envelope penalty}
+
+The geometric and payload constraints of the design box are not response functions, and they enter as a quadratic penalty on the violation,
+\begin{equation}
+    \Phi(\mathbf{x}) = \max\!\left(0, R_{\max}(\mathbf{x}) - 3.0\right)^{2} + \max\!\left(0, 1.0 - X_1\right)^{2} + \max\!\left(0, R_{N,\mathrm{payload}} - X_1\right)^{2} ,
+    \label{eq:app_penalty}
+\end{equation}
+which is Eq.~\eqref{eq:penalty}. Each term is zero inside the admissible set and strictly positive outside it, so the feasible set is exactly the zero set of $\Phi$.
+
+\subsection{The cost, and its sign}
+
+Combining the normalised responses with weights gives the cost of Eq.~\eqref{eq:ga_cost},
+\begin{equation}
+\begin{aligned}
+    J(\mathbf{x}) = {} & W_{HL}\frac{Q}{Q_{\mathrm{target}}} + W_{q}\frac{\dot{q}_{SG}}{\dot{q}_{\mathrm{ref}}}
+    + W_{\beta}\left(\frac{\beta}{\beta_{\mathrm{ref}}} - 1\right)^{2} \\
+    & + W_{Cd}\max\!\left(0, \frac{C_{d,\mathrm{goal}} - C_d}{C_{d,\mathrm{goal}}}\right)
+    + \Lambda_{\mathrm{pen}}\Phi(\mathbf{x}) .
+\end{aligned}
+    \label{eq:app_cost}
+\end{equation}
+Every term of \eqref{eq:app_cost} is non-negative whenever the weights are non-negative and the normalising responses are positive, which holds throughout the design box since $Q$, $\dot{q}_{SG}$ and $Q_{\mathrm{target}}$ are positive by \eqref{eq:heat_load}. Hence
+\begin{equation}
+    W_{HL}, W_q, W_\beta, W_{Cd}, \Lambda_{\mathrm{pen}} \ge 0 \ \wedge\ Q_{\mathrm{target}}, \dot{q}_{\mathrm{ref}} > 0
+    \;\Longrightarrow\;
+    J(\mathbf{x}) \ge 0 ,
+    \label{eq:app_cost_nonneg}
+\end{equation}
+and the equality $J = 0$ holds only for a design that attains exactly the reference heat load and flux, exactly the reference ballistic coefficient, at least the goal drag, and no constraint violation. The bound \eqref{eq:app_cost_nonneg} matters operationally: the stagnation criterion of the genetic algorithm compares successive best costs, and a cost that could change sign would make that comparison meaningless. Section~\ref{app:machine} records \eqref{eq:app_cost_nonneg} as a machine-checked theorem in both Lean~4 and Rocq.
+
+\section{The Chain Condensed}
+\label{app:chain_table}
+
+Table~\ref{tab:app_results} lists every equation derived above against the equation of Chapter~\ref{ch:methodology} that uses it, so that the provenance of each downstream statement can be checked in one place.
+
+\begin{table}[H]
+\centering
+\caption{Provenance of the governing equations: each result of this appendix and the place it is used.}
+\label{tab:app_results}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.30\textwidth} >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.18\textwidth}@{}}
+\toprule
+\textbf{Result} & \textbf{Derived from} & \textbf{Used at} \\
+\midrule
+Continuity, Eq.~\eqref{eq:app_continuity} & zeroth moment of Boltzmann & Eq.~\eqref{eq:boltzmann_dsmc} \\
+Momentum, Eq.~\eqref{eq:app_momentum} & first moment & Eq.~\eqref{eq:boltzmann_dsmc} \\
+Internal energy, Eq.~\eqref{eq:app_internal_energy} & second moment minus mechanical energy & thermal chain \\
+Navier--Stokes, Eq.~\eqref{eq:app_ns} & Cauchy plus Newtonian closure & continuum solvers \\
+Transport coefficients, Eq.~\eqref{eq:app_mu_kappa} & Chapman--Enskog first order & DSMC gas model \\
+Knudsen number, Eq.~\eqref{eq:app_kn_dimensionless} & dimensionless Boltzmann equation & Eq.~\eqref{eq:knudsen} \\
+VSS cross-section, Eq.~\eqref{eq:app_vss} & $\mu\propto T^{\omega}$ & DSMC collisions \\
+No-time-counter identity, Eq.~\eqref{eq:app_ntc_identity} & rejection sampling in expectation & DSMC collisions \\
+Stefan--Boltzmann, Eq.~\eqref{eq:app_stefan} & Planck integration & Eq.~\eqref{eq:thermal_balance} \\
+Surface temperature, Eq.~\eqref{eq:app_tsurf} & radiative balance & Eq.~\eqref{eq:thermal_balance} \\
+Backface temperature, Eq.~\eqref{eq:app_lag} & lumped capacitance with lag & Eq.~\eqref{eq:thermal_balance} \\
+Sutton--Graves, Eq.~\eqref{eq:app_sg_reduction} & Fay--Riddell, cold wall, constant density ratio & Eq.~\eqref{eq:sutton_graves} \\
+Ballistic coefficient, Eq.~\eqref{eq:app_beta} & drag area & Eq.~\eqref{eq:beta_ratio} \\
+Deceleration, Eq.~\eqref{eq:app_gl} & Newton's second law & screening metric \\
+Cost, Eq.~\eqref{eq:app_cost} & normalised responses and weights & Eq.~\eqref{eq:ga_cost} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Machine-Checked Identities}
+\label{app:machine}
+
+The algebraic steps that are most easily got wrong are checked mechanically rather than by inspection. Three identities are proved in both Lean~4 and Rocq: the exponent arithmetic of the Sutton--Graves units, Eq.~\eqref{eq:app_sg_units}; the equivalence of the two forms of the deceleration, Eq.~\eqref{eq:app_gl}; and the non-negativity of the cost, Eq.~\eqref{eq:app_cost_nonneg}. The proofs are listed below with the file and theorem name, and both provers report no unproved goals and no warnings.
+
+\begin{table}[H]
+\centering
+\caption{Machine-checked algebraic identities of this appendix.}
+\label{tab:app_proofs}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+\toprule
+\textbf{Theorem} & \textbf{Statement} \\
+\midrule
+\texttt{sg\_dimensional\_exponents} & $(1/2,-1,0) + (1/2,-2,0) + (0,3,-3) = (1,0,-3)$ in $(\mathrm{M},\mathrm{L},\mathrm{T})$, i.e.\ Eq.~\eqref{eq:app_sg_units} \\
+\texttt{deceleration\_equivalence} & $C_DA\,\dot{q}/(m g_0) = \dot{q}/(\beta g_0)$ whenever $\beta = m/(C_DA)$, i.e.\ Eq.~\eqref{eq:app_gl} \\
+\texttt{cost\_nonnegative} & $J \ge 0$ for non-negative weights and positive normalisers, i.e.\ Eq.~\eqref{eq:app_cost_nonneg} \\
+\texttt{cost\_zero\_iff} & $J = 0$ iff every term vanishes simultaneously \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent The mechanical check does not replace the derivations of this appendix, and it is not presented as doing so: it verifies the algebra of the final step of each chain, not the physics that produced the step. What it does exclude is the class of error that a long derivation invites, namely a sign, an exponent or an inequality that is wrong in a way that reads as right.

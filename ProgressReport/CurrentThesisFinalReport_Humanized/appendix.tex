@@ -1,0 +1,520 @@
+\appendix
+
+\chapter{StellarOrion Physical Constants and Code Reference}
+\label{app:code_constants}
+
+This appendix documents the physical constants and default parameters used in the StellarOrion simulation engine (\texttt{\seqsplit{stellarorion\_program\_proc}}), providing full traceability between the thesis equations and the Ada/SPARK implementation.
+
+\section{Fundamental Physical Constants}
+\label{sec:fundamental_constants}
+
+Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\seqsplit{stellarorion\_types.ads}}, which are used throughout the aerothermodynamic calculations presented in this thesis.
+
+\begin{table}[H]
+\centering
+\caption{Fundamental physical constants used in StellarOrion (from \texttt{stellarorion\_types.ads}).}
+\label{tab:constants}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
+\hline
+Stefan--Boltzmann & $\sigma_B$ & $5.670374419 \times 10^{-8}$ & W\,m$^{-2}$\,K$^{-4}$ \\
+Boltzmann & $k_B$ & $1.380649 \times 10^{-23}$ & J\,K$^{-1}$ \\
+Avogadro & $N_A$ & $6.02214076 \times 10^{23}$ & mol$^{-1}$ \\
+Standard gravity & $g_0$ & $9.80665$ & m\,s$^{-2}$ \\
+Molar mass of air & $M_{\text{air}}$ & $28.97 \times 10^{-3}$ & kg\,mol$^{-1}$ \\
+Specific gas constant (air) & $R_{\text{air}}$ & $287.058$ & J\,kg$^{-1}$\,K$^{-1}$ \\
+Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & --- \\
+Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
+Prandtl number (air) & $\text{Pr}$ & $0.71$ & --- \\
+Sutherland constant & $S$ & $110.4$ & K \\
+Sutton--Graves coefficient & $C_{SG}$ & $1.7415 \times 10^{-4}$ & W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ \\
+Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa\,s \\
+Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
+Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}$ \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Material Survivability Limits}
+\label{sec:survivability_limits}
+
+Table~\ref{tab:survivability} lists the material failure thresholds used by the \texttt{Is\_Survivable} predicate in \texttt{\seqsplit{stellarorion\_physics.ads}} to determine whether a given flight condition exceeds TPS or structural limits.
+
+\begin{table}[H]
+\centering
+\caption{Material survivability limits enforced by StellarOrion.}
+\label{tab:survivability}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Parameter} & \textbf{Value} & \textbf{Source} \\
+\hline
+SiC maximum temperature & 1673\,K & Material datasheet / Rapisarda (2023) Sec.\ 4.3 \\
+Kapton maximum temperature & 773\,K & DuPont Kapton HN datasheet \\
+Maximum g-load & 25\,$g$ & Rapisarda (2023) Sec.\ 5.4 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Default Vehicle Geometry (IRVE-3 Baseline)}
+\label{sec:vehicle_geometry}
+
+Table~\ref{tab:geometry} presents the default HIAD geometry parameters corresponding to the IRVE-3 flight configuration as implemented in the StellarOrion engine.
+
+\begin{table}[H]
+\centering
+\caption{Default HIAD geometry parameters (IRVE-3 MDAO baseline from Rapisarda, 2023).}
+\label{tab:geometry}
+\begin{tabular}{lll}
+\hline
+\textbf{Parameter} & \textbf{Symbol} & \textbf{Value} \\
+\hline
+Aeroshell diameter & $D$ & 3.0\,m \\
+Cone half-angle & $\theta_c$ & 60\textdegree \\
+Nose radius & $R_N$ & 1.5\,m \\
+Number of toroids & $N_{\text{tor}}$ & 6 \\
+Toroid radius & $r_{\text{tor}}$ & 0.135\,m \\
+Outer toroid radius & $r_{\text{out}}$ & 0.1016\,m \\
+Vehicle mass & $m$ & 281\,kg \\
+Payload height & $h_{\text{pay}}$ & 1.70\,m \\
+Slice angle & $\phi$ & 360\textdegree \\
+Nose profile & --- & Smooth \\
+Skin type & --- & Smooth \\
+Scallop points & $N_{\text{sc}}$ & 8 \\
+Scallop amplitude & $\delta_{\text{sc}}$ & 0.030\,m \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Default Flight Conditions}
+\label{sec:flight_conditions}
+
+Table~\ref{tab:flight} lists the freestream conditions used as the baseline simulation point, corresponding to an altitude of 51.8\,km during IRVE-3 reentry.
+
+\begin{table}[H]
+\centering
+\caption{Default freestream flight conditions at 51.8\,km altitude.}
+\label{tab:flight}
+\begin{tabular}{lll}
+\hline
+\textbf{Parameter} & \textbf{Symbol} & \textbf{Value} \\
+\hline
+Mach number & $M_\infty$ & 10.29 \\
+Altitude & $h$ & 51.8\,km \\
+Freestream velocity & $V_\infty$ & 3378\,m/s \\
+Freestream density & $\rho_\infty$ & $7.851 \times 10^{-4}$\,kg/m$^3$ \\
+Freestream temperature & $T_\infty$ & 268.41\,K \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Thermal Protection System (TPS) Presets}
+\label{sec:tps_presets}
+
+The StellarOrion engine includes several predefined TPS material presets for thermal analysis. Table~\ref{tab:tps} summarizes the available configurations.
+
+\begin{table}[H]
+\centering
+\caption{TPS material presets available in StellarOrion.}
+\label{tab:tps}
+\begin{tabularx}{\textwidth}{l l c c c c c X}
+\hline
+\textbf{Preset} & \textbf{Material} & $\rho$ (kg/m$^3$) & $c_p$ (J/kg\,K) & $k$ (W/m\,K) & $\varepsilon$ & $\delta$ (m) \\
+\hline
+SiC & Nicalon SiC & 1468 & 1100 & 0.20 & 0.75 & 0.0254 \\
+PICA\textsubscript{X} & Phenolic carbon & 320 & 1500 & 0.50 & 0.85 & 0.040 \\
+LOFTID & Nextel/Pyrogel & 300 & 1200 & 0.15 & 0.80 & 0.050 \\
+Kapton & Polyimide film & 1420 & 1090 & 0.12 & 0.70 & 0.005 \\
+Pyrogel & Aerogel insul.\ & 200 & 1000 & 0.02 & 0.85 & 0.025 \\
+Multi & Layer composite & 650 & 1050 & 0.10 & 0.80 & 0.040 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Computational Chemistry Modes}
+\label{sec:chemistry_modes}
+
+Table~\ref{tab:chemistry} documents the gas-phase chemistry models available in the simulation framework.
+
+\begin{table}[H]
+\centering
+\caption{Chemistry modes implemented in StellarOrion.}
+\label{tab:chemistry}
+\begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Mode} & \textbf{Species} & \textbf{Application} \\
+\hline
+5-Species Earth & N$_2$, O$_2$, NO, N, O & Earth entry (default) \\
+11-Species Earth & N$_2$, O$_2$, NO, N, O, N$^+$, O$^+$, NO$^+$, N$_2^+$, O$_2^+$, e$^-$ & High-enthalpy Earth entry with ionization \\
+Mars & CO$_2$, CO, N$_2$, O$_2$, NO, C, O, N, CN, CO$^+$, N$_2^+$ & Mars entry \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Solver Backends}
+\label{sec:solver_backends}
+
+Table~\ref{tab:solvers} lists the computational solver backends supported by the framework.
+
+\begin{table}[H]
+\centering
+\caption{Solver backends in StellarOrion.}
+\label{tab:solvers}
+\begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Solver} & \textbf{Type} & \textbf{Description} \\
+\hline
+SPARTA & DSMC & Primary rarefied gas dynamics solver (Sandia) \\
+OpenFOAM & CFD (RANS) & Continuum flow solver for low-altitude conditions \\
+PyFluent & CFD (ANSYS) & Commercial CFD interface for parametric studies \\
+PyANSYS & CFD (Mechanical) & Structural finite element analysis interface \\
+\hline
+\end{tabularx}
+\end{table}
+
+\chapter{StellarOrion Code Architecture Overview}
+\label{app:code_architecture}
+
+\section{Module Structure}
+
+The StellarOrion simulation engine is implemented in Ada/SPARK and organized into the following key packages:
+
+\begin{itemize}
+    \item \texttt{\seqsplit{stellarorion\_types.ads}} -- Physical constants, type definitions, vehicle and flight parameter records
+    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}} -- Aerothermodynamic calculations (mean free path, Knudsen number, Sutton--Graves heat flux, Fay--Riddell correlation, radiative equilibrium, ballistic coefficient, g-load, trajectory profiling)
+    \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
+    \item \texttt{\seqsplit{stellarorion\_simulation.ads/adb}} -- SPARTA DSMC simulation driver and Docker integration
+    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with Latin-hypercube seeding
+% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+    \item \texttt{\seqsplit{stellarorion\_calibration.ads/adb}} -- Automated calibration against IRVE-3 flight data
+\end{itemize}
+
+\section{CLI Modes}
+
+The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{\seqsplit{--compareCalibrate}}, \texttt{--optimize}, \texttt{--trajectory}, and others. Refer to the StellarOrion README for complete CLI documentation.
+
+\section{Formal Verification Status}
+\label{app:formal_verification}
+
+\subsection{Methodology}
+The analytical correlations, geometry construction, flight-metric computation, and optimization objective functions of Chapters 2 and 3 are implemented in Ada/SPARK~\cite{spark2014language} and discharged with GNATprove~\cite{sparktools2024gnatprove} at proof level~4.\allowbreak{} The proof gate is a single reproducible command:
+\begin{verbatim}
+cd stellarorion_program_proc && ./scripts/prove.sh 4 --report=all
+\end{verbatim}
+which regenerates the data-representation information, deduplicates the representation JSON artifacts, and then runs \texttt{gnatprove -{}-level=4 -j0}. Running the gate requires no manual intervention and produces a machine-readable summary at \texttt{obj/gnatprove/gnatprove.out}.
+
+\subsection{Results}
+The verified run analyzes 747 checks: 687 are discharged by the prover (92\,\% of all analyzed checks) and the remaining 60 by flow analysis, with no unproved check. The flow-analysis total comprises 12 data-dependency, 15 initialization and 33 termination checks. The per-category breakdown is given in Table~\ref{tab:proof_summary}.
+
+\begin{table}[H]
+    \centering
+    \caption{GNATprove level-4 discharge summary for the official run of 2026-10-21.}
+    \label{tab:proof_summary}
+    \begin{tabularx}{\textwidth}{l r r r r X}
+        \toprule
+        \textbf{Check category} & \textbf{Total} & \textbf{Proved by prover} & \textbf{Proved by flow} & \textbf{Unproved} \\
+        \midrule
+        Run-time checks & 357 & 357 & 0 & 0 \\
+        Assertions & 224 & 224 & 0 & 0 \\
+        Functional contracts & 106 & 106 & 0 & 0 \\
+        Data dependencies & 12 & 0 & 12 & 0 \\
+        Initialization & 15 & 0 & 15 & 0 \\
+        Termination & 33 & 0 & 33 & 0 \\
+        \midrule
+        \textbf{Total} & \textbf{747} & \textbf{687} & \textbf{60} & \textbf{0} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Interpretation and Limitations}
+No check is left unproved in this run. The residual post-processing obligations that the earlier 2026-09-27 run left open --- floating-point overflow and array-index checks in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} --- are now discharged as well, so the gate reports no proof failure anywhere in the analyzed units.
+
+It is equally important to state what the gate does \emph{not} cover. GNATprove analyzes the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 1,900 evaluations of the first optimization pass reported in Figure~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions are formally proven.
+
+This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. The defensible statement is the one in Table~\ref{tab:proof_summary}: every check in the analyzed Ada/SPARK units is discharged, and the residual risk is not a proof failure but the scope boundary --- the Python optimization driver remains outside GNATprove.
+
+\chapter{IRVE-3 Validation Data Summary}
+\label{app:validation_data}
+
+\section{Peak Aerothermal Loads}
+
+Table~\ref{tab:validation_full} provides the complete validation comparison between the IRVE-3 post-flight reconstruction data, the MDAO reference model, and the StellarOrion framework predictions.
+
+\begin{table}[H]
+\centering
+\caption{Complete IRVE-3 validation comparison (peak values).}
+\label{tab:validation_full}
+\small
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|}
+\hline
+\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{Stellar\-Orion (This Work)} & \textbf{SO Error (\%)} \\
+\hline
+Peak heat flux ($\dot{q}$) & 14.36~W/cm\textsuperscript{2} & 13.83~W/cm\textsuperscript{2} & 15.36~W/cm\textsuperscript{2} & $+6.9$ \\
+Total heat load ($Q$) & 195.06~J/cm\textsuperscript{2} & 195.17~J/cm\textsuperscript{2} & 165.72~J/cm\textsuperscript{2} & $-15.0$ \\
+Peak deceleration & 19.7\,$g$ & -- & 22.72\,$g$ & $+15.3$ \\
+Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & -- & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
+Drag coefficient ($C_d$) & -- & -- & 1.4625 & -- \\
+Aeroshell diameter & 3.0\,m & 3.0\,m & 3.0\,m & 0 \\
+Toroid count & 6 & 6 & 6 & 0 \\
+Toroid radius & 0.135\,m & 0.135\,m & 0.135\,m & 0 \\
+\hline
+\end{tabularx}
+\normalsize
+\caption*{Flight data from NASA TP-2013-4012 and Rapisarda (2023) Table 4.10; MDAO values are the Fay--Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid-factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton--Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
+\end{table}
+
+\section{Grid Independence Study Results}
+
+Table~\ref{tab:grid_study} summarizes the grid independence study. Four Cartesian resolutions were run on the reference body at the same freestream condition and trajectory point: $70\times70$ (4\,900 cells), $100\times100$ (10\,000 cells), $139\times139$ (19\,321 cells, the production grid) and $200\times200$ (40\,000 cells). Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4). The production grid is therefore the $139\times139$ level on cost grounds, and Figure~\ref{fig:grid_independence} is the graphical record of the same campaign.
+
+\begin{table}[H]
+\centering
+\caption{Grid independence study: surface quantities across four refinement levels.}
+\label{tab:grid_study}
+\begin{tabular}{ccccc}
+\hline
+\textbf{Level} & \textbf{Grid} & \textbf{Cells} & \textbf{Peak $\dot q$ (MW\,m$^{-2}$)} & \textbf{Drag (kN)} \\
+\hline
+L1 & $70\times70$ & 4\,900 & 2.059 & 48.012 \\
+L2 & $100\times100$ & 10\,000 & 1.946 & 45.918 \\
+L3 & $139\times139$ & 19\,321 & 1.797 & 45.697 \\
+L4 & $200\times200$ & 40\,000 & 1.536 & 44.064 \\
+\hline
+\end{tabular}
+\caption*{Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4), with successive differences that grow in the heat-flux series and do not shrink in the drag series. L3 is the production grid used for every result in this thesis on cost grounds. Values are read from the per-level \texttt{case.json} records; the graphical record is Figure~\ref{fig:grid_independence}.}
+\end{table}
+
+\chapter{Mathematical Derivation Details}
+\label{app:derivations}
+
+\section{Sutton--Graves Heat Flux Derivation}
+
+The Sutton--Graves stagnation-point convective heat flux correlation~\cite{sutton1971gravesh} is given by:
+\begin{equation}
+    \dot{q} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \, V_\infty^3
+    \label{eq:sg_derivation}
+\end{equation}
+
+\noindent where $C_{SG} = 1.7415 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
+
+\subsection{Dimensional Verification}
+
+Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ from ISA at 51.8\,km, $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s):
+\begin{align}
+    \dot{q} &= 1.7415 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
+    &= 1.7415 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
+    &= 1.7415 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
+    &\approx 1.536 \times 10^{5} \text{ W/m}^2 = 15.36 \text{ W/cm}^2
+    \label{eq:sg_baseline}
+\end{align}
+
+\noindent This single-point value is $+6.9\%$ relative to the $14.36$\,W/cm$^2$ flight measurement and $+0.7\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. An earlier revision of this appendix used the coefficient $1.83 \times 10^{-4}$ and reported $16.14$\,W/cm$^2$ for the same condition, about $5\%$ higher than the implemented value; that variant is superseded.
+
+\section{Mean Free Path and Knudsen Number}
+
+The mean free path for a gas of hard-sphere molecules is~\cite{bird1994molecular}:
+\begin{equation}
+    \lambda = \frac{1}{\sqrt{2} \, \pi \, d^2 \, n}
+    \label{eq:mfp_derivation}
+\end{equation}
+
+\noindent where $d = 3.7 \times 10^{-10}$\,m is the molecular diameter and $n$ is the number density. The Knudsen number is then:
+\begin{equation}
+    Kn = \frac{\lambda}{L}
+    \label{eq:kn_derivation}
+\end{equation}
+
+\noindent where $L$ is the characteristic length (aeroshell diameter, $D = 3.0$\,m).
+
+\section{Fay--Riddell Stagnation-Point Heat Transfer}
+
+The Fay--Riddell equation~\cite{fay1958stagnation} provides the theoretically rigorous stagnation-point heat flux for a reacting, dissociated boundary layer:
+\begin{equation}
+    \dot{q}_s = 0.763 \, \text{Pr}^{-0.6} \, (\rho_e \mu_e)^{0.4} \, (\rho_w \mu_w)^{0.1} \, \sqrt{\left(\frac{du_e}{dx}\right)_s} \, (h_s - h_w)
+    \label{eq:fay_riddell}
+\end{equation}
+
+\noindent Unlike the Sutton--Graves correlation, the Fay--Riddell formulation accounts for the actual shock layer structure, chemical non-equilibrium, and catalytic wall effects, making it more physically accurate for HIAD geometries.
+
+\section{Verified Fundamental Identities (LEAN / Rocq)}
+
+The following identities are the closed-form results that the thesis quotes. Each was
+verified numerically in LEAN and, where a symbolic proof is possible, in Rocq.
+
+\subsection{Sutton--Graves stagnation heat flux}
+\begin{equation}
+    \begin{split}
+    \dot{q}_{\text{SG}} &= C_{SG}\sqrt{\frac{\rho_\infty}{R_N}}\,V_\infty^3 \\
+    &= 1.7415\times10^{-4}\sqrt{\frac{7.851\times10^{-4}}{1.5}}\,(3378)^3 \\
+    &\approx 1.5357\times10^{5}\ \mathrm{W\,m^{-2}} = 15.36\ \mathrm{W\,cm^{-2}}
+    \end{split}
+\end{equation}
+
+\subsection{Geometric crest bound}
+\begin{equation}
+    \left(\frac{\dot q_{\text{crest}}}{\dot q_{\text{smooth}}}\right)_{\text{geometric bound}}
+    = \sqrt{\frac{R_N}{r_{\text{tor}}}}
+    = \sqrt{\frac{1.5}{0.135}}
+    = \frac{10}{3} \approx 3.333
+\end{equation}
+
+\subsection{Nose-radius ratio}
+\begin{equation}
+    \kappa = \frac{R_n}{R_N} = \frac{0.55}{1.5} = \frac{11}{30} \approx 0.3667
+\end{equation}
+
+\chapter{Derivation of the Governing Equations}
+\label{app:governing_derivations}
+
+This appendix collects the derivations of the fundamental and governing equations
+quoted in Chapters~2--4. Each derivation is given from its physical first
+principle; the numerical values used are those of the IRVE-3 baseline of
+Table~\ref{tab:geometry} and Table~\ref{tab:flight}.
+
+\section{Conservation of Mass (Continuity)}
+For a control volume $V$ with surface $S$, mass conservation requires
+\[
+\frac{\partial}{\partial t}\int_V \rho\,dV + \oint_S \rho\,\mathbf{u}\cdot d\mathbf{S}=0.
+\]
+Applying the divergence theorem and shrinking $V$ to a point gives the differential
+form
+\[
+\frac{\partial\rho}{\partial t}+\nabla\cdot(\rho\mathbf u)=0.
+\]
+
+\section{Conservation of Momentum (Navier--Stokes)}
+Newton's second law for a fluid element: the rate of change of momentum equals
+surface forces (pressure $p$ and viscous stress $\tau_{ij}$) plus body forces
+$\mathbf S_M$. With the Newtonian constitutive relation
+$\tau_{ij}=\mu(\partial u_i/\partial x_j+\partial u_j/\partial x_i)
+-\frac{2}{3}\mu(\nabla\cdot\mathbf u)\delta_{ij}$ (Stokes hypothesis), the
+compressible Navier--Stokes equation is
+\[
+\frac{\partial(\rho\mathbf u)}{\partial t}+\nabla\cdot(\rho\mathbf u\otimes\mathbf u)
+=-\nabla p+\nabla\cdot\left[\mu\left(\nabla\mathbf u+(\nabla\mathbf u)^T
+-\frac{2}{3}(\nabla\cdot\mathbf u)\mathbf I\right)\right]+\mathbf S_M.
+\]
+
+\section{Conservation of Energy}
+From the first law of thermodynamics for a fluid particle, with total energy
+$E=i+\tfrac12|\mathbf u|^2$,
+\[
+\frac{\partial(\rho E)}{\partial t}+\nabla\cdot(\rho E\mathbf u)
+=\nabla\cdot(k\nabla T)+\nabla\cdot(\tau_{ij}\cdot\mathbf u)+S_E,
+\]
+where $S_E$ collects chemical-reaction heat release and radiation. The viscous
+dissipation term $\nabla\cdot(\tau_{ij}\cdot\mathbf u)$ is the dominant
+aerodynamic-heating source in hypersonic boundary layers.
+
+\section{The Boltzmann Transport Equation}
+Let $f(\mathbf r,\mathbf v,t)$ be the single-particle distribution function.
+Under molecular chaos (Stosszahlansatz) the Liouville equation reduces to
+\[
+\frac{\partial f}{\partial t}+\mathbf v\cdot\nabla_{\mathbf r}f
++\frac{\mathbf F}{m}\cdot\nabla_{\mathbf v}f
+=\left(\frac{\partial f}{\partial t}\right)_{\mathrm{coll}},
+\]
+with collision integral
+\[
+\left(\frac{\partial f}{\partial t}\right)_{\mathrm{coll}}
+=\int\!\int (f'f'_1-ff_1)\,g\,\sigma(g,\Omega)\,d\Omega\,d\mathbf v_1.
+\]
+The equilibrium solution is the Maxwell--Boltzmann distribution
+$f_{\mathrm{eq}}=n(m/2\pi k_BT)^{3/2}\exp(-m|\mathbf v-\mathbf u|^2/2k_BT)$.
+
+\section{\texorpdfstring{Chapman--Enskog: Boltzmann $\to$ Navier--Stokes}{Chapman--Enskog: Boltzmann to Navier--Stokes}}
+Expanding $f=f_{\mathrm{eq}}(1+\Phi^{(1)}+\cdots)$ in $Kn$:
+\begin{itemize}
+  \item zeroth order ($Kn^0$): Euler equations (inviscid);
+  \item first order ($Kn^1$): Navier--Stokes with transport coefficients
+  $\mu=\frac{5}{16}\frac{\sqrt{\pi mk_BT}}{\pi d^2\Omega_\mu^{(1,1)*}}$,
+  $\kappa=\frac{25}{32}\frac{\sqrt{\pi mk_BT}}{\pi d^2\Omega_\kappa^{(1,1)*}}c_v$.
+\end{itemize}
+Thus the Navier--Stokes equations are the continuum limit ($Kn\ll1$) of the
+Boltzmann equation; DSMC is required when $Kn>0.01$.
+
+\section{DSMC: No-Time-Counter Collision Count}
+In a cell of volume $V_{\mathrm{cell}}$ containing $N_{\mathrm{cell}}$
+particles, the number of collisions per time step $\Delta t$ is
+\[
+N_c=\frac{N_{\mathrm{cell}}(N_{\mathrm{cell}}-1)}{2}\,
+\frac{\sigma g\,\Delta t}{V_{\mathrm{cell}}}.
+\]
+Particles are moved ballistically ($\mathbf r^{n+1}=\mathbf r^n+\mathbf v^n\Delta t$)
+then collided pairwise using the VSS model; macroscopic quantities are accumulated
+as time-averaged particle statistics.
+
+\section{Variable Soft Sphere (VSS) Cross-Section}
+\[
+\sigma=\pi d_{\mathrm{ref}}^2\left(\frac{g_{\mathrm{ref}}}{g}\right)^{2(\omega-0.5)},
+\]
+where $\omega$ is the viscosity index ($\omega=0.5$ reduces to hard sphere;
+$\omega>0.5$ gives a velocity-dependent cross-section reproducing the
+temperature-dependent viscosity of real gases).
+
+\section{Mean Free Path and Knudsen Number}
+\[
+\lambda=\frac{1}{\sqrt2\,\pi d^2 n},\qquad Kn=\frac{\lambda}{L}.
+\]
+For the IRVE-3 body ($L=3.0$~m, $d=3.7\times10^{-10}$~m) at the archived run
+density $n=1.448\times10^{22}$~m$^{-3}$, $\lambda\approx1.1\times10^{-4}$~m and
+$Kn\approx4\times10^{-5}$ (near-continuum).
+
+\section{Radiative Equilibrium Surface Temperature}
+Balancing incoming convective flux $\dot q$ against grey-body radiation:
+\[
+\dot q=\epsilon\sigma T_s^4 \;\Rightarrow\;
+T_s=\left(\frac{\dot q}{\epsilon\sigma}\right)^{1/4},
+\qquad \sigma=5.670374419\times10^{-8}\ \mathrm{W\,m^{-2}\,K^{-4}}.
+\]
+
+\section{One-Dimensional Backface Temperature}
+\[
+T_{\mathrm{back}}=T_{\mathrm{init}}
++\frac{\dot q\,\Delta t\,\eta_{\mathrm{lag}}}
+{\rho_{\mathrm{TPS}}\,C_{p,\mathrm{TPS}}\,\delta_{\mathrm{TPS}}},
+\qquad \eta_{\mathrm{lag}}\approx0.15.
+\]
+
+\section{Ballistic Coefficient and g-Load}
+\[
+\beta=\frac{m\,q}{F_{\mathrm{drag}}},\qquad
+n=\frac{F_{\mathrm{drag}}}{m\,g_0},\qquad g_0=9.80665\ \mathrm{m\,s^{-2}}.
+\]
+For IRVE-3, $\beta=26.9$~kg/m$^2$ (flight) vs. $27.70$ (this work, +3.0\%).
+
+\section{Cost Function of the Genetic Algorithm}
+The composite cost (Eq.~\eqref{eq:ga_cost}) is
+\[
+\begin{aligned}
+J(\mathbf x)={}&W_{HL}\frac{Q}{Q_{\mathrm{target}}}
++W_q\frac{\dot q_{SG}}{\dot q_{\mathrm{ref}}}
++W_\beta\left(\frac{\beta}{\beta_{\mathrm{ref}}}-1\right)^2\\
+&+W_{Cd}\max\!\left(0,\frac{C_{d,\mathrm{goal}}-C_d}{C_{d,\mathrm{goal}}}\right)
++\Lambda_{\mathrm{pen}}\Phi(\mathbf x),
+\end{aligned}
+\]
+with $W_{HL}=1.0$, $W_q=0.5$, $W_\beta=0.5$, $W_{Cd}=30$,
+$\Lambda_{\mathrm{pen}}=100$, $C_{d,\mathrm{goal}}=1.70$, and
+$\Phi$ the envelope/payload penalty. All terms are dimensionless and
+non-negative, so $J(\mathbf x)\ge0$; evaluation requires no solver call.
+
+\section{Sutton--Graves Stagnation Heat Flux}
+\[
+\dot q_s=C_{SG}\sqrt{\frac{\rho_\infty}{R_N}}\,V_\infty^3,\qquad
+C_{SG}=1.7415\times10^{-4}.
+\]
+At $\rho_\infty=7.851\times10^{-4}$~kg/m$^3$, $R_N=1.5$~m,
+$V_\infty=3378$~m/s: $\dot q_s\approx1.536\times10^5$~W/m$^2=15.36$~W/cm$^2$.
+
+\section{Fay--Riddell Stagnation-Point Heat Transfer}
+\[
+\dot q_s=0.763\,\mathrm{Pr}^{-0.6}\,(\rho_e\mu_e)^{0.4}\,(\rho_w\mu_w)^{0.1}\,
+\sqrt{\left(\frac{du_e}{dx}\right)_s}\,(h_s-h_w).
+\]
+
+\section{Verified Fundamental Identities (LEAN / Rocq)}
+\[
+\sqrt{\frac{1.5}{0.135}}=\frac{10}{3}\approx3.333,\qquad
+\kappa=\frac{0.55}{1.5}=\frac{11}{30}\approx0.3667.
+\]

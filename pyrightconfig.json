@@ -1,0 +1,14 @@
+{
+  "venvPath": "ProgressReport/Week 19",
+  "venv": ".venv",
+  "include": [
+    "ProgressReport/Week 19/tools",
+    "ProgressReport/Week 19/make_pptx.py"
+  ],
+  "exclude": [
+    "**/obj",
+    "**/__pycache__",
+    "sparta",
+    "**/.venv"
+  ]
+}
