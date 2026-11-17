@@ -262,7 +262,7 @@ def parse_qoi(log_path: Path) -> tuple[dict[str, float] | None, int]:
 
 
 def run_level(index: int, n_grid: int, template: Path, steps: int,
-              sparta: Path) -> dict[str, object]:
+              sparta: Path, tasks: int = 1) -> dict[str, object]:
     """Solve one refinement level and write its case.json (A4).
 
     Parameters:
@@ -285,6 +285,7 @@ def run_level(index: int, n_grid: int, template: Path, steps: int,
     record: dict[str, object] = {
         "level": index,
         "n_grid": n_grid,
+        "tasks": tasks,
         "steps": steps,
         "run_record_id": (
             f"gi-l{index}-{n_grid}x{n_grid}-"f"{datetime.datetime.now(datetime.UTC).strftime('%Y%m%dT%H%M%S')}"
@@ -330,10 +331,18 @@ def run_level(index: int, n_grid: int, template: Path, steps: int,
 
     _log(f"level {index}: {n_grid}x{n_grid}, {steps} steps -> {level_dir.name}")
     try:
+        cmd = (
+            #  --tasks > 1 runs the MPI build across that many ranks. The
+            #  binary is the OpenMPI-linked spa_mac_mpi, so mpirun is the
+            #  launcher; a single task keeps the direct exec path.
+            ["mpirun", "-np", str(tasks), str(sparta), "-in", "in.hiad"]
+            if tasks > 1
+            else [str(sparta), "-in", "in.hiad"]
+        )
         proc = subprocess.run(
             # SPARTA rejects a bare deck name ("Invalid command-line
             # argument", sparta.cpp:176); it must be passed as -in <file>.
-            [str(sparta), "-in", "in.hiad"],
+            cmd,
             cwd=str(level_dir),
             capture_output=True,
             text=True,
@@ -430,6 +439,8 @@ def main(argv: list[str] | None = None) -> int:
                         default=list(DEFAULT_LEVELS),
                         help="cells per side, low->high (default: %(default)s)")
     parser.add_argument("--steps", type=int, default=DEFAULT_STEPS)
+    parser.add_argument("--tasks", type=int, default=1,
+                        help="MPI ranks for the solver (default: 1)")
     parser.add_argument("--only", nargs="+", type=int, default=None,
                         help="run just these level numbers (smoke testing)")
     args = parser.parse_args(argv)
@@ -453,14 +464,15 @@ def main(argv: list[str] | None = None) -> int:
 
     _log(f"sparta={sparta}")
     _log(f"template={template.relative_to(PROJECT_ROOT)}")
-    _log(f"levels={args.levels} steps={args.steps}")
+    _log(f"levels={args.levels} steps={args.steps} tasks={args.tasks}")
 
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
     results: list[dict[str, object]] = []
     for idx, n_grid in enumerate(args.levels, start=1):
         if args.only is not None and idx not in args.only:
             continue
-        results.append(run_level(idx, n_grid, template, args.steps, sparta))
+        results.append(run_level(idx, n_grid, template, args.steps, sparta,
+                                 tasks=args.tasks))
 
     ok = sum(1 for r in results if r.get("status") == "ok")
     _log(f"finished: {ok}/{len(results)} levels ok")
