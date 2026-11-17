@@ -110,7 +110,8 @@ def _find_sparta() -> Path | None:
     return None
 
 
-def build_deck(template: Path, level_dir: Path, n_grid: int, steps: int) -> Path | None:
+def build_deck(template: Path, level_dir: Path, n_grid: int, steps: int,
+               restart_every: int = 500) -> Path | None:
     """Derive a level deck from the production `in.hiad`.
 
     Parameters:
@@ -163,6 +164,12 @@ def build_deck(template: Path, level_dir: Path, n_grid: int, steps: int) -> Path
             if path_idx < 0:
                 raise ValueError(f"no output path found in line: {line.strip()}")
             parts[path_idx] = str(level_dir / Path(parts[path_idx]).name)
+            if stripped.startswith("restart "):
+                #  Restart cadence is pure I/O: a 250x250 case writes ~190 MB
+                #  per restart, and every 100 steps of such writes was the
+                #  difference between a 1.0 s and a 4.0 s step at 6 ranks.
+                #  Coarsening it changes no physics, only the checkpoint rate.
+                parts[1] = str(restart_every)
             out.append(" ".join(parts))
             continue
         if stripped.startswith("run "):
@@ -262,7 +269,7 @@ def parse_qoi(log_path: Path) -> tuple[dict[str, float] | None, int]:
 
 
 def run_level(index: int, n_grid: int, template: Path, steps: int,
-              sparta: Path, tasks: int = 1) -> dict[str, object]:
+              sparta: Path, tasks: int = 1, restart_every: int = 500) -> dict[str, object]:
     """Solve one refinement level and write its case.json (A4).
 
     Parameters:
@@ -295,7 +302,7 @@ def run_level(index: int, n_grid: int, template: Path, steps: int,
         "status": "failed",
     }
     try:
-        deck = build_deck(template, level_dir, n_grid, steps)
+        deck = build_deck(template, level_dir, n_grid, steps, restart_every)
     except (OSError, ValueError) as exc:
         record["error"] = f"deck build failed: {exc}"
         _record(level_dir, record)
@@ -346,7 +353,7 @@ def run_level(index: int, n_grid: int, template: Path, steps: int,
             cwd=str(level_dir),
             capture_output=True,
             text=True,
-            timeout=3600,
+            timeout=10800,  # 3 h: 2200 steps at ~4 s/step with 6 ranks
             check=False,
         )
     except subprocess.TimeoutExpired:
@@ -439,6 +446,8 @@ def main(argv: list[str] | None = None) -> int:
                         default=list(DEFAULT_LEVELS),
                         help="cells per side, low->high (default: %(default)s)")
     parser.add_argument("--steps", type=int, default=DEFAULT_STEPS)
+    parser.add_argument("--restart-every", type=int, default=500,
+                        help="restart checkpoint cadence in steps (default: 500)")
     parser.add_argument("--tasks", type=int, default=1,
                         help="MPI ranks for the solver (default: 1)")
     parser.add_argument("--only", nargs="+", type=int, default=None,
@@ -472,7 +481,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.only is not None and idx not in args.only:
             continue
         results.append(run_level(idx, n_grid, template, args.steps, sparta,
-                                 tasks=args.tasks))
+                                 tasks=args.tasks,
+                                 restart_every=args.restart_every))
 
     ok = sum(1 for r in results if r.get("status") == "ok")
     _log(f"finished: {ok}/{len(results)} levels ok")
