@@ -17,7 +17,7 @@ def commits_for(refs_text: str):
         parts = line.split()
         if len(parts) < 4:
             continue
-        local_ref, local_oid, remote_ref, remote_oid = parts[:4]
+        _local_ref, local_oid, _remote_ref, remote_oid = parts[:4]
         if len(local_oid) < 40 or set(local_oid) == {"0"}:
             continue  # deletion
         if remote_oid and remote_oid != "0" * 40 and len(remote_oid) == 40:
@@ -29,7 +29,8 @@ def commits_for(refs_text: str):
                 ["git", "rev-list", rng],
                 capture_output=True, text=True, check=False,
             )
-        except Exception:
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"guard: rev-list failed for {rng}: {e}", file=sys.stderr)
             continue
         for c in r.stdout.split():
             if c not in seen:
@@ -47,7 +48,8 @@ def main() -> int:
                 ["git", "show", "-s", "--format=%B", c], text=True,
                 stderr=subprocess.DEVNULL,
             )
-        except Exception:
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"guard: show failed for {c}: {e}", file=sys.stderr)
             continue
         if any(p.search(msg) for p in PATTERNS):
             bad.append(c)
