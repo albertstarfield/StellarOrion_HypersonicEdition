@@ -1,0 +1,22 @@
+{
+  "level": 5,
+  "n_grid": 250,
+  "tasks": 6,
+  "steps": 2200,
+  "run_record_id": "gi-l5-250x250-20261117T174847",
+  "geometry": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/00_reference/in.hiad",
+  "generated_at": "2026-11-17T17:48:47+00:00",
+  "status": "ok",
+  "exit_code": 0,
+  "n_cells": 62500,
+  "wall_time_s": 9793.701,
+  "qoi_name": "heat_peak_wm2",
+  "qoi_value": 1579610.8,
+  "secondary": {
+    "drag": 44106.8,
+    "lift": -18381.917,
+    "n_particles": 2132717.0,
+    "final_step": 2200.0,
+    "cpu_s": 9793.1021
+  }
+}
