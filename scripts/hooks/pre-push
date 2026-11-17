@@ -1,0 +1,22 @@
+#!/bin/sh
+# Pre-push: guard against invalid (Claude) co-authors, then delegate to git-lfs.
+root=$(git rev-parse --show-toplevel 2>/dev/null)
+tmp=$(mktemp)
+cat > "$tmp"
+rc=0
+if [ -n "$root" ] && [ -f "$root/scripts/hooks/claude_coauthor_guard.py" ]; then
+    python3 "$root/scripts/hooks/claude_coauthor_guard.py" < "$tmp" || rc=$?
+fi
+if [ "$rc" -ne 0 ]; then
+    rm -f "$tmp"
+    exit "$rc"
+fi
+if command -v git-lfs >/dev/null 2>&1; then
+    git lfs pre-push "$@" < "$tmp"
+    rc=$?
+else
+    printf >&2 "\n%s\n\n" "git-lfs not found; skipping LFS pre-push."
+    rc=0
+fi
+rm -f "$tmp"
+exit "$rc"

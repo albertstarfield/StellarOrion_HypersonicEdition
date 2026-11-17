@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""commit-msg hook: strip invalid (Claude) co-author/attribution lines and enforce
+conventional-commit subject format. Auto-overwrites the message file in place."""
+import re
+import sys
+from pathlib import Path
+
+INVALID_PATTERNS = [
+    re.compile(r"^\s*Co-?[Aa]uthored-?[Bb]y:.*claude", re.IGNORECASE),
+    re.compile(r"^\s*Co-?[Aa]uthored-?[Bb]y:.*anthropic\.com", re.IGNORECASE),
+    re.compile(r"^\s*🤖\s*Generated with Claude Code", re.IGNORECASE),
+    re.compile(r"^\s*Generated (with|by):.*claude", re.IGNORECASE),
+]
+
+CONV = re.compile(
+    r"^(feat|fix|chore|build|docs|refactor|test|perf|ci|style|revert)"
+    r"(\([^)]*\))?!?: .+"
+)
+ALLOWED_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ", "amend! ", "Revert \"")
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        return 0
+    path = Path(sys.argv[1])
+    if not path.is_file():
+        return 0
+    original = path.read_text()
+    lines = original.splitlines(keepends=True)
+    cleaned = []
+    stripped = []
+    for line in lines:
+        if any(pat.search(line) for pat in INVALID_PATTERNS):
+            stripped.append(line.rstrip("\n"))
+            continue
+        cleaned.append(line)
+    text = "".join(cleaned)
+
+    path.write_text(text)
+
+    # Enforce conventional-commit subject (first non-comment, non-empty line).
+    subject = ""
+    for line in text.splitlines():
+        s = line.strip()
+        if s and not s.startswith("#"):
+            subject = s
+            break
+    if subject and not subject.startswith("#") and not any(subject.startswith(p) for p in ALLOWED_PREFIXES):
+        if not CONV.match(subject):
+            sys.stderr.write(
+                "commit-msg: subject does not follow conventional commits.\n"
+                f"  got: {subject}\n"
+                "  expected: <type>(<scope>): <subject>\n"
+                "  types: feat, fix, chore, build, docs, refactor, test, perf, ci, style, revert\n"
+            )
+            return 1
+
+    if stripped:
+        sys.stderr.write("commit-msg: stripped invalid (Claude) attribution lines:\n")
+        for s in stripped:
+            sys.stderr.write(f"  - {s}\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
