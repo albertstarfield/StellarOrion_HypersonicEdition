@@ -712,7 +712,9 @@ package StellarOrion_Optimization is
     --  G-load (deceleration) constraint.
     --
     --  n(x) = q_dyn * Cd(x) * A(x) / (m * g0) at the snapshot state, and the
-    --  design is penalised for exceeding G_Load_Limit.
+    --  design's G_Load is REPORTED against G_Load_Limit as a survivability
+    --  decision; it is not folded into the cost (see the WHY note at
+    --  stellarorion_optimization.adb:3200).
     --
     --  Limit provenance: the Orion structural limit ORION_MAX_G = 25 g
     --  (stellarorion_orion.ads:72, "g-loads <= 25 g").  IRVE-3 flew a peak of
@@ -1002,7 +1004,7 @@ package StellarOrion_Optimization is
        Beta_Dev        : Float := 0.0;  --  (beta(x)/beta_ref - 1)^2
        Cd_Ratio        : Float := 0.0;  --  Cd(x)/Cd_ref
        Cd_Deficit      : Float := 0.0;  --  max(0,(Cd_Goal-Cd(x))/Cd_Goal)
-       Penalty         : Float := 0.0;  --  envelope + TPS + payload + g-load
+       Penalty         : Float := 0.0;  --  envelope + payload only; g-load is reported, not priced
        G_Load          : Float := 0.0;  --  n(x) at the snapshot state [g]
        Total           : Float := 0.0;  --  J(x) = weighted sum
        Heat_Load_Jcm2  : Float := 0.0;  --  Q(x) absolute [J/cm^2]

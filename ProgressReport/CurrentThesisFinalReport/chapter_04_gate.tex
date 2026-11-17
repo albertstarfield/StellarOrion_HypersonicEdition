@@ -71,7 +71,11 @@ area-averaged flux ranges move from 192.0 to 155.785\,W/cm and from 55.200 to 43
 The drag coefficient increases by $57.53\,\%$, the peak deceleration falls from 22.720 to
 8.357\,g and the final deceleration from 16.553 to 5.212\,g. The DSMC surface heat load, the
 quantity the writer integrates from the solver's own surface flux, is 1829.38
-J/cm\textsuperscript{2} against 1978.77 for the pass-1 candidate.
+J/cm\textsuperscript{2} against 1978.77 for the pass-1 candidate. Screened against the $25\,g$
+structural limit, the pass-1 candidate at $32.343\,g$ is non-survivable while the pass-2
+candidate at $8.357\,g$ is survivable with a factor of three to spare; that verdict is reported
+here as a decision on the design rather than encoded in $J(\mathbf{x})$, for the reason given in
+Chapter~\ref{ch:methodology}.
 
 Two properties of these runs matter for how their numbers are read. First, the drag coefficient in the run's \texttt{cd} column is clamped to $[0,3]$ by the SPARTA writer: the pass-1 run saturates that clamp on one of its twenty-two recorded steps and the pass-2 run on twelve, so the column is not flat in either case, but any table that reads it must use the \texttt{cd\_unclamped} column instead. Second, the correction factor is clamped, not measured to that value: the solver's peak surface flux is $13.0629$ times the correlation's, and the clamp is what keeps the second pass from trusting a single-point ratio without bound.
 

@@ -3197,7 +3197,25 @@ package body StellarOrion_Optimization is
          end if;
          Pen_G  := StellarOrion_Optimizer_Core.Decel_Penalty
                      (G_Now, G_Load_Limit);
-         Penalty := Lambda_Pen * (Pen_R + Pen_N + Pen_P + Pen_G);
+         --  AXIOM G2: Decel_Penalty'Result is in [0, 1e8] (see
+         --  stellarorion_optimizer_core.ads:655).  The value is COMPUTED and
+         --  BOUNDED here, but it is deliberately NOT added to Penalty.
+         --
+         --  WHY: the published cost (chapter_03_methodology.tex:571-579) is
+         --  four weighted physical terms plus envelope/payload penalties, so
+         --  J(x) is kept identical to the equation the thesis prints and the
+         --  reported results stay reproducible.  Deceleration is instead
+         --  REPORTED through Cost_Components.G_Load and decided against
+         --  G_Load_Limit (25.0 g) by the caller: a design above the limit is
+         --  non-survivable and must be rejected as a decision, not folded
+         --  into the ranking.  Keeping Pen_G out of J also avoids the
+         --  scaling defect where Lambda_Pen * Pen_G reaches ~5.4e3 against an
+         --  objective near 4 and swamps every other term.
+         if Pen_G < 0.0 or else Pen_G > 1.0E8 then
+            raise Constraint_Error
+              with "HIAD_Cost_Components: g penalty outside [0, 1e8]";
+         end if;
+         Penalty := Lambda_Pen * (Pen_R + Pen_N + Pen_P);
 
          --  The heat-load weight is the double pass GA's round-2 injection
          --  point: W_Heat_Load + (c - 1) reproduces
