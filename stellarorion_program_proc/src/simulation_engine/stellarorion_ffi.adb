@@ -167,6 +167,42 @@ package body StellarOrion_FFI is
    end HIAD_Cost_C;
 
    -- -------------------------------------------------------------------------
+   --  HIAD_G_Survivable_C
+   -- -------------------------------------------------------------------------
+   --  Deceleration is reported, not priced: this wrapper is the decision.
+   --  AXIOMS: the three doubles map 1:1 onto Param_Vector; G_Load is the
+   --          snapshot deceleration already reported by HIAD_Cost_Components.
+   --  THEOREM: the result is 1 exactly when G_Load <= G_Load_Limit.
+   --  Timing analysis: one component evaluation, O(1).
+   -- -------------------------------------------------------------------------
+   function HIAD_G_Survivable_C
+     (X1 : Interfaces.C.Double;
+      X2 : Interfaces.C.Double;
+      X3 : Interfaces.C.Double)
+      return Interfaces.C.Int
+   is
+      X    : Param_Vector;
+      Comp : Cost_Components;
+   begin
+      X (1) := Standard.Float (X1);  -- R_N
+      X (2) := Standard.Float (X2);  -- r_tor
+      X (3) := Standard.Float (X3);  -- half_cone_deg
+
+      Comp := HIAD_Cost_Components (X);
+
+      if Comp.G_Load <= G_Load_Limit then
+         return 1;
+      else
+         return 0;
+      end if;
+
+   exception
+      when others =>
+         Log ("[VERBOSE_ERROR] HIAD_G_Survivable_C: Ada exception - returning -1");
+         return -1;
+   end HIAD_G_Survivable_C;
+
+   -- -------------------------------------------------------------------------
    --  HIAD_Set_Refs_C
    -- -------------------------------------------------------------------------
    --  AXIOMS: four binary64 doubles map 1:1 to the Ada procedure

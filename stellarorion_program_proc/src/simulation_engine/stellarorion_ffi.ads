@@ -111,6 +111,30 @@ package StellarOrion_FFI is
    pragma Export (C, HIAD_Cost_C, "HIAD_Cost_C");
 
    -- -------------------------------------------------------------------------
+   --  HIAD_G_Survivable_C
+   -- -------------------------------------------------------------------------
+   --  C wrapper that turns the reported deceleration into a decision.
+   --  Evaluates the cost components for the same design point and compares
+   --  Cost_Components.G_Load against G_Load_Limit (25.0 g).  The g-load is
+   --  NOT priced into J (see stellarorion_optimization.adb:3200), so this is
+   --  the only place the survivability question is answered.
+   --
+   --  Returns:
+   --     1  deceleration at or below the limit (survivable)
+   --     0  deceleration above the limit (non-survivable)
+   --    -1  evaluation failed (sentinel, mirrors HIAD_Cost_C)
+   -- -------------------------------------------------------------------------
+   function HIAD_G_Survivable_C
+     (X1 : Interfaces.C.Double;
+      X2 : Interfaces.C.Double;
+      X3 : Interfaces.C.Double)
+      return Interfaces.C.Int
+   with Pre  => X1 > 0.0 and then X2 > 0.0
+                and then X3 > 0.0 and then X3 < 90.0,
+        Post => HIAD_G_Survivable_C'Result in -1 .. 1;
+   pragma Export (C, HIAD_G_Survivable_C, "HIAD_G_Survivable_C");
+
+   -- -------------------------------------------------------------------------
    --  HIAD_Set_Refs_C
    -- -------------------------------------------------------------------------
    --  C wrapper for StellarOrion_Optimization.Set_Validation_Refs.

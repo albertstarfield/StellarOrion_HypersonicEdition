@@ -592,6 +592,33 @@ def estimate_cd(r_n: float, r_tor: float, half_cone_deg: float) -> float:
         ctypes.c_double(half_cone_deg))
 
 
+# Bind Ada HIAD_G_Survivable_C(X1, X2, X3) return int
+# [Citation: stellarorion_ffi.ads — HIAD_G_Survivable_C]
+_ada_lib.HIAD_G_Survivable_C.restype = ctypes.c_int
+_ada_lib.HIAD_G_Survivable_C.argtypes = [
+    ctypes.c_double, ctypes.c_double, ctypes.c_double,
+]
+
+
+def hiad_g_survivable(x1: float, x2: float, x3: float) -> int:
+    """Decide whether a design survives the 25 g structural limit.
+
+    Deceleration is reported, not priced: ``J(x)`` does not contain the
+    g-load term, so this wrapper is where the survivability question is
+    answered.  It evaluates the Ada cost components for the same design
+    point and compares ``G_Load`` against ``G_Load_Limit`` (25.0 g).
+
+    Args:
+        x1, x2, x3: nose radius [m], toroid radius [m], half-cone [deg].
+
+    Returns:
+        1 when G_Load <= 25 g, 0 when above it, -1 when the evaluation
+        failed (the same sentinel HIAD_Cost_C uses).
+    """
+    return int(_ada_lib.HIAD_G_Survivable_C(
+        ctypes.c_double(x1), ctypes.c_double(x2), ctypes.c_double(x3)))
+
+
 def hiad_cost_function(x1: float, x2: float, x3: float) -> float:
     """Compute the multi-objective HIAD cost J(x) via Ada/SPARK FFI.
 
