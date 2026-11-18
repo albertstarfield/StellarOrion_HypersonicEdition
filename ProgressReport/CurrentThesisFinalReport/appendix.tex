@@ -265,11 +265,11 @@ Toroid radius & 0.135\,m & 0.135\,m & 0.135\,m & 0 \\
 
 \section{Grid Independence Study Results}
 
-Table~\ref{tab:grid_study} summarizes the grid independence study. Four Cartesian resolutions were run on the reference body at the same freestream condition and trajectory point: $70\times70$ (4\,900 cells), $100\times100$ (10\,000 cells), $139\times139$ (19\,321 cells, the production grid) and $200\times200$ (40\,000 cells). Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4). The production grid is therefore the $139\times139$ level on cost grounds, and Figure~\ref{fig:grid_independence} is the graphical record of the same campaign.
+Table~\ref{tab:grid_study} summarizes the grid independence study. Five Cartesian resolutions were run on the reference body at the same freestream condition and trajectory point: $70\times70$ (4\,900 cells), $100\times100$ (10\,000 cells), $139\times139$ (19\,321 cells, the production grid), $200\times200$ (40\,000 cells) and $250\times250$ (62\,500 cells). Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4) before reversing to $+2.85\,\%$ at L5. The production grid is therefore the $139\times139$ level on cost grounds, and Figure~\ref{fig:grid_independence} is the graphical record of the same campaign.
 
 \begin{table}[H]
 \centering
-\caption{Grid independence study: surface quantities across four refinement levels.}
+\caption{Grid independence study: surface quantities across five refinement levels.}
 \label{tab:grid_study}
 \begin{tabular}{ccccc}
 \hline
@@ -279,6 +279,7 @@ L1 & $70\times70$ & 4\,900 & 2.059 & 48.012 \\
 L2 & $100\times100$ & 10\,000 & 1.946 & 45.918 \\
 L3 & $139\times139$ & 19\,321 & 1.797 & 45.697 \\
 L4 & $200\times200$ & 40\,000 & 1.536 & 44.064 \\
+L5 & $250\times250$ & 62\,500 & 1.580 & 44.107 \\
 \hline
 \end{tabular}
 \caption*{Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4), with successive differences that grow in the heat-flux series and do not shrink in the drag series. L3 is the production grid used for every result in this thesis on cost grounds. Values are read from the per-level \texttt{case.json} records; the graphical record is Figure~\ref{fig:grid_independence}.}
