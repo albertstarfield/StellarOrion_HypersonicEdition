@@ -157,7 +157,7 @@ To isolate the effects of the scalloped surface geometry, a methodology has been
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
     \item The term\textbf{Survivability Optimization:} represents a Genetic Algorithm (GA) employing tournament selection, uniform crossover, Gaussian mutation, and elitism as components for automated multi-objective optimization of HIAD geometry.
 
-    \item \textbf{Validation and Analysis:} Validation of the solution through a four-level grid independence study ($70\times70$, $100\times100$, $139\times139$ and $200\times200$ cells, Figure~\ref{fig:grid_independence}) and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
+    \item \textbf{Validation and Analysis:} Validation of the solution through a five-level grid independence study ($70\times70$, $100\times100$, $139\times139$, $200\times200$ and $250\times250$ cells, Figure~\ref{fig:grid_independence}) and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
 \section{Geometric Modeling and Computational Domain}
@@ -301,14 +301,14 @@ While DSMC is a particle-based approach, a Cartesian coordinate system is necess
     \item \textbf{Macroscopic Sampling:} Cells serve as sampling volumes for accumulating density, temperature, pressure, and velocity statistics from the particle data.
 \end{enumerate}
 
-The resolution must exceed the local mean free path ($\lambda$) to accurately depict shock structure and boundary layer gradients. A grid-factor parameter (default: 0.7) influences the mesh density; the impact of this choice was evaluated through a four-level study ($70\times70$, $100\times100$, $139\times139$, and $200\times200$ cells, Figure~\ref{fig:grid_independence} and Table~\ref{tab:grid_study}).
+The resolution must exceed the local mean free path ($\lambda$) to accurately depict shock structure and boundary layer gradients. A grid-factor parameter (default: 0.7) influences the mesh density; the impact of this choice was evaluated through a five-level study ($70\times70$, $100\times100$, $139\times139$, $200\times200$, and $250\times250$ cells, Figure~\ref{fig:grid_independence} and Table~\ref{tab:grid_study}).
 
 \subsection{Grid Independence Study}
-A grid-independent analysis was conducted at the same freestream conditions and trajectory points across four Cartesian resolutions to ensure the numerical solution remains independent of the grid resolution.
+A grid-independent analysis was conducted at the same freestream conditions and trajectory points across five Cartesian resolutions to ensure the numerical solution remains independent of the grid resolution.
 
 \begin{table}[H]
     \centering
-    \caption{Grid independence study: four refinement levels.}
+    \caption{Grid independence study: five refinement levels.}
     \label{tab:mesh_independence}
     \begin{tabular}{|l|c|c|c|}
         \hline
@@ -317,10 +317,11 @@ A grid-independent analysis was conducted at the same freestream conditions and 
         L2 & $100\times100$ & 1.946 & 45.918 \\ \hline
         L3 & $139\times139$ & 1.797 & 45.697 \\ \hline
         L4 & $200\times200$ & 1.536 & 44.064 \\ \hline
+        L5 & $250\times250$ & 1.580 & 44.107 \\ \hline
     \end{tabular}
 \end{table}
 
-Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4), with successive differences that grow in the heat-flux series and do not shrink in the drag series. The $139\times139$ grid (19\,321 cells) is retained as the production grid on cost grounds, not because convergence has been demonstrated. The graphical record is Figure~\ref{fig:grid_independence}; the cross-reference table is Table~\ref{tab:grid_study}.
+Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3), $-14.53\,\%$ (L3--L4) and then $+2.85\,\%$ (L4--L5), with successive differences that grow in the heat-flux series, reverse sign at L5 and do not shrink in the drag series. The $139\times139$ grid (19\,321 cells) is retained as the production grid on cost grounds, not because convergence has been demonstrated. The graphical record is Figure~\ref{fig:grid_independence}; the cross-reference table is Table~\ref{tab:grid_study}.
 
 \section{Surface Data Extraction and Flight Metrics}
 
