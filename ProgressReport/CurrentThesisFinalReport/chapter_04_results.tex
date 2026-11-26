@@ -28,18 +28,11 @@ The baseline analysis is anchored at the IRVE-3 peak-heating condition of the re
 
 The itemized state is the reference peak-heating condition and the state at which the Sutton--Graves correlation of Sec.~\ref{sec:validation_irve3} is evaluated. It is not the state recorded by the reference DSMC run itself: that run's own time series (\texttt{results/00\_reference/validation\_timeseries.csv}) records $t = 97$\,s, altitude $52.0692$\,km, $V_{\infty} = 3101.08$\,m/s, $M_{\infty} = 9.4553$, $q_{\infty} = 3655.03$\,Pa and $T_{\infty} = 267.66$\,K, and the total heat load, drag coefficient, final drag and peak deceleration entries of Table~\ref{tab:validation} are that run's values at that recorded state. The two states are reported side by side rather than conflated, because the Sutton--Graves flux scales as $V^3$ and a comparison drawn across them would not be like-for-like.
 
-The temperature for a calorically perfect gas under the specified conditions is: 300 K.
-\begin{equation}
-    T_0 = T_{\infty} \left( 1 + \frac{\gamma - 1}{2} M_{\infty}^2 \right) = 268.41 \ \text{K} \left( 1 + 0.2 \times 105.9 \right) = 5952 \ \text{K}
-\end{equation}
+Using the total-temperature relation of Section~\ref{sec:cfd_framework}, the specified freestream condition gives $T_0 = 5952$\,K.
 However, the 5-species air model (N$_2$, O$_2$, NO, N, O) with VSS collisions captures real-gas effects including vibrational excitation above $\sim$800\,K and dissociation above $\sim$2000\,K, resulting in a lower effective translational temperature~\cite{bird1994molecular}.
 
 \section{Surface Heat Flux Distribution}
-The stagnation-point heat flux is computed using the Sutton-Graves (1971) correlation~\cite{sutton1971gravesh}:
-\begin{equation}
-    \dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3
-\end{equation}
-where $C_{SG} = 1.7415 \times 10^{-4}$\,W$\cdot$s$^2$/m$^{5}$ for Earth air in SI units, the value implemented in the thermal model.
+The stagnation-point heat flux is evaluated with the Sutton--Graves correlation of Eq.~\eqref{eq:sutton_graves_lit}, with the Earth-air coefficient $C_{SG} = 1.7415 \times 10^{-4}$ in SI units adopted in Section~\ref{sec:validation_irve3}.
 
 \subsection{Stagnation Point Results}
 For the baseline IRVE-3 configuration the correlation is evaluated at the SPARTA DSMC run condition ($h = 51.8$\,km, ISA $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, $V_{\infty} = 3{,}378$\,m/s) with the IRVE-3 body radius $R_N = 1.5$\,m corresponding to the 3\,m aeroshell diameter:
@@ -95,11 +88,7 @@ The axial drag force ($f_x$) and transverse force components are determined by t
 \end{figure}
 
 \subsection{Drag Coefficient}
-The drag coefficient is computed from the total axial force:
-\begin{equation}
-    C_d = \frac{f_x}{\frac{1}{2} \rho_{\infty} V_{\infty}^2 A_{ref}}
-\end{equation}
-where $A_{ref} = \pi (D/2)^2$ is the reference area based on the aeroshell diameter. The HIAD's large frontal area produces a high drag coefficient, which is the fundamental mechanism enabling deceleration at high altitudes where atmospheric density is low~\cite{AndersonHypersonic}.
+The drag coefficient is formed from the axial force and the reference area $A_{ref} = \pi (D/2)^2$ using the flight-metric definitions of Chapter~\ref{chap:literature}. The HIAD's large frontal area produces a high drag coefficient, which is the fundamental mechanism enabling deceleration at high altitudes where atmospheric density is low~\cite{AndersonHypersonic}.
 
 \section{Flow Field Analysis}
 
@@ -130,7 +119,7 @@ The velocity vectors (Figure~\ref{fig:velocity_vectors}) show the strong deceler
 \subsection{Knudsen Number Distribution}
 The Knudsen number field (Figure~\ref{fig:knudsen_map}) represents the transition behavior across the computational domain.
 \begin{itemize}
-    \item \textbf{Near-Wall (Stagnation):} $Kn < 0.01$ (near-continuum)
+    \item \textbf{Near-Wall (Stagnation):} $Kn < 0.01$, spanning the continuum band ($Kn < 0.001$) and the slip-flow band ($0.001 < Kn < 0.01$, Navier--Stokes with velocity and temperature slip at the wall)
 
     \item \textbf{Shock Layer:} $0.01 < Kn < 1$ (transitional flow, DSMC regime)
 
@@ -364,18 +353,22 @@ The convergence record and design path define the search process. The subsequent
     \BeginAccSupp{method=escape,ActualText={Two panels above a table. The left panel plots the flown meridional half-sections of four trees: the validation reference and the optimized-topology candidate are both 1.269 metres long with maximum radii 1.880 and 1.830 metres, gate pass 1 is a larger 1.597 metre body that failed the heat gate, and gate pass 2 is a 0.803 metre body that passed. The right panel zooms on the shoulder envelope of the two same-length bodies and marks a 50.4 millimetre difference between their maximum radii with a double arrow. The table lists, per tree, length, maximum radius, recorded gate heat load and verdict; the optimized-topology candidate has since been flown through the gate's DSMC leg and its recorded gate heat load is 165.716 joules per square centimetre, identical to the reference because that column is the Sutton-Graves stagnation flux times a fixed 13.58 second window and so depends only on the nose radius; its measured surface heat load is 1972.73 joules per square centimetre against the reference's 1978.765, a difference of 0.305 per cent, and the gate verdict on it is therefore a formality that passes.}}%
 \includegraphics[width=0.75\textwidth]{figures/hiad_topology_comparison.png}%
 \EndAccSupp{}%
-    \caption{Flown topologies compared. Every meridian is read directly from \texttt{results/\textit{tree}/HIAD\_custom.surf}, the surface file that SPARTA integrated, so no geometry is reconstructed and no simulation is re-run. The reference and the optimized candidate share a length of $1.269$\,m and differ only in the outer envelope, by at most $50.4$\,mm; gate pass~1 grew to $1.597$\,m and failed the heat gate at $175.580$\,J/cm\textsuperscript{2}, while gate pass~2 shrank to $0.803$\,m and passed at $117.526$\,J/cm\textsuperscript{2}. The optimized candidate has since been flown through the gate's DSMC leg (\texttt{results/validation\_optimized\_smooth}: 2200 steps, $D = 3.0$\,m, $R_n = 0.55$\,m, $r_{tor} = 0.135$\,m, $60^\circ$ half-cone, smooth skin, $n_{grid} = 139$), and every DSMC column of the earlier \texttt{results/03\_opt\_geometry} tree is reproduced exactly, which confirms the solver's determinism. Its recorded gate heat load is $165.716$\,J/cm\textsuperscript{2}, equal to the reference's to the printed precision, but that equality is structural rather than thermal: the gate's heat-load column is the Sutton--Graves stagnation flux multiplied by a fixed $13.58$\,s window, so it is fixed by the nose radius and the matched trajectory and is unchanged by removing the scallop. The geometry-sensitive quantity is the measured surface load, $1972.73$\,J/cm\textsuperscript{2} for the smooth body against $1978.765$\,J/cm\textsuperscript{2} for the scalloped reference, a difference of $0.305\,\%$; the final-step area-averaged surface flux is $575\,839$ against $565\,865$\,W/m\textsuperscript{2} ($+1.76\,\%$) and its surface maximum $1\,788\,250$ against $1\,824\,880$\,W/m\textsuperscript{2} ($-2.01\,\%$). The scallop therefore does not drive the thermal outcome, and the verdict on this body is a formality: it passes, and it would pass for any skin at this nose radius.}
+    \caption{Flown topologies compared: reference, optimized candidate, and the two gate passes.}
     \label{fig:topology_comparison}
 \end{figure}
+
+The meridians in Figure~\ref{fig:topology_comparison} are read directly from \texttt{results/\textit{tree}/HIAD\_custom.surf}, the surface file SPARTA integrated, so no geometry is reconstructed and no simulation is re-run. The reference and the optimized candidate share a length of $1.269$\,m and differ only in the outer envelope, by at most $50.4$\,mm; gate pass~1 grew to $1.597$\,m and failed the heat gate at $175.580$\,J/cm\textsuperscript{2}, while gate pass~2 shrank to $0.803$\,m and passed at $117.526$\,J/cm\textsuperscript{2}. The optimized candidate has since been flown through the gate\textquotesingle s DSMC leg (\texttt{results/validation\_optimized\_smooth}: 2200 steps, $D = 3.0$\,m, $R_n = 0.55$\,m, $r_{tor} = 0.135$\,m, $60^\circ$ half-cone, smooth skin, $n_{grid} = 139$), and every DSMC column of the earlier \texttt{results/03\_opt\_geometry} tree is reproduced exactly, confirming the solver\textquotesingle s determinism. Its recorded gate heat load is $165.716$\,J/cm\textsuperscript{2}, equal to the reference\textquotesingle s to the printed precision, but that equality is structural rather than thermal: the gate heat-load column is the Sutton--Graves stagnation flux multiplied by a fixed $13.58$\,s window, so it is fixed by the nose radius and the matched trajectory and unchanged by removing the scallop. The geometry-sensitive quantity is the measured surface load, $1972.73$\,J/cm\textsuperscript{2} for the smooth body against $1978.765$\,J/cm\textsuperscript{2} for the scalloped reference, a difference of $0.305\,\%$; the final-step area-averaged surface flux is $575\,839$ against $565\,865$\,W/m\textsuperscript{2} ($+1.76\,\%$) and its surface maximum $1\,788\,250$ against $1\,824\,880$\,W/m\textsuperscript{2} ($-2.01\,\%$). The scallop therefore does not drive the thermal outcome, and the verdict on this body is a formality: it passes, and it would pass for any skin at this nose radius.
 
 \begin{figure}[H]
     \centering
     \BeginAccSupp{method=escape,ActualText={Two rows of panels. The top row holds four vertical strips of through-thickness temperature, two per tree, a peak-heating element and a median-heating element; each strip runs from the hot face at the top to the back face at the bottom, and every ply is a coloured band; the four plies thicker than the printed hairline carry their node temperature beside them. A shared colour bar beneath the strips spans 300 to 1430 kelvin. The bottom row holds one box plot per tree of the per-ply heat flux over all 3648 elements, five boxes from the surface ply to the back face.}}%
 \includegraphics[width=\textwidth]{figures/tps_thermal_print.png}%
 \EndAccSupp{}%
-    \caption{Thermal response of the reference (left) and of the optimized topology (right). The upper strips give the through-thickness temperature of two elements per tree, the peak-heating element and the element at the median of the heated population, with the node temperature of every ply thicker than the printed hairline written in kelvin beside its band, and the $25$\,$\mu$m Kapton film at the back face stated here because its band is thinner than a hairline at the printed scale (its node computes to $300.8$\,K); the lower panel gives the per-ply heat flux over all $3648$ surface elements, so each box is a population and not a sample. Both trees were flown at step 2200 of the same condition ($52.07$\,km, $3101$\,m/s), so the two columns are directly comparable. Peak surface heat flux is $q_{peak} = q_{SG} = 193\,154.22$\,W/m\textsuperscript{2} ($19.315$\,W/cm\textsuperscript{2}, against $30$\,W/cm\textsuperscript{2} for Nextel BF20); this is the Sutton--Graves value at the TPS-run condition and not the $15.36$\,W/cm\textsuperscript{2} baseline of Sec.~\ref{sec:validation_irve3}, which is evaluated at $h = 51.8$\,km and $V = 3378$\,m/s. The mean surface temperature is $801.35$\,K for the reference against $830.03$\,K for the optimized body, the peak is $1430.25$\,K in both, $2064$ against $2160$ elements exceed $523.15$\,K, $912$ against $960$ elements carry zero flux, and the back-face temperature is pinned at $300$\,K by the boundary condition in both runs, where its deepest node computes to $300.8$\,K, so only the surface field is informative. The panels are drawn at their printed size, $6.8$--$8$\,pt (ticks $6.78$, axis labels $7.48$, titles $7.98$), from the run's own element, layer and profile records with the program's loaders, and the plotted values are recomputed from those records and asserted against the run's summary before a pixel is written; the earlier wide-format post-processing images, whose $4.6$--$9$\,pt type printed at $1.4$--$2.7$\,pt once an $8.6$\,in panel was squeezed into a $2.83$\,in cell, are not reused. The ply thicknesses and conductivities shown by the band edges are the TPS preset tabulated in Chapter~3.}
+    \caption{Thermal response of the reference (left) and the optimized topology (right): through-thickness temperature and per-ply heat flux.}
     \label{fig:tps_reuse}
 \end{figure}
+
+Figure~\ref{fig:tps_reuse} compares the reference and the optimized topology. The upper strips give the through-thickness temperature of two elements per tree, the peak-heating element and the element at the median of the heated population, with the node temperature of every ply thicker than the printed hairline written in kelvin beside its band, and the $25$\,$\mu$m Kapton film at the back face stated here because its band is thinner than a hairline at the printed scale (its node computes to $300.8$\,K); the lower panel gives the per-ply heat flux over all $3648$ surface elements, so each box is a population and not a sample. Both trees were flown at step 2200 of the same condition ($52.07$\,km, $3101$\,m/s), so the two columns are directly comparable. Peak surface heat flux is $q_{peak} = q_{SG} = 193\,154.22$\,W/m\textsuperscript{2} ($19.315$\,W/cm\textsuperscript{2}, against $30$\,W/cm\textsuperscript{2} for Nextel BF20); this is the Sutton--Graves value at the TPS-run condition and not the $15.36$\,W/cm\textsuperscript{2} baseline of Sec.~\ref{sec:validation_irve3}, which is evaluated at $h = 51.8$\,km and $V = 3378$\,m/s. The mean surface temperature is $801.35$\,K for the reference against $830.03$\,K for the optimized body, the peak is $1430.25$\,K in both, $2064$ against $2160$ elements exceed $523.15$\,K, $912$ against $960$ elements carry zero flux, and the back-face temperature is pinned at $300$\,K by the boundary condition in both runs, where its deepest node computes to $300.8$\,K, so only the surface field is informative. The panels are drawn at their printed size, $6.8$--$8$\,pt (ticks $6.78$, axis labels $7.48$, titles $7.98$), from the run\textquotesingle s own element, layer and profile records with the program\textquotesingle s loaders, and the plotted values are recomputed from those records and asserted against the run\textquotesingle s summary before a pixel is written; the earlier wide-format post-processing images, whose $4.6$--$9$\,pt type printed at $1.4$--$2.7$\,pt once an $8.6$\,in panel was squeezed into a $2.83$\,in cell, are not reused. The ply thicknesses and conductivities shown by the band edges are the TPS preset tabulated in Chapter~3.
 
 The vertical flux entering each surface element is then divided at the
 surface itself, between what the wall re-radiates and what the stack conducts.
@@ -459,18 +452,19 @@ statistically steady state from which every field panel of this chapter is taken
 
 \begin{figure}[H]
 \centering
-\BeginAccSupp{method=escape,ActualText={Two panels, each showing the same body in four azimuth views with an axial-position color scale. Left is the reference geometry with length 1.2694 metres and maximum radius 1.8802 metres; right is the optimized topology with the same length and a maximum radius of 1.8298 metres.}}
-\includegraphics[width=0.9\textwidth]{figures/geometry_3d_plate.png}
-\EndAccSupp{}
-\caption[Three-dimensional geometry, four views]{%
-Three-dimensional geometry in four azimuth views, reused from
-\texttt{results/99\_shared/geometry/}: the reference body on the left and the
-optimized topology on the right. This is the only three-dimensional view of
-the bodies in the thesis; Figure~\ref{fig:topology_comparison} gives the
-meridional section and the envelope difference, and this plate shows the same
-geometry in the round. The cost metric printed inside the panels belongs to
-the round-one run that produced these views and is not the composite cost of
-the optimization section.}
+\BeginAccSupp{method=escape,ActualText={Reference geometry in four azimuth views with an axial-position color scale; length 1.2694 metres and maximum radius 1.8802 metres.}}%
+\includegraphics[width=0.62\textwidth]{figures/geometry_3d_reference.png}%
+\EndAccSupp{}%
+\caption{Reference geometry in four azimuth views, reused from \texttt{results/99\_shared/geometry/}. The printed cost metric belongs to the round-one run that produced this view and is not the composite cost of the optimization section.}
+\label{fig:geometry_3d_reference}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\BeginAccSupp{method=escape,ActualText={Optimized topology in four azimuth views with an axial-position color scale; length 1.2694 metres and maximum radius 1.8298 metres.}}%
+\includegraphics[width=0.62\textwidth]{figures/geometry_3d_optimized.png}%
+\EndAccSupp{}%
+\caption{Optimized topology in four azimuth views, reused from \texttt{results/99\_shared/geometry/} and directly comparable with Figure~\ref{fig:geometry_3d_reference}. Together these are the only three-dimensional views of the bodies in the thesis; Figure~\ref{fig:topology_comparison} gives the meridional section and envelope difference.}
 \label{fig:geometry_3d}
 \end{figure}
 
@@ -636,7 +630,7 @@ Rapisarda's framework uses a sequential, single-objective approach: the aerodyna
 
 The presented framework employs a Genetic Algorithm (GA) with an analytic cost, employing a population of fifty designs seeded via Latin hypercube and utilizing tournament selection, uniform crossover, Gaussian mutation, and elitism for evolution. Since the cost is closed-form, thousands of candidate geometries are evaluated without invoking an external solver, ensuring that the high-fidelity DSMC chain is utilized for reference validation and final verification rather than within the search loop. This approach is essential for exploring the five effective coordinates (body radius, torus radius, half-cone angle, toroid count, and mass) with thousands of evaluations, which would be computationally prohibitive if every candidate required an individual SPARTA simulation.
 
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% PINN NOTE (2026-11-26): PINN is not part of the reported pipeline; it is recorded only as future work in the conclusion.
 % to produce the optimized body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline

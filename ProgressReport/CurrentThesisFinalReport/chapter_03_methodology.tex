@@ -32,7 +32,7 @@ TA3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (
 TA4 & Equilibrium distribution follows Maxwell--Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
 TA5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
 TA6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+% PINN NOTE (2026-11-26): PINN is not part of the reported pipeline; it is recorded only as future work in the conclusion.
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -69,7 +69,7 @@ For rapid engineering estimates, the stagnation-point heat flux is approximated 
 \end{equation}
 where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $R_n$ is the nose radius, and $V_\infty$ is the flight velocity. This correlation is used both for initial thermal loading estimates and as a validation benchmark against DSMC results.
 
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% PINN NOTE (2026-11-26): PINN is not part of the reported pipeline; it is recorded only as future work in the conclusion.
 % to produce the optimized body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
@@ -133,7 +133,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \multirow{3}{=}{\textbf{Sampling (LHS)}} & Method & Latin hypercube, one per stratum \\
  & Samples ($N$) & 50 strata per coordinate \\
  & Active variables & Body radius, torus radius, half-cone angle, toroid count, mass \\ \midrule
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+% PINN NOTE (2026-11-26): PINN is not part of the reported pipeline; it is recorded only as future work in the conclusion.
 \multirow{6}{=}{\textbf{GA Optimization}} & Population ($P$) & 50 \\
  & Generations ($G_{\max}$) & 200 \\
  & Tournament size ($k_t$) & 3 \\
@@ -154,7 +154,7 @@ To isolate the effects of the scalloped surface geometry, a methodology has been
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics.
 
     \item The\textbf{Particle-Based Simulation:} component initiates the DSMC simulation in a Docker containerized Linux environment, observing a vast array of particle trajectories through advection, molecular collisions, and surface interactions.
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+% PINN NOTE (2026-11-26): PINN is not part of the reported pipeline; it is recorded only as future work in the conclusion.
     \item The term\textbf{Survivability Optimization:} represents a Genetic Algorithm (GA) employing tournament selection, uniform crossover, Gaussian mutation, and elitism as components for automated multi-objective optimization of HIAD geometry.
 
     \item \textbf{Validation and Analysis:} Validation of the solution through a five-level grid independence study ($70\times70$, $100\times100$, $139\times139$, $200\times200$ and $250\times250$ cells, Figure~\ref{fig:grid_independence}) and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
@@ -474,7 +474,7 @@ As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt
 
 Statistical convergence and spatial convergence are different requirements, and neither is optional. DSMC solves the Boltzmann equation by simulating molecular behaviour directly rather than discretising a partial differential equation, so the familiar CFD hierarchy of order-of-accuracy tests does not transfer unchanged~\cite{chen2019dsmc}. Its computational error has three sources: decomposition error from finite cell size, time step and particle population; statistical error from stochastic sampling; and round-off error~\cite{chen2019dsmc}. Refining the grid reduces decomposition error but does not remove statistical uncertainty, because a cell with too few representative molecules cannot sample collisions accurately~\cite{ntrs2012dsmc}. The NASA DSMC requirements make this concrete: the time step must be shorter than the local mean collision time, the collision cell smaller than the local mean free path, and each cell must hold enough representative molecules for an accurate statistical representation~\cite{ntrs2012dsmc}. A direct numerical simulation of the Navier--Stokes equations differs in kind: it discretises a deterministic PDE, so truncation error falls with mesh spacing once the physical scales are resolved and grid convergence is the principal verification instrument. The corresponding DSMC claim is convergence to the Boltzmann solution as the particle population grows and the cell size and time step shrink, reported with a statistical band on each sampled quantity. The $2\,\%$ test applied in Chapter~\ref{ch:results} therefore fails at every pair not because DSMC is exempt from convergence, but because a migrating peak location and a falling particle count per cell turn the sampled maximum into a moving target; the quoted grid band is the combined decomposition and sampling uncertainty.
 
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
+% PINN NOTE (2026-11-26): PINN is not part of the reported pipeline; it is recorded only as future work in the conclusion.
 % to produce the optimized body, so all PINN material is removed from this
 % thesis deliberately. Do not reintroduce it.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
@@ -660,7 +660,7 @@ The computational framework accommodates multiple backends for addressing divers
         \hline
         \textbf{Stage} & \textbf{Solver} & \textbf{Rationale} \\ \hline
         Exploration & Analytic GA & Closed-form evaluation of 1000s of candidates \\ \hline
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
+% PINN NOTE (2026-11-26): PINN is not part of the reported pipeline; it is recorded only as future work in the conclusion.
         Validation & DSMC only & Independent kinetic check of the analytic ranking \\ \hline
         High-Density (Future) & Fluent / OpenFOAM & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
     \end{tabularx}
@@ -722,7 +722,7 @@ The local Knudsen number is computed from the SPARTA grid data:
     Kn_{local} = \frac{\lambda_{local}}{L} = \frac{1}{\sqrt{2} \pi d^2 n_{local} L}
 \end{equation}
 
-The identification of continuum ($Kn < 0.01$), transitional ($0.01 < Kn < 1$), and, where applicable, free-molecular ($Kn > 1$) regions within the flow field is enabled by using different sentence structure and word choices.
+The identification of continuum ($Kn < 0.001$), slip-flow ($0.001 < Kn < 0.01$), transitional ($0.01 < Kn < 1$), and, where applicable, free-molecular ($Kn > 1$) regions within the flow field follows the regime classification of Chapter~\ref{chap:literature}.
 
 \subsection{Validation Against Flight Data}
 The numerical model is validated against IRVE-3 flight data~\cite{old2013irve3postflight} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
