@@ -387,7 +387,7 @@ Table~\ref{tab:app_chain} is the map. The left column is the level of descriptio
 2 & Moments & multiply by $m$, $m\mathbf{v}$, $\tfrac12 m v^2$ and integrate & exact conservation laws \\
 3 & Continuum & Reynolds transport theorem, Cauchy's stress theorem & Cauchy momentum and energy equations \\
 4 & Closure & Newtonian and Fourier constitutive laws & compressible Navier--Stokes system \\
-5 & Scaling & nondimensionalisation & Knudsen number, Eq.~\eqref{eq:knudsen} \\
+5 & Scaling & nondimensionalisation & Knudsen number, Eq.~\eqref{eq:knudsen_definition} \\
 6 & Perturbation & Chapman--Enskog expansion in $Kn$ & transport coefficients $\mu$, $\kappa$ \\
 7 & Stochastic & operator splitting, no-time-counter sampling & DSMC algorithm over the Boltzmann equation \\
 8 & Surface & Planck integration, Fourier conduction & Eqs.~\eqref{eq:thermal_balance}--\eqref{eq:lateral} \\
@@ -1004,7 +1004,7 @@ Momentum, Eq.~\eqref{eq:app_momentum} & first moment & Eq.~\eqref{eq:boltzmann_d
 Internal energy, Eq.~\eqref{eq:app_internal_energy} & second moment minus mechanical energy & thermal chain \\
 Navier--Stokes, Eq.~\eqref{eq:app_ns} & Cauchy plus Newtonian closure & continuum solvers \\
 Transport coefficients, Eq.~\eqref{eq:app_mu_kappa} & Chapman--Enskog first order & DSMC gas model \\
-Knudsen number, Eq.~\eqref{eq:app_kn_dimensionless} & dimensionless Boltzmann equation & Eq.~\eqref{eq:knudsen} \\
+Knudsen number, Eq.~\eqref{eq:app_kn_dimensionless} & dimensionless Boltzmann equation & Eq.~\eqref{eq:knudsen_definition} \\
 VSS cross-section, Eq.~\eqref{eq:app_vss} & $\mu\propto T^{\omega}$ & DSMC collisions \\
 No-time-counter identity, Eq.~\eqref{eq:app_ntc_identity} & rejection sampling in expectation & DSMC collisions \\
 Stefan--Boltzmann, Eq.~\eqref{eq:app_stefan} & Planck integration & Eq.~\eqref{eq:thermal_balance} \\

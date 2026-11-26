@@ -55,9 +55,12 @@ The current analysis uses the IRVE-3 Gen-1 TPS (Nextel/Pyrogel) as the baseline.
 \subsection{Mars Entry Extension}
 The framework is designed to accommodate Mars entry conditions by adjusting the atmospheric composition from a CO$_2$-dominated regime and updating the gas model to SPARTA. The Sutton-Graves correlation would need to be replaced with the Mars-specific correlation of West and Brandis (2020), while the Earth's 5-species air model would be replaced with a CO$_2$/N$_2$/Ar mixture model.
 
-% PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required
-% to produce the optimized body, so all PINN material is removed from this
-% thesis deliberately. Do not reintroduce it.
+\subsection{Physics-Informed Neural Networks}
+The present pipeline uses DSMC for the flow field and a genetic algorithm for optimization; no trained or surrogate model is employed. Physics-informed neural networks (PINNs) are therefore a future-work direction rather than a component of this framework. A separate study could investigate PINNs as a fast surrogate for the aerothermal field or as an accelerated closure for selected sub-problems, but any such model would need validation against the DSMC results reported here before it could inform design decisions.
+
+% PINN NOTE (2026-11-26): PINN is not part of the main pipeline required to
+% produce the optimized body. It is recorded only as a future-work direction in
+% the subsection above; do not move it into the reported method.
 % NOTE (2026-10-21): this sub-iteration is implemented. The main pipeline
 % is analytical (closed-form Sutton-Graves heat flux, not a solver-resolved
 % field) and the default optimizer is now a simple genetic algorithm; the

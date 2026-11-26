@@ -10,7 +10,7 @@ In the preceding section, the foundational theory anchors are established to und
 \begin{figure}[H]
     \centering
     \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each theory anchor to the equation or solver step that implements it.}}%
-\includegraphics[width=\textwidth]{figures/methodology_derivation.png}%
+\includegraphics[width=0.60\textwidth]{figures/methodology_derivation.png}%
 \EndAccSupp{}%
     \caption{Methodology derivation from first principles: theory anchors $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
     \label{fig:methodology_derivation}
@@ -173,7 +173,7 @@ The modeling phase targets two specific scales identified in previous NASA resea
     \BeginAccSupp{method=escape,ActualText={Two side-by-side shaded three-dimensional renderings comparing inflatable and rigid decelerator concepts. The left panel shows a slender, sharply pointed olive-green inflated sphere-cone labelled '15m Inflatable', drawn at a shallow angle so that it appears as a long thin lens. The right panel shows a stubby, blunt-nosed orange-brown rigid body captioned '4.57m Rigid', viewed nearly end-on. The two panels are separated by a vertical rule. The contrast is between a large-diameter deployable inflatable and a small-diameter rigid aeroshell; the diameters are those printed in the panels themselves and are not to scale relative to each other.}}%
 \includegraphics[width=0.8\textwidth]{figures/Hiad_DesignSpec.png}%
 \EndAccSupp{}%
-    \caption{Size scaling between deployable inflatable and rigid HIAD concepts: the 15\,m inflatable aeroshell (left) against the 4.57\,m rigid aeroshell (right). The two diameters are the values printed in the panels; note that the rigid reference in this figure is 4.57\,m and \emph{not} the 3.0\,m IRVE-3 baseline through which the scaling discussion in this section is framed. The rendering compares overall form and scale only, not internal structure.}
+    \caption{Size scaling between deployable inflatable and rigid HIAD concepts: the 15\,m inflatable aeroshell (left) against the 4.57\,m rigid aeroshell (right). Image adapted from NASA Langley HIAD material~\cite{dillman2015irve3}. The two diameters are the values printed in the panels; note that the rigid reference in this figure is 4.57\,m and \emph{not} the 3.0\,m IRVE-3 baseline through which the scaling discussion in this section is framed. The rendering compares overall form and scale only, not internal structure.}
     \label{fig:hiad_comparison}
 \end{figure}
 
@@ -192,7 +192,7 @@ The outer mold line (OML) is constructed using the 6-toroid stack configuration 
     \BeginAccSupp{method=escape,ActualText={Cutaway cross-section of the deployed HIAD, 3 metres or 118 inches in diameter, showing the vehicle's internal subsystems. A central cylindrical equipment stack sits above the nose; callout arrows from the right label, from top to bottom, the cameras mounted on the upper struts, the attitude control system abbreviated ACS, the telemetry and power system, the centre-of-gravity offset system, and the inflation system. Below the stack a row of seven orange toroidal bladders runs the length of the vehicle, labelled T1 through T6 along the right-hand side with a seventh, smaller shoulder torus T7 at the far right end. The bladders rest against a pink flexible thermal protection layer, and the payload is carried in the central cavity. Two callout labels on the left-hand side are cut off by the edge of the source image and are only partially legible.}}%
 \includegraphics[width=0.6\textwidth]{figures/Spec0.png}%
 \EndAccSupp{}%
-    \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface. The six primary bladders T1--T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
+    \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface, reproduced from NASA Langley IRVE-3 material~\cite{dillman2015irve3}. The six primary bladders T1--T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
     \label{fig:irve3_layout}
 \end{figure}
 
@@ -222,7 +222,7 @@ The two configurations established for this study -- \textbf{Configuration A (Sc
     \BeginAccSupp{method=escape,ActualText={Cutaway of the HIAD in its stowed launch configuration inside the launch vehicle, headed Stowed with a quoted 18.5 inch diameter. A long tapered stowed pack sits above the vehicle internals, which include a pale green spherical payload and stacked avionics and battery boxes; below them a green upper stage band and a pale blue lower stage are labelled 22 inch diameter, and three orange landing legs extend downward from the lower stage.}}%
 \includegraphics[width=0.2\textwidth]{figures/Spec1.png}%
 \EndAccSupp{}%
-    \caption{Launch configuration of the HIAD system, showing the stowed constraint.}
+    \caption{Launch configuration of the HIAD system, showing the stowed constraint. Reproduced from NASA Langley IRVE-3 material~\cite{dillman2015irve3}.}
     \label{fig:stowed_deployed}
 \end{figure}
 
@@ -244,19 +244,7 @@ Unlike continuum CFD methods that solve the Reynolds-Averaged Navier--Stokes (RA
 The terms $\mathbf{F}$, $m$, and so forth denote external forces per molecule and molecular mass, while the right-hand side represents the Boltzmann collision integral. DSMC offers a stochastic approach to solving this equation by tracking representative particles through advection and collisions.
 
 \subsection{Knudsen Number and Flow Regime}
-The validity of the continuum assumption is maintained by the Knudsen number, denoted as$Kn$, which is defined as the ratio between the molecular mean free path ($\lambda$) and characteristic length ($L$).
-
-\begin{equation}
-    Kn = \frac{\lambda}{L}
-    \label{eq:knudsen}
-\end{equation}
-
-\begin{equation}
-    \lambda = \frac{1}{\sqrt{2} \pi d^2 n}
-    \label{eq:mmfp}
-\end{equation}
-
-where $d$ is the molecular diameter and $n$ is the number density. At the $51.8$\,km condition used throughout this thesis, $\rho_\infty = 7.851\times10^{-4}$\,kg\,m$^{-3}$ gives $n = \rho_\infty/m_{\mathrm{air}} = 1.632\times10^{22}$\,m$^{-3}$, so with $d = 3.7\times10^{-10}$\,m Eq.~\eqref{eq:mmfp} gives $\lambda = 1.007\times10^{-4}$\,m and, for the $3.0$\,m aeroshell diameter, $Kn = 3.36\times10^{-5}$. That is three orders of magnitude below the $0.01$ threshold, so the $51.8$\,km run condition is a continuum condition; for this vehicle the transitional band $0.01 < Kn < 1$ is reached only near $90$\,km, where the density has fallen to about $2.6\times10^{-6}$\,kg\,m$^{-3}$. The DSMC runs of this thesis are used as the high-fidelity reference for the surface flux and the shock-layer structure rather than because the continuum description fails at the run condition, and it is in the rarefied band that DSMC becomes unavoidable~\cite{bird1994molecular,tsien1946}. Appendix~\ref{app:governing_derivations} derives both relations from the Boltzmann equation.
+The Knudsen number compares the mean free path with a characteristic length; the defining relations are given in Chapter~\ref{chap:literature} and derived in Appendix~\ref{app:governing_derivations}, and are not repeated here. In those relations $d$ is the molecular diameter and $n$ is the number density. At the $51.8$\,km condition used throughout this thesis, $\rho_\infty = 7.851\times10^{-4}$\,kg\,m$^{-3}$ gives $n = \rho_\infty/m_{\mathrm{air}} = 1.632\times10^{22}$\,m$^{-3}$, so with $d = 3.7\times10^{-10}$\,m Eq.~\eqref{eq:app_mfp} gives $\lambda = 1.007\times10^{-4}$\,m and, for the $3.0$\,m aeroshell diameter, $Kn = 3.36\times10^{-5}$. That is three orders of magnitude below the $0.01$ threshold, so the $51.8$\,km run condition is a continuum condition; for this vehicle the transitional band $0.01 < Kn < 1$ is reached only near $90$\,km, where the density has fallen to about $2.6\times10^{-6}$\,kg\,m$^{-3}$. The DSMC runs of this thesis are used as the high-fidelity reference for the surface flux and the shock-layer structure rather than because the continuum description fails at the run condition, and it is in the rarefied band that DSMC becomes unavoidable~\cite{bird1994molecular,tsien1946}. Appendix~\ref{app:governing_derivations} derives both relations from the Boltzmann equation.
 
 \subsection{SPARTA Solver Configuration}
 The simulations are performed using the SPARTA (Sandia Parallel Algorithm for Real-Time Application) DSMC solver~\cite{plimpton2014sparta}. SPARTA is executed within a Docker-containerized Linux environment to ensure reproducibility of the build and execution across platforms.
@@ -457,6 +445,20 @@ The boundary conditions balance the two outward paths, conduction through the la
 \end{equation}
 where $\epsilon$ and $\sigma$ are as above and $T_{back}$ is supplied by the transient model of this section. The left-hand side is monotone in $T_{surf}$, so the equation has a unique root, which the solver finds by bisection and Newton iteration; the solver is registered in the unit-test suite, so the root exists and is unique for every element.
 
+Equation~\eqref{eq:thermal_balance} is the surface-node balance: it is the only node that radiates to the freestream, through the term $\epsilon\sigma(T_{surf}^4-T_\infty^4)$. The plies stacked underneath are opaque to one another and exchange energy only by conduction between adjacent layers; there is no internal radiation path between them, so the radiative term is taken as zero for every interior node. For ply $i$ below the surface the transient balance is therefore
+\begin{equation}
+    \rho_i c_{p,i}\,\delta_i\,\frac{\partial T_i}{\partial t}
+    \;=\;
+    \frac{T_{i-1}-T_i}{R_{i-1,i}}
+    \;+\;
+    \frac{T_{i+1}-T_i}{R_{i,i+1}}
+    \;+\;
+    \underbrace{0}_{\text{radiation between plies}},
+    \qquad i = 2,\dots,N-1,
+    \label{eq:ply_balance}
+\end{equation}
+where $R_{i-1,i}=\delta_i/(2k_i)+\delta_{i-1}/(2k_{i-1})$ is the half-ply resistance of the two neighbouring layers and $\rho_i c_{p,i}\delta_i$ is the areal heat capacity of ply $i$. The zero term is the modelling assumption being stated explicitly: reradiation exists at the exposed hot face only, not at the interfaces inside the layup. The backface value returned by this chain is the $T_{back}$ inserted into Eq.~\eqref{eq:thermal_balance}, which is how the surface and interior balances close on one another.
+
 The lateral term is applied to \emph{after}, the one-dimensional solution, and is not a two-dimensional PDE: each element exchanges heat with its neighbors via a lumped conductance $G_{lat}$.
 \begin{equation}
     \dot{q}_{lateral} = G_{lat}\left(T_{surf}-T_{surf}^{neighbours}\right),
@@ -536,6 +538,15 @@ A design is only permissible within the structural envelope. The maximum body ra
 The initial population is a Latin hypercube (LHS) over the five effective coordinates~\cite{mckay1979lhs}. Each coordinate is divided into $P=50$ equal strata, the stratum assignment is a fresh random permutation for every coordinate, and one individual is placed inside each stratum of each coordinate. The design is therefore stratified in every one-dimensional marginal: no stratum is empty and no stratum receives two individuals, which is the property that a uniform random draw does not have. The stratified start covers the box before the first fitness evaluation and avoids the clustering that otherwise leaves whole regions of the search space unvisited.
 
 The LHS is the only seeding the GA uses. There are no factorial points, no axial points and no Bayesian seed: the same fifty individuals are both the initial sample and the first generation, and each of them is evaluated with the analytic cost. The generator that draws the stratum permutations and the mutation offsets is seeded with the fixed value $42$, so the campaign is reproducible: two runs of the same binary on the same inputs return the same generation history and the same optimum. A Latin hypercube is also the natural choice here because the objective is cheap: the reason to use a space-filling design is coverage, not the construction of a surrogate.
+
+\begin{figure}[htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two scatter panels of the fifty Latin-hypercube initial designs. Left: body diameter against half-cone angle; right: nose radius against toroid minor radius. A light ten-by-ten grid makes the stratification visible; each marginal contains exactly one point per stratum.}}%
+\includegraphics[width=0.85\textwidth]{figures/thesis_lhs_initial_population.png}%
+\EndAccSupp{}%
+    \caption{Latin-hypercube initial population of fifty individuals, regenerated from the engine's seeding loop at seed $42$ and plotted against the design bounds. The two panels show representative coordinate pairs; a check over all four continuous coordinates confirms exactly one individual in each of the fifty strata of every marginal, which is the stratification the text claims. The grid lines are a visual aid at one tenth of each range and are not the fifty sampling strata.}
+    \label{fig:lhs_initial_population}
+\end{figure}
 
 \subsection{Cost Function}
 The cost is computed as the sum of four normalized physical terms, weighted by a constraint penalty, with all evaluations conducted through closed-form methods derived from geometry and validated flight conditions. The frontal geometry is defined as the outermost edge of the toroid stack.
@@ -651,7 +662,7 @@ The computational framework accommodates multiple backends for addressing divers
         Exploration & Analytic GA & Closed-form evaluation of 1000s of candidates \\ \hline
 % PINN-HIDDEN (2026-10-20): PINN is not part of the main pipeline required to produce the optimized body; removed deliberately, do not reintroduce.
         Validation & DSMC only & Independent kinetic check of the analytic ranking \\ \hline
-        High-Density (Future) & Fluent & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
+        High-Density (Future) & Fluent / OpenFOAM & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
     \end{tabularx}
 \end{table}
 
