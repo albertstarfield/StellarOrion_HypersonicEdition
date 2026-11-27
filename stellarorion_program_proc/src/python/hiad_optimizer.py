@@ -1957,7 +1957,7 @@ def main(argv: "list[str] | None" = None) -> int:
         )
     else:
         hl_pct = 0.0
-    output = {
+    output: dict[str, Any] = {
         # DYNAMIC validation base reference actually used for this run
         # (read from unified_comparison_data.json — see _load_validation_refs)
         "validation_refs": refs,

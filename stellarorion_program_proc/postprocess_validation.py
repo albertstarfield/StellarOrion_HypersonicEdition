@@ -480,7 +480,7 @@ def table5_integrated_heat_load(
     Heat load Q = integral(q_dot * dt) over trajectory.
     For single-point DSMC, we approximate by averaging across surface elements.
     """
-    rows = []
+    rows: list[_Row] = []
     cumulative_heat_load = 0.0
 
     for i, sf in enumerate(sorted(surf_files)):

@@ -71,9 +71,12 @@ The field panels of this section are reference-tree renders: they are produced f
     \BeginAccSupp{method=escape,ActualText={SPARTA temperature field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, colored by temperature in kelvin on a scale from 0 to about 5400 kelvin. Heating is concentrated on the windward face of the stacked tori. The panel is rendered from the step-2200 grid dump of the validation reference run, results/00_reference/grid.2200.out, at Mach 7.53, a freestream temperature of 267.85 kelvin and a derived freestream velocity of about 2472 metres per second, on a grid of 19321 child cells.}}%
 \includegraphics[width=0.75\textwidth]{figures/thermal_map_smooth.png}%
 \EndAccSupp{}%
-    \caption{Surface temperature distribution on the smooth-skinned toroid-stack configuration from SPARTA DSMC, shown as an axial--radial meridional slice. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. The skin is smooth, so the scalloped grooving quantified in the preceding paragraph is \emph{not} present in this render --- the repository contains no scalloped field map. The panel is produced at the reference-run condition rather than at the $3{,}378$\,m/s trajectory point used for the scalar validation metrics of Table~\ref{tab:validation_full}, and is used as a qualitative field visualisation only.}
+    \caption{Surface temperature distribution on the smooth-skinned toroid-stack configuration from SPARTA DSMC, shown as an.}
     \label{fig:thermal_map}
 \end{figure}
+
+Surface temperature distribution on the smooth-skinned toroid-stack configuration from SPARTA DSMC, shown as an axial--radial meridional slice. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. The skin is smooth, so the scalloped grooving quantified in the preceding paragraph is \emph{not} present in this render --- the repository contains no scalloped field map. The panel is produced at the reference-run condition rather than at the $3{,}378$\,m/s trajectory point used for the scalar validation metrics of Table~\ref{tab:validation_full}, and is used as a qualitative field visualisation only.
+
 
 \section{Pressure and Force Distribution}
 The axial drag force ($f_x$) and transverse force components are determined by the SPARTA surface force model. The pressure distribution across the scalloped surface, as depicted in Figure~\ref{fig:pressure_map}, reveals the characteristic features associated with the stacked toroidal geometry.
@@ -83,9 +86,12 @@ The axial drag force ($f_x$) and transverse force components are determined by t
     \BeginAccSupp{method=escape,ActualText={SPARTA pressure field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, colored by pressure in pascals on a scale from 0 to about 15000 pascals. The elevated-pressure band follows the windward face where the stacked tori sit. The panel is rendered from the step-2200 grid dump of the validation reference run, results/00_reference/grid.2200.out, at Mach 7.53, a freestream temperature of 267.85 kelvin and a derived freestream velocity of about 2472 metres per second, on a grid of 19321 child cells.}}%
 \includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth.png}%
 \EndAccSupp{}%
-    \caption{Surface pressure distribution on the smooth-skinned toroid-stack configuration, shown as an axial--radial meridional slice in which the elevated-pressure band follows the windward face along the stacked tori. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. Because the panel is a meridional cut it cannot show the circumferential periodicity of the toroid stack, so no periodic peak structure is claimed here.}
+    \caption{Surface pressure distribution on the smooth-skinned toroid-stack configuration, shown as an axial--radial.}
     \label{fig:pressure_map}
 \end{figure}
+
+Surface pressure distribution on the smooth-skinned toroid-stack configuration, shown as an axial--radial meridional slice in which the elevated-pressure band follows the windward face along the stacked tori. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. Because the panel is a meridional cut it cannot show the circumferential periodicity of the toroid stack, so no periodic peak structure is claimed here.
+
 
 \subsection{Drag Coefficient}
 The drag coefficient is formed from the axial force and the reference area $A_{ref} = \pi (D/2)^2$ using the flight-metric definitions of Chapter~\ref{chap:literature}. The HIAD's large frontal area produces a high drag coefficient, which is the fundamental mechanism enabling deceleration at high altitudes where atmospheric density is low~\cite{AndersonHypersonic}.
@@ -100,9 +106,12 @@ The Mach number field, denoted as~\ref{fig:mach_map}, represents the bow shock s
     \BeginAccSupp{method=escape,ActualText={SPARTA Mach number field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, colored by local Mach number on a scale from 0 to 16. The freestream away from the body is near the run Mach number, a low-Mach region of roughly Mach 4 wraps the forward and aft faces, and the wake behind the body is left as white speckle where no DSMC cells carry data. The panel is rendered from the step-2200 grid dump of the validation reference run, results/00_reference/grid.2200.out, at Mach 7.53, a freestream temperature of 267.85 kelvin and a derived freestream velocity of about 2472 metres per second, on a grid of 19321 child cells.}}%
 \includegraphics[width=0.75\textwidth]{figures/mach_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
-    \caption{Mach number field around the smooth-skinned toroid-stack configuration, again a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map} rather than a body without tori. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. The freestream is near the run Mach number and a low-Mach region of order Mach 4 encloses the forward and aft faces; this region is sub-freestream but \emph{not} subsonic. The wake behind the body is unpopulated and renders as white speckle, so no Mach value is claimed for it.}
+    \caption{Mach number field around the smooth-skinned toroid-stack configuration, again a meridional slice of the same.}
     \label{fig:mach_map}
 \end{figure}
+
+Mach number field around the smooth-skinned toroid-stack configuration, again a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map} rather than a body without tori. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. The freestream is near the run Mach number and a low-Mach region of order Mach 4 encloses the forward and aft faces; this region is sub-freestream but \emph{not} subsonic. The wake behind the body is unpopulated and renders as white speckle, so no Mach value is claimed for it.
+
 
 \subsection{Velocity Vector Field}
 The velocity vectors (Figure~\ref{fig:velocity_vectors}) show the strong deceleration in the near wake of the toroid stack, with velocity magnitude falling from the freestream value to well below $1.5$\,km/s immediately behind the body. In the DSMC framework, this momentum loss and the associated recirculating flow emerge naturally from molecular collisions and surface interactions without requiring turbulence modeling~\cite{bird1994molecular}.
@@ -112,9 +121,12 @@ The velocity vectors (Figure~\ref{fig:velocity_vectors}) show the strong deceler
     \BeginAccSupp{method=escape,ActualText={SPARTA velocity-vector field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, with arrows colored by velocity magnitude in metres per second on a scale from 0 to 2700. The freestream arrows are uniform across the domain, and a wedge-shaped wake behind the body carries sparse, reduced-magnitude arrows. The panel is rendered from the step-2200 grid dump of the validation reference run, results/00_reference/grid.2200.out, at Mach 7.53, a freestream temperature of 267.85 kelvin and a derived freestream velocity of about 2472 metres per second, on a grid of 19321 child cells.}}%
 \includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth.png}%
 \EndAccSupp{}%
-    \caption{Velocity vector field on the smooth-skinned toroid-stack configuration, showing the decelerated wake region downstream of the toroid stack. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells, so it shares the run condition of Figures~\ref{fig:thermal_map}, \ref{fig:pressure_map} and \ref{fig:mach_map} and of the rarefaction panel of Figure~\ref{fig:knudsen_map}: the velocity, pressure, temperature and rarefaction panels are directly comparable. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign.}
+    \caption{Velocity vector field on the smooth-skinned toroid-stack configuration, showing the decelerated wake region.}
     \label{fig:velocity_vectors}
 \end{figure}
+
+Velocity vector field on the smooth-skinned toroid-stack configuration, showing the decelerated wake region downstream of the toroid stack. The panel is rendered from the step-2200 grid dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells, so it shares the run condition of Figures~\ref{fig:thermal_map}, \ref{fig:pressure_map} and \ref{fig:mach_map} and of the rarefaction panel of Figure~\ref{fig:knudsen_map}: the velocity, pressure, temperature and rarefaction panels are directly comparable. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign.
+
 
 \subsection{Knudsen Number Distribution}
 The Knudsen number field (Figure~\ref{fig:knudsen_map}) represents the transition behavior across the computational domain.
@@ -135,9 +147,12 @@ A distribution validating the utilization of DSMC for a majority of the flow fie
     \BeginAccSupp{method=escape,ActualText={Local Knudsen number field of the validation reference tree at step 2200, drawn as filled cell tiles on a meridional half-section: axial distance from minus 1 to 5 metres across and radial distance from 0 to 3.5 metres up. The grey body outline is the reference decelerator, nose at the origin and back face near 1.27 metres. A white box in the upper left states the run condition: Mach 7.53, freestream temperature 267.85 kelvin, derived freestream speed about 2472 metres per second, 19321 child cells, smooth nose. The color bar spans 1e-5 to 1.15e-2 and no region reaches the free-molecular regime.}}%
 \includegraphics[width=0.95\textwidth]{figures/knudsen_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
-    \caption{Local Knudsen number on the smooth-skinned toroid-stack reference configuration, rendered from the step-2200 grid dump of the validation reference tree (\texttt{results/00\_reference/grid.2200.out}). The run condition is Mach~7.53, $T_{\infty} = 267.85$\,K and derived $V_{\infty} \approx 2472$\,m/s on 19321 child cells, and it is restated in the box inside the panel. The field is drawn as filled cell tiles so that the domain reads as a continuous map; the grey outline is the reference body. The visible range runs from $10^{-5}$ to $1.15\times10^{-2}$, so the flow is transitional to near-continuum but never free-molecular. This is the reference geometry, not the optimized design.}
+    \caption{Local Knudsen number on the smooth-skinned toroid-stack reference configuration, rendered from the step-2200 grid.}
     \label{fig:knudsen_map}
 \end{figure}
+
+Local Knudsen number on the smooth-skinned toroid-stack reference configuration, rendered from the step-2200 grid dump of the validation reference tree (\texttt{results/00\_reference/grid.2200.out}). The run condition is Mach~7.53, $T_{\infty} = 267.85$\,K and derived $V_{\infty} \approx 2472$\,m/s on 19321 child cells, and it is restated in the box inside the panel. The field is drawn as filled cell tiles so that the domain reads as a continuous map; the grey outline is the reference body. The visible range runs from $10^{-5}$ to $1.15\times10^{-2}$, so the flow is transitional to near-continuum but never free-molecular. This is the reference geometry, not the optimized design.
+
 
 \section{Grid Independence Study}
 A grid independence study was performed on the reference body at the same freestream condition and trajectory point, at five Cartesian resolutions: $70\times70$ (4\,900 cells), $100\times100$ (10\,000 cells), $139\times139$ (19\,321 cells, the production grid), $200\times200$ (40\,000 cells) and $250\times250$ (62\,500 cells). Neither series is grid-converged: the integrated drag force appears to plateau between L2 and L3 ($-0.48\,\%$) but moves $-3.57\,\%$ at L4, and the stagnation-point peak heat flux changes by $-7.66\,\%$ (L2--L3) and $-14.53\,\%$ (L3--L4) before reversing to $+2.85\,\%$ at L5 (1.580 against 1.536\,MW\,m$^{-2}$), so the successive differences do not shrink and the peak surface migrates between elements (id 4 at L3, 2 at L4, 7 at L5). Figure~\ref{fig:grid_independence} is the graphical record of the same campaign; the quantitative summary is Table~\ref{tab:grid_study}.
@@ -147,9 +162,12 @@ A grid independence study was performed on the reference body at the same freest
     \BeginAccSupp{method=escape,ActualText={SPARTA computational mesh map showing the axial and radial grid distribution used in the DSMC calculation.}}%
 \includegraphics[width=0.75\textwidth]{figures/grid_mesh_map_smooth.png}%
 \EndAccSupp{}%
-    \caption{Computational grid used in the SPARTA DSMC simulation with grid-factor 0.7. Figure~\ref{fig:mesh_stats} is a second rendering of the same mesh, with the body outlines, a shoulder zoom and the mesh statistics added.}
+    \caption{Computational grid used in the SPARTA DSMC simulation with grid-factor 0.7.}
     \label{fig:grid_mesh}
 \end{figure}
+
+Computational grid used in the SPARTA DSMC simulation with grid-factor 0.7. Figure~\ref{fig:mesh_stats} is a second rendering of the same mesh, with the body outlines, a shoulder zoom and the mesh statistics added.
+
 
 \section{Validation Against IRVE-3 Flight Data}
 \label{sec:validation_irve3}
@@ -175,6 +193,31 @@ The simulation results are validated against the IRVE-3 post-flight aerothermal 
     \end{tabularx}
     \normalsize
 \end{table}
+\noindent The analytic model used to score the search is evaluated in Table~\ref{tab:analytic_validation} at the baseline geometry ($D=3.0$\,m, $R_n=0.55$\,m, $r_{tor}=0.135$\,m, $60^\circ$ half-cone, six toroids), not at either optimized pass. The flux and load use Eq.~\eqref{eq:sutton_graves} and Eq.~\eqref{eq:heat_load} with $\rho_\infty=7.851\times10^{-4}$\,kg/m\textsuperscript{3}, $V_\infty=3{,}378$\,m/s, $C_{SG}=1.7415\times10^{-4}$ and $\tau=13.582459$\,s; the drag coefficient uses Eq.~\eqref{eq:cd_law} at its baseline value. The percentage is $(\text{analytic}-\text{flight})/\text{flight}$.
+
+\begin{table}[H]
+    \centering
+    \caption{Analytic screening model at the baseline geometry versus IRVE-3 flight; no row is a like-for-like validation.}
+    \label{tab:analytic_validation}
+    \small
+    \begin{tabularx}{\textwidth}{>{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}p{0.15\textwidth} >{\RaggedRight\arraybackslash}p{0.10\textwidth} >{\RaggedRight\arraybackslash}X}
+        \hline
+        \textbf{Quantity} & \textbf{Analytic (baseline)} & \textbf{IRVE-3 flight} & $\Delta$ & \textbf{Like-for-like?} \\
+        \hline
+        Peak heat flux $\dot{q}_{SG}$ & 25.36~W/cm\textsuperscript{2} & 14.36~W/cm\textsuperscript{2} & $+76.6\%$ & No: physical nose radius, single snapshot \\
+        Heat load $Q=\dot{q}_{SG}\tau$ & 344.48~J/cm\textsuperscript{2} & 195.06~J/cm\textsuperscript{2} & $+76.6\%$ & No: constant-flux window, not trajectory-integrated \\
+        Drag coefficient $C_d$ & 1.6073 & -- & -- & No flight value quoted \\
+        Peak deceleration & reported but not priced (Eq.~\ref{eq:ga_cost}) & 19.7\,$g$ & -- & No: solver value 22.72\,$g$ is a different instant \\
+        \hline
+    \end{tabularx}
+    \normalsize
+\end{table}
+
+\noindent \textbf{Acceptance criterion.} The comparison target for DSMC against the IRVE-3 reference is a difference below $10\,\%$, ideally $5$--$7\,\%$, and it applies only to like-for-like quantities. Against the flight values in Table~\ref{tab:validation} the heat-flux entry is $+6.9\,\%$ but is a Sutton--Graves evaluation, not a solver-resolved peak; the total heat load is $-15.0\,\%$ and the peak deceleration $+15.3\,\%$, both outside the band, because the run samples one trajectory point and its deceleration maximum occurs at step 100 rather than at the flight peak. The ballistic-coefficient comparison is $+3.0\,\%$ (27.70 against 26.9\,kg/m\textsuperscript{2}) and lies inside the band. The criterion is therefore stated here as an acceptance target: no like-for-like integrated quantity is claimed as passed, and the single-point flux comparison is reported as a scale comparison only.
+
+\noindent A related caveat concerns the labels carried by the validation export itself. That export's \texttt{Status} column marks its heat-flux row ($12.20$\,W/cm$^2$ against a $13.80$\,W/cm$^2$ target, $11.57\,\%$) and its heat-load row ($165.72$\,J/cm$^2$ against a $188.00$\,J/cm$^2$ target, $11.85\,\%$) as \texttt{PASS}. Both differences exceed the $10\,\%$ acceptance band stated above, and both rows are the non-like-for-like single-point quantities already described: the flux is the legacy correlation evaluation and the load is the single-trajectory-point value, not a trajectory-integrated flight peak. Those \texttt{PASS} labels are export bookkeeping and are not adopted here as validation verdicts.
+
+\noindent \textbf{Scope of the remaining pipeline gates.} Two further readings from the same build are reported here and are not adopted as verdicts on the configuration. The sample validation job's Step~9b regime gate records $Kn = 3.78388\times10^{-5}$ at its recorded run point against the transitional band $0.01 < Kn < 1$ and marks it \texttt{FAIL}. The job's own mean free path of $1.13516\times10^{-4}$\,m divided by the $3.0$\,m body gives the same order, and Chapter~3 derives $Kn = 3.36\times10^{-5}$ independently at the $51.8$\,km reference state; the two values describe different recorded thermodynamic states and both are about three orders of magnitude below the band. That regime gate is the wrong instrument for the surface comparison in Table~\ref{tab:validation}: the DSMC runs of this thesis are used as the high-fidelity reference for surface flux and shock-layer structure rather than because the continuum description fails at the run condition, so a \texttt{FAIL} against a transitional-band criterion cannot be read as a failed surface validation~\cite{bird1994molecular,tsien1946}. Chapter~2 notes that the local density-gradient length scale inside the shock layer can reach the transitional band even at this altitude; the gate tests the freestream run point only, no local Kn evaluation is reported here, and that regime question therefore remains open. The residual uncertainty is the run-point state itself, which is taken from the sample job's log and is not re-derived here from the reference time series. Separately, that job's shell wrapper closes with \texttt{EXIT=0} although Step~13 failed to spawn the PINN sidecar (an \texttt{ImportError} in \texttt{scipy.stats}); the exit status is wrapper bookkeeping and is explicitly not a passing simulation. A later unmodified campaign run completed its PINN extrapolation leg and ended \texttt{rc=0} with \texttt{BUILD SUCCEEDED}, but that later success does not retroactively turn the failed sample job into a pass. No claim in this thesis depends on that job's sidecar output, and none of these three readings changes the like-for-like verdict above.
 
 The MDAO Fay--Riddell prediction of 13.83~W/cm\textsuperscript{2} is within 3.7\% of the 14.36~W/cm\textsuperscript{2} flight measurement, and its total heat load of 195.17~J/cm\textsuperscript{2} is within 0.06\% of the 195.06~J/cm\textsuperscript{2} flight value. These figures are computed by the external MDAO reference model, not by the SPARTA DSMC solver used in this work, and they establish that the IRVE-3 flight reconstruction adopted here is internally consistent.
 
@@ -190,9 +233,12 @@ The temperature distribution within the toroidal pockets demonstrates that the r
     \BeginAccSupp{method=escape,ActualText={Line plot of temperature against axial position measured at the centre of a scallop pocket, showing the thermal response of the valley flow. The panel is rendered from the step-2200 dump of the validation reference run, results/00_reference/grid.2200.out, at Mach 7.53, a freestream temperature of 267.85 kelvin and a derived freestream velocity of about 2472 metres per second, on a grid of 19321 child cells.}}%
 \includegraphics[width=0.75\textwidth]{figures/scallop_pocket_temp_smooth_M0_A0.png}%
 \EndAccSupp{}%
-    \caption{Axial temperature trace sampled at the centre of a scallop pocket. The panel is rendered from the step-2200 dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. The trace is flat at ambient temperature upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak near $3.6 \times 10^3$\,K, and decays through the recirculation region, quantifying the thermal shelter that the pocket provides relative to the heated crests.}
+    \caption{Axial temperature trace sampled at the centre of a scallop pocket.}
     \label{fig:scallop_pocket}
 \end{figure}
+
+Axial temperature trace sampled at the centre of a scallop pocket. The panel is rendered from the step-2200 dump of the validation reference run (\texttt{results/00\_reference/grid.2200.out}) at $M_{\infty} = 7.53$, $T_{\infty} = 267.85$\,K and a derived $V_{\infty} \approx 2472$\,m/s, on a grid of 19321 child cells. The authoritative run condition is the one quoted here and not any condition legend printed inside the panel image, which belongs to a superseded campaign. The trace is flat at ambient temperature upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak near $3.6 \times 10^3$\,K, and decays through the recirculation region, quantifying the thermal shelter that the pocket provides relative to the heated crests.
+
 
 \section{TPS Conduction, Re-radiation and Lateral Coupling}
 \label{sec:tps_conduction_results}
@@ -204,9 +250,12 @@ The thermal-propagation chain for Sec.~\ref{sec:thermal_chain} is analyzed by de
     \BeginAccSupp{method=escape,ActualText={Two-panel figure of the thermal protection system. Panel a shows through-thickness temperature profiles for five surface elements of the reference run at the final step: four elements fall from about 1330 to 1400 kelvin at the outer face to about 300 kelvin at the back over roughly 6.9 millimetres of layup, while a fifth, sheltered element stays near 550 kelvin. Panel b shows the stepped per-ply temperatures of the first element for the reference geometry (blue, 1330 kelvin outer face) and the optimized geometry (orange, 1220 kelvin outer face), with a large drop at the first ply interface and a final drop to the 300 kelvin backface at 6.9 millimetres. An annotation records the convective load of 1.44 times ten to the five watts per square metre, the conductive 3.36 times ten to the three, the radiative 1.4 times ten to the five, and the lateral 0.00833 watts per square metre.}}%
 \includegraphics[width=0.9\textwidth]{figures/tps_ply_conduction.png}%
 \EndAccSupp{}%
-    \caption{Through-thickness and per-ply thermal response of the FTPS layup at the final step. Panel (a): temperature profiles for five surface elements of the reference run, four of which carry the stagnation load and one of which is sheltered. Panel (b): per-ply temperatures of the first element for the reference and the optimized geometry. Source: \texttt{results/tps\_conduction/00\_reference} and \texttt{results/tps\_conduction/03\_opt\_geometry}, \texttt{tps\_step2200\_profiles.csv}, \texttt{tps\_step2200\_layers.csv} and \texttt{tps\_step2200\_elements.csv}; generated by \texttt{figures/make\_tps\_ply\_figure.py}.}
+    \caption{Through-thickness and per-ply thermal response of the FTPS layup at the final step.}
     \label{fig:tps_ply}
 \end{figure}
+
+Through-thickness and per-ply thermal response of the FTPS layup at the final step. Panel (a): temperature profiles for five surface elements of the reference run, four of which carry the stagnation load and one of which is sheltered. Panel (b): per-ply temperatures of the first element for the reference and the optimized geometry. Source: \texttt{results/tps\_conduction/00\_reference} and \texttt{results/tps\_conduction/03\_opt\_geometry}, \texttt{tps\_step2200\_profiles.csv}, \texttt{tps\_step2200\_layers.csv} and \texttt{tps\_step2200\_elements.csv}; generated by \texttt{figures/make\_tps\_ply\_figure.py}.
+
 
 The profiles confirm the balance of Eq.~\eqref{eq:thermal_balance}. The hot face sits at $T_{surf}\approx1327$\,K while the backface remains at 300\,K, so the layup resistance carries only $\dot{q}_{cond}=3{,}362$\,W/m$^2$ against a convective load of $143{,}760$\,W/m$^2$; the remaining $140{,}399$\,W/m$^2$ leaves the surface by radiation. The insulation therefore works mainly by keeping the hot face cold enough for the radiative path, not by absorbing the load. % Supervisor approval (2026-10-26): the 1D transient backface model is retained.
 % A 2D/3D thermal model was considered to capture edge effects and
@@ -222,9 +271,12 @@ The DSMC simulation convergence is monitored via residual tracking (Figure~\ref{
     \BeginAccSupp{method=escape,ActualText={Log-scale plot of normalized convergence residuals against particle-time step for three monitored quantities. Drag coefficient (Cd, solid orange) falls from about 0.38 to about 1.5 times ten to the minus three; lift coefficient (Cl, dashed cyan) falls from about 0.28 to about 5 times ten to the minus five; and the per-element heat-flux average (q, solid red) falls from about 1.6 to about 4 times ten to the minus three. All three decrease by over an order of magnitude over steps 100 to 2200, with visible non-monotonic statistical scatter between adjacent samples.}}%
 \includegraphics[width=0.75\textwidth]{figures/convergence_residuals_master_smooth.png}%
 \EndAccSupp{}%
-    \caption{Convergence history of the SPARTA DSMC simulation, plotted as the normalized residual $|x - x_{\mathrm{ref}}|/|x_{\mathrm{ref}}|$ of the drag coefficient, the lift coefficient and the per-element heat-flux average against particle-time step. The residuals fall by over an order of magnitude over steps 100--2200 with residual statistical scatter, which is the expected behavior of a finite-sample particle estimator rather than a monotone error bound. The processed Sutton-Graves correlation value is deliberately not plotted here: it is a function of the fixed freestream state and is bit-identical at every step, so it carries no convergence information. Regenerated by \texttt{figures/make\_convergence\_residuals.py}.}
+    \caption{Convergence history of the SPARTA DSMC simulation, plotted as the normalized residual.}
     \label{fig:convergence}
 \end{figure}
+
+Convergence history of the SPARTA DSMC simulation, plotted as the normalized residual $|x - x_{\mathrm{ref}}|/|x_{\mathrm{ref}}|$ of the drag coefficient, the lift coefficient and the per-element heat-flux average against particle-time step. The residuals fall by over an order of magnitude over steps 100--2200 with residual statistical scatter, which is the expected behavior of a finite-sample particle estimator rather than a monotone error bound. The processed Sutton-Graves correlation value is deliberately not plotted here: it is a function of the fixed freestream state and is bit-identical at every step, so it carries no convergence information. Regenerated by \texttt{figures/make\_convergence\_residuals.py}.
+
 
 \section{Mesh Quality Statistics}
 The quantitative evidence for the chosen grid is the five-level grid-independence study of Table~\ref{tab:grid_study} and Figure~\ref{fig:grid_independence}, together with the residual convergence of Figure~\ref{fig:convergence}, not a statistics panel: both figures in this section (Figures~\ref{fig:grid_mesh} and \ref{fig:mesh_stats}) render the mesh and report no numeric quality metric. The study shows that neither series is grid-converged (the drag plateau at L2--L3 is invalidated by L4 and the heat-flux differences grow with refinement), so the production grid ($139\times139$, 19\,321 cells) is retained on cost grounds as a conservative choice for the surface quantities.
@@ -234,9 +286,12 @@ The quantitative evidence for the chosen grid is the five-level grid-independenc
     \BeginAccSupp{method=escape,ActualText={Two-panel mesh figure on a dark background. Panel (a) shows the Cartesian SPARTA mesh across the whole domain from minus 5 to 9 metres axially and 0 to 3.94 metres radially, with the body filled dark, a red solid reference outline and a yellow dashed optimized outline. Panel (b) zooms on the shoulder between 0.85 and 1.35 metres axially and 1.15 and 1.95 metres radially. A text block lists grid 139 by 139 by 1, 19321 child cells, cell size 0.10072 by 0.02833 metres, cell aspect ratio 3.56, 12.6 cells along and 66.4 across the body, and 18746 outside, 430 inside and 145 overlapping the surface.}}%
 \includegraphics[width=0.75\textwidth]{figures/mesh_statistics_smooth.png}%
 \EndAccSupp{}%
-    \caption{Computational mesh of the SPARTA domain at the validation reference condition (139$\times$139$\times$1 grid, 19321 child cells), with the reference body (red solid) and the optimized candidate (yellow dashed) drawn on the same mesh, a shoulder zoom in panel~(b), and the mesh statistics in the text block. Cell size is $0.10072$\,m axially and $0.02833$\,m radially, an aspect ratio of $3.56$; 12.6 cells span the body length and 66.4 its radius, and 430 cells lie inside the body, 145 overlap the surface and 18746 are in the free stream. This is the same Cartesian mesh as Figure~\ref{fig:grid_mesh}, with the outlines, the zoom and the quantitative block added.}
+    \caption{Computational mesh of the SPARTA domain at the validation reference condition (139$\times$139$\times$1 grid, 19321.}
     \label{fig:mesh_stats}
 \end{figure}
+
+Computational mesh of the SPARTA domain at the validation reference condition (139$\times$139$\times$1 grid, 19321 child cells), with the reference body (red solid) and the optimized candidate (yellow dashed) drawn on the same mesh, a shoulder zoom in panel~(b), and the mesh statistics in the text block. Cell size is $0.10072$\,m axially and $0.02833$\,m radially, an aspect ratio of $3.56$; 12.6 cells span the body length and 66.4 its radius, and 430 cells lie inside the body, 145 overlap the surface and 18746 are in the free stream. This is the same Cartesian mesh as Figure~\ref{fig:grid_mesh}, with the outlines, the zoom and the quantitative block added.
+
 
 \section{Discussion of the DSMC Results}
 
@@ -314,9 +369,12 @@ Figure~\ref{fig:ga_convergence} presents the best search score for the campaign 
     \BeginAccSupp{method=escape,ActualText={Step plot of the recorded generation-best cost against generation for the Latin-hypercube-seeded genetic-algorithm campaign, on a vertical axis from 4.2090 to 4.2140 so that every improvement is resolved. The recorded best falls from 4.2142 at generation 0 to 4.2089 by generation 37 in eight steps at generations 4, 6, 7, 8, 14, 15, 16 and 17, marked by open circles. The IRVE-3 baseline 4.6017 and the re-evaluated optimum 4.1788 lie outside the plotted band and are written at the right edge as off-scale values rather than drawn as lines.}}%
 \includegraphics[width=0.9\textwidth]{figures/ga_convergence.png}%
 \EndAccSupp{}%
-    \caption{Recorded generation-best cost of the LHS-seeded GA campaign against generation. The vertical axis is limited to the recorded band, $4.2090$ to $4.2140$, so that all eight improvements are resolved; the baseline $4.6017$ and the double-precision re-evaluation of the optimum $4.1788$ lie outside that band and are annotated at the right edge as off-scale values instead of being drawn as lines.}
+    \caption{Recorded generation-best cost of the LHS-seeded GA campaign against generation.}
     \label{fig:ga_convergence}
 \end{figure}
+
+Recorded generation-best cost of the LHS-seeded GA campaign against generation. The vertical axis is limited to the recorded band, $4.2090$ to $4.2140$, so that all eight improvements are resolved; the baseline $4.6017$ and the double-precision re-evaluation of the optimum $4.1788$ lie outside that band and are annotated at the right edge as off-scale values instead of being drawn as lines.
+
 
 The search improves in discrete steps: the recorded best falls from $4.2142$ in generation 0 to $4.2089$ by generation 37, with eight strict improvements, the first at generation 4. The final optimum, re-evaluated in double precision with Eq.~\eqref{eq:ga_cost}, is $4.1788$; the $-0.72\,\%$ difference from the recorded single-precision search score is a precision effect, not a fidelity penalty. Both reference values lie outside the plotted band and are annotated as off-scale in Figure~\ref{fig:ga_convergence}, so neither is conflated with the recorded curve.
 
@@ -330,9 +388,12 @@ Figure~\ref{fig:ga_trajectory} represents the trajectory of the generation-best 
     \BeginAccSupp{method=escape,ActualText={Two-panel figure. The upper panel plots the generation-best design in the plane of body radius X1, from 1.3360 to 1.3385 metres, against half-cone angle X3, from 58.3 to 58.6 degrees, colored by generation with a horizontal color bar from 0 to 37. Generations 0, 4, 6 and 7 are numbered; generations 8, 14, 15, 16 and 17 lie within 0.0002 metres of one another and are covered by a single note. A gold star marks the final optimum and a square in the upper right keys the IRVE-3 baseline, which lies off scale. The lower panel gives the change from the baseline as horizontal bars: half-cone angle minus 2.32 per cent, torus radius plus 33.04 per cent, body radius minus 10.94 per cent.}}%
 \includegraphics[width=0.9\textwidth]{figures/ga_design_trajectory.png}%
 \EndAccSupp{}%
-    \caption{Generation-best design path in the plane of body radius $X_1$ against half-cone angle $X_3$, colored by generation; the torus radius is effectively constant at $0.1796$\,m along the accepted path, so the recorded trajectory is two-dimensional in this plane. Only generations 0, 4, 6 and 7 are numbered, because generations 8, 14, 15, 16 and 17 fall within $0.0002$\,m of one another; the gold star is the final optimum and the IRVE-3 baseline is keyed as off scale in the upper right. The lower panel gives the change from the baseline: half-cone angle $-2.32\,\%$, torus radius $+33.04\,\%$, body radius $-10.94\,\%$.}
+    \caption{Generation-best design path in the plane of body radius $X_1$ against half-cone angle $X_3$, colored by generation;.}
     \label{fig:ga_trajectory}
 \end{figure}
+
+Generation-best design path in the plane of body radius $X_1$ against half-cone angle $X_3$, colored by generation; the torus radius is effectively constant at $0.1796$\,m along the accepted path, so the recorded trajectory is two-dimensional in this plane. Only generations 0, 4, 6 and 7 are numbered, because generations 8, 14, 15, 16 and 17 fall within $0.0002$\,m of one another; the gold star is the final optimum and the IRVE-3 baseline is keyed as off scale in the upper right. The lower panel gives the change from the baseline: half-cone angle $-2.32\,\%$, torus radius $+33.04\,\%$, body radius $-10.94\,\%$.
+
 
 The path has a clear physical reading. The optimizer reduces the body radius from $1.5$ to $1.3359$\,m, increases the torus radius from $0.135$ to $0.1796$\,m, and reduces the half-cone angle from $60^\circ$ to $58.61^\circ$. The smaller body radius shrinks the physical nose radius from $0.55$ to $0.4898$\,m, and because Sutton--Graves scales as $1/\sqrt{R_n}$ the stagnation flux rises by $+5.96\,\%$; the drag coefficient rises by $+2.14\,\%$, which is the reward the objective pays for.
 
@@ -364,9 +425,11 @@ The meridians in Figure~\ref{fig:topology_comparison} are read directly from \te
     \BeginAccSupp{method=escape,ActualText={Two rows of panels. The top row holds four vertical strips of through-thickness temperature, two per tree, a peak-heating element and a median-heating element; each strip runs from the hot face at the top to the back face at the bottom, and every ply is a coloured band; the four plies thicker than the printed hairline carry their node temperature beside them. A shared colour bar beneath the strips spans 300 to 1430 kelvin. The bottom row holds one box plot per tree of the per-ply heat flux over all 3648 elements, five boxes from the surface ply to the back face.}}%
 \includegraphics[width=\textwidth]{figures/tps_thermal_print.png}%
 \EndAccSupp{}%
-    \caption{Thermal response of the reference (left) and the optimized topology (right): through-thickness temperature and per-ply heat flux.}
+    \caption{Thermal response of the reference (left) and the optimized topology (right): through-thickness temperature and.}
     \label{fig:tps_reuse}
 \end{figure}
+
+
 
 Figure~\ref{fig:tps_reuse} compares the reference and the optimized topology. The upper strips give the through-thickness temperature of two elements per tree, the peak-heating element and the element at the median of the heated population, with the node temperature of every ply thicker than the printed hairline written in kelvin beside its band, and the $25$\,$\mu$m Kapton film at the back face stated here because its band is thinner than a hairline at the printed scale (its node computes to $300.8$\,K); the lower panel gives the per-ply heat flux over all $3648$ surface elements, so each box is a population and not a sample. Both trees were flown at step 2200 of the same condition ($52.07$\,km, $3101$\,m/s), so the two columns are directly comparable. Peak surface heat flux is $q_{peak} = q_{SG} = 193\,154.22$\,W/m\textsuperscript{2} ($19.315$\,W/cm\textsuperscript{2}, against $30$\,W/cm\textsuperscript{2} for Nextel BF20); this is the Sutton--Graves value at the TPS-run condition and not the $15.36$\,W/cm\textsuperscript{2} baseline of Sec.~\ref{sec:validation_irve3}, which is evaluated at $h = 51.8$\,km and $V = 3378$\,m/s. The mean surface temperature is $801.35$\,K for the reference against $830.03$\,K for the optimized body, the peak is $1430.25$\,K in both, $2064$ against $2160$ elements exceed $523.15$\,K, $912$ against $960$ elements carry zero flux, and the back-face temperature is pinned at $300$\,K by the boundary condition in both runs, where its deepest node computes to $300.8$\,K, so only the surface field is informative. The panels are drawn at their printed size, $6.8$--$8$\,pt (ticks $6.78$, axis labels $7.48$, titles $7.98$), from the run\textquotesingle s own element, layer and profile records with the program\textquotesingle s loaders, and the plotted values are recomputed from those records and asserted against the run\textquotesingle s summary before a pixel is written; the earlier wide-format post-processing images, whose $4.6$--$9$\,pt type printed at $1.4$--$2.7$\,pt once an $8.6$\,in panel was squeezed into a $2.83$\,in cell, are not reused. The ply thicknesses and conductivities shown by the band edges are the TPS preset tabulated in Chapter~3.
 
@@ -381,9 +444,12 @@ comparable line for line.
     \BeginAccSupp{method=escape,ActualText={Four rows by two columns of panels, the reference tree in the left column and the optimized tree in the right column. The first row scatters the re-radiated share of the surface heat against surface temperature with a dashed mean line. Panel b is a two-segment bar of the mean split between re-radiation and conduction. Panel c scatters conduction into the stack against the imposed convective flux on logarithmic axes, with a one-to-one dashed line, and adds the lateral exchange term in a second colour. Panel d scatters the absolute closure residual on logarithmic axes against the imposed flux, with a dotted tolerance line.}}%
 \includegraphics[width=\textwidth]{figures/tps_balance_print.png}%
 \EndAccSupp{}%
-    \caption{Surface energy balance of the reference (left column) and of the optimized topology (right column), the same four diagnostics stacked as rows so each row compares the two trees directly. Panel~(a) plots the re-radiated share $q_{rad}/(q_{cond}+q_{rad})$ of each element against its surface temperature with the population mean dashed; panel~(b) reduces that population to the mean split; panel~(c) tests the conduction path against the imposed flux on logarithmic axes, where the dashed line is $q_{cond} = q_{conv}$ and the second colour is the lateral exchange with neighbouring elements; panel~(d) is the closure itself. The mean radiative fraction is $0.8660$ for the reference against $0.8693$ for the optimized body, that is $13.40$ against $13.07$ per cent of the surface throughput conducted into the stack, over $2971$ against $3017$ elements that carry more than $1$\,W/m\textsuperscript{2} of throughput. The lateral term stays small, between $-6.30$ and $+6.90$\,W/m\textsuperscript{2} for the reference ($1632$ elements shedding heat to their neighbours against $2016$ gaining) and between $-7.43$ and $+6.74$\,W/m\textsuperscript{2} for the optimized body ($1536$ against $2112$). The run records a worst relative closure of $1.78\times10^{-4}$ and $1.99\times10^{-4}$, the residual divided by the surface throughput, a factor of $5.6$ and $5.0$ below the $10^{-3}$ at which the program refuses to plot a split at all, so the balance the figure shows is the solver's own and not an imposed one.}
+    \caption{Surface energy balance of the reference (left column) and of the optimized topology (right column), the same four.}
     \label{fig:tps_balance}
 \end{figure}
+
+Surface energy balance of the reference (left column) and of the optimized topology (right column), the same four diagnostics stacked as rows so each row compares the two trees directly. Panel~(a) plots the re-radiated share $q_{rad}/(q_{cond}+q_{rad})$ of each element against its surface temperature with the population mean dashed; panel~(b) reduces that population to the mean split; panel~(c) tests the conduction path against the imposed flux on logarithmic axes, where the dashed line is $q_{cond} = q_{conv}$ and the second colour is the lateral exchange with neighbouring elements; panel~(d) is the closure itself. The mean radiative fraction is $0.8660$ for the reference against $0.8693$ for the optimized body, that is $13.40$ against $13.07$ per cent of the surface throughput conducted into the stack, over $2971$ against $3017$ elements that carry more than $1$\,W/m\textsuperscript{2} of throughput. The lateral term stays small, between $-6.30$ and $+6.90$\,W/m\textsuperscript{2} for the reference ($1632$ elements shedding heat to their neighbours against $2016$ gaining) and between $-7.43$ and $+6.74$\,W/m\textsuperscript{2} for the optimized body ($1536$ against $2112$). The run records a worst relative closure of $1.78\times10^{-4}$ and $1.99\times10^{-4}$, the residual divided by the surface throughput, a factor of $5.6$ and $5.0$ below the $10^{-3}$ at which the program refuses to plot a split at all, so the balance the figure shows is the solver's own and not an imposed one.
+
 
 The thermal cost of the topological change is small: the optimized body raises the mean surface temperature below $30$\,K and leaves the peak unchanged, while the heat flux distribution and energy balance remain essentially the same. What the topology profits is the drag reward reported above, not a thermal penalty.
 
@@ -397,175 +463,111 @@ The figures presented are snapshots of a converged state, a mesh, geometry, and 
 \BeginAccSupp{method=escape,ActualText={Four rows by two columns of time histories. Rows are drag coefficient, total drag force, total heat load and deceleration load from top to bottom; columns are the reference tree on the left and the gate-passing optimized topology on the right. The reference drag force falls from 62.5 kN to about 45 kN, the peak deceleration is 22.72 g and the heat load is flat at 165.7 J per square centimetre. The optimized topology is the smaller gate-passing body: its drag force peaks at 23.0 kN and ends at 14.4 kN, its peak deceleration is 8.36 g (final 5.21 g), and its heat load is 117.5 J per square centimetre, a lighter trajectory than the reference's 45.6 kN and 22.72 g.}}
 \includegraphics[width=0.85\textwidth]{figures/flight_history_panel.png}
 \EndAccSupp{}
-\caption[Integrated flight history of the reference and optimized bodies]{%
-Integrated flight history of the reference and of the optimized topology,
-reused from \texttt{results/00\_reference/plots/} (left) and
-\texttt{results/validation\_optimized\_round2/plots/} (right). Rows are
-(a)~drag coefficient, (b)~total drag force, (c)~total heat load and
-(d)~deceleration load. These are the histories behind Table~\ref{tab:validation}
-and the gate totals: the reference drag force falls from $62.5$\,kN to about
-$45$\,kN against a final value of $45{,}613$\,N in Table~\ref{tab:validation}, the
-peak deceleration is $22.5$ against $22.72$\,g, and the accumulated heat load
-is flat at $165.7$\,J/cm\textsuperscript{2} against $165.716$ for the
-reference and $117.5$ against $117.526$ for the gate-passing topology. The
-drag coefficient plotted here is the instantaneous DSMC value on the body
-reference area; it is deliberately not the surrogate cost-model value quoted
-in the optimization section, nor the IRVE-3 flight value of
-Table~\ref{tab:validation}, which uses the flight reference area.}
+\caption{Integrated flight history of the reference and optimized bodies}
 \label{fig:flight_history}
 \end{figure}
+
+Integrated flight history of the reference and of the optimized topology, reused from \texttt{results/00\_reference/plots/} (left) and \texttt{results/validation\_optimized\_round2/plots/} (right). Rows are (a)~drag coefficient, (b)~total drag force, (c)~total heat load and (d)~deceleration load. These are the histories behind Table~\ref{tab:validation} and the gate totals: the reference drag force falls from $62.5$\,kN to about $45$\,kN against a final value of $45{,}613$\,N in Table~\ref{tab:validation}, the peak deceleration is $22.5$ against $22.72$\,g, and the accumulated heat load is flat at $165.7$\,J/cm\textsuperscript{2} against $165.716$ for the reference and $117.5$ against $117.526$ for the gate-passing topology. The drag coefficient plotted here is the instantaneous DSMC value on the body reference area; it is deliberately not the surrogate cost-model value quoted in the optimization section, nor the IRVE-3 flight value of Table~\ref{tab:validation}, which uses the flight reference area.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Three panels of surface heat flux and surface temperature against axial position at steps 100, 1000 and 2200. Heat flux is the red curve on the left axis in watts per square centimetre, surface temperature the blue dashed curve on the right axis in kelvin, and a red dotted line marks the SiC limit of 1673 kelvin. The shoulder carries the maximum and the aft face the minimum.}}
 \includegraphics[width=0.95\textwidth]{figures/heatflux_vs_x_panel.png}
 \EndAccSupp{}
-\caption[Surface heat flux along the meridian]{%
-Surface heat flux (red, left axis, W/cm\textsuperscript{2}) and surface
-temperature (blue dashed, right axis, K) against axial position at steps
-100, 1000 and 2200, reused from
-\texttt{\seqsplit{results/00\_reference/plots/vtu\_heatflux\_vs\_x\_step\{100,1000,2200\}}.png}.
-The shoulder carries the maximum and the aft face the minimum, which is why
-the ply stack of Figure~\ref{fig:tps_reuse} is graded rather than uniform, and
-no station reaches the red dotted silicon-carbide limit of $1673$\,K. No
-curve is rescaled or edited.}
+\caption{Surface heat flux along the meridian}
 \label{fig:heatflux_x}
 \end{figure}
+
+Surface heat flux (red, left axis, W/cm\textsuperscript{2}) and surface temperature (blue dashed, right axis, K) against axial position at steps 100, 1000 and 2200, reused from \texttt{\seqsplit{results/00\_reference/plots/vtu\_heatflux\_vs\_x\_step\{100,1000,2200\}}.png}. The shoulder carries the maximum and the aft face the minimum, which is why the ply stack of Figure~\ref{fig:tps_reuse} is graded rather than uniform, and no station reaches the red dotted silicon-carbide limit of $1673$\,K. No curve is rescaled or edited.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Four sampling snapshots of the reference case at steps 0, 500, 1500 and 2200. The computational mesh and the two body outlines are identical in all four; the annotated number of cells holding at least ten DSMC particles falls from 18879 to 16349.}}
 \includegraphics[width=0.90\textwidth]{figures/field_development_strip.png}
 \EndAccSupp{}
-\caption[Sampling development of the reference case]{%
-Sampling development of the reference case: cells holding at least ten particles,
-reused from
-\texttt{\seqsplit{results/99\_shared/cfd\_fields/grid\_mesh\_map\_smooth\_00\_reference\_step\_\{0,500,1500,2200\}}.png}.
-The results tree archives 149 such steps at intervals of one hundred; the four
-shown here bracket the sampling. The computational mesh and the two body outlines are
-identical in all four panels; the annotated number is the count of cells holding at
-least ten DSMC particles, 18879, 18036, 16585 and 16349, so the panels document the
-sampling filling the domain rather than a change of flow state. Step 2200 is the
-statistically steady state from which every field panel of this chapter is taken.}
+\caption{Sampling development of the reference case}
 \label{fig:field_development}
 \end{figure}
+
+Sampling development of the reference case: cells holding at least ten particles, reused from \texttt{\seqsplit{results/99\_shared/cfd\_fields/grid\_mesh\_map\_smooth\_00\_reference\_step\_\{0,500,1500,2200\}}.png}. The results tree archives 149 such steps at intervals of one hundred; the four shown here bracket the sampling. The computational mesh and the two body outlines are identical in all four panels; the annotated number is the count of cells holding at least ten DSMC particles, 18879, 18036, 16585 and 16349, so the panels document the sampling filling the domain rather than a change of flow state. Step 2200 is the statistically steady state from which every field panel of this chapter is taken.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Reference geometry in four azimuth views with an axial-position color scale; length 1.2694 metres and maximum radius 1.8802 metres.}}%
 \includegraphics[width=0.62\textwidth]{figures/geometry_3d_reference.png}%
 \EndAccSupp{}%
-\caption{Reference geometry in four azimuth views, reused from \texttt{results/99\_shared/geometry/}. The printed cost metric belongs to the round-one run that produced this view and is not the composite cost of the optimization section.}
+\caption{Reference geometry in four azimuth views, reused from \texttt{results/99\_shared/geometry/}.}
 \label{fig:geometry_3d_reference}
 \end{figure}
+
+Reference geometry in four azimuth views, reused from \texttt{results/99\_shared/geometry/}. The printed cost metric belongs to the round-one run that produced this view and is not the composite cost of the optimization section.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Optimized topology in four azimuth views with an axial-position color scale; length 1.2694 metres and maximum radius 1.8298 metres.}}%
 \includegraphics[width=0.62\textwidth]{figures/geometry_3d_optimized.png}%
 \EndAccSupp{}%
-\caption{Optimized topology in four azimuth views, reused from \texttt{results/99\_shared/geometry/} and directly comparable with Figure~\ref{fig:geometry_3d_reference}. Together these are the only three-dimensional views of the bodies in the thesis; Figure~\ref{fig:topology_comparison} gives the meridional section and envelope difference.}
+\caption{Optimized topology in four azimuth views, reused from \texttt{results/99\_shared/geometry/} and directly comparable.}
 \label{fig:geometry_3d}
 \end{figure}
+
+Optimized topology in four azimuth views, reused from \texttt{results/99\_shared/geometry/} and directly comparable with Figure~\ref{fig:geometry_3d_reference}. Together these are the only three-dimensional views of the bodies in the thesis; Figure~\ref{fig:topology_comparison} gives the meridional section and envelope difference.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Two panels: a survivability assessment and the surface-temperature history of the reference body. The surface temperature rises with the flight and the back-face temperature stays pinned at 300 kelvin.}}
 \includegraphics[width=0.9\textwidth]{figures/survivability_panel.png}
 \EndAccSupp{}
-\caption[Survivability and surface temperature]{%
-Survivability assessment and surface-temperature history of the reference
-body, reused from
-\texttt{\seqsplit{results/00\_reference/plots/\{survivability\_assessment,T\_surface\_vs\_step\}}.png}.
-These panels exist only for the reference tree: no equivalent temperature
-history was written for the gate-passing topology, whose thermal evidence is
-therefore the per-ply flux populations of Figure~\ref{fig:tps_reuse} rather
-than a time series.}
+\caption{Survivability and surface temperature}
 \label{fig:survivability}
 \end{figure}
 
-\begin{figure}[H]
-\centering
-\BeginAccSupp{method=escape,ActualText={Two panels: the central composite design used to sample the three design variables, and its sensitivity map showing how the composite cost responds to each variable.}}
-\includegraphics[width=0.9\textwidth]{figures/ccd_sensitivity_panel.png}
-\EndAccSupp{}
-\caption[Central composite design and sensitivity]{%
-Central composite design and its sensitivity map, reused from
-\texttt{\seqsplit{results/99\_shared/\{ga\_ccd\_design,ga\_ccd\_sensitivity\}}.png}.
-The design fixes which of the three variables --- nose diameter $X_1$, torus
-radius $X_2$ and half-cone angle $X_3$ --- the search is allowed to move, and
-the sensitivity map shows that the drag reward dominates the heat-load penalty
-over most of the box, which is the behavior the converged path of
-Figure~\ref{fig:ga_trajectory} exhibits.}
-\label{fig:ccd_sensitivity}
-\end{figure}
+Survivability assessment and surface-temperature history of the reference body, reused from \texttt{\seqsplit{results/00\_reference/plots/\{survivability\_assessment,T\_surface\_vs\_step\}}.png}. These panels exist only for the reference tree: no equivalent temperature history was written for the gate-passing topology, whose thermal evidence is therefore the per-ply flux populations of Figure~\ref{fig:tps_reuse} rather than a time series.
+
+
+Central composite design and its sensitivity map, reused from \texttt{\seqsplit{results/99\_shared/\{ga\_ccd\_design,ga\_ccd\_sensitivity\}}.png}. The design fixes which of the three variables --- nose diameter $X_1$, torus radius $X_2$ and half-cone angle $X_3$ --- the search is allowed to move, and the sensitivity map shows that the drag reward dominates the heat-load penalty over most of the box, which is the behavior the converged path of Figure~\ref{fig:ga_trajectory} exhibits.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Two panels showing a kriging denoised field and the noise-reduction achieved by that filter at step 100 of the reference run.}}
 \includegraphics[width=0.95\textwidth]{figures/kriging_denoise_panel.png}
 \EndAccSupp{}
-\caption[Denoising of the sampled field]{%
-Kriging denoising of the sampled field and the noise reduction it achieves,
-reused from
-\texttt{\seqsplit{results/99\_shared/kriging/\{kriging\_denoise\_step100,kriging\_noise\_reduction\_step100\}}.png}.
-DSMC fields carry statistical scatter at this cell count, so the smooth
-contours of Figures~\ref{fig:thermal_map}--\ref{fig:knudsen_map} are the
-denoised view of the same data; the right-hand panel quantifies what the
-filter removes, which is why no conclusion in this chapter is drawn from a
-single-cell value.}
+\caption{Denoising of the sampled field}
 \label{fig:kriging}
 \end{figure}
+
+Kriging denoising of the sampled field and the noise reduction it achieves, reused from \texttt{\seqsplit{results/99\_shared/kriging/\{kriging\_denoise\_step100,kriging\_noise\_reduction\_step100\}}.png}. DSMC fields carry statistical scatter at this cell count, so the smooth contours of Figures~\ref{fig:thermal_map}--\ref{fig:knudsen_map} are the denoised view of the same data; the right-hand panel quantifies what the filter removes, which is why no conclusion in this chapter is drawn from a single-cell value.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Four panels of the gate-passing geometry against step: body diameter, nose radius, torus radius and half-cone angle. The diameter, nose radius and torus radius fall with step while the half-cone angle rises.}}
 \includegraphics[width=0.85\textwidth]{figures/morphing_geometry_panel.png}
 \EndAccSupp{}
-\caption[Geometry of the gate-passing candidate against step]{%
-Geometry of the gate-passing candidate against step, reused from
-\texttt{\seqsplit{results/validation\_optimized\_round2/plots/geom\_*\_vs\_step.png}}.
-Only this tree records the geometry at every step; the reference tree holds it
-constant by construction. The four curves are the trace of the shape change
-that produced the $0.62\times$ body of
-Figure~\ref{fig:topology_comparison}, and they are the reason the optimization
-is described as a topology change rather than a parameter tweak.}
+\caption{Geometry of the gate-passing candidate against step}
 \label{fig:morphing_geometry}
 \end{figure}
+
+Geometry of the gate-passing candidate against step, reused from \texttt{\seqsplit{results/validation\_optimized\_round2/plots/geom\_*\_vs\_step.png}}. Only this tree records the geometry at every step; the reference tree holds it constant by construction. The four curves are the trace of the shape change that produced the $0.62\times$ body of Figure~\ref{fig:topology_comparison}, and they are the reason the optimization is described as a topology change rather than a parameter tweak.
+
 
 \begin{figure}[H]
 \centering
 \BeginAccSupp{method=escape,ActualText={Two panels. The left panel plots the stagnation-point peak heat flux against refinement level for five grids, falling from 2.059 to 1.946 to 1.797 to 1.536 megawatts per square metre and then rising to 1.580 at the 250 by 250 grid, with level-to-level changes of minus 5.49, minus 7.66, minus 14.53 and plus 2.85 per cent. The right panel plots the integrated drag force over the same levels, falling from 48.012 to 45.918 to 45.697 to 44.064 kilonewtons and then rising to 44.107, with level-to-level changes of minus 4.36, minus 0.48, minus 3.57 and plus 0.10 per cent. The levels are 70 by 70, 100 by 100, 139 by 139, 200 by 200 and 250 by 250, with 4 900, 10 000, 19 321, 40 000 and 62 500 cells. Neither series can be extrapolated: in both, the successive differences grow with refinement and the final step changes sign, so both are non-monotone in the sense of Roache and no converged value is claimed. The fourth level refutes the drag extrapolation that three levels had suggested, and the fifth confirms the reversal.}}
 \includegraphics[width=0.95\textwidth]{figures/grid_independence_qoi.png}
 \EndAccSupp{}
-\caption[Grid independence of the surface quantities]{%
-Grid independence of the surface quantities across five refinement
-levels (L1 $70\times70$, L2 $100\times100$, L3 $139\times139$,
-L4 $200\times200$, L5 $250\times250$; 4\,900, 10\,000, 19\,321,
-40\,000 and 62\,500 cells).
-The stagnation-point peak heat flux falls from $2.059$ to $1.946$ to
-$1.797$ to $1.536$\,MW\,m$^{-2}$ and then rises to $1.580$ at L5, a
-level-to-level change of $-5.49$, $-7.66$, $-14.53$ and $+2.85\,\%$; it is
-therefore \emph{not} grid-converged, and the sign reversal at the finest level
-means the sequence does not bracket a limit. The integrated drag force falls
-from $48.012$ to $45.918$ to $45.697$ to $44.064$\,kN and rises to $44.107$ at L5
-($-4.36$, $-0.48$, $-3.57$ and $+0.10\,\%$): the apparent plateau at
-$139\times139$ was not a limit and the $-0.48\,\%$ step did not survive the next
-refinement, although the L4--L5 drag step is only a tenth of a per cent. Neither
-series admits a Richardson extrapolation, because in both cases the successive
-differences \emph{grow} with refinement and then change sign
-($0.113 \to 0.149 \to 0.261 \to -0.044$\,MW\,m$^{-2}$
-and $2.095 \to 0.221 \to 1.633 \to -0.043$\,kN); they are non-monotone in the
-sense of Roache, so no extrapolated value is reported for either. The
-three-level drag estimate implied by the first three levels
-($p = 6.24$, $45.665$\,kN, GCI $6.4\,\%$ of the limit) is superseded by the
-fourth and fifth levels and is not claimed.
-Every value is read from the per-level
-\texttt{case.json} record of the run, and the annotations are level-to-level
-changes in the sense of Roache~\cite{roache1998verification} and
-Celik et al.~\cite{celik2008procedure}.}
+\caption{Grid independence of the surface quantities}
 \label{fig:grid_independence}
 \end{figure}
+
+Grid independence of the surface quantities across five refinement levels (L1 $70\times70$, L2 $100\times100$, L3 $139\times139$, L4 $200\times200$, L5 $250\times250$; 4\,900, 10\,000, 19\,321, 40\,000 and 62\,500 cells). The stagnation-point peak heat flux falls from $2.059$ to $1.946$ to $1.797$ to $1.536$\,MW\,m$^{-2}$ and then rises to $1.580$ at L5, a level-to-level change of $-5.49$, $-7.66$, $-14.53$ and $+2.85\,\%$; it is therefore \emph{not} grid-converged, and the sign reversal at the finest level means the sequence does not bracket a limit. The integrated drag force falls from $48.012$ to $45.918$ to $45.697$ to $44.064$\,kN and rises to $44.107$ at L5 ($-4.36$, $-0.48$, $-3.57$ and $+0.10\,\%$): the apparent plateau at $139\times139$ was not a limit and the $-0.48\,\%$ step did not survive the next refinement, although the L4--L5 drag step is only a tenth of a per cent. Neither series admits a Richardson extrapolation, because in both cases the successive differences \emph{grow} with refinement and then change sign ($0.113 \to 0.149 \to 0.261 \to -0.044$\,MW\,m$^{-2}$ and $2.095 \to 0.221 \to 1.633 \to -0.043$\,kN); they are non-monotone in the sense of Roache, so no extrapolated value is reported for either. The three-level drag estimate implied by the first three levels ($p = 6.24$, $45.665$\,kN, GCI $6.4\,\%$ of the limit) is superseded by the fourth and fifth levels and is not claimed. Every value is read from the per-level \texttt{case.json} record of the run, and the annotations are level-to-level changes in the sense of Roache~\cite{roache1998verification} and Celik et al.~\cite{celik2008procedure}.
+
 
 The conventional $2\,\%$ grid-convergence test fails at every adjacent pair in
 Figure~\ref{fig:grid_independence}: the peak heat flux changes by $-5.49$,
@@ -589,29 +591,12 @@ is read from the per-level \texttt{case.json} record of the runs.
 \BeginAccSupp{method=escape,ActualText={A surface-pressure profile along the axis of the reference body at step 2200, sampled by the solver itself. The pressure peaks at 5.23 kilopascals at the first axial station, 0.0055 metres, with the adjacent station at 0.0104 metres only 3 per cent lower, oscillates between roughly 1.3 and 4.9 kilopascals along the toroid stack, falls to a trough of 1.04 kilopascals at 0.262 metres, and drops below 0.44 kilopascals beyond 1.1 metres as the base is reached. The axial force components of the same 76 surface bands sum to 45.410 kilonewtons, which is the run's integrated drag at that step.}}
 \includegraphics[width=0.95\textwidth]{figures/surface_pressure_vs_axial.png}
 \EndAccSupp{}
-\caption[Surface-pressure distribution along the body]{%
-Axial surface-pressure distribution of the reference body at step~2200. The
-pressures are the solver's \emph{own} per-surface pressure, written by the
-SPARTA \texttt{press} keyword requested on the \texttt{compute surfF} card and
-dumped as the trailing column \texttt{f\_surfavg[4]}; no pressure is derived
-from a force and no term is neglected. The run is the reference geometry
-($D = 3.0$\,m, nose radius $0.55$\,m, toroid radius $0.135$\,m, half-cone
-$60^{\circ}$, six toroids, scalloped skin) on the production grid
-($n_{\mathrm{grid}} = 139$, grid factor~$0.7$), giving 76 surface bands. The
-peak is $5.23$\,kPa at $x = 0.0055$\,m, and the adjacent band at
-$0.0104$\,m is $5.08$\,kPa, so the two are within $3\,\%$ of one another and
-the peak station is not resolved beyond that band width. The toroid stack
-produces the alternating high and low bands along the windward face, with the
-pressure falling to $1.29$\,kPa at the deepest of those dips
-($x = 0.920$\,m) and rising to $4.92$\,kPa at the highest
-($x = 0.529$\,m); the deepest trough overall is $1.04$\,kPa at
-$x = 0.262$\,m, and beyond $x \approx 1.1$\,m
-the base sits below $0.44$\,kPa. The axial force components of those same 76
-bands sum to $45.410$\,kN, which reproduces the run's integrated drag at that
-step to within the dump's rounding, so the profile and the force balance are
-read from one dump and agree.}
+\caption{Surface-pressure distribution along the body}
 \label{fig:surface_pressure}
 \end{figure}
+
+Axial surface-pressure distribution of the reference body at step~2200. The pressures are the solver's \emph{own} per-surface pressure, written by the SPARTA \texttt{press} keyword requested on the \texttt{compute surfF} card and dumped as the trailing column \texttt{f\_surfavg[4]}; no pressure is derived from a force and no term is neglected. The run is the reference geometry ($D = 3.0$\,m, nose radius $0.55$\,m, toroid radius $0.135$\,m, half-cone $60^{\circ}$, six toroids, scalloped skin) on the production grid ($n_{\mathrm{grid}} = 139$, grid factor~$0.7$), giving 76 surface bands. The peak is $5.23$\,kPa at $x = 0.0055$\,m, and the adjacent band at $0.0104$\,m is $5.08$\,kPa, so the two are within $3\,\%$ of one another and the peak station is not resolved beyond that band width. The toroid stack produces the alternating high and low bands along the windward face, with the pressure falling to $1.29$\,kPa at the deepest of those dips ($x = 0.920$\,m) and rising to $4.92$\,kPa at the highest ($x = 0.529$\,m); the deepest trough overall is $1.04$\,kPa at $x = 0.262$\,m, and beyond $x \approx 1.1$\,m the base sits below $0.44$\,kPa. The axial force components of those same 76 bands sum to $45.410$\,kN, which reproduces the run's integrated drag at that step to within the dump's rounding, so the profile and the force balance are read from one dump and agree.
+
 
 \section{Comparative Analysis with Prior Work}
 \label{sec:comparison_rapisarda}
@@ -639,7 +624,7 @@ The presented framework employs a Genetic Algorithm (GA) with an analytic cost, 
 % Bayesian-optimization material has been removed from this thesis.
 
 \subsection{Reproducibility and Accessibility}
-The present framework is open-source, Python-based, and Docker-containerized. The SPARTA simulation runs within a reproducible Linux environment, while the Python optimization pipeline operates natively on the native OS and evaluates the analytical cost of Eq.~\eqref{eq:ga_cost} in closed form. Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.
+The present framework is open-source, Docker-containerized, and built around an Ada/SPARK simulation core with a Python FFI sidecar rather than a Python-only pipeline. The SPARTA simulation runs within a reproducible Linux environment, while the Python sidecar drives the analytic cost evaluations of Eq.~\eqref{eq:ga_cost} in closed form through the verified core. Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.
 
 \begin{table}[H]
     \centering

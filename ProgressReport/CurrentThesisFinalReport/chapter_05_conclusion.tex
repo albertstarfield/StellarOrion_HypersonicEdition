@@ -27,6 +27,7 @@ The use of a realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variabl
 
 \section{Contributions}
 This research contributes to the field of hypersonic aerothermal analysis by offering new perspectives on shock wave interactions.
+The framework separates the search from the check: geometry exploration uses a low-fidelity closed-form aerothermal cost evaluated for every candidate, and the high-fidelity SPARTA DSMC chain is applied only to the reference and optimized configurations for final checking and in-depth analysis. The verified simulation core is implemented in Ada/SPARK with a Python FFI sidecar; proof evidence is reported in Appendix~\ref{app:formal_verification}, not repeated here.
 \begin{enumerate}
     \item \textbf{Integrated DSMC-HIAD Framework:} A complete computational pipeline from parametric geometry generation through DSMC simulation to survivability optimization, specifically designed for inflatable aerodynamic decelerators in the transitional flow regime.
 

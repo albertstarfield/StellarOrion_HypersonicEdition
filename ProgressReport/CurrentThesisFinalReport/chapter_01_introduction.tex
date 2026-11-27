@@ -103,6 +103,8 @@ This research project aims to address the aerothermal properties and survivabili
 \section{Methodology Overview}
 The study employs a multi-stage computational framework to analyze the aerothermal performance and optimize the survivability of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The framework integrates automated parametric geometry generation, DSMC-based rarefied gas dynamics simulation, and Genetic Algorithm optimization. The methodology is designed to compare a smooth rigid sphere-cone baseline against the scalloped inflatable architecture under identical hypersonic flight conditions. The workflow is illustrated in Figure~\ref{fig:flowchart_ch1}.
 
+The implementation is not Python-only: the StellarOrion simulation core is written in Ada/SPARK, and a thin Python FFI wrapper exposes it to the sidecar; the formally verified core is described in the appendix, while this chapter records only its role and scope. The search uses two fidelities. A low-fidelity closed-form Sutton--Graves and geometric drag/ballistic model evaluates every Latin-hypercube and genetic-algorithm individual with no solver call; the high-fidelity SPARTA DSMC chain is reserved for final checking and in-depth analysis of the reference and optimized geometries. Both optimization passes are analytic model-space passes, each followed by one high-fidelity validation run.
+
 \begin{figure}[htbp]
     \centering
     % flowchart.png is a tall vertical workflow diagram (1760x3600 px,
@@ -115,9 +117,12 @@ The study employs a multi-stage computational framework to analyze the aerotherm
     \BeginAccSupp{method=escape,ActualText={Vertical flowchart of the numerical research workflow, read from top to bottom: Start, then a literature stage comprising a survey of various papers feeding into a literature study and into a data retrieval and familiar-study collection stage (which also replicates the axisymmetric slice model and adjusts if replication fails); a simulation stage that runs the geometry at Mach 10.29, the solver's configured run condition; a parallelogram for the simulation result; a single validation decision asking whether the result is theoretically valid or within the error range, whose No branch is labelled Invalid and loops back to the simulation stage while its Yes branch is labelled valid; then a survivability optimization stage using a genetic algorithm, a data analysis and simulation stage, a conclusion and recommendation stage, and End.}}%
 \includegraphics[height=0.80\textheight, keepaspectratio]{figures/flowchart.png}%
 \EndAccSupp{}%
-    \caption{Research methodology flowchart. The single validation decision carries a feedback loop: an invalid or out-of-range result returns to the simulation stage, and the optimization stage follows that validation gate before the post-optimization data-analysis stage. This is the overview only; the twelve-stage validation run, the DSMC-gated optimization loop and the correction-factor double pass are expanded in Figure~\ref{fig:optimization_flowchart}.}
+    \caption{Research methodology flowchart.}
     \label{fig:flowchart_ch1}
 \end{figure}
+
+Research methodology flowchart. The single validation decision carries a feedback loop: an invalid or out-of-range result returns to the simulation stage, and the optimization stage follows that validation gate before the post-optimization data-analysis stage. This is the overview only; the twelve-stage validation run, the DSMC-gated optimization loop and the correction-factor double pass are expanded in Figure~\ref{fig:optimization_flowchart}.
+
 
 \subsection*{a. Literature Study}
 The initial stage involves a comprehensive literature review of hypersonic aerothermodynamics, rarefied gas dynamics, DSMC methodology, and HIAD design principles. Key topics include the Boltzmann equation, the Direct Simulation Monte Carlo method (~\cite{bird1994molecular}), the Sutton-Graves heating correlation, and the IRVE-3/LOFTID flight experiment results. This establishes the theoretical foundation for the computational framework.

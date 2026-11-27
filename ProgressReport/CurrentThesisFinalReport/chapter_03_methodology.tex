@@ -5,16 +5,9 @@
 \section{Theory Anchors and First Principles}
 \label{sec:theory_anchors}
 
-In the preceding section, the foundational theory anchors are established to underpin the methodology. Each anchor is grounded in established physical theory and validated against the literature reviewed in Chapter~\ref{chap:literature}. The derivation process, spanning from fundamental kinetic theory to the implemented software pipeline, is summarized in Figure~\ref{fig:methodology_derivation}.
+In the preceding section, the foundational theory anchors are established to underpin the methodology. Each anchor is grounded in established physical theory and validated against the literature reviewed in Chapter~\ref{chap:literature}.
 
-\begin{figure}[H]
-    \centering
-    \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each theory anchor to the equation or solver step that implements it.}}%
-\includegraphics[width=0.60\textwidth]{figures/methodology_derivation.png}%
-\EndAccSupp{}%
-    \caption{Methodology derivation from first principles: theory anchors $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
-    \label{fig:methodology_derivation}
-\end{figure}
+
 
 \subsection{Theory Anchors}
 The foundational propositions of this research are derived from physical theory and are traced back to their respective literature.
@@ -88,9 +81,12 @@ Figure~\ref{fig:governing_equations} illustrates the complete derivation process
     \BeginAccSupp{method=escape,ActualText={Panel of the governing equations used in the study, listing the continuity, momentum and energy equations together with the state and transport relations.}}%
 \includegraphics[width=\textwidth]{figures/governing_equations.png}%
 \EndAccSupp{}%
-    \caption{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier--Stokes continuum limit, Sutton--Graves engineering correlation to GA-based survivability optimization. Each layer is anchored by the theory anchors defined in Table~\ref{tab:theory_anchors}.}
+    \caption{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization,.}
     \label{fig:governing_equations}
 \end{figure}
+
+Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier--Stokes continuum limit, Sutton--Graves engineering correlation to GA-based survivability optimization. Each layer is anchored by the theory anchors defined in Table~\ref{tab:theory_anchors}.
+
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
@@ -101,9 +97,12 @@ The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\
     \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline in five columns: input, core engine, solvers, models and output. The input column holds CadQuery geometry export, flight conditions and the design variables. The core engine is the StellarOrion engine. The solvers column holds SPARTA as the DSMC solver in Docker and the one-dimensional layered thermal solver. The models column holds the Genetic Algorithm with a population of fifty. The output column holds ParaView VTK and STL rendering. An orange feedback arrow labelled GA optimization returns from the genetic algorithm to the core engine.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver and the 1-D layered thermal solver $\rightarrow$ Genetic Algorithm optimizer $\rightarrow$ ParaView visualization. The thermal chain is solved by the dedicated thermal solver, not in a continuum CFD package. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.}
+    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver and.}
     \label{fig:software_pipeline}
 \end{figure}
+
+StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver and the 1-D layered thermal solver $\rightarrow$ Genetic Algorithm optimizer $\rightarrow$ ParaView visualization. The thermal chain is solved by the dedicated thermal solver, not in a continuum CFD package. The feedback loop from the GA to the core engine closes the optimization loop: the GA writes the next geometry back to the engine until the best cost stagnates.
+
 
 \subsection{Default Optimization Parameters}
 \label{sec:default_params}
@@ -173,9 +172,12 @@ The modeling phase targets two specific scales identified in previous NASA resea
     \BeginAccSupp{method=escape,ActualText={Two side-by-side shaded three-dimensional renderings comparing inflatable and rigid decelerator concepts. The left panel shows a slender, sharply pointed olive-green inflated sphere-cone labelled '15m Inflatable', drawn at a shallow angle so that it appears as a long thin lens. The right panel shows a stubby, blunt-nosed orange-brown rigid body captioned '4.57m Rigid', viewed nearly end-on. The two panels are separated by a vertical rule. The contrast is between a large-diameter deployable inflatable and a small-diameter rigid aeroshell; the diameters are those printed in the panels themselves and are not to scale relative to each other.}}%
 \includegraphics[width=0.8\textwidth]{figures/Hiad_DesignSpec.png}%
 \EndAccSupp{}%
-    \caption{Size scaling between deployable inflatable and rigid HIAD concepts: the 15\,m inflatable aeroshell (left) against the 4.57\,m rigid aeroshell (right). Image adapted from NASA Langley HIAD material~\cite{dillman2015irve3}. The two diameters are the values printed in the panels; note that the rigid reference in this figure is 4.57\,m and \emph{not} the 3.0\,m IRVE-3 baseline through which the scaling discussion in this section is framed. The rendering compares overall form and scale only, not internal structure.}
+    \caption{Size scaling between deployable inflatable and rigid HIAD concepts: the 15\,m inflatable aeroshell (left) against.}
     \label{fig:hiad_comparison}
 \end{figure}
+
+Size scaling between deployable inflatable and rigid HIAD concepts: the 15\,m inflatable aeroshell (left) against the 4.57\,m rigid aeroshell (right). Image adapted from NASA Langley HIAD material~\cite{dillman2015irve3}. The two diameters are the values printed in the panels; note that the rigid reference in this figure is 4.57\,m and \emph{not} the 3.0\,m IRVE-3 baseline through which the scaling discussion in this section is framed. The rendering compares overall form and scale only, not internal structure.
+
 
 \subsection{Internal Architecture and Scallop Definition}
 The outer mold line (OML) is constructed using the 6-toroid stack configuration from the Rapisarda (2023) MDAO baseline. The internal layout, encompassing the stacked toroid arrangement, is depicted in Figure \ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
@@ -192,9 +194,12 @@ The outer mold line (OML) is constructed using the 6-toroid stack configuration 
     \BeginAccSupp{method=escape,ActualText={Cutaway cross-section of the deployed HIAD, 3 metres or 118 inches in diameter, showing the vehicle's internal subsystems. A central cylindrical equipment stack sits above the nose; callout arrows from the right label, from top to bottom, the cameras mounted on the upper struts, the attitude control system abbreviated ACS, the telemetry and power system, the centre-of-gravity offset system, and the inflation system. Below the stack a row of seven orange toroidal bladders runs the length of the vehicle, labelled T1 through T6 along the right-hand side with a seventh, smaller shoulder torus T7 at the far right end. The bladders rest against a pink flexible thermal protection layer, and the payload is carried in the central cavity. Two callout labels on the left-hand side are cut off by the edge of the source image and are only partially legible.}}%
 \includegraphics[width=0.6\textwidth]{figures/Spec0.png}%
 \EndAccSupp{}%
-    \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface, reproduced from NASA Langley IRVE-3 material~\cite{dillman2015irve3}. The six primary bladders T1--T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
+    \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface,.}
     \label{fig:irve3_layout}
 \end{figure}
+
+Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface, reproduced from NASA Langley IRVE-3 material~\cite{dillman2015irve3}. The six primary bladders T1--T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.
+
 
 The specific geometric parameters for the numerical model are detailed in Table \ref{tab:geom_params}.
 
@@ -222,9 +227,12 @@ The two configurations established for this study -- \textbf{Configuration A (Sc
     \BeginAccSupp{method=escape,ActualText={Cutaway of the HIAD in its stowed launch configuration inside the launch vehicle, headed Stowed with a quoted 18.5 inch diameter. A long tapered stowed pack sits above the vehicle internals, which include a pale green spherical payload and stacked avionics and battery boxes; below them a green upper stage band and a pale blue lower stage are labelled 22 inch diameter, and three orange landing legs extend downward from the lower stage.}}%
 \includegraphics[width=0.2\textwidth]{figures/Spec1.png}%
 \EndAccSupp{}%
-    \caption{Launch configuration of the HIAD system, showing the stowed constraint. Reproduced from NASA Langley IRVE-3 material~\cite{dillman2015irve3}.}
+    \caption{Launch configuration of the HIAD system, showing the stowed constraint.}
     \label{fig:stowed_deployed}
 \end{figure}
+
+Launch configuration of the HIAD system, showing the stowed constraint. Reproduced from NASA Langley IRVE-3 material~\cite{dillman2015irve3}.
+
 
 \begin{enumerate}
     \item \textbf{Configuration A (Scalloped):} This model utilizes the 6-toroid profile (T1--T6) shown in Figure \ref{fig:irve3_layout}. The valleys between toroids are the primary focus for analyzing heating augmentation and flow separation in the scalloped troughs.
@@ -504,9 +512,12 @@ The optimization process employs a genetic algorithm (GA) with an initial popula
     \BeginAccSupp{method=escape,ActualText={Flowchart of the optimization pipeline in four bands read from top to bottom. Band one: the validation pipeline in twelve numbered stages arranged in two columns, 1 flight parameters, 2 geometry quality assurance, 3 generate HIAD surface, 4 write solver input script, 5 build solver container, 6 run DSMC simulation, then 7 parse surface dumps, 8 compute flight metrics, 9 survivability check, 10 sanity checks, 11 compare with IRVE-3 flight, 12 export fields and plots, with a Start terminal above stage 1, a Stop terminal below stage 12 and a wrap connector labelled continues. Band two: the geometry optimization loop, driven by the cost function and gated by DSMC re-simulation, with five boxes reading design space with Latin hypercube, genetic algorithm, cost function J of x, DSMC re-simulation and accept if q is at most the target heat load, plus a red reject and resample feedback path. Band three: inside the genetic algorithm, one generation, five boxes reading evaluate J of x in closed form, tournament selection with k equals 3, uniform crossover 0.7, Gaussian mutation 0.1 and elitism with the best two kept, with a magenta next generation path and the stopping rule of 200 generations or no gain of 1e-6 over 20 generations. Band four: the double pass of the same algorithm, where pass 1 sends a Latin hypercube of fifty through the genetic algorithm in closed form to a winner that is validated by 2200 steps of DSMC, the correction factor c clamped between 0.5 and 2.0 is applied to the heat-load term only, and pass 2 runs the same genetic algorithm again with the re-weighted heat load to a winner that is validated.}}%
 \includegraphics[height=0.72\textheight, keepaspectratio]{figures/fignew_pipeline.png}%
 \EndAccSupp{}
-    \caption{Optimization pipeline flowchart: the twelve stages of the validation run, the geometry optimization loop driven by the cost function and gated by the DSMC re-simulation, one generation of the genetic algorithm with its four operators and its stopping rule, and the double pass that applies the solver-measured correction factor to the heat-load term alone. Stages 9 and 10 are pass/fail gates rather than branch points of the drawn flow, so they are tinted process boxes; their pass/fail consequence is not drawn as a separate edge.}
+    \caption{Optimization pipeline flowchart: the twelve stages of the validation run, the geometry optimization loop driven by.}
     \label{fig:optimization_flowchart}
 \end{figure}
+
+Optimization pipeline flowchart: the twelve stages of the validation run, the geometry optimization loop driven by the cost function and gated by the DSMC re-simulation, one generation of the genetic algorithm with its four operators and its stopping rule, and the double pass that applies the solver-measured correction factor to the heat-load term alone. Stages 9 and 10 are pass/fail gates rather than branch points of the drawn flow, so they are tinted process boxes; their pass/fail consequence is not drawn as a separate edge.
+
 
 \subsection{Design Space and Parameters}
 The search operation utilizes the vector $\mathbf{x}=(X_1,X_2,X_3,N_t,m)$, the body radius $X_1=D/2$, the minor radius $X_2=r_{tor}$, the half-cone angle $X_3=\theta_c$, the toroid count $N_t$, and the vehicle mass $m$. The bounds are established by the defaults of the production runner (Table~\ref{tab:design_variables}). The mass affects the ballistic coefficient ratio and does not alter the geometry, as it influences the vehicle and deceleration load, and the toroid count remains fixed at six during the campaign. The nose bluntness used by the Sutton--Graves correlation is not a separate coordinate; it is derived from the body radius.
@@ -544,9 +555,12 @@ The LHS is the only seeding the GA uses. There are no factorial points, no axial
     \BeginAccSupp{method=escape,ActualText={Two scatter panels of the fifty Latin-hypercube initial designs. Left: body diameter against half-cone angle; right: nose radius against toroid minor radius. A light ten-by-ten grid makes the stratification visible; each marginal contains exactly one point per stratum.}}%
 \includegraphics[width=0.85\textwidth]{figures/thesis_lhs_initial_population.png}%
 \EndAccSupp{}%
-    \caption{Latin-hypercube initial population of fifty individuals, regenerated from the engine's seeding loop at seed $42$ and plotted against the design bounds. The two panels show representative coordinate pairs; a check over all four continuous coordinates confirms exactly one individual in each of the fifty strata of every marginal, which is the stratification the text claims. The grid lines are a visual aid at one tenth of each range and are not the fifty sampling strata.}
+    \caption{Latin-hypercube initial population of fifty individuals, regenerated from the engine's seeding loop at seed $42$.}
     \label{fig:lhs_initial_population}
 \end{figure}
+
+Latin-hypercube initial population of fifty individuals, regenerated from the engine's seeding loop at seed $42$ and plotted against the design bounds. The two panels show representative coordinate pairs; a check over all four continuous coordinates confirms exactly one individual in each of the fifty strata of every marginal, which is the stratification the text claims. The grid lines are a visual aid at one tenth of each range and are not the fifty sampling strata.
+
 
 \subsection{Cost Function}
 The cost is computed as the sum of four normalized physical terms, weighted by a constraint penalty, with all evaluations conducted through closed-form methods derived from geometry and validated flight conditions. The frontal geometry is defined as the outermost edge of the toroid stack.
@@ -725,29 +739,7 @@ The local Knudsen number is computed from the SPARTA grid data:
 The identification of continuum ($Kn < 0.001$), slip-flow ($0.001 < Kn < 0.01$), transitional ($0.01 < Kn < 1$), and, where applicable, free-molecular ($Kn > 1$) regions within the flow field follows the regime classification of Chapter~\ref{chap:literature}.
 
 \subsection{Validation Against Flight Data}
-The numerical model is validated against IRVE-3 flight data~\cite{old2013irve3postflight} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
-
-\begin{table}[H]
-    \centering
-    % This table reports the same validation comparison as Table 4.1 in the
-    % results chapter, and the heat-flux caveat in the caption below is stated
-    % in identical terms on purpose: a reader who meets either table first must
-    % not be left with the impression that a single-point Sutton-Graves value is
-    % directly comparable to a trajectory-integrated flight peak.
-    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
-    \label{tab:irve3_validation}
-    \small
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.19\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}X|}
-        \hline
-        \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{Stellar\-Orion (This Work)} & \textbf{SO Error (\%)} \\ \hline
-        Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 15.36 W/cm$^2$ & $+6.9$, \emph{not like-for-like} \\ \hline
-        Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
-        Peak Deceleration & 19.7\,$g$ & -- & 22.72\,$g$ & $+15.3$ \\ \hline
-        Ballistic Coefficient ($\beta$) & 26.9 kg/m$^2$ & -- & 27.70 kg/m$^2$ & $+3.0$ \\ \hline
-        Drag Coefficient ($C_d$) & -- & -- & 1.4625 & -- \\ \hline
-    \end{tabularx}
-    \normalsize
-\end{table}
+The numerical model is validated against IRVE-3 flight data~\cite{old2013irve3postflight} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
 
 Two distinct tolerance statements apply to this table. First, the MDAO reference model reproduces the flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$ respectively, comfortably inside the $\pm 10\%$ margin normally required of a calibrated reconstruction; this confirms that the IRVE-3 flight data adopted here are internally consistent and suitable as a validation target. Second, the geometry-sensitive quantities computed by this work satisfy that same margin: the ballistic coefficient deviates by $+3.0\%$ and the drag coefficient is 1.4625.
 
@@ -800,21 +792,7 @@ The configuration listed in Table~\ref{tab:ga_hparams} represents the setup for 
 \end{table}
 
 \subsection{Validation Metrics}
-The analytical results are assessed against the DSMC solution and IRVE-3 flight data using metrics from Table~\ref{tab:ml_metrics}, focusing on validation; these are not used for model training.
-
-\begin{table}[H]
-    \centering
-    \caption{Validation metrics used for the analytic predictions.}
-    \label{tab:ml_metrics}
-    \begin{tabular}{|l|l|l|}
-        \hline
-        \textbf{Metric} & \textbf{Definition} & \textbf{Target} \\ \hline
-        $R^2$ (Coefficient of Determination) & $1 - \frac{SS_{res}}{SS_{tot}}$ & $> 0.95$ \\ \hline
-        RMSE (Root Mean Squared Error) & $\sqrt{\frac{1}{N}\sum(\hat{y}_i - y_i)^2}$ & Minimized \\ \hline
-        MAE (Mean Absolute Error) & $\frac{1}{N}\sum|\hat{y}_i - y_i|$ & Minimized \\ \hline
-        Max Absolute Error & $\max|\hat{y}_i - y_i|$ & $< 5\%$ of range \\ \hline
-    \end{tabular}
-\end{table}
+The analytical results are assessed against the DSMC solution and IRVE-3 flight data using the validation metrics of Table~\ref{tab:validation}; no model-training metrics are reported because the pipeline contains no trained ML model.
 
 \subsection{Reproducibility Requirements}
 

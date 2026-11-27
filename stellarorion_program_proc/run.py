@@ -808,6 +808,7 @@ def _phase2_python_analysis(
          "--project-excludes", "scripts/**",
          "--project-excludes", "data/**",
          "--project-excludes", "results/**",
+         "--project-excludes", "proofs/**",
          "--project-excludes", ".opencode/**",
          "--project-excludes", ".tmp/**",
          "--project-excludes", "Lost+Found/**"],

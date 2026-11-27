@@ -6996,7 +6996,7 @@ def _build_integration_contract_patterns() -> list[Pattern]:
                         if bound_name == "*":
                             continue
                         start_line = node.lineno
-                        end_line = getattr(node, "end_lineno", start_line)
+                        end_line = node.end_lineno or start_line
                         is_used = False
                         for i, line in enumerate(lines, 1):
                             if start_line <= i <= end_line:
@@ -7023,7 +7023,7 @@ def _build_integration_contract_patterns() -> list[Pattern]:
                         if bound_name == "*":
                             continue
                         start_line = node.lineno
-                        end_line = getattr(node, "end_lineno", start_line)
+                        end_line = node.end_lineno or start_line
                         is_used = False
                         for i, line in enumerate(lines, 1):
                             if start_line <= i <= end_line:
@@ -17785,6 +17785,7 @@ def _check_safe_fallback(src_dir: str) -> list["Violation"]:
                         compound_re = re.compile(
                             r"\b(if|loop|case|record|select)\b", re.IGNORECASE
                         )
+                        m = None
                         while depth > 0 and pos < len(scan_content):
                             m = end_re.search(scan_content, pos)
                             if not m:

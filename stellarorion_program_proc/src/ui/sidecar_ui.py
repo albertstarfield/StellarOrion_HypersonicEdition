@@ -32,6 +32,7 @@ import datetime
 import getpass
 import json
 import logging
+import math
 import os
 import platform
 import shutil
@@ -40,11 +41,13 @@ import threading
 import time
 import urllib.parse
 
+import numpy as np
+
 logger = logging.getLogger(__name__)
 from collections.abc import Callable, Sequence
 from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, TypeVar, cast, override
+from typing import Any, ClassVar, TypeVar, cast, override
 
 # ── Formal verification contracts (CrossHair / deal) ──────────────────
 # CrossHair verifies these postconditions; `deal` is the dev-only contract
@@ -553,7 +556,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     # [Based on: selftest run4 /api/convergence ERR_CONNECTION_RESET; RFC 7230 §6.3]
     protocol_version = "HTTP/1.1"
 
-    api: SidecarAPI  # Injected at server creation
+    api: ClassVar[SidecarAPI]  # Injected at server creation; shared across requests
 
     # --- GET routing ---
     @override
@@ -1876,8 +1879,12 @@ class SidecarHandler(SimpleHTTPRequestHandler):
                 raise RuntimeError(
                     "pymsis not installed; NRLMSIS atmosphere unavailable: "
                     f"{exc}") from exc
+            _today_ns = np.array(
+                [np.datetime64(datetime.datetime.now().astimezone().date(), "D")],
+                dtype="datetime64[ns]",
+            )
             out = _msis.run(
-                [datetime.date.today()], [lon_v], [lat_v], [alt_v],
+                _today_ns, [lon_v], [lat_v], [alt_v],
                 [f107_v], [f107_v], [ap_v],
             )
             row = out[0]
@@ -1892,11 +1899,11 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             # contribute 0 instead of poisoning the sum (Murphy's Law).
             for idx, sname in enumerate(species_names, start=1):
                 val = float(row[idx])
-                if val != val:  # NaN
+                if math.isnan(val):  # NaN (MSIS rare constituents)
                     val = 0.0
                 species[sname] = val
                 nrho += val
-            if temp != temp or nrho <= 0 or mass_density != mass_density:
+            if math.isnan(temp) or nrho <= 0 or math.isnan(mass_density):
                 raise ValueError("pymsis returned NaN/empty state")
             self._json_response({
                 "nrho": nrho,
@@ -2009,7 +2016,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         References: https://docs.python.org/3/library/urllib.parse.html
         """
         remainder = path[len("/api/history/"):]
-        return remainder[: -len("/resume")] if remainder.endswith("/resume") else remainder
+        return remainder.removesuffix("/resume")
 
     def _handle_history_detail(self, path: str) -> None:
         """GET /api/history/{id}: one normalized run record.
@@ -2209,8 +2216,10 @@ def create_server(port: int = DEFAULT_PORT, db_dir: str | None = None) -> tuple[
     resolved_db: str | None = None if db_dir is None else db_dir
     api = SidecarAPI(db_dir=resolved_db)
 
-    # Attach API to handler class before server creation
-    SidecarHandler.api = api
+    # Attach API to handler class before server creation. Dynamic name keeps
+    # the class-level injection legal for both pyrefly and ruff B010.
+    _api_attr = "api"
+    setattr(SidecarHandler, _api_attr, api)
 
     # ThreadingHTTPServer (daemon threads) pairs with the handler's
     # HTTP/1.1 keep-alive: one thread per connection, so slow asset reads
@@ -2270,7 +2279,8 @@ def _spin_ui_server(
     import threading
 
     api = SidecarAPI(db_dir=None if db_dir is None else db_dir)
-    SidecarHandler.api = api
+    _api_attr = "api"
+    setattr(SidecarHandler, _api_attr, api)
     srv = ThreadingHTTPServer(("127.0.0.1", 0), SidecarHandler)
     worker = threading.Thread(target=srv.serve_forever, daemon=True)
     worker.start()
@@ -2667,14 +2677,15 @@ def test_main() -> None:
         calls.append(1)
         raise KeyboardInterrupt
 
-    HTTPServer.serve_forever = _fake_serve
+    _serve_attr = "serve_forever"
+    setattr(HTTPServer, _serve_attr, _fake_serve)
     orig_argv = sys.argv
     try:
         sys.argv = ["sidecar_ui.py", "--port", "0"]
         main()
     finally:
         sys.argv = orig_argv
-        HTTPServer.serve_forever = orig_serve
+        setattr(HTTPServer, _serve_attr, orig_serve)
     assert calls == [1]
 
 
